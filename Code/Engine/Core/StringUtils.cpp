@@ -1,6 +1,7 @@
-#include "Engine/Core/StringUtils.hpp"
+#include <cstring>
 #include <stdarg.h>
-
+#include "Engine/Core/StringUtils.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 
 //-----------------------------------------------------------------------------------------------
 const int STRINGF_STACK_LOCAL_TEMP_LENGTH = 2048;
@@ -48,15 +49,15 @@ const std::vector<std::string> Tokenize(const std::string& stringToTokenize, con
 	std::vector<std::string> tokens;
 	
 	// Set up the substring indices
-	int subStringStartIndex = stringToTokenize.find_first_not_of(delimiter);
+	size_t subStringStartIndex = stringToTokenize.find_first_not_of(delimiter);
 	if (subStringStartIndex == (int) std::string::npos) { return tokens; }	// Return if the entire string is just delimiters
-	int subStringEndPostion = stringToTokenize.find(delimiter, subStringStartIndex + 1);
+	size_t subStringEndPostion = stringToTokenize.find(delimiter, subStringStartIndex + 1);
 
 	// Iterate across the entire string
 	while (subStringEndPostion != (int) std::string::npos)
 	{
 		// Create the substring
-		int substringLength = (subStringEndPostion - subStringStartIndex);
+		size_t substringLength = (subStringEndPostion - subStringStartIndex);
 		tokens.push_back(std::string(stringToTokenize, subStringStartIndex, substringLength));
 
 		// Update the indices
@@ -72,5 +73,31 @@ const std::vector<std::string> Tokenize(const std::string& stringToTokenize, con
 }
 
 
+//-----------------------------------------------------------------------------------------------
+int GetStringLength(const char* string)
+{
+	return (int) strlen(string);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+bool IsStringNullOrEmpty(const char* string)
+{
+	bool stringNull = (string == nullptr);
+	bool stringEmpty = true;
+	if (!stringNull)
+	{
+		stringEmpty = (strlen(string) == 0);
+	}
+
+	return (stringNull || stringEmpty);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+bool IsStringNullOrEmpty(const std::string& string)
+{
+	return IsStringNullOrEmpty(string.c_str());
+}
 
 

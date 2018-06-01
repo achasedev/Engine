@@ -10,7 +10,7 @@
 #include "Engine/Renderer/SpriteAnimSetDef.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
-
+#include "Engine/Math/MathUtils.hpp"
 
 //-----------------------------------------------------------------------------------------------
 // Constructor - from a set definition
@@ -105,7 +105,7 @@ void SpriteAnimSet::SetCurrentAnimation(const std::string& animationName)
 		// If the animation was finished reset it
 		if (m_currentAnimation->IsFinished())
 		{
-			m_currentAnimation->Reset();
+			m_currentAnimation->ResetAndPlay();
 		}
 	}
 }

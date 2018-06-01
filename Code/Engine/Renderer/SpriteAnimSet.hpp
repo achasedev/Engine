@@ -10,7 +10,6 @@
 #include <map>
 #include <vector>
 
-
 class SpriteAnim;
 class SpriteAnimSetDef;
 
@@ -19,6 +18,7 @@ class SpriteAnimSet
 public:
 	//-----Public Methods-----
 
+	SpriteAnimSet() {};
 	SpriteAnimSet(const SpriteAnimSetDef* setDefinition);
 	~SpriteAnimSet();	// For freeing the map of animation pointers
 
@@ -46,7 +46,7 @@ public:
 private:
 	//-----Private Data-----
 
-	SpriteAnim* m_currentAnimation = nullptr;
-	const SpriteAnimSetDef* m_setDefinition = nullptr;
-	std::map<std::string, SpriteAnim*> m_animations;
+	SpriteAnim*							m_currentAnimation = nullptr;
+	const SpriteAnimSetDef*				m_setDefinition = nullptr;
+	std::map<std::string, SpriteAnim*>	m_animations;
 };

@@ -11,14 +11,12 @@
 #include "Engine/Renderer/SpriteSheet.hpp"
 #include "ThirdParty/tinyxml2/tinyxml2.h"
 
-typedef tinyxml2::XMLElement XMLElement;
-
 class SpriteAnimDef
 {
 public:
 	//-----Public Methods-----
 
-	SpriteAnimDef(const SpriteSheet& defaultSpriteSheet, int framesPerSecond, const std::vector<int>& frameIndices, const std::string& name=std::string("default"));			// Construct from code
+	SpriteAnimDef(const SpriteSheet& defaultSpriteSheet, int framesPerSecond, const std::vector<int>& frameIndices, const std::string& name=std::string("default"), PlayMode playmode=PLAY_MODE_ONCE);			// Construct from code
 	SpriteAnimDef(const SpriteSheet& defaultSpriteSheet, const XMLElement& spriteAnimDefElement);						// Construct from XML data
 
 	// Accessors/Producers

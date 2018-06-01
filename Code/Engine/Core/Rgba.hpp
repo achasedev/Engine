@@ -35,7 +35,7 @@ public:
 	void ScaleAlpha(float alphaScale);
 
 	// Sets the values for RGB(and optionally A) to the ones specified in the passed text
-	void SetFromText(const char* text);
+	bool SetFromText(const char* text);
 
 public:
 

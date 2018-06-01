@@ -28,6 +28,9 @@ struct XboxStickState
 
 	float m_innerDeadzoneFraction = 0.3f;
 	float m_outerDeadzoneFraction = 0.9f;
+
+	// The magnitude of the stick last frame, used for WasStickJustPressed
+	float m_lastFrameCorrectedMagnitude = 0.f;
 };
 
 
@@ -89,13 +92,15 @@ public: // Methods
 	bool WasButtonJustReleased(XboxButtonID buttonID) const;			// Returns whether the button was just released this frame
 	bool IsConnected() const;											// Returns whether the contoller is connected to the pc
 
-	Vector2 GetRawStickPosition(XboxStickID stickID) const;				// Returns the raw stick (x, y) position
-	Vector2 GetCorrectedStickPosition(XboxStickID stickID) const;		// Returns the corrected (x, y) position
-	float GetStickOrientationDegrees(XboxStickID stickID) const;			// Returns the angle orientation of the stick
-	float GetRawStickMagnitude(XboxStickID stickID) const;				// Returns the raw magnitude of the stick
-	float GetCorrectedStickMagnitude(XboxStickID stickID) const;		// Returns the magnitude of the stick after compensating for deadzone
+	Vector2 GetRawStickPosition(XboxStickID stickID) const;					// Returns the raw stick (x, y) position
+	Vector2 GetCorrectedStickPosition(XboxStickID stickID) const;			// Returns the corrected (x, y) position
+	float	GetStickOrientationDegrees(XboxStickID stickID) const;			// Returns the angle orientation of the stick
+	Vector2 GetCardinalStickDirection(XboxStickID stickID) const;			// Returns the cardinal direction closest to the stick's current orientation
+	float	GetRawStickMagnitude(XboxStickID stickID) const;				// Returns the raw magnitude of the stick
+	float	GetCorrectedStickMagnitude(XboxStickID stickID) const;			// Returns the magnitude of the stick after compensating for deadzone
+	bool	WasStickJustPressed(XboxStickID stickID) const;					// Returns true if the stick was just pressed this frame (previous corrected magnitude was 0.f)
 
-	float GetTriggerValue(XboxTriggerID triggerID) const;				// Gets the current value of the trigger, from 0.f to 1.f
+	float GetTriggerValue(XboxTriggerID triggerID) const;					// Gets the current value of the trigger, from 0.f to 1.f
 
 public: // Data
 

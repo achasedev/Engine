@@ -9,7 +9,11 @@
 #include "Engine/Input/InputSystem.hpp"
 #define WIN32_LEAN_AND_MEAN			// Always #define this before #including <windows.h>
 #include <windows.h>
+#include "Engine/Core/EngineCommon.hpp"
 
+
+// Singleton instance
+InputSystem* InputSystem::s_instance = nullptr;
 
 // Mapping InputSystem constants to Windows macros
 const unsigned char	InputSystem::KEYBOARD_ESCAPE		= VK_ESCAPE;
@@ -20,12 +24,15 @@ const unsigned char	InputSystem::KEYBOARD_F3			= VK_F3;
 const unsigned char	InputSystem::KEYBOARD_F4			= VK_F4;
 const unsigned char	InputSystem::KEYBOARD_F5			= VK_F5;
 const unsigned char	InputSystem::KEYBOARD_F6			= VK_F6;
+const unsigned char	InputSystem::KEYBOARD_F7			= VK_F7;
+const unsigned char	InputSystem::KEYBOARD_F8			= VK_F8;
+const unsigned char	InputSystem::KEYBOARD_F9			= VK_F9;
 const unsigned char	InputSystem::KEYBOARD_F10			= VK_F10;
 const unsigned char	InputSystem::KEYBOARD_LEFT_ARROW	= VK_LEFT;
 const unsigned char	InputSystem::KEYBOARD_UP_ARROW		= VK_UP;
 const unsigned char	InputSystem::KEYBOARD_DOWN_ARROW	= VK_DOWN;
 const unsigned char	InputSystem::KEYBOARD_RIGHT_ARROW	= VK_RIGHT;
-
+const unsigned char InputSystem::KEYBOARD_TILDE			= VK_OEM_3;
 
 //-----------------------------------------------------------------------------------------------
 // Constructor - Creates 4 XboxControllers with their ID's equal to their index in the array
@@ -36,6 +43,14 @@ InputSystem::InputSystem()
 	{
 		m_xboxControllers[i] = XboxController(i);
 	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Destructor - made private (use InputSystem::Shutdown() instead)
+//
+InputSystem::~InputSystem()
+{
 }
 
 
@@ -57,6 +72,29 @@ void RunMessagePump()
 
 		TranslateMessage( &queuedMessage );
 		DispatchMessage( &queuedMessage ); // This tells Windows to call our "WindowsMessageHandlingProcedure" function
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Creates the InputSystem singleton instance
+//
+void InputSystem::Initialize()
+{
+	GUARANTEE_OR_DIE(s_instance == nullptr, "Error: InputSystem::Initialize() called with an existing instance.");
+	s_instance = new InputSystem();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Deletes the InputSystem singleton instance
+//
+void InputSystem::Shutdown()
+{
+	if (s_instance != nullptr)
+	{
+		delete s_instance;
+		s_instance = nullptr;
 	}
 }
 
@@ -131,10 +169,32 @@ bool InputSystem::WasKeyJustReleased(unsigned char keyCode) const
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Returns the controller given by the passed index
+//
 XboxController& InputSystem::GetController(int controllerNumber)
 {
 	return m_xboxControllers[controllerNumber];
 }
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the InputSystem singleton instance
+//
+InputSystem* InputSystem::GetInstance()
+{
+	return s_instance;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the controller currently used by player one
+//
+XboxController& InputSystem::GetPlayerOneController()
+{
+	return s_instance->m_xboxControllers[0];
+}
+
 
 //-----------------------------------------------------------------------------------------------
 // Sets the 'just' states of all KeyButtonStates to false, so that they may be updated correctly

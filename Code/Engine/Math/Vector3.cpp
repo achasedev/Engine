@@ -8,12 +8,20 @@
 #include <math.h>
 #include <string>
 #include "Engine/Math/Vector3.hpp"
+#include "Engine/Math/IntVector3.hpp"
 #include "Engine/Math/MathUtils.hpp"
 
 
 // Initialize the static constants
-const Vector3 Vector3::ZERO = Vector3(0.f, 0.f, 0.f);
-const Vector3 Vector3::ONES = Vector3(1.f, 1.f, 1.f);
+const Vector3 Vector3::ZERO	= Vector3(0.f, 0.f, 0.f);
+const Vector3 Vector3::ONES	= Vector3(1.f, 1.f, 1.f);
+
+const Vector3 Vector3::DIRECTION_UP			= Vector3(0.f, 1.0f, 0.f);
+const Vector3 Vector3::DIRECTION_DOWN		= Vector3(0.f, -1.0f, 0.f);
+const Vector3 Vector3::DIRECTION_LEFT		= Vector3(-1.0f, 0.f, 0.f);
+const Vector3 Vector3::DIRECTION_RIGHT		= Vector3(1.0f, 0.f, 0.f);
+const Vector3 Vector3::DIRECTION_FORWARD	= Vector3(0.f, 0.f, 1.f);
+const Vector3 Vector3::DIRECTION_BACK		= Vector3(0.f, 0.f, -1.f);
 
 
 //-----------------------------------------------------------------------------------------------
@@ -33,6 +41,16 @@ Vector3::Vector3( float initialX, float initialY, float initialZ)
 	, y( initialY )
 	, z(initialZ)
 {
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Constructor - from an IntVector3
+Vector3::Vector3(const IntVector3& intVector)
+{
+	x = static_cast<float>(intVector.x);
+	y = static_cast<float>(intVector.y);
+	z = static_cast<float>(intVector.z);
 }
 
 
@@ -220,6 +238,15 @@ void Vector3::SetFromText(const char* text)
 	x = static_cast<float>(atof(std::string(stringText, 0, firstComma).c_str()));
 	y = static_cast<float>(atof(std::string(stringText, firstComma + 1, secondComma - firstComma - 1).c_str()));
 	z = static_cast<float>(atof(std::string(stringText, secondComma + 1).c_str()));
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the x and z values of this vector as a Vector2
+//
+Vector2 Vector3::xz() const
+{
+	return Vector2(x, z);
 }
 
 

@@ -12,6 +12,44 @@
 
 
 //-----------------------------------------------------------------------------------------------
+// Converts the radius and radian angle to cartesian coordinates
+//
+Vector2 PolarToCartesian(float radius, float angleRadians)
+{
+	Vector2 result;
+	result.x = radius * cosf(angleRadians);
+	result.y = radius * sinf(angleRadians);
+	return result;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Converts the (x,y) cartesian coordinate to polar coordinates
+//
+void CartesianToPolar(float x, float y, float& out_radius, float& out_angleRadians)
+{
+	out_radius			= sqrtf((x * x) + (y * y));
+	out_angleRadians	= atan2f(y, x);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Converts a (r, theta, phi) spherical coordinate to an (x, y, z) cartesian coordinate.
+// Assumes angles are in degrees.
+//
+Vector3 SphericalToCartesian(float radius, float rotationDegrees, float azimuthDegrees)
+{
+	Vector3 cartesianCoordinate;
+
+	cartesianCoordinate.x = radius * CosDegrees(rotationDegrees) * SinDegrees(azimuthDegrees);
+	cartesianCoordinate.z = radius * SinDegrees(rotationDegrees) * SinDegrees(azimuthDegrees);
+	cartesianCoordinate.y = radius * CosDegrees(azimuthDegrees);
+
+	return cartesianCoordinate;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Converts an angle in radians to its degree measure and returns it
 //
 float ConvertRadiansToDegrees(float radians) 
@@ -65,6 +103,17 @@ float Atan2Degrees(float y, float x)
 
 
 //-----------------------------------------------------------------------------------------------
+// Calculates the arctan of the side ratio given by ratio, expressed in degrees
+//
+float Atan2Degrees(float ratio)
+{
+	float radians = atan2f(ratio, 1.f);
+
+	return ConvertRadiansToDegrees(radians);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the nearest cardinal direction to the given angle
 //
 float GetNearestCardinalAngle(float angle)
@@ -81,6 +130,64 @@ float GetNearestCardinalAngle(float angle)
 	else if	(minDistance == leftDistance)		{ return 180.f; }
 	else if	(minDistance == upDistance)			{ return 90.f; }
 	else										{ return 270.f; }
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the nearest inter-cardinal angle to the one given
+//
+float GetNearestInterCardinalAngle(float angle)
+{
+	float neDistance		= abs(GetAngularDisplacement(angle, 45.f));
+	float nwDistance		= abs(GetAngularDisplacement(angle, 135.f));
+	float swDistance		= abs(GetAngularDisplacement(angle, 225.f));
+	float seDistance		= abs(GetAngularDisplacement(angle, 315.f));
+
+	float minDistance = MinFloat(neDistance, nwDistance, swDistance, seDistance);
+
+	// Return the direction corresponding to the min distance
+	if		(minDistance == neDistance)		{ return 45.f;}
+	else if	(minDistance == nwDistance)		{ return 135.f; }
+	else if	(minDistance == swDistance)		{ return 225.f; }
+	else									{ return 315.f; }
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the nearest cardinal direction to the one given
+//
+Vector2 GetNearestCardinalDirection(const Vector2& direction)
+{
+	float northDot = DotProduct(direction, Vector2::DIRECTION_UP);
+	float southDot = DotProduct(direction, Vector2::DIRECTION_DOWN);
+	float eastDot = DotProduct(direction, Vector2::DIRECTION_RIGHT);
+	float westDot = DotProduct(direction, Vector2::DIRECTION_LEFT);
+
+	float maxDot = MaxFloat(northDot, southDot, eastDot, westDot);
+
+	if		(maxDot == northDot)		{ return Vector2::DIRECTION_UP;}
+	else if	(maxDot == southDot)		{ return Vector2::DIRECTION_DOWN; }
+	else if	(maxDot == eastDot)			{ return Vector2::DIRECTION_RIGHT; }
+	else								{ return Vector2::DIRECTION_LEFT; }
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the angle coterminal to angle between 0 and 360 degrees
+//
+float GetAngleBetweenZeroThreeSixty(float angleDegrees)
+{
+	while (angleDegrees > 360.f)
+	{
+		angleDegrees -= 360.f;
+	}
+
+	while (angleDegrees < 0.f)
+	{
+		angleDegrees += 360.f;
+	}
+
+	return angleDegrees;
 }
 
 
@@ -166,7 +273,6 @@ int RoundToNearestInt(float inValue)
 	{
 		toReturn = castedInt + 1;
 	}
-	
 
 	if (fraction < -0.5f)
 	{
@@ -174,7 +280,6 @@ int RoundToNearestInt(float inValue)
 	}
 	
 	return toReturn;
-	
 }
 
 
@@ -319,6 +424,39 @@ float TurnToward(float currentDegrees, float goalDegrees, float maxTurnDegrees)
 float DotProduct(const Vector2& a, const Vector2& b)
 {
 	return ((a.x * b.x) + (a.y * b.y));
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Calculates the dot product between a and b
+//
+float DotProduct(const Vector3& a, const Vector3& b)
+{
+	return ((a.x * b.x) + (a.y * b.y) + (a.z * b.z));
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the dot product between a and b
+//
+float DotProduct(const Vector4& a, const Vector4& b)
+{
+	return ((a.x * b.x) + (a.y * b.y) + (a.z * b.z) + (a.w * b.w));
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the cross product between a and b
+//
+Vector3 CrossProduct(const Vector3& a, const Vector3& b)
+{
+	Vector3 result;
+
+	result.x = (a.y * b.z) - (a.z * b.y);
+	result.y = (a.z * b.x) - (a.x * b.z);
+	result.z = (a.x * b.y) - (a.y * b.x);
+
+	return result;
 }
 
 
@@ -523,6 +661,45 @@ const Rgba Interpolate(const Rgba& start, const Rgba& end, float fractionTowardE
 
 
 //-----------------------------------------------------------------------------------------------
+// Finds the roots of the quadratic function given by the coefficients a, b, and c, and stores them
+// in solutions
+// Returns true if roots were found, false otherwise
+//
+bool Quadratic(Vector2& out_solutions, float a, float b, float c)
+{
+	// (-b +- sqrt(b^2 - 4ac)) / (2a)
+
+	// First determine the inside of the square root - if it is negative, then there are no real solutions
+	float insideSqrt = (b * b) - (4 * a * c);
+
+	if (insideSqrt < 0)
+	{
+		return false;
+	}
+
+	// There is at least one solution
+	float sqrtValue = sqrtf(insideSqrt);
+
+	float firstSolution = (-b + sqrtValue) / (2 * a);
+	float secondSolution = (-b - sqrtValue) / (2 * a);
+
+	// Order the solutions in order of magnitude
+	if (firstSolution < secondSolution)
+	{
+		out_solutions.x = firstSolution;
+		out_solutions.y = secondSolution;
+	}
+	else
+	{
+		out_solutions.x = secondSolution;
+		out_solutions.y = firstSolution;
+	}
+
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the max of 4 floats
 //
 float MaxFloat(float a, float b, float c, float d)
@@ -531,6 +708,15 @@ float MaxFloat(float a, float b, float c, float d)
 	float maxCD = ((c > d) ? c : d);
 
 	return ((maxAB > maxCD) ? maxAB : maxCD);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the max of 4 floats
+//
+float MaxFloat(float a, float b)
+{
+	return ((a > b) ? a : b);
 }
 
 
@@ -552,4 +738,41 @@ float MinFloat(float a, float b, float c, float d)
 float MinFloat(float a, float b)
 {
 	return ((a < b) ? a : b);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the text converted to an int (atoi)
+//
+int TextToInt(const char* text)
+{
+	return atoi(text);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the absolute value of the integer inValue
+//
+int AbsoluteValue(int inValue)
+{
+	if (inValue < 0)
+	{
+		inValue *= -1;
+	}
+
+	return inValue;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the absolute value of the float inValue
+//
+float AbsoluteValue(float inValue)
+{
+	if (inValue < 0.f)
+	{
+		inValue *= -1.f;
+	}
+
+	return inValue;
 }

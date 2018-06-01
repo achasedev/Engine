@@ -19,23 +19,27 @@ public:
 
 	// Mutators
 	void SetHeat(const IntVector2& cellCoords, float newHeatValue);
+	void SetHeat(int index, float newHeatValue);
 	void AddHeat(const IntVector2& cellCoords, float addAmount);
-	void RunDijkstraFromTarget(const IntVector2& targetCoords);
+	void Seed(float seedValue, const IntVector2& seedLocation);
+	void Seed(float seedValue, const std::vector<IntVector2>& seedCoords);
+	void SolveMapUpToDistance(float maxDistance, const HeatMap* costs = nullptr);
 
 	// Accessors
 	float GetHeat(const IntVector2& cellCoords) const;
+	float GetHeat(int index) const;
 
 	// Producers
+	int			GetIndex(int x, int y) const;
 	void		GetGreedyShortestPath(const IntVector2& pathStartCoords, const IntVector2& pathEndCoords, std::vector<IntVector2>& path) const;
 	IntVector2	GetMinNeighborCoords(const IntVector2& currCoords) const;
-	bool		AreCoordsInBounds(const IntVector2& coords) const;
+	bool		AreCoordsValid(const IntVector2& coords) const;
 
-	static HeatMap* ConstructDijkstraMap(const IntVector2& dimensions, IntVector2& targetTileCoords);
 
 private:
 	//-----Private Methods-----
 
-	void UpdateNeighborDistance(const IntVector2& currCoords, const IntVector2& stepDirection, std::queue<IntVector2>& distanceQueue);
+	bool UpdateCurrFromNeighbor(int currIndex, int neighborIndex, float maxDistance, const HeatMap* costs);
 
 
 private:
@@ -44,4 +48,6 @@ private:
 	std::vector<float> m_heatPerGridCell;	// Ordered from bottom-left, across rows then up
 	IntVector2 m_dimensions;				// Width x height of the grid
 
+	int m_maxDistanceSolved;				// Set when the HeatMap is solved up to a certain distance from seeds
+	HeatMap* m_costMap;						// Costs associated with a solve
 };

@@ -41,13 +41,17 @@ public:
 	Vector2 GetCenter() const;												// Returns the center point position of the box as (x,y)
 	Vector2 GetRandomPointInside() const;									// Returns a random position inside the box
 
+	//-----Producers-----
+	Vector2 GetBottomLeft() const;
+	Vector2 GetBottomRight() const;
+	Vector2 GetTopRight() const;
+	Vector2 GetTopLeft() const;
 
 	//-----Operators-----
 	void operator+=(const Vector2& translation);							// Works like Translate, linear move
 	void operator-=(const Vector2& antiTranslation);						// Inverse of Translate, moves the box opposite of antiTranslation
 	AABB2 operator+(const Vector2& translation) const;						// Returns a copy of this box with an offset added to it
 	AABB2 operator-(const Vector2& antiTranslation) const;					// Returns a copy of this box with an offset subtracted to it
-
 
 	static const AABB2 UNIT_SQUARE_CENTERED;								// Square centered at (0,0) with width 2
 	static const AABB2 HALF_UNIT_SQUARE_CENTERED;							// Square centered at (0,0) with width 1

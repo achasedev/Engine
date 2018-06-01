@@ -116,6 +116,9 @@ void XboxController::UpdateStickState(XboxStickID stickID, short rawX, short raw
 {
 	XboxStickState& currStick = m_sticks[stickID];
 
+	// Before recalculating magnitude, save off the previous magnitude
+	currStick.m_lastFrameCorrectedMagnitude = currStick.m_normalizedCorrectedMagnitude;
+
 	// Represent the raw input as a float between -1.f and 1.f
 	float normalizedRawX = RangeMapFloat(static_cast<float>(rawX), MIN_AXIS, MAX_AXIS, -1.f, 1.f);
 	float normalizedRawY = RangeMapFloat(static_cast<float>(rawY), MIN_AXIS, MAX_AXIS, -1.f, 1.f);
@@ -256,6 +259,15 @@ float XboxController::GetStickOrientationDegrees(XboxStickID stickID) const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the cardinal direction closest to the stick's current orientation
+//
+Vector2 XboxController::GetCardinalStickDirection(XboxStickID stickID) const
+{
+	return GetNearestCardinalDirection(m_sticks[stickID].m_normalizedCorrectedPosition);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the raw stick magnitude, mapped to 0.f and 1.f
 //
 float XboxController::GetRawStickMagnitude(XboxStickID stickID) const
@@ -269,6 +281,19 @@ float XboxController::GetRawStickMagnitude(XboxStickID stickID) const
 float XboxController::GetCorrectedStickMagnitude(XboxStickID stickID) const
 {
 	return m_sticks[stickID].m_normalizedCorrectedMagnitude;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns true if the stick was just pressed this frame (previous corrected magnitude was 0.f)
+//
+bool XboxController::WasStickJustPressed(XboxStickID stickID) const
+{
+	bool isCurrentlyPressed = m_sticks[stickID].m_normalizedCorrectedMagnitude > 0.f;
+	bool WasPressedLastFrame = m_sticks[stickID].m_lastFrameCorrectedMagnitude > 0.f;
+
+	bool wasJustPressed = (isCurrentlyPressed && !WasPressedLastFrame);
+	return wasJustPressed;
 }
 
 

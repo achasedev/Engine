@@ -16,17 +16,31 @@ class Image
 public:
 	//-----Public Methods-----
 
+	Image();
 	explicit Image(const std::string& imageFilePath);
+	~Image();
 
-	Rgba GetTexel(int x, int y) const;
+	Rgba GetTexelColor(int x, int y) const;
+	unsigned char GetTexelGrayScale(int x, int y) const;
 	IntVector2 GetDimensions() const;
+	int GetNumComponentsPerTexel() const;
+	const unsigned char* GetImageData() const;
 
 	void SetTexel( int x, int y, const Rgba& color );
+	void FlipVertical();
+
+public:
+	//-----Public Data-----
+
+	const static Image IMAGE_WHITE;
 
 private:
 	//-----Private Data-----
 
-	IntVector2 m_dimensions;	// Width and height of the image in texels
-	std::vector<Rgba> m_texels;	// Ordered left to right, then down, so (0,0) is the texel at m_texels[0]
+	IntVector2 m_dimensions;		// Width and height of the image in texels
+	int m_numComponentsPerTexel;	// The number of values for each texel (3 for RGB, 4 for RGBA, etc)
+		
+	std::vector<Rgba> m_texels;		// Ordered left to right, then down, so (0,0) is the texel at m_texels[0]
+	unsigned char* m_imageData;		// Raw string data of the image from stbi
 
 };

@@ -8,74 +8,214 @@
 /************************************************************************/
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#include <gl/GL.h>
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/Image.hpp"
 #include "Engine/Renderer/Texture.hpp"
-#include "Engine/Core/StringUtils.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Renderer/glFunctions.hpp"
 #include "ThirdParty/stb/stb_image.h"
 
-//-----------------------------------------------------------------------------------------------
-// Called only by the Renderer.  Use renderer->CreateOrGetTexture() to instantiate textures.
-//
-Texture::Texture( const std::string& imageFilePath )
-	: m_textureID( 0 )
-	, m_dimensions( 0, 0 )
+
+// Texture Data
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// |-------------------------------------------------------------------------------------------------------| //
+// |      Image Format       |    Internal Format      |        Channels         |      Pixel Layout       | //
+// |-------------------------|-------------------------|-------------------------|-------------------------| //
+// |     R8 (1 channel)      |          GL_R8          |         GL_RED          |     GL_UNSIGNED_BYTE    | //
+// |-------------------------|-------------------------|-------------------------|-------------------------| //
+// |    RG8 (2 Channel)      |         GL_RG8          |         GL_RG           |     GL_UNSIGNED_BYTE    | //
+// |-------------------------|-------------------------|-------------------------|-------------------------| //
+// |    RGB8 (3 Channel)     |         GL_RGB8         |         GL_RGB          |     GL_UNSIGNED_BYTE    | //
+// |-------------------------|-------------------------|-------------------------|-------------------------| //
+// |    RGBA8 (4 Channel)    |        GL_RGBA8         |         GL_RGBA         |     GL_UNSIGNED_BYTE    | //
+// |-------------------------|-------------------------|-------------------------|-------------------------| //
+// |D24S8 (Depth24/Stencil8) |   GL_DEPTH24_STENCIL8   |     GL_DEPTH_STENCIL    |   GL_UNSIGNED_INT_24_8  | //
+// |-------------------------|-------------------------|-------------------------|-------------------------| //
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+//-----For converting primitive types to GL types-----
+
+// Internal Formats
+int g_openGLInternalFormats[NUM_TEXTURE_FORMATS] =
 {
-	int numComponents = 0; // Filled in for us to indicate how many color/alpha components the image had (e.g. 3=RGB, 4=RGBA)
-	int numComponentsRequested = 0; // don't care; we support 3 (RGB) or 4 (RGBA)
+	GL_R8,
+	GL_RG8,
+	GL_RGB8,
+	GL_RGBA8,
+	GL_DEPTH24_STENCIL8
+};
 
-	// Load (and decompress) the image RGB(A) bytes from a file on disk, and create an OpenGL texture instance from it
-	unsigned char* imageData = stbi_load( imageFilePath.c_str(), &m_dimensions.x, &m_dimensions.y, &numComponents, numComponentsRequested );
+// Channels
+int g_openGLChannels[NUM_TEXTURE_FORMATS] =
+{
+	GL_RED,
+	GL_RG,
+	GL_RGB,
+	GL_RGBA,
+	GL_DEPTH_STENCIL
+};
 
-	GUARANTEE_OR_DIE((imageData != nullptr), Stringf("Texture at path \"%s\" not found.", imageFilePath.c_str()));
+// Pixel Layouts
+int g_openGLPixelLayouts[NUM_TEXTURE_FORMATS] = 
+{
+	GL_UNSIGNED_BYTE,
+	GL_UNSIGNED_BYTE,
+	GL_UNSIGNED_BYTE,
+	GL_UNSIGNED_BYTE,
+	GL_UNSIGNED_INT_24_8
+};
 
-	PopulateFromData( imageData, m_dimensions, numComponents );
-	stbi_image_free( imageData );
+
+Texture::Texture()
+	: m_textureHandle(0)
+	, m_dimensions(0, 0)
+	, m_textureFormat(TEXTURE_FORMAT_RGBA8)
+{
+}
+
+void Texture::CreateFromFile(const std::string& filename)
+{
+	Image* loadedImage = new Image(filename);
+
+	// Flip the image so it isn't upsidedown
+	loadedImage->FlipVertical();
+
+	// Construct the Texture from the image
+	CreateFromImage(loadedImage);
+
+	// Free up the image data
+	delete loadedImage;
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Creates a texture identity on the video card, and populates it with the given image texel data
+// Loads this texture from the image provided onto the graphics card
 //
-void Texture::PopulateFromData( unsigned char* imageData, const IntVector2& texelSize, int numComponents )
+void Texture::CreateFromImage(const Image* image)
 {
-	m_dimensions = texelSize;
+	if (m_textureHandle == NULL)
+	{
+		glGenTextures(1, &m_textureHandle);
+		GL_CHECK_ERROR();
+	}
 
-	// Enable texturing
-	glEnable( GL_TEXTURE_2D );
+	m_dimensions = image->GetDimensions();
+	m_textureFormat = static_cast<TextureFormat>(image->GetNumComponentsPerTexel() - 1);
 
-	// Tell OpenGL that our pixel data is single-byte aligned
-	glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+	// Use texture slot 0 for the operation
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_textureHandle);  
 
-	// Ask OpenGL for an unused texName (ID number) to use for this texture
-	glGenTextures( 1, (GLuint*) &m_textureID );
+	// Create the GPU-side buffer
+	glTexStorage2D(GL_TEXTURE_2D,
+		1,										  // Number of mipmap levels
+		g_openGLInternalFormats[m_textureFormat], // How is the memory stored on the GPU
+		m_dimensions.x, m_dimensions.y);		  // Dimensions
 
-	// Tell OpenGL to bind (set) this as the currently active texture
-	glBindTexture( GL_TEXTURE_2D, m_textureID );
+	GL_CHECK_ERROR();
 
-	// Set texture clamp vs. wrap (repeat)
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP ); // GL_CLAMP or GL_REPEAT
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP ); // GL_CLAMP or GL_REPEAT
+	// Copy the image data to the GPU buffer that we just created
+	glTexSubImage2D(GL_TEXTURE_2D,
+		0,										// Mip layer we're copying to
+		0, 0,									// Pixel offset
+		m_dimensions.x, m_dimensions.y,			// Dimensions
+		g_openGLChannels[m_textureFormat],      // Which channels exist in the CPU buffer
+		g_openGLPixelLayouts[m_textureFormat],  // How are those channels stored
+		image->GetImageData());					// Cpu buffer to copy
 
-	// Set magnification (texel > pixel) and minification (texel < pixel) filters
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST ); // one of: GL_NEAREST, GL_LINEAR
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR ); // one of: GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR
-
-	GLenum bufferFormat = GL_RGBA; // the format our source pixel data is in; any of: GL_RGB, GL_RGBA, GL_LUMINANCE, GL_LUMINANCE_ALPHA, ...
-	if( numComponents == 3 )
-		bufferFormat = GL_RGB;
-
-	GLenum internalFormat = bufferFormat; // the format we want the texture to be on the card; allows us to translate into a different texture format as we upload to OpenGL
-
-	glTexImage2D(			// Upload this pixel data to our new OpenGL texture
-		GL_TEXTURE_2D,		// Creating this as a 2d texture
-		0,					// Which mipmap level to use as the "root" (0 = the highest-quality, full-res image), if mipmaps are enabled
-		internalFormat,		// Type of texel format we want OpenGL to use for this texture internally on the video card
-		m_dimensions.x,			// Texel-width of image; for maximum compatibility, use 2^N + 2^B, where N is some integer in the range [3,11], and B is the border thickness [0,1]
-		m_dimensions.y,			// Texel-height of image; for maximum compatibility, use 2^M + 2^B, where M is some integer in the range [3,11], and B is the border thickness [0,1]
-		0,					// Border size, in texels (must be 0 or 1, recommend 0)
-		bufferFormat,		// Pixel format describing the composition of the pixel data in buffer
-		GL_UNSIGNED_BYTE,	// Pixel color components are unsigned bytes (one byte per color channel/component)
-		imageData );		// Address of the actual pixel data bytes/buffer in system memory
+	GL_CHECK_ERROR();
 }
 
+//-----------------------------------------------------------------------------------------------
+// Returns the dimensions of the texture
+//
+IntVector2 Texture::GetDimensions() const
+{
+	return m_dimensions;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the GPU handle for this texture
+//
+unsigned int Texture::GetHandle() const
+{
+	return m_textureHandle;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Creates a target object on the GPU, full of garbage data, used as an intermediate render target
+//
+bool Texture::CreateRenderTarget(unsigned int width, unsigned int height, TextureFormat format)
+{
+	if (m_textureHandle == NULL)
+	{
+		glGenTextures(1, &m_textureHandle);
+		GL_CHECK_ERROR();
+	}
+
+	// Copy the texture - first, get use to be using texture unit 0 for this;
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_textureHandle);  
+	GL_CHECK_ERROR();
+
+	// Create the GPU-side buffer
+	glTexStorage2D( GL_TEXTURE_2D,
+		1,								// Number of mipmap levels
+		g_openGLInternalFormats[format], // How is the memory stored on the GPU
+		width, height );				// Dimensions
+
+	// Make sure it succeeded
+	GL_CHECK_ERROR(); 
+
+	// cleanup after myself; 
+	glBindTexture( GL_TEXTURE_2D, NULL );
+
+	// Set members
+	m_dimensions = IntVector2((int)width, (int)height);  
+	m_textureFormat = format; 
+
+	return true; 
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Copies a source texture's data to a destination texture on the GPU
+//
+bool Texture::CopyTexture(Texture* source, Texture* destination)
+{
+	// We need the source and destination both to be specified
+	if (source == nullptr || destination == nullptr) 
+	{
+		return false; 
+	}
+
+	// Get the handles
+	GLuint sourceHandle			= source->GetHandle();
+	GLuint destinationHandle	= destination->GetHandle(); 
+
+	// Ensure we don't copy onto ourselves
+	if (destinationHandle == sourceHandle) 
+	{
+		return false; 
+	}
+
+	// For now, Ensure the textures have the same dimensions
+	IntVector2 sourceDimensions			= source->GetDimensions();
+	IntVector2 destinationDimensions	= destination->GetDimensions();
+
+	if (sourceDimensions != destinationDimensions)
+	{
+		return false;
+	}
+
+	// Copy the data over
+	glCopyImageSubData(sourceHandle,		GL_TEXTURE_2D, 0, 0, 0, 0,
+					   destinationHandle,	GL_TEXTURE_2D, 0, 0, 0, 0,
+					   sourceDimensions.x,	sourceDimensions.y, 1);
+ 
+	GL_CHECK_ERROR();
+
+	return GLSucceeded();
+}

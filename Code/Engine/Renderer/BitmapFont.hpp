@@ -30,6 +30,9 @@ public:
 	float GetGlyphAspect() const { return m_baseAspect; }	// Will replace later when we implement varied aspects
 	float GetStringWidth(const std::string& asciiText, float cellHeight, float aspectScale);
 
+	const SpriteSheet& GetSpriteSheet() const;
+
+
 private:
 	//-----Private Methods-----
 
@@ -38,6 +41,6 @@ private:
 private:
 	//-----Private Data-----
 
-	const SpriteSheet& m_spriteSheet;	// The spritesheet of the font, assumed to be 16x16
+	const SpriteSheet m_spriteSheet;	// The spritesheet of the font, assumed to be 16x16
 	float m_baseAspect;					// The base width:height ratio of the font
 };

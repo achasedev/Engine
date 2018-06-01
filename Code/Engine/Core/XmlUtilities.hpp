@@ -10,7 +10,11 @@
 #include "ThirdParty/tinyxml2/tinyxml2.h"
 #include <string>
 
+typedef tinyxml2::XMLDocument XMLDocument;
 typedef tinyxml2::XMLElement XMLElement;
+typedef tinyxml2::XMLAttribute XMLAttribute;
+typedef tinyxml2::XMLError XMLError;
+
 class Rgba;
 class Vector2;
 class IntRange;

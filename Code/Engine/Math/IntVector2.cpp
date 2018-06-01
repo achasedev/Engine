@@ -50,6 +50,14 @@ IntVector2::IntVector2(float initialX, float initialY)
 {
 }
 
+//-----------------------------------------------------------------------------------------------
+// Explicit float vector constructor
+IntVector2::IntVector2(const Vector2& floatVector)
+	: x(static_cast<int>(floatVector.x))
+	, y(static_cast<int>(floatVector.y))
+{
+}
+
 //------------------------------ Operator Overloads ---------------------------------------------
 
 //-----------------------------------------------------------------------------------------------

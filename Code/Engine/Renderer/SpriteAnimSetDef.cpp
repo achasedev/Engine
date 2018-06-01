@@ -16,14 +16,16 @@
 //-----------------------------------------------------------------------------------------------
 // Constructor - using an XMLElement representing an Animation Set Definition
 //
-SpriteAnimSetDef::SpriteAnimSetDef(const XMLElement& animationSetElement, Renderer& renderer)
+SpriteAnimSetDef::SpriteAnimSetDef(const XMLElement& animationSetElement)
 {
+	Renderer* renderer = Renderer::GetInstance();
+
 	// Create the spritesheet for the animation child elements
 	std::string		spriteSheetName		= ParseXmlAttribute(animationSetElement, "spriteSheet", nullptr);
 	std::string		spriteSheetFilePath = Stringf("Data/Images/%s", spriteSheetName.c_str());
 	IntVector2		spriteLayout		= ParseXmlAttribute(animationSetElement, "spriteLayout", spriteLayout);
-	Texture*		spriteSheetTexture	= renderer.CreateOrGetTexture(spriteSheetFilePath);
-	SpriteSheet		setSpriteSheet		= SpriteSheet(*spriteSheetTexture, spriteLayout);
+	Texture*		spriteSheetTexture	= renderer->CreateOrGetTexture(spriteSheetFilePath);
+	SpriteSheet		setSpriteSheet		= SpriteSheet(spriteSheetName, *spriteSheetTexture, spriteLayout);
 
 
 	// Iterate across animation elements to create animation definitions

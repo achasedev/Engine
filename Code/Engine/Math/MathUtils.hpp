@@ -7,12 +7,18 @@
 /* Description: Math Utility Class for my personal game engine
 /************************************************************************/
 #pragma once
+#include "Engine/Core/Rgba.hpp"
 #include "Engine/Math/Vector2.hpp"
 #include "Engine/Math/Vector3.hpp"
-#include "Engine/Math/IntVector2.hpp"
+#include "Engine/Math/Vector4.hpp"
 #include "Engine/Math/IntRange.hpp"
-#include "Engine/Core/Rgba.hpp"
+#include "Engine/Math/IntVector2.hpp"
 
+
+// Coordinate system
+Vector2 PolarToCartesian(float radius, float angleRadians);
+void	CartesianToPolar(float x, float y, float& out_radius, float& out_angleRadians);
+Vector3 SphericalToCartesian(float radius, float rotationDegrees, float azimuthDegrees);
 
 // Angle manipulation
 float	ConvertRadiansToDegrees(float radians);									// Converts an angle in radians to degrees
@@ -20,7 +26,11 @@ float	ConvertDegreesToRadians(float degrees);									// converts an angle in de
 float	CosDegrees(float degrees);												// Calculates the cosine of an angle in degrees
 float	SinDegrees(float degrees);												// Calculates the sine of an angle in degrees
 float	Atan2Degrees(float y, float x);											// Calculates arctan(y, x) expressed in degrees
+float	Atan2Degrees(float ratio);												// Calculates arctan of the side ratio, expressed in degrees
 float	GetNearestCardinalAngle(float angle);									// Returns the nearest cardinal direction to the given angle
+float	GetNearestInterCardinalAngle(float angle);								// Returns the nearest inter-cardinal direction to the given angle
+Vector2	GetNearestCardinalDirection(const Vector2& direction);					// Returns the nearest cardinal direction to the one given
+float	GetAngleBetweenZeroThreeSixty(float angleDegrees);						// Returns an angle coterminal to angleDegrees between 0 and 360
 
 // Random functions
 float	GetRandomFloatInRange(float minInclusive, float maxInclusive);			// Generates a random float between minInclusive and maxInclusive
@@ -46,7 +56,9 @@ float	RangeMapFloat(float inValue, float inStart, float inEnd, float outStart, f
 float	GetAngularDisplacement(float startDegrees, float endDegrees);					// Returns the angular displacement from start to end, taking the shorter path
 float	TurnToward(float currentDegrees, float goalDegrees, float maxTurnDegrees);		// Returns an angle that is at most maxTurn from current towards goal 
 float	DotProduct(const Vector2& a, const Vector2& b);									// Returns the dot product between a and b
-
+float	DotProduct(const Vector3& a, const Vector3& b);	
+float	DotProduct(const Vector4& a, const Vector4& b);
+Vector3 CrossProduct(const Vector3& a, const Vector3& b);								// Returns the cross product between a and b
 
 // Bitflag utilities
 bool	AreBitsSet(unsigned char bitFlags8, unsigned char flagsToCheck);				// Checks to see if the bits are set in the 8 bit flag
@@ -77,7 +89,16 @@ const IntVector2	Interpolate(const IntVector2& start, const IntVector2& end, flo
 const IntRange		Interpolate(const IntRange& start, const IntRange& end, float fractionTowardEnd);
 const Rgba			Interpolate(const Rgba& start, const Rgba& end, float fractionTowardEnd);
 
+
+// Polynomials
+bool Quadratic(Vector2& out_solutions, float a, float b, float c);
+
+
 // General functions
-float MaxFloat(float a, float b, float c, float d);
-float MinFloat(float a, float b, float c, float d);
-float MinFloat(float a, float b);
+float	MaxFloat(float a, float b, float c, float d);
+float	MinFloat(float a, float b, float c, float d);
+float	MinFloat(float a, float b);
+float	MaxFloat(float a, float b);
+int		TextToInt(const char* text);
+int		AbsoluteValue(int inValue);
+float	AbsoluteValue(float inValue);

@@ -7,7 +7,8 @@
 /* Description: Class representing a vector of two elements, x and y
 /************************************************************************/
 #pragma once
-#include "Engine/Math/IntVector2.hpp"
+
+class IntVector2;
 
 //-----------------------------------------------------------------------------------------------
 class Vector2
@@ -22,7 +23,7 @@ public:
 	Vector2( const Vector2& copyFrom );						// copy constructor (from another vec2)
 	explicit Vector2( float initialX, float initialY );		// explicit constructor (from x, y)
 	explicit Vector2( int initialX, int initialY );			// explicit int constructor
-	Vector2(const IntVector2& copyFrom);					// Creates a Vector2 from an IntVector2
+	Vector2(const IntVector2& intVector);					// Creates a Vector2 from an IntVector2
 
 																		// Operators
 	const	Vector2 operator+( const Vector2& vecToAdd ) const;			// vec2 + vec2
@@ -44,7 +45,7 @@ public:
 	float	NormalizeAndGetLength();					// Normalizes the vector and returns its original length
 	Vector2 GetNormalized() const;						// Calculates the normalized form of the vector
 	float	GetOrientationDegrees() const;				// Returns the degree representation of this vector
-	void	SetFromText(const char* text);				// For turning a text representation into a Vector2
+	bool	SetFromText(const char* text);				// For turning a text representation into a Vector2
 
 	static Vector2 MakeDirectionAtDegrees(float degrees);		// Returns the unit vector with the given orientation
 	static Vector2 GetRandomVector(float desiredMagnitude);		// Returns a random vector with the given magnitude
@@ -56,6 +57,7 @@ public:
 	const static Vector2 DIRECTION_DOWN;
 	const static Vector2 DIRECTION_LEFT;
 	const static Vector2 DIRECTION_RIGHT;
+
 
 public:
 	float x;

@@ -22,10 +22,11 @@ class AudioSystem;
 class AudioSystem
 {
 public:
-	AudioSystem();
-	virtual ~AudioSystem();
+	
+	static void					Initialize();
+	static void					Shutdown();
+	static AudioSystem*			GetInstance();
 
-public:
 	virtual void				BeginFrame();
 	virtual void				EndFrame();
 
@@ -42,5 +43,18 @@ protected:
 	FMOD::System*						m_fmodSystem;
 	std::map< std::string, SoundID >	m_registeredSoundIDs;
 	std::vector< FMOD::Sound* >			m_registeredSounds;
+
+private:
+	//-----Private Methods-----
+
+	// Use Initialize/Destroy instead
+	AudioSystem();
+	virtual ~AudioSystem();
+	AudioSystem(const AudioSystem& copy) = delete;
+
+private:
+	//-----Private Data-----
+
+	static AudioSystem* s_instance;	// The singleton AudioSystem instance
 };
 

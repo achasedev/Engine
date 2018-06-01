@@ -9,6 +9,8 @@
 #include <math.h>
 #include <string>
 #include "Engine/Math/Vector2.hpp"
+#include "Engine/Math/IntVector2.hpp"
+
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/StringUtils.hpp"
@@ -224,9 +226,9 @@ float Vector2::GetOrientationDegrees() const
 
 
 //-----------------------------------------------------------------------------------------------
-// Sets the Vector2 to the values represented in the text passed
+// Sets the Vector2 to the values represented in the text passed, expects the form "5,3"
 //
-void Vector2::SetFromText(const char* text)
+bool Vector2::SetFromText(const char* text)
 {
 	std::string stringText = std::string(text);
 
@@ -235,11 +237,13 @@ void Vector2::SetFromText(const char* text)
 	// No comma present in text
 	if (commaPosition == static_cast<int>(std::string::npos))
 	{
-		return;
+		return false;
 	}
 
 	x = static_cast<float>(atof(std::string(stringText, 0, commaPosition).c_str()));
 	y = static_cast<float>(atof(std::string(stringText, commaPosition + 1).c_str()));
+
+	return true;
 }
 
 

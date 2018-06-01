@@ -7,35 +7,64 @@
 /************************************************************************/
 #pragma once
 #include "Engine/Math/Vector2.hpp"
+#include "Engine/Math/Vector3.hpp"
+#include "Engine/Math/Vector4.hpp"
+
 
 class Matrix44
 {
 public:
 	//-----Public Methods-----
 
-	Matrix44() {} // default-construct to Identity matrix (via variable initialization), for speed
-	explicit Matrix44( const float* sixteenValuesBasisMajor ); // float[16] array in order Ix, Iy...
-	explicit Matrix44( const Vector2& iBasis, const Vector2& jBasis, const Vector2& translation=Vector2(0.f,0.f) );
+	// Constructors
+	Matrix44(); // default-construct to Identity matrix (via variable initialization), for speed
+	explicit Matrix44(const float* sixteenValuesBasisMajor); // float[16] array in order Ix, Iy...
+	explicit Matrix44(const Vector3& iBasis, const Vector3& jBasis, const Vector3& kBasis, const Vector3& translation=Vector3::ZERO);
 
-	// Accessors
-	Vector2 TransformPosition2D( const Vector2& position2D );			// Written assuming z=0, w=1
-	Vector2 TransformDisplacement2D( const Vector2& displacement2D );	// Written assuming z=0, w=0
+	// Operators
+	const Matrix44	operator*(const Matrix44& rightMat) const;			
+	const Matrix44	operator*(float scaler) const;
+	const Vector4	operator*(const Vector4& rightVector) const;
+
+	// Vector transformers
+	Vector4 TransformPoint(const Vector2& point) const;
+	Vector4 TransformPoint(const Vector3& point) const;
+
+	Vector4 TransformVector(const Vector2& vector) const;
+	Vector4 TransformVector(const Vector3& vector) const;
+
+	Vector4 Transform(const Vector4& vectorToTransform) const;
 
 	// Mutators
 	void SetIdentity();
 	void SetValues( const float* sixteenValuesBasisMajor );				// float[16] array in order Ix, Iy...
-	void Append( const Matrix44& matrixToAppend );						// a.k.a. Concatenate (right-multiply)
-	void RotateDegrees2D( float rotationDegreesAboutZ );
-	void Translate2D( const Vector2& translation );
-	void ScaleUniform2D( float scaleXY );
-	void Scale2D( float scaleX, float scaleY );
+	
+	void Append(const Matrix44& matrixToAppend);	// Concatenate on the right	
+	void Transpose();
 
-	// Producers
-	static Matrix44 MakeRotationDegrees2D( float rotationDegreesAboutZ );
-	static Matrix44 MakeTranslation2D( const Vector2& translation );
-	static Matrix44 MakeScaleUniform2D( float scaleXY );
-	static Matrix44 MakeScale2D( float scaleX, float scaleY );
-	static Matrix44 MakeOrtho2D( const Vector2& bottomLeft, const Vector2& topRight );
+	// Accessor helpers
+	Vector4 GetIVector() const;
+	Vector4 GetJVector() const;
+	Vector4 GetKVector() const;
+	Vector4 GetTVector() const;
+
+	Vector4 GetXVector() const;
+	Vector4 GetYVector() const;
+	Vector4 GetZVector() const;
+	Vector4 GetWVector() const;
+
+	// Static Producers
+	static Matrix44 MakeTranslation(const Vector3& translation);
+	static Matrix44 MakeRotation(const Vector3& rotation);
+	static Matrix44 MakeScale(const Vector3& scale);
+	static Matrix44 MakeScaleUniform(float uniformScale);
+
+	static Matrix44 MakeModelMatrix(const Vector3& translation, const Vector3& rotation, const Vector3& scale);
+
+	static Matrix44 MakeOrtho(float leftX, float rightX, float bottomY, float topY, float nearZ, float farZ);
+	static Matrix44 MakeOrtho(const Vector2& bottomLeft, const Vector2& topRight, float nearZ=0.f, float farZ=1.0f);
+	static Matrix44 MakeLookAt(const Vector3& position, const Vector3& target, const Vector3& up = Vector3::DIRECTION_UP);
+
 
 public:
 	//-----Public data----- 
@@ -66,4 +95,7 @@ public:
 	float Tz = 0.f;
 	float Tw = 1.f;
 
+	//-----Public Static Data-----
+
+	const static Matrix44 IDENTITY;
 };

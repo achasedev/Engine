@@ -1,0 +1,295 @@
+/************************************************************************/
+/* File: Command.cpp
+/* Author: Andrew Chase
+/* Date: February 3rd, 2018
+/* Description: Implementation of the Command class
+/************************************************************************/
+#include "Engine/Core/Command.hpp"
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/DevConsole.hpp"
+#include "Engine/Math/Vector2.hpp"
+#include "Engine/Math/MathUtils.hpp"
+
+
+//-----Commands-----
+ void Command_Help(Command &cmd);
+
+//--------------------Registration Class----------------------
+// Class to represent a stored command in the registry, holds meta data
+class CommandRegistration
+{
+public:
+	//-----Public Methods-----
+	CommandRegistration(const std::string& name, const std::string& helpDescription, command_cb callback);
+
+public:
+	//-----Public Data-----
+
+	std::string m_name;
+	std::string m_description;
+	command_cb m_callBack;
+
+};
+
+CommandRegistration::CommandRegistration(const std::string& name, const std::string& helpDescription, command_cb callback)
+	: m_name(name)
+	, m_description(helpDescription)
+	, m_callBack(callback)
+{
+}
+
+
+// Collection of registered commands
+std::map<std::string, CommandRegistration*> Command::s_commandRegistry;
+
+
+//-----------------------------------------------------------------------------------------------
+// Constructs a command given the command line (first token is name, remaining tokens are
+// arguments
+//
+Command::Command(const std::string& commandLine)
+{
+	ParseNameAndArguments(commandLine);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Destructor - unused
+//
+Command::~Command()
+{
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the name of the command associated with this command
+//
+std::string Command::GetName()
+{
+	return m_name;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Removes and returns the next string argument in the m_arguments member
+// If the next argument is in quotes, it returns the string within the quotes, ignoring whitespace
+// Otherwise, it returns the string ending at the first whitespace
+// If m_arguments is empty, it returns an empty string
+//
+std::string Command::GetNextString()
+{
+	// If no arguments left return an empty string
+	if (m_arguments.size() == 0)
+	{
+		return m_arguments;
+	}
+
+	// Used to track when the argument ends
+	int endArgumentIndex = static_cast<int>(std::string::npos);
+	std::string nextArgument;
+
+	// If the first character of m_arguments is a quote, then next argument ends at the close quote
+	if (m_arguments[0] == '\"')
+	{
+		endArgumentIndex = static_cast<int>(m_arguments.find_first_of('\"', 1));
+		if (endArgumentIndex == static_cast<int>(std::string::npos))
+		{
+			ERROR_AND_DIE(Stringf("Quotes don't line up: %s", m_arguments.c_str()));
+		}
+
+		nextArgument = std::string(m_arguments, 1, endArgumentIndex - 1);
+	}
+	// Else the argument doesn't start with quote, so we just end the argument by the next white space
+	else
+	{
+		endArgumentIndex = static_cast<int>(m_arguments.find_first_of(' '));
+		
+		// No more white spaces exist, so return the rest of m_arguments
+		if (endArgumentIndex == static_cast<int>(std::string::npos))
+		{
+			nextArgument = m_arguments;
+			m_arguments = std::string("");
+			return nextArgument;
+		}
+		else
+		{
+			nextArgument = std::string(m_arguments, 0, endArgumentIndex);
+		}
+	}
+
+	// Cleaning up m_arguments by removing the next argument from it
+	int remainingArgumentIndex = static_cast<int>(m_arguments.find_first_not_of(' ', endArgumentIndex + 1));
+	if (remainingArgumentIndex == static_cast<int>(std::string::npos))
+	{
+		m_arguments = std::string("");
+	}
+	else
+	{
+		m_arguments = std::string(m_arguments, remainingArgumentIndex);
+	}
+
+	return nextArgument;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Reads the next argument and interprets it as an int
+//
+bool Command::GetNextInt(int *out_val)
+{
+	*out_val = TextToInt(GetNextString().c_str());
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Adds the name and callback pair to the registry, checking for duplicates
+//
+bool Command::GetNextColor(Rgba *out_val)
+{
+	std::string text = GetNextString();
+	return out_val->SetFromText(text.c_str());
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Adds the name and callback pair to the registry, checking for duplicates
+//
+bool Command::GetNextVector2(Vector2 *out_val)
+{
+	std::string text = GetNextString();
+	return out_val->SetFromText(text.c_str());
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Constructs and registers all Command class commands
+//
+void Command::Initialize()
+{
+	Command::Register("help", "Prints out all available commands to console", Command_Help);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Currently does nothing, here just in case we need something cleaned up later
+//
+void Command::Shutdown()
+{
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Adds the name and callback pair to the registry, checking for duplicates
+//
+void Command::Register(const std::string& name, const std::string& description, command_cb cb)
+{
+	bool commandAlreadyExists = (s_commandRegistry.find(name) != s_commandRegistry.end());
+	GUARANTEE_OR_DIE(!commandAlreadyExists, Stringf("Error: Duplicate command \"%s\" in command registry.", name.c_str()));
+
+	s_commandRegistry[name] = new CommandRegistration(name, description, cb);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Constructs a Command object with the given command line, and calls the command callback
+// associated with its name
+// Returns true if a command was found and called, false otherwise
+//
+bool Command::Run(const std::string& commandLine)
+{
+	// Push the command on to the console log
+	ConsolePrintf(DevConsole::DEFAULT_COMMAND_LOG_COLOR, commandLine.c_str());
+
+	// Add the commandLine to the console history
+	DevConsole::AddCommandLineToHistory(commandLine);
+
+	// Make a command object to be used by the callback
+	Command* cmd = new Command(commandLine);
+
+	// Ensure it exists
+	bool commandExists = (s_commandRegistry.find(cmd->GetName()) != s_commandRegistry.end());
+	if (!commandExists)
+	{
+		// Print an error
+		ConsoleErrorf("INVALID COMMAND: \"%s\"", cmd->GetName().c_str());
+		return false;
+	}
+
+	// Run the command
+	s_commandRegistry[cmd->GetName()]->m_callBack(*cmd);
+	
+	// Clean up and return
+	delete cmd;
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the command registry
+//
+const std::map<std::string, CommandRegistration*>& Command::GetCommands()
+{
+	return s_commandRegistry;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Separates the name and arguments from the command line and store them in this command
+//
+void Command::ParseNameAndArguments(const std::string& commandLine)
+{
+	// First get the name parsed
+	int nameStart = static_cast<int>(commandLine.find_first_not_of(' '));
+
+	// If the line is empty or all white space don't do anything
+	if (commandLine.size() == 0 || nameStart == static_cast<int>(std::string::npos))
+	{
+		return;
+	}
+
+	// Get the end of the name by finding the next whitespace
+	int nameEnd = static_cast<int>(commandLine.find_first_of(' ', nameStart));
+
+	// No white space exists means the line is a single token, so no arguments
+	if (nameEnd == static_cast<int>(std::string::npos))
+	{
+		m_name = commandLine;
+	}
+	else
+	{
+		// Set the name
+		m_name = std::string(commandLine, nameStart, nameEnd - nameStart);
+
+		// Save the rest of the arguments
+		int argumentStart = static_cast<int>(commandLine.find_first_not_of(' ', nameEnd));
+
+		// Only set m_arguments if non-whitespace characters follow name
+		if (argumentStart != static_cast<int>(std::string::npos))
+		{
+			m_arguments = std::string(commandLine, argumentStart);
+		}
+	}
+}
+
+//-----COMMANDS-----
+
+//-----------------------------------------------------------------------------------------------
+// Prints all commands in the registry with their description
+// Usage: help
+//
+void Command_Help(Command &cmd)
+{
+	UNUSED(cmd);
+	const std::map<std::string, CommandRegistration*>& commandRegistry = Command::GetCommands();
+	std::map<std::string, CommandRegistration*>::const_iterator itr = commandRegistry.begin();
+
+	ConsolePrintf("-----Begin Help-----");
+	int commandCount = 0;
+	for (itr; itr != commandRegistry.end(); itr++)
+	{
+		ConsolePrintf("%s: %s", itr->second->m_name.c_str(), itr->second->m_description.c_str());
+		commandCount++;
+	}
+	ConsolePrintf("-----End Help, %i results-----", commandCount);
+}

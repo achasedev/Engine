@@ -13,13 +13,14 @@
 //-----------------------------------------------------------------------------------------------
 // Constructs a SpriteAnimDef from explicit values
 //
-SpriteAnimDef::SpriteAnimDef(const SpriteSheet& spriteSheet, int framesPerSecond, const std::vector<int>& frameIndices, const std::string& name/*=std::string("default")*/)
+SpriteAnimDef::SpriteAnimDef(const SpriteSheet& spriteSheet, int framesPerSecond, const std::vector<int>& frameIndices, const std::string& name/*=std::string("default")*/, PlayMode playMode/*=std::string("default")*/)
 	: m_name(name)
 	, m_spriteSheet(spriteSheet)
 	, m_framesPerSecond(framesPerSecond)
 	, m_frameIndexes(frameIndices)
 	, m_autoOrient(false)
 	, m_priority(0)
+	, m_playMode(playMode)
 {
 }
 

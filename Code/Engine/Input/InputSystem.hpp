@@ -15,9 +15,10 @@ class InputSystem
 {
 
 public:
+	//-----Public Methods-----
 
-	InputSystem();			// Default - constructs four XboxController objects
-
+	static void Initialize();
+	static void Shutdown();
 
 	void BeginFrame();										
 	void EndFrame();
@@ -33,8 +34,22 @@ public:
 	// Accessor for controllers
 	XboxController& GetController(int controllerNumber);
 
+	// Accessor for the singleton instance
+	static InputSystem* GetInstance();
+	static XboxController& GetPlayerOneController();
+
+private:
+	//-----Private Methods-----
+
+	InputSystem();		// Default - constructs four XboxController objects
+	~InputSystem();		// Use shutdown publicly instead
+	InputSystem(const InputSystem& copy) = delete;
+
+	void ResetJustKeyStates();	// Resets the 'Just' key states every frame
+	void UpdateControllers();	// Fetches controller input from XInput
 
 public:
+	//-----Public Data-----
 
 	static const int NUM_KEYS = 256; 
 	static const int NUM_CONTROLLERS = 4;
@@ -50,16 +65,17 @@ public:
 	static const unsigned char  KEYBOARD_F4;
 	static const unsigned char  KEYBOARD_F5;
 	static const unsigned char  KEYBOARD_F6;
+	static const unsigned char  KEYBOARD_F7;
+	static const unsigned char  KEYBOARD_F8;
+	static const unsigned char  KEYBOARD_F9;
 	static const unsigned char  KEYBOARD_F10;
-
+	static const unsigned char  KEYBOARD_TILDE;
 
 private:
+	//-----Private Data-----
 
 	KeyButtonState m_keyStates[NUM_KEYS];
 	XboxController m_xboxControllers[NUM_CONTROLLERS];
 
-private:
-
-	void ResetJustKeyStates();	// Resets the 'Just' key states every frame
-	void UpdateControllers();	// Fetches controller input from XInput
+	static InputSystem* s_instance;	// The singleton InputSystem instance
 };

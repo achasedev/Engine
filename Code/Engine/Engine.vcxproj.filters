@@ -8,9 +8,6 @@
     <Filter Include="Math">
       <UniqueIdentifier>{531de8da-7621-4a9a-81b4-b4b68221f775}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Renderer">
-      <UniqueIdentifier>{a5794966-908d-418a-a85a-aa8fea74f975}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Input">
       <UniqueIdentifier>{796d3a98-b4b0-47e1-a5a5-f84d98b6302a}</UniqueIdentifier>
     </Filter>
@@ -23,8 +20,35 @@
     <Filter Include="Audio">
       <UniqueIdentifier>{eabdeafa-385f-400a-a7e0-b3705f27e7fc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Renderer\Animation">
+    <Filter Include="ThirdParty\fmod">
+      <UniqueIdentifier>{3d3bc1ec-374a-41fd-b2eb-977f8b64840e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\gl">
+      <UniqueIdentifier>{af7908ff-c019-4d06-9915-e55867e293c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\stb">
+      <UniqueIdentifier>{cad74aa4-fea8-4ea5-92ad-3e8212be3f01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\tinyxml2">
+      <UniqueIdentifier>{84c0af4f-52ed-49e2-923d-77eee19c72e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\DeveloperConsole">
+      <UniqueIdentifier>{92ecfe94-80d7-47b3-a05d-14f8375bff2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Utilities">
+      <UniqueIdentifier>{85098a70-9384-447b-baaa-27845463a8c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering">
+      <UniqueIdentifier>{a5794966-908d-418a-a85a-aa8fea74f975}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering\Animation">
       <UniqueIdentifier>{fb4ed7c0-6b35-4a0f-84e1-bc009b5cef79}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering\Image Data">
+      <UniqueIdentifier>{60f746a7-9ae8-40b7-a8fa-0f292f951ee9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Time">
+      <UniqueIdentifier>{594dfe6a-3eed-4c4a-b71e-8d250b3b0e64}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -32,7 +56,7 @@
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\Renderer.cpp">
-      <Filter>Renderer</Filter>
+      <Filter>Rendering</Filter>
     </ClCompile>
     <ClCompile Include="Math\Vector2.cpp">
       <Filter>Math</Filter>
@@ -49,14 +73,8 @@
     <ClCompile Include="Input\KeyButtonState.cpp">
       <Filter>Input</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Time.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Input\XboxController.cpp">
       <Filter>Input</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\Texture.cpp">
-      <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Math\IntVector2.cpp">
       <Filter>Math</Filter>
@@ -67,38 +85,17 @@
     <ClCompile Include="Audio\AudioSystem.cpp">
       <Filter>Audio</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\SpriteSheet.cpp">
-      <Filter>Renderer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\stb\stb_image.c">
-      <Filter>ThirdParty</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\ErrorWarningAssert.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\StringUtils.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Math\FloatRange.cpp">
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="Math\IntRange.cpp">
       <Filter>Math</Filter>
     </ClCompile>
-    <ClCompile Include="..\ThirdParty\tinyxml2\tinyxml2.cpp">
-      <Filter>ThirdParty</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\XmlUtilities.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Core\Blackboard.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\EngineCommon.cpp">
       <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\BitmapFont.cpp">
-      <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Core\Image.cpp">
       <Filter>Core</Filter>
@@ -110,19 +107,100 @@
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\SpriteAnimDef.cpp">
-      <Filter>Renderer\Animation</Filter>
+      <Filter>Rendering\Animation</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\SpriteAnimSet.cpp">
-      <Filter>Renderer\Animation</Filter>
+      <Filter>Rendering\Animation</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\SpriteAnimSetDef.cpp">
-      <Filter>Renderer\Animation</Filter>
+      <Filter>Rendering\Animation</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\SpriteAnim.cpp">
-      <Filter>Renderer\Animation</Filter>
+      <Filter>Rendering\Animation</Filter>
     </ClCompile>
     <ClCompile Include="Core\HeatMap.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\CubicSpline.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\glFunctions.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\ShaderProgram.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\RenderBuffer.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\stb\stb_image.c">
+      <Filter>ThirdParty\stb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\tinyxml2\tinyxml2.cpp">
+      <Filter>ThirdParty\tinyxml2</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\BitmapFont.cpp">
+      <Filter>Rendering\Image Data</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Texture.cpp">
+      <Filter>Rendering\Image Data</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\SpriteSheet.cpp">
+      <Filter>Rendering\Image Data</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\File.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Window.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Sampler.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Command.cpp">
+      <Filter>Core\DeveloperConsole</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\DevConsole.cpp">
+      <Filter>Core\DeveloperConsole</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\XmlUtilities.cpp">
+      <Filter>Core\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ErrorWarningAssert.cpp">
+      <Filter>Core\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\StringUtils.cpp">
+      <Filter>Core\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Camera.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\FrameBuffer.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Vector4.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\IntVector3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\OrbitCamera.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Sprite.cpp">
+      <Filter>Rendering\Image Data</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Trajectory.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Time.cpp">
+      <Filter>Core\Time</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Clock.cpp">
+      <Filter>Core\Time</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Stopwatch.cpp">
+      <Filter>Core\Time</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -130,7 +208,7 @@
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\Renderer.hpp">
-      <Filter>Renderer</Filter>
+      <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="Math\Vector2.hpp">
       <Filter>Math</Filter>
@@ -147,9 +225,6 @@
     <ClInclude Include="Input\KeyButtonState.hpp">
       <Filter>Input</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Time.hpp">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Input\XboxController.hpp">
       <Filter>Input</Filter>
     </ClInclude>
@@ -159,47 +234,8 @@
     <ClInclude Include="Core\Rgba.hpp">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Texture.hpp">
-      <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\fmod\fmod.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\fmod\fmod.hpp">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\fmod\fmod_codec.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\fmod\fmod_common.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\fmod\fmod_dsp.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\fmod\fmod_dsp_effects.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\fmod\fmod_errors.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\fmod\fmod_output.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
     <ClInclude Include="Audio\AudioSystem.hpp">
       <Filter>Audio</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\SpriteSheet.hpp">
-      <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\stb\stb_image.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\ErrorWarningAssert.hpp">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\StringUtils.hpp">
-      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\EngineCommon.hpp">
       <Filter>Core</Filter>
@@ -210,17 +246,8 @@
     <ClInclude Include="Math\IntRange.hpp">
       <Filter>Math</Filter>
     </ClInclude>
-    <ClInclude Include="..\ThirdParty\tinyxml2\tinyxml2.h">
-      <Filter>ThirdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\XmlUtilities.hpp">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Core\Blackboard.hpp">
       <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\BitmapFont.hpp">
-      <Filter>Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Core\Image.hpp">
       <Filter>Core</Filter>
@@ -232,19 +259,139 @@
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\SpriteAnimDef.hpp">
-      <Filter>Renderer\Animation</Filter>
+      <Filter>Rendering\Animation</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\SpriteAnimSet.hpp">
-      <Filter>Renderer\Animation</Filter>
+      <Filter>Rendering\Animation</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\SpriteAnimSetDef.hpp">
-      <Filter>Renderer\Animation</Filter>
+      <Filter>Rendering\Animation</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\SpriteAnim.hpp">
-      <Filter>Renderer\Animation</Filter>
+      <Filter>Rendering\Animation</Filter>
     </ClInclude>
     <ClInclude Include="Core\HeatMap.hpp">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CubicSpline.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\glFunctions.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\ShaderProgram.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\RenderBuffer.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\fmod\fmod.h">
+      <Filter>ThirdParty\fmod</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\fmod\fmod.hpp">
+      <Filter>ThirdParty\fmod</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\fmod\fmod_codec.h">
+      <Filter>ThirdParty\fmod</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\fmod\fmod_common.h">
+      <Filter>ThirdParty\fmod</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\fmod\fmod_dsp.h">
+      <Filter>ThirdParty\fmod</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\fmod\fmod_dsp_effects.h">
+      <Filter>ThirdParty\fmod</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\fmod\fmod_errors.h">
+      <Filter>ThirdParty\fmod</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\fmod\fmod_output.h">
+      <Filter>ThirdParty\fmod</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\gl\glcorearb.h">
+      <Filter>ThirdParty\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\gl\glext.h">
+      <Filter>ThirdParty\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\gl\wglext.h">
+      <Filter>ThirdParty\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\stb\stb_image.h">
+      <Filter>ThirdParty\stb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\tinyxml2\tinyxml2.h">
+      <Filter>ThirdParty\tinyxml2</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\BitmapFont.hpp">
+      <Filter>Rendering\Image Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Texture.hpp">
+      <Filter>Rendering\Image Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\SpriteSheet.hpp">
+      <Filter>Rendering\Image Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\File.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Window.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Sampler.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Command.hpp">
+      <Filter>Core\DeveloperConsole</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\DevConsole.hpp">
+      <Filter>Core\DeveloperConsole</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\XmlUtilities.hpp">
+      <Filter>Core\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ErrorWarningAssert.hpp">
+      <Filter>Core\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\StringUtils.hpp">
+      <Filter>Core\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Camera.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\FrameBuffer.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Vector4.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\IntVector3.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\OrbitCamera.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\stb\stb_image_write.h">
+      <Filter>ThirdParty\stb</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\ShaderSource.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Sprite.hpp">
+      <Filter>Rendering\Image Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Trajectory.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Time.hpp">
+      <Filter>Core\Time</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Clock.hpp">
+      <Filter>Core\Time</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Stopwatch.hpp">
+      <Filter>Core\Time</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

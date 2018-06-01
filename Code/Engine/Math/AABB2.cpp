@@ -251,6 +251,42 @@ Vector2 AABB2::GetRandomPointInside() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the bottom left of the AABB2
+//
+Vector2 AABB2::GetBottomLeft() const
+{
+	return mins;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the bottom right of the AABB2
+//
+Vector2 AABB2::GetBottomRight() const
+{
+	return Vector2(maxs.x, mins.y);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the top right of the AABB2
+//
+Vector2 AABB2::GetTopRight() const
+{
+	return maxs;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the top left of the AABB2
+//
+Vector2 AABB2::GetTopLeft() const
+{
+	return Vector2(mins.x, maxs.y);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Moves the box boundaries in the direction given by translation, works the same as Translate
 //
 void AABB2::operator+=(const Vector2& translation)

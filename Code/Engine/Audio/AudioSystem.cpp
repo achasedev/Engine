@@ -24,6 +24,9 @@
 #pragma comment( lib, "ThirdParty/fmod/fmod_vc.lib" )
 #endif
 
+// Singleton AudioSystem instance
+AudioSystem* AudioSystem::s_instance = nullptr;
+
 
 //-----------------------------------------------------------------------------------------------
 // Initialization code based on example from "FMOD Studio Programmers API for Windows"
@@ -47,6 +50,31 @@ AudioSystem::~AudioSystem()
 	ValidateResult( result );
 
 	m_fmodSystem = nullptr; // #Fixme: do we delete/free the object also, or just do this?
+}
+
+
+//-----------------------------------------------------------------------------------------------
+void AudioSystem::Initialize()
+{
+	GUARANTEE_OR_DIE(s_instance == nullptr, "Error: AudioSystem::Initialize() called with an existing instance.");
+	s_instance = new AudioSystem();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+void AudioSystem::Shutdown()
+{
+	if (s_instance != nullptr)
+	{
+		delete s_instance;
+		s_instance = nullptr;
+	}
+}
+
+//-----------------------------------------------------------------------------------------------
+AudioSystem* AudioSystem::GetInstance()
+{
+	return s_instance;
 }
 
 

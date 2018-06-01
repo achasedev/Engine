@@ -11,9 +11,9 @@
 #include "ThirdParty/tinyxml2/tinyxml2.h"
 #include "Engine/Renderer/SpriteSheet.hpp"
 
-typedef tinyxml2::XMLElement XMLElement;
+//typedef tinyxml2::XMLElement XMLElement;
 class SpriteAnimDef;
-
+class Renderer;
 
 class SpriteAnimSetDef
 {
@@ -23,7 +23,7 @@ public:
 
 	//-----Public Methods-----
 
-	SpriteAnimSetDef(const XMLElement& animationSetElement, Renderer& renderer);
+	SpriteAnimSetDef(const XMLElement& animationSetElement);
 	
 	SpriteAnimDef*	GetAnimationDefinitionByName(const std::string& animationName) const;
 	void			AddAnimationDefinition(const std::string& animationName, SpriteAnimDef* animationToAdd);

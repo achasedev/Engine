@@ -759,6 +759,9 @@ stbi_inline static uint8 get8u(StbImage *image)
    return (uint8) get8(image);
 }
 
+#pragma warning(push)
+#pragma warning(disable : 4244)
+
 static void skip(StbImage *image, int n)
 {
    if (image->io.read) {
@@ -795,6 +798,8 @@ static int getn(StbImage *image, stbi_uc *buffer, int n)
    } else
       return 0;
 }
+
+#pragma warning (pop)
 
 static int get16(StbImage *image)
 {

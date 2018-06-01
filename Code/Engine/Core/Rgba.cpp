@@ -126,17 +126,19 @@ void Rgba::ScaleAlpha(float alphaScale)
 //-----------------------------------------------------------------------------------------------
 // Sets the values for RGB(and optionally A) to the ones specified in the passed text
 //
-void Rgba::SetFromText(const char* text)
+bool Rgba::SetFromText(const char* text)
 {
 	std::string stringText = std::string(text);
 
 	// Red
 	int firstComma = static_cast<int>(stringText.find(","));
+	if (firstComma == static_cast<int>(std::string::npos)) { return false; }
 	std::string redText = std::string(stringText, 0, firstComma);
 	r = static_cast<unsigned char>(atoi(redText.c_str()));
 
 	// Green
 	int secondComma = static_cast<int>(stringText.find(",", firstComma + 1));
+	if (secondComma == static_cast<int>(std::string::npos)) { return false; }
 	std::string greenText = std::string(stringText, firstComma + 1, secondComma - firstComma - 1);
 	g = static_cast<unsigned char>(atoi(greenText.c_str()));
 
@@ -156,5 +158,7 @@ void Rgba::SetFromText(const char* text)
 		std::string alphaText = std::string(stringText, thirdComma + 1);
 		a = static_cast<unsigned char>(atoi(alphaText.c_str()));
 	}
+
+	return true;
 }
 

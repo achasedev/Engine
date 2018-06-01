@@ -37,7 +37,6 @@ bool SystemDialogue_YesNo( const std::string& messageTitle, const std::string& m
 int SystemDialogue_YesNoCancel( const std::string& messageTitle, const std::string& messageText, SeverityLevel severity );
 
 
-
 //-----------------------------------------------------------------------------------------------
 // ERROR_AND_DIE
 //

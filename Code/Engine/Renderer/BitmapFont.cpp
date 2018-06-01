@@ -47,3 +47,12 @@ float BitmapFont::GetStringWidth(const std::string& asciiText, float cellHeight,
 
 	return totalWidth;
 }
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the spritesheet of this font
+//
+const SpriteSheet& BitmapFont::GetSpriteSheet() const
+{
+	return m_spriteSheet;
+}
