@@ -63,6 +63,8 @@
 #pragma warning( disable: 4996 ) // 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 #pragma warning( disable: 4100 ) // warning C4100: 'whatever' : unreferenced formal parameter
 
+#pragma warning( disable: 4457 ) // warning C4457: 'whatever' : hides function parameter
+#pragma warning( disable: 4456 ) // warning C4456: 'whatever' : hides previous local declaration
 
 #ifndef STBI_INCLUDE_STB_IMAGE_H
 #define STBI_INCLUDE_STB_IMAGE_H

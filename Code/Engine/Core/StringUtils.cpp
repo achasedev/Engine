@@ -42,6 +42,35 @@ const std::string Stringf( const int maxLength, const char* format, ... )
 }
 
 
+//-----------------------------------------------------------------------------------------------
+const std::vector<std::string> Tokenize(const std::string& stringToTokenize, const char delimiter)
+{
+	std::vector<std::string> tokens;
+	
+	// Set up the substring indices
+	int subStringStartIndex = stringToTokenize.find_first_not_of(delimiter);
+	if (subStringStartIndex == (int) std::string::npos) { return tokens; }	// Return if the entire string is just delimiters
+	int subStringEndPostion = stringToTokenize.find(delimiter, subStringStartIndex + 1);
+
+	// Iterate across the entire string
+	while (subStringEndPostion != (int) std::string::npos)
+	{
+		// Create the substring
+		int substringLength = (subStringEndPostion - subStringStartIndex);
+		tokens.push_back(std::string(stringToTokenize, subStringStartIndex, substringLength));
+
+		// Update the indices
+		subStringStartIndex = stringToTokenize.find_first_not_of(delimiter, subStringEndPostion + 1);
+		if (subStringStartIndex == (int) std::string::npos) { return tokens; } // Return if the rest of the string is just delimiters
+		subStringEndPostion = stringToTokenize.find(delimiter, subStringStartIndex + 1);
+	}
+
+	// Add the rest of the string
+	tokens.push_back(std::string(stringToTokenize, subStringStartIndex));
+
+	return tokens;
+}
+
 
 
 

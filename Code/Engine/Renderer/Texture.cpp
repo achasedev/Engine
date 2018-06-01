@@ -10,6 +10,8 @@
 #include <Windows.h>
 #include <gl/GL.h>
 #include "Engine/Renderer/Texture.hpp"
+#include "Engine/Core/StringUtils.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "ThirdParty/stb/stb_image.h"
 
 //-----------------------------------------------------------------------------------------------
@@ -24,6 +26,9 @@ Texture::Texture( const std::string& imageFilePath )
 
 	// Load (and decompress) the image RGB(A) bytes from a file on disk, and create an OpenGL texture instance from it
 	unsigned char* imageData = stbi_load( imageFilePath.c_str(), &m_dimensions.x, &m_dimensions.y, &numComponents, numComponentsRequested );
+
+	GUARANTEE_OR_DIE((imageData != nullptr), Stringf("Texture at path \"%s\" not found.", imageFilePath.c_str()));
+
 	PopulateFromData( imageData, m_dimensions, numComponents );
 	stbi_image_free( imageData );
 }

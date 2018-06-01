@@ -1,15 +1,12 @@
 /************************************************************************/
-/* File: EngineCommon.hpp
+/* File: EngineCommon.cpp
 /* Author: Andrew Chase
 /* Date: October 28th, 2017
 /* Bugs: None
-/* Description: Header to be included in some Game and Engine files for
-				Game metadata
+/* Description: Defines the global variables shared across engine files
 /************************************************************************/
-#pragma once
-#include <map>
+#include "Engine/Core/Blackboard.hpp"
 #include "Engine/Renderer/SpriteSheet.hpp"
 
-class Blackboard;
 
-extern Blackboard* g_gameConfigBlackboard;
+Blackboard* g_gameConfigBlackboard = nullptr;

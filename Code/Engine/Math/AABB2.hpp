@@ -32,13 +32,14 @@ public:
 	void AddPaddingToSides(float xPaddingRadius, float yPaddingRadius);		// Adds offset values to all sides of the box
 	void Translate(const Vector2& translation);								// Moves the box linearly by a single Vector2 value
 	void Translate(float translationX, float TranslationY);					// Moves the box linearly by float values
-
+	void SetFromText(const char* text);										// Sets the values from the text representation
 
 	//-----Accessors-----
 	bool IsPointInside(float x, float y) const;								// Returns true if the point at (x,y) is inside the box
 	bool IsPointInside(const Vector2& point) const;							// Returns true if 'point' is inside the box
 	Vector2 GetDimensions() const;											// Returns the dimensions of the box as (width, height)
 	Vector2 GetCenter() const;												// Returns the center point position of the box as (x,y)
+	Vector2 GetRandomPointInside() const;									// Returns a random position inside the box
 
 
 	//-----Operators-----
@@ -54,4 +55,6 @@ public:
 };
 
 
-bool DoAABBsOverlap(const AABB2& boxOne, const AABB2& boxTwo);				// Utility function - returns true if boxes a and b overlap
+bool DoAABBsOverlap(const AABB2& boxOne, const AABB2& boxTwo);								// Checks for overlap, including boundaries
+
+const AABB2 Interpolate(const AABB2& start, const AABB2& end, float fractionTowardEnd);		// Interpolates the mins/maxes of the boxes

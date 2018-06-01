@@ -8,6 +8,7 @@
 /************************************************************************/
 #include "Engine/Core/Rgba.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include <string>
 
 // Defining the constant color values
 const Rgba Rgba::WHITE			= Rgba();
@@ -121,4 +122,39 @@ void Rgba::ScaleAlpha(float alphaScale)
 	a = static_cast<unsigned char>(alphaFloat);
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Sets the values for RGB(and optionally A) to the ones specified in the passed text
+//
+void Rgba::SetFromText(const char* text)
+{
+	std::string stringText = std::string(text);
+
+	// Red
+	int firstComma = static_cast<int>(stringText.find(","));
+	std::string redText = std::string(stringText, 0, firstComma);
+	r = static_cast<unsigned char>(atoi(redText.c_str()));
+
+	// Green
+	int secondComma = static_cast<int>(stringText.find(",", firstComma + 1));
+	std::string greenText = std::string(stringText, firstComma + 1, secondComma - firstComma - 1);
+	g = static_cast<unsigned char>(atoi(greenText.c_str()));
+
+	// Blue and Alpha, if alpha is present
+	int thirdComma = static_cast<int>(stringText.find(",", secondComma + 1));
+	if (thirdComma == static_cast<int>(std::string::npos))
+	{
+		std::string blueText = std::string(stringText, secondComma + 1);
+		b = static_cast<unsigned char>(atoi(blueText.c_str()));
+		a = 255;
+	}
+	else
+	{
+		std::string blueText = std::string(stringText, secondComma + 1, thirdComma - secondComma - 1);
+		b = static_cast<unsigned char>(atoi(blueText.c_str()));
+
+		std::string alphaText = std::string(stringText, thirdComma + 1);
+		a = static_cast<unsigned char>(atoi(alphaText.c_str()));
+	}
+}
 

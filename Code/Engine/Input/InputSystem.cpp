@@ -23,6 +23,7 @@ const unsigned char	InputSystem::KEYBOARD_F6			= VK_F6;
 const unsigned char	InputSystem::KEYBOARD_F10			= VK_F10;
 const unsigned char	InputSystem::KEYBOARD_LEFT_ARROW	= VK_LEFT;
 const unsigned char	InputSystem::KEYBOARD_UP_ARROW		= VK_UP;
+const unsigned char	InputSystem::KEYBOARD_DOWN_ARROW	= VK_DOWN;
 const unsigned char	InputSystem::KEYBOARD_RIGHT_ARROW	= VK_RIGHT;
 
 

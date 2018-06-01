@@ -7,7 +7,7 @@
 /* Description: Implementation of the Disc2 class
 /************************************************************************/
 #include "Engine/Math/Disc2.hpp"
-
+#include "Engine/Math/MathUtils.hpp"
 
 //-----------------------------------------------------------------------------------------------
 // Copy constructor for a Disc2
@@ -190,15 +190,15 @@ Disc2 Disc2::operator-(const Vector2& antiTranslation) const
 //
 bool DoDiscsOverlap(const Disc2& a, const Disc2& b)
 {
-	float distanceBetween = GetDistance(a.center, b.center);
+	float distanceSquared = GetDistanceSquared(a.center, b.center);
 
-	float sumOfRadii = a.radius + b.radius;
+	float radiiSquared = (a.radius + b.radius) * (a.radius + b.radius);
 
-	bool doOverlap = true;
+	bool doOverlap = false;
 
-	if (sumOfRadii < distanceBetween)
+	if (distanceSquared < radiiSquared)
 	{
-		doOverlap = false;
+		doOverlap = true;
 	}
 
 	return doOverlap;
@@ -228,10 +228,23 @@ bool DoDiscsOverlap(const Vector2& aCenter, float aRadius, const Vector2& bCente
 
 //-----------------------------------------------------------------------------------------------
 // Checks if a disc given by 'center' and 'radius' overlaps the point 'point'
+//
 bool DoesDiscOverlapPoint(const Vector2& center, float radius, const Vector2& point)
 {
 	float distanceSquared = GetDistanceSquared(center, point);
 	float radiusSquared = (radius * radius);
 	
 	return (distanceSquared <= radiusSquared);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Interpolates the discs by interpolating their center positions and their radii
+//
+const Disc2 Interpolate(const Disc2& start, const Disc2& end, float fractionTowardEnd)
+{
+	Vector2 interpolatedCenter = Interpolate(start.center, end.center, fractionTowardEnd);
+	float interpolatedRadii = Interpolate(start.radius, end.radius, fractionTowardEnd);
+
+	return Disc2(interpolatedCenter, interpolatedRadii);
 }

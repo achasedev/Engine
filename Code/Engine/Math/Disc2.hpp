@@ -28,11 +28,11 @@ public:
 	explicit Disc2(const Vector2& initialCenter, float initialRadius);
 
 	//-----Mutators-----
-	void StretchToIncludePoint(float x, float y);
-	void StretchToIncludePoint(const Vector2& point);
-	void AddPaddingToRadius(float paddingRadius);
-	void Translate(const Vector2& translation);
-	void Translate(float translationX, float translationY);
+	void StretchToIncludePoint(float x, float y);						// Expands the radius, does not move the disc
+	void StretchToIncludePoint(const Vector2& point);					// Also expands without moving the center
+	void AddPaddingToRadius(float paddingRadius);						// Addition to the radius
+	void Translate(const Vector2& translation);							// Move the center by translation
+	void Translate(float translationX, float translationY);				// Moves the center by translation
 
 	//-----Accessors/Queries-----
 	bool IsPointInside(float x, float y) const;
@@ -54,5 +54,8 @@ bool DoDiscsOverlap(const Disc2& a, const Disc2& b);
 // Detects whether two discs overlap, using the member data of a disc instead of two disc objects
 bool DoDiscsOverlap(const Vector2& aCenter, float aRadius, const Vector2& bCenter, float bRadius);
 
-// Detects whether a disc overlaps a point
+// Detects whether a disc overlaps a point, boundary inclusive
 bool DoesDiscOverlapPoint(const Vector2& center, float radius, const Vector2& point);
+
+// Interpolates the discs by interpolating their center positions and their radii
+const Disc2 Interpolate(const Disc2& start, const Disc2& end, float fractionTowardEnd);

@@ -21,25 +21,24 @@ SpriteSheet::SpriteSheet(const Texture& texture, const IntVector2& spriteLayout)
 
 
 //-----------------------------------------------------------------------------------------------
-// Returns the texture coordinates for the mins and maxes of a bounding box, for the specified
-// sprite coordinates (bottom left and top right)
+// Returns the texture coordinate UV's (top left, bottom right) given the sprite coordinates
 //
-AABB2 SpriteSheet::GetTexCoordFromSpriteCoords(const IntVector2& spriteCoords) const
+AABB2 SpriteSheet::GetTexUVsFromSpriteCoords(const IntVector2& spriteCoords) const
 {
 	float spriteStepX = (1.f / static_cast<float>(m_spriteLayout.x));
 	float spriteStepY = (1.f / static_cast<float>(m_spriteLayout.y));
 
-	// Finding the min coordinates
-	Vector2 texCoordsAtMins;
-	texCoordsAtMins.x = (static_cast<float>(spriteCoords.x) * spriteStepX);
-	texCoordsAtMins.y = (static_cast<float>(spriteCoords.y) * spriteStepY) + spriteStepY; // Add one extra step to get the bottom left corner, not the top left
+	// Finding the top left UVs
+	Vector2 topLeftUVs;
+	topLeftUVs.x = (static_cast<float>(spriteCoords.x) * spriteStepX);
+	topLeftUVs.y = (static_cast<float>(spriteCoords.y) * spriteStepY);
 
-	// Finding the max coordinates
-	Vector2 texCoordsAtMaxs;
-	texCoordsAtMaxs.x = (static_cast<float>(spriteCoords.x) * spriteStepX) + spriteStepX; // Add one extra step to get the top right corner, not the top left
-	texCoordsAtMaxs.y = (static_cast<float>(spriteCoords.y) * spriteStepY);
+	// Finding the bottom right UVs
+	Vector2 bottomRightUVs;
+	bottomRightUVs.x = topLeftUVs.x + spriteStepX;
+	bottomRightUVs.y = topLeftUVs.y + spriteStepY;
 
-	return AABB2(texCoordsAtMins, texCoordsAtMaxs);
+	return AABB2(topLeftUVs, bottomRightUVs);
 }
 
 
@@ -47,13 +46,13 @@ AABB2 SpriteSheet::GetTexCoordFromSpriteCoords(const IntVector2& spriteCoords) c
 // Returns the texture coordinates for the mins and maxes of a bounding box, for the specified
 // sprite linear index.
 //
-AABB2 SpriteSheet::GetTexCoordFromSpriteIndex(int spriteIndex) const
+AABB2 SpriteSheet::GetTexUVsFromSpriteIndex(int spriteIndex) const
 {
 	IntVector2 spriteCoords;
 	spriteCoords.x = (spriteIndex % m_spriteLayout.x);
 	spriteCoords.y = (spriteIndex / m_spriteLayout.x);
 
-	return GetTexCoordFromSpriteCoords(spriteCoords);
+	return GetTexUVsFromSpriteCoords(spriteCoords);
 }
 
 

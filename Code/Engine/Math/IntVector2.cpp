@@ -7,25 +7,27 @@
 /* Description: Implementation of the IntVector2 class
 /************************************************************************/
 #include <math.h>
+#include <string>
 #include "Engine/Math/IntVector2.hpp"
 #include "Engine/Math/MathUtils.hpp"
 
 
 // Initialize the static constants
-const IntVector2 IntVector2::ZERO = IntVector2(0, 0);
-const IntVector2 IntVector2::STEP_NORTH = IntVector2(0, 1);
-const IntVector2 IntVector2::STEP_SOUTH = IntVector2(0, -1);
-const IntVector2 IntVector2::STEP_EAST = IntVector2(1, 0);
-const IntVector2 IntVector2::STEP_WEST = IntVector2(-1, 0);
-const IntVector2 IntVector2::STEP_NORTHEAST = IntVector2(1, 1);
-const IntVector2 IntVector2::STEP_NORTHWEST = IntVector2(-1, 1);
-const IntVector2 IntVector2::STEP_SOUTHEAST = IntVector2(1, -1);
-const IntVector2 IntVector2::STEP_SOUTHWEST = IntVector2(-1, -1);
+const IntVector2 IntVector2::ZERO				= IntVector2(0, 0);
+const IntVector2 IntVector2::STEP_NORTH			= IntVector2(0, 1);
+const IntVector2 IntVector2::STEP_SOUTH			= IntVector2(0, -1);
+const IntVector2 IntVector2::STEP_EAST			= IntVector2(1, 0);
+const IntVector2 IntVector2::STEP_WEST			= IntVector2(-1, 0);
+const IntVector2 IntVector2::STEP_NORTHEAST		= IntVector2(1, 1);
+const IntVector2 IntVector2::STEP_NORTHWEST		= IntVector2(-1, 1);
+const IntVector2 IntVector2::STEP_SOUTHEAST		= IntVector2(1, -1);
+const IntVector2 IntVector2::STEP_SOUTHWEST		= IntVector2(-1, -1);
+
 
 //-----------------------------------------------------------------------------------------------
 // Copy constructor
 IntVector2::IntVector2( const IntVector2& copy )
-	: x( copy.x )
+  	: x( copy.x )
 	, y( copy.y )
 {
 }
@@ -39,6 +41,14 @@ IntVector2::IntVector2( int initialX, int initialY )
 {
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Explicit float constructor
+IntVector2::IntVector2(float initialX, float initialY)
+	: x(static_cast<int>(initialX))
+	, y(static_cast<int>(initialY))
+{
+}
 
 //------------------------------ Operator Overloads ---------------------------------------------
 
@@ -64,14 +74,6 @@ const IntVector2 IntVector2::operator*( int uniformScale ) const
 
 
 //-----------------------------------------------------------------------------------------------
-const IntVector2 IntVector2::operator/( int inverseScale ) const
-{
-	float multScaler = (1.f / inverseScale);
-	return IntVector2( static_cast<int>(x * multScaler), static_cast<int>(y * multScaler) );
-}
-
-
-//-----------------------------------------------------------------------------------------------
 void IntVector2::operator+=( const IntVector2& vecToAdd )
 {
 	x += vecToAdd.x;
@@ -92,16 +94,6 @@ void IntVector2::operator*=( const int uniformScale )
 {
 	x *= uniformScale;
 	y *= uniformScale;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-void IntVector2::operator/=( const int uniformDivisor )
-{
-	float multScaler = (1.f / uniformDivisor);
-
-	x = static_cast<int>(x * multScaler);
-	y *= static_cast<int>(y * multScaler);
 }
 
 
@@ -159,37 +151,6 @@ float IntVector2::GetLengthSquared() const
 
 
 //-----------------------------------------------------------------------------------------------
-// Normalizes the vector and returns its original length
-//
-float IntVector2::NormalizeAndGetLength()
-{
-	float length = GetLength();
-
-	x = static_cast<int>(x / length);
-	y = static_cast<int>(y / length);
-
-	return length;
-
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Returns a normalized copy of the vector, the original vector is unchanged
-//
-IntVector2 IntVector2::GetNormalized() const
-{
-	float magnitude = GetLength();
-
-	IntVector2 normalizedForm;
-
-	normalizedForm.x = static_cast<int>(x / magnitude);
-	normalizedForm.y = static_cast<int>(y / magnitude);
-
-	return normalizedForm;
-}
-
-
-//-----------------------------------------------------------------------------------------------
 // Returns the degree orientation of a vector, as if the angle was on a unit circle
 //
 float IntVector2::GetOrientationDegrees() const
@@ -199,16 +160,36 @@ float IntVector2::GetOrientationDegrees() const
 
 
 //-----------------------------------------------------------------------------------------------
-// Returns this IntVector2 as a Vector2 of float values, essentially just casting
+// Sets the int values based on the text representation passed
 //
-Vector2 IntVector2::GetAsFloats() const
+void IntVector2::SetFromText(const char* text)
 {
-	Vector2 floatVector;
+	std::string stringText = std::string(text);
 
-	floatVector.x = static_cast<float>(x);
-	floatVector.y = static_cast<float>(y);
+	int commaPosition = static_cast<int>(stringText.find(","));
 
-	return floatVector;
+	// No comma present in text
+	if (commaPosition == static_cast<int>(std::string::npos))
+	{
+		return;
+	}
+
+	x = atoi(std::string(stringText, 0, commaPosition).c_str());
+	y = atoi(std::string(stringText, commaPosition + 1).c_str());
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the distance between points a and b on a 2D plane
+//
+IntVector2 IntVector2::GetRandomVector(int maxDeviation)
+{
+	IntVector2 randomVector;
+
+	randomVector.x = GetRandomIntInRange(-maxDeviation, maxDeviation);
+	randomVector.y = GetRandomIntInRange(-maxDeviation, maxDeviation);
+
+	return randomVector;
 }
 
 

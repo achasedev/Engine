@@ -6,7 +6,10 @@
 /* Bugs: None
 /* Description: Implementation of the Box2D class
 /************************************************************************/
+#include <string>
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Math/MathUtils.hpp"
+
 
 // Constant square values
 const AABB2 AABB2::UNIT_SQUARE_CENTERED = AABB2(Vector2(-1.f, -1.f), Vector2(1.f, 1.f));
@@ -134,6 +137,34 @@ void AABB2::Translate(float translationX, float translationY)
 
 
 //-----------------------------------------------------------------------------------------------
+// Sets the values based on the text representation passed
+//
+void AABB2::SetFromText(const char* text)
+{
+	std::string stringText = std::string(text);
+
+	// min x value
+	int firstComma = static_cast<int>(stringText.find(","));
+	std::string minXText = std::string(stringText, 0, firstComma);
+	mins.x = static_cast<float>(atof(minXText.c_str()));
+
+	// min y value
+	int secondComma = static_cast<int>(stringText.find(",", firstComma + 1));
+	std::string minYText = std::string(stringText, firstComma + 1, secondComma - firstComma - 1);
+	mins.y = static_cast<float>(atof(minYText.c_str()));
+
+	// max x value
+	int thirdComma = static_cast<int>(stringText.find(",", secondComma + 1));
+	std::string maxXText = std::string(stringText, secondComma + 1, thirdComma - secondComma - 1);
+	maxs.x = static_cast<float>(atof(maxXText.c_str()));
+
+	// max y value
+	std::string maxYText = std::string(stringText, thirdComma + 1);
+	maxs.y = static_cast<float>(atof(maxYText.c_str()));
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Checks whether or not the point at (x,y) is within the bounds of the box. Returns true if it
 // is, false otherwise
 //
@@ -206,6 +237,20 @@ Vector2 AABB2::GetCenter() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns a random point inside the box as (x,y)
+//
+Vector2 AABB2::GetRandomPointInside() const
+{
+	Vector2 randomPoint;
+	
+	randomPoint.x = GetRandomFloatInRange(mins.x, maxs.x);
+	randomPoint.y = GetRandomFloatInRange(mins.y, maxs.y);
+
+	return randomPoint;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Moves the box boundaries in the direction given by translation, works the same as Translate
 //
 void AABB2::operator+=(const Vector2& translation)
@@ -272,22 +317,35 @@ bool DoAABBsOverlap(const AABB2& a, const AABB2& b)
 	bool doOverlap = true;
 
 	// Check if a is completely to the left of b
-	if (a.maxs.x < b.mins.x)
+	if (a.maxs.x <= b.mins.x)
 	{
 		doOverlap = false;
 	// Check if a is completely to the right of b
-	} else if (a.mins.x > b.maxs.x)
+	} else if (a.mins.x >= b.maxs.x)
 	{
 		doOverlap = false;
 	// Check if a is completely above b
-	} else if (a.mins.y > b.maxs.y)
+	} else if (a.mins.y >= b.maxs.y)
 	{
 		doOverlap = false;
 	// Check if a is completely below b
-	} else if (a.maxs.y < b.mins.y)
+	} else if (a.maxs.y <= b.mins.y)
 	{
 		doOverlap = false;
 	}
 
 	return doOverlap;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Interpolates the two boxes by interpolating their mins/maxes to find the box that is
+// fractionTowardEnd in between
+//
+const AABB2 Interpolate(const AABB2& start, const AABB2& end, float fractionTowardEnd)
+{
+	Vector2 interpolatedMins = Interpolate(start.mins, end.mins, fractionTowardEnd);
+	Vector2 interpolatedMaxs = Interpolate(start.maxs, end.maxs, fractionTowardEnd);
+
+	return AABB2(interpolatedMins, interpolatedMaxs);
 }

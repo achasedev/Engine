@@ -65,6 +65,26 @@ float Atan2Degrees(float y, float x)
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the nearest cardinal direction to the given angle
+//
+float GetNearestCardinalAngle(float angle)
+{
+	float rightDistance		= abs(GetAngularDisplacement(angle, 0.f));
+	float upDistance		= abs(GetAngularDisplacement(angle, 90.f));
+	float leftDistance		= abs(GetAngularDisplacement(angle, 180.f));
+	float downDistance		= abs(GetAngularDisplacement(angle, 270.f));
+
+	float minDistance = MinFloat(rightDistance, upDistance, leftDistance, downDistance);
+
+	// Return the direction corresponding to the min distance
+	if		(minDistance == rightDistance)		{ return 0.f;}
+	else if	(minDistance == leftDistance)		{ return 180.f; }
+	else if	(minDistance == upDistance)			{ return 90.f; }
+	else										{ return 270.f; }
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Generates a random float between zero and one (inclusively) and returns it
 //
 float GetRandomFloatZeroToOne()
@@ -228,17 +248,6 @@ float GetFractionInRange(float inValue, float rangeStart, float rangeEnd)
 
 
 //-----------------------------------------------------------------------------------------------
-// Finds the value at a certain percent (fraction) in [rangeStart, rangeEnd]
-//
-float Interpolate(float start, float end, float fractionTowardEnd)
-{
-	float rangeSize = (end - start);
-	float offsetIntoRange = (fractionTowardEnd * rangeSize);
-	return (offsetIntoRange + start);
-}
-
-
-//-----------------------------------------------------------------------------------------------
 // Maps inValue from an inRange to an outRange
 //
 float RangeMapFloat(float inValue, float inStart, float inEnd, float outStart, float outEnd)
@@ -290,14 +299,14 @@ float GetAngularDisplacement(float startDegrees, float endDegrees)
 //
 float TurnToward(float currentDegrees, float goalDegrees, float maxTurnDegrees)
 {
-	float angularDisp = GetAngularDisplacement(currentDegrees, goalDegrees);
+	float angularDisplacement = GetAngularDisplacement(currentDegrees, goalDegrees);
 
-	if (abs(angularDisp) <= maxTurnDegrees)
+	if (abs(angularDisplacement) <= maxTurnDegrees)
 	{
 		return goalDegrees;
 	}
 	
-	float directionToTurn = (angularDisp / abs(angularDisp));
+	float directionToTurn = (angularDisplacement / abs(angularDisplacement));
 	float result = ((directionToTurn * maxTurnDegrees) + currentDegrees);
 
 	return result;
@@ -366,4 +375,181 @@ void ClearBits(unsigned int& bitFlags32, unsigned int flagsToClear)
 {
 	unsigned int bitMask = ~flagsToClear;
 	bitFlags32 &= bitMask;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// 2nd-degree smooth start (a.k.a "quadratic ease in")
+//
+float SmoothStart2(float t)
+{
+	return (t * t);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// 3rd-degree smooth start (a.k.a "cubic ease in")
+//
+float SmoothStart3(float t)
+{
+	return (t * t * t);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// 4th-degree smooth start (a.k.a "quartic ease in")
+//
+float SmoothStart4(float t)
+{
+	return (t * t * t * t);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// 2nd-degree smooth start (a.k.a "quadratic ease out")
+//
+float SmoothStop2(float t)
+{
+	float flipped = (1 - t);
+	float squaredFlipped = (flipped * flipped);
+	float flippedSquaredFlipped = (1 - squaredFlipped);
+
+	return flippedSquaredFlipped;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// 3rd-degree smooth start (a.k.a "cubic ease out")
+//
+float SmoothStop3(float t)
+{
+	float flipped = (1 - t);
+	float cubedFlipped = (flipped * flipped * flipped);
+	float flippedCubedFlipped = (1 - cubedFlipped);
+
+	return flippedCubedFlipped;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// 4th-degree smooth start (a.k.a "quartic ease out")
+//
+float SmoothStop4(float t)
+{
+	float flipped = (1 - t);
+	float quartedFlipped = (flipped * flipped * flipped * flipped);
+	float flippedQuartedFlipped = (1 - quartedFlipped);
+
+	return flippedQuartedFlipped;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// 3rd-degree smooth start/stop (a.k.a "smoothstep")
+//
+float SmoothStep3(float t)
+{
+	return ((1 - t) * SmoothStart2(t)) + (t * SmoothStop2(t));
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Finds the float at a certain percent (fraction) in [rangeStart, rangeEnd]
+//
+float Interpolate(float start, float end, float fractionTowardEnd)
+{
+	float rangeSize = (end - start);
+	float offsetIntoRange = (fractionTowardEnd * rangeSize);
+	return (offsetIntoRange + start);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Finds the int at a certain percent (fraction) in [rangeStart, rangeEnd]
+//
+int Interpolate(int start, int end, float fractionTowardEnd)
+{
+	int range = (end - start);
+	return start + RoundToNearestInt(fractionTowardEnd * range);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Finds the unsigned char at a certain percent (fraction) in [rangeStart, rangeEnd]
+//
+unsigned char Interpolate(unsigned char start, unsigned char end, float fractionTowardEnd)
+{
+	float range = static_cast<float>(end - start);
+	return start + static_cast<unsigned char>(RoundToNearestInt(fractionTowardEnd * range));
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Finds the IntVector2 at a certain percent (fraction) in [rangeStart, rangeEnd]
+//
+const IntVector2 Interpolate(const IntVector2& start, const IntVector2& end, float fractionTowardEnd)
+{
+	int interpolatedX = Interpolate(start.x, end.x, fractionTowardEnd);
+	int interpolatedY = Interpolate(start.y, end.y, fractionTowardEnd);
+
+	return IntVector2(interpolatedX, interpolatedY);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Finds the IntRange at a certain percent (fraction) in [rangeStart, rangeEnd]
+//
+const IntRange Interpolate(const IntRange& start, const IntRange& end, float fractionTowardEnd)
+{
+	int interpolatedMin = Interpolate(start.min, end.min, fractionTowardEnd);
+	int interpolatedMax = Interpolate(start.max, end.max, fractionTowardEnd);
+
+	return IntRange(interpolatedMin, interpolatedMax);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Finds the Rgba at a certain percent (fraction) in [rangeStart, rangeEnd]
+//
+const Rgba Interpolate(const Rgba& start, const Rgba& end, float fractionTowardEnd)
+{
+	unsigned char interpolatedR = Interpolate(start.r, end.r, fractionTowardEnd);
+	unsigned char interpolatedG = Interpolate(start.g, end.g, fractionTowardEnd);
+	unsigned char interpolatedB = Interpolate(start.b, end.b, fractionTowardEnd);
+	unsigned char interpolatedA = Interpolate(start.a, end.a, fractionTowardEnd);
+
+	return Rgba(interpolatedR, interpolatedG, interpolatedB, interpolatedA);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the max of 4 floats
+//
+float MaxFloat(float a, float b, float c, float d)
+{
+	float maxAB = ((a > b) ? a : b);
+	float maxCD = ((c > d) ? c : d);
+
+	return ((maxAB > maxCD) ? maxAB : maxCD);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the min of 4 floats
+//
+float MinFloat(float a, float b, float c, float d)
+{
+	float minAB = ((a < b) ? a : b);
+	float minCD = ((c < d) ? c : d);
+
+	return ((minAB < minCD) ? minAB : minCD);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the min of 2 floats
+//
+float MinFloat(float a, float b)
+{
+	return ((a < b) ? a : b);
 }

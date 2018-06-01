@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="DebugInline|Win32">
+      <Configuration>DebugInline</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="DebugInline|x64">
+      <Configuration>DebugInline</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
@@ -32,6 +40,12 @@
     <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugInline|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -40,6 +54,12 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugInline|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
@@ -60,10 +80,16 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugInline|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugInline|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -75,7 +101,17 @@
     <OutDir>$(SolutionDir)Temporary\$(ProjectName)_$(PlatformName)_$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)Temporary\$(ProjectName)_$(PlatformName)_$(Configuration)\</IntDir>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugInline|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)Temporary\$(ProjectName)_$(PlatformName)_$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Temporary\$(ProjectName)_$(PlatformName)_$(Configuration)\</IntDir>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)Temporary\$(ProjectName)_$(PlatformName)_$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Temporary\$(ProjectName)_$(PlatformName)_$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugInline|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)Temporary\$(ProjectName)_$(PlatformName)_$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)Temporary\$(ProjectName)_$(PlatformName)_$(Configuration)\</IntDir>
@@ -99,6 +135,30 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)../../Engine/Code;$(SolutionDir)Code</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)../../Engine/Code/;$(SolutionDir)Code/</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugInline|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SolutionDir)../../Engine/Code;$(SolutionDir)Code</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -117,6 +177,30 @@
       <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)../../Engine/Code;$(SolutionDir)Code</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)../../Engine/Code/;$(SolutionDir)Code/</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugInline|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SolutionDir)../../Engine/Code;$(SolutionDir)Code</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -137,6 +221,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)../../Engine/Code;$(SolutionDir)Code</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -159,6 +244,7 @@
       <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)../../Engine/Code;$(SolutionDir)Code</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -172,21 +258,35 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\ThirdParty\stb\stb_image.c" />
+    <ClCompile Include="..\ThirdParty\tinyxml2\tinyxml2.cpp" />
     <ClCompile Include="Audio\AudioSystem.cpp" />
+    <ClCompile Include="Core\Blackboard.cpp" />
+    <ClCompile Include="Core\EngineCommon.cpp" />
     <ClCompile Include="Core\ErrorWarningAssert.cpp" />
+    <ClCompile Include="Core\HeatMap.cpp" />
+    <ClCompile Include="Core\Image.cpp" />
     <ClCompile Include="Core\Rgba.cpp" />
     <ClCompile Include="Core\StringUtils.cpp" />
     <ClCompile Include="Core\Time.cpp" />
+    <ClCompile Include="Core\XmlUtilities.cpp" />
     <ClCompile Include="Input\InputSystem.cpp" />
     <ClCompile Include="Input\KeyButtonState.cpp" />
     <ClCompile Include="Input\XboxController.cpp" />
     <ClCompile Include="Math\AABB2.cpp" />
     <ClCompile Include="Math\Disc2.cpp" />
+    <ClCompile Include="Math\FloatRange.cpp" />
+    <ClCompile Include="Math\IntRange.cpp" />
     <ClCompile Include="Math\IntVector2.cpp" />
     <ClCompile Include="Math\MathUtils.cpp" />
+    <ClCompile Include="Math\Matrix44.cpp" />
     <ClCompile Include="Math\Vector2.cpp" />
+    <ClCompile Include="Math\Vector3.cpp" />
+    <ClCompile Include="Renderer\BitmapFont.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
-    <ClCompile Include="Renderer\SpriteAnimation.cpp" />
+    <ClCompile Include="Renderer\SpriteAnim.cpp" />
+    <ClCompile Include="Renderer\SpriteAnimDef.cpp" />
+    <ClCompile Include="Renderer\SpriteAnimSet.cpp" />
+    <ClCompile Include="Renderer\SpriteAnimSetDef.cpp" />
     <ClCompile Include="Renderer\SpriteSheet.cpp" />
     <ClCompile Include="Renderer\Texture.cpp" />
   </ItemGroup>
@@ -200,22 +300,35 @@
     <ClInclude Include="..\ThirdParty\fmod\fmod_errors.h" />
     <ClInclude Include="..\ThirdParty\fmod\fmod_output.h" />
     <ClInclude Include="..\ThirdParty\stb\stb_image.h" />
+    <ClInclude Include="..\ThirdParty\tinyxml2\tinyxml2.h" />
     <ClInclude Include="Audio\AudioSystem.hpp" />
+    <ClInclude Include="Core\Blackboard.hpp" />
     <ClInclude Include="Core\EngineCommon.hpp" />
     <ClInclude Include="Core\ErrorWarningAssert.hpp" />
+    <ClInclude Include="Core\HeatMap.hpp" />
+    <ClInclude Include="Core\Image.hpp" />
     <ClInclude Include="Core\Rgba.hpp" />
     <ClInclude Include="Core\StringUtils.hpp" />
     <ClInclude Include="Core\Time.hpp" />
+    <ClInclude Include="Core\XmlUtilities.hpp" />
     <ClInclude Include="Input\InputSystem.hpp" />
     <ClInclude Include="Input\KeyButtonState.hpp" />
     <ClInclude Include="Input\XboxController.hpp" />
     <ClInclude Include="Math\AABB2.hpp" />
     <ClInclude Include="Math\Disc2.hpp" />
+    <ClInclude Include="Math\FloatRange.hpp" />
+    <ClInclude Include="Math\IntRange.hpp" />
     <ClInclude Include="Math\IntVector2.hpp" />
     <ClInclude Include="Math\MathUtils.hpp" />
+    <ClInclude Include="Math\Matrix44.hpp" />
     <ClInclude Include="Math\Vector2.hpp" />
+    <ClInclude Include="Math\Vector3.hpp" />
+    <ClInclude Include="Renderer\BitmapFont.hpp" />
     <ClInclude Include="Renderer\Renderer.hpp" />
-    <ClInclude Include="Renderer\SpriteAnimation.hpp" />
+    <ClInclude Include="Renderer\SpriteAnim.hpp" />
+    <ClInclude Include="Renderer\SpriteAnimDef.hpp" />
+    <ClInclude Include="Renderer\SpriteAnimSet.hpp" />
+    <ClInclude Include="Renderer\SpriteAnimSetDef.hpp" />
     <ClInclude Include="Renderer\SpriteSheet.hpp" />
     <ClInclude Include="Renderer\Texture.hpp" />
   </ItemGroup>

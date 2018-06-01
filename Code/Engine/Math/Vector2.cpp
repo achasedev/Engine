@@ -7,14 +7,20 @@
 /* Description: Implementation of the Vector2 class
 /************************************************************************/
 #include <math.h>
+#include <string>
 #include "Engine/Math/Vector2.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Core/StringUtils.hpp"
 
 
 // Initialize the static constants
 const Vector2 Vector2::ZERO = Vector2(0.f, 0.f);
 const Vector2 Vector2::ONES = Vector2(1.f, 1.f);
-
+const Vector2 Vector2::DIRECTION_UP = Vector2(0.f, 1.0f);
+const Vector2 Vector2::DIRECTION_DOWN = Vector2(0.f, -1.0f);
+const Vector2 Vector2::DIRECTION_LEFT = Vector2(-1.0f, 0.f);
+const Vector2 Vector2::DIRECTION_RIGHT = Vector2(1.0f, 0.f);
 
 //-----------------------------------------------------------------------------------------------
 // Copy constructor
@@ -26,13 +32,30 @@ Vector2::Vector2( const Vector2& copy )
 
 
 //-----------------------------------------------------------------------------------------------
-// Explicit constructor
+// Explicit constructor - floats
 Vector2::Vector2( float initialX, float initialY )
 	: x( initialX )
 	, y( initialY )
 {
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// IntVector2 constructor
+Vector2::Vector2(const IntVector2& copyFrom)
+{
+	x = static_cast<float>(copyFrom.x);
+	y = static_cast<float>(copyFrom.y);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Explicit constructor - ints
+Vector2::Vector2( int initialX, int initialY )
+	: x( static_cast<float>(initialX))
+	, y( static_cast<float>(initialY))
+{
+}
 
 //------------------------------ Operator Overloads ---------------------------------------------
 
@@ -157,6 +180,9 @@ float Vector2::GetLengthSquared() const
 //
 float Vector2::NormalizeAndGetLength()
 {
+	// Ensure we have a valid vector to normalize
+	ASSERT_OR_DIE((x != 0.f || y != 0.f), Stringf("Error: Vector2::NormalizeAndGetLength called on a (0,0) Vector2."));
+
 	float length = this->GetLength();
 
 	x = (x / length);
@@ -172,6 +198,9 @@ float Vector2::NormalizeAndGetLength()
 //
 Vector2 Vector2::GetNormalized() const
 {
+	// Ensure we have a valid vector to normalize
+	ASSERT_OR_DIE((x != 0.f || y != 0.f), Stringf("Error: Vector2::GetNormalized called on a (0,0) Vector2."));
+
 	float magnitude = GetLength();
 	
 	Vector2 normalizedForm;
@@ -188,7 +217,29 @@ Vector2 Vector2::GetNormalized() const
 //
 float Vector2::GetOrientationDegrees() const
 {
+	// Ensure we have a valid vector to calculate on
+	ASSERT_OR_DIE((x != 0.f || y != 0.f), Stringf("Error: Vector2::GetOrientationDegrees called on a (0,0) Vector2."));
 	return Atan2Degrees(y, x);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the Vector2 to the values represented in the text passed
+//
+void Vector2::SetFromText(const char* text)
+{
+	std::string stringText = std::string(text);
+
+	int commaPosition = static_cast<int>(stringText.find(","));
+
+	// No comma present in text
+	if (commaPosition == static_cast<int>(std::string::npos))
+	{
+		return;
+	}
+
+	x = static_cast<float>(atof(std::string(stringText, 0, commaPosition).c_str()));
+	y = static_cast<float>(atof(std::string(stringText, commaPosition + 1).c_str()));
 }
 
 
@@ -233,4 +284,93 @@ float GetDistance(const Vector2& a, const Vector2& b)
 float GetDistanceSquared(const Vector2& a, const Vector2& b)
 {
 	return ((a.x - b.x) * (a.x - b.x)) + ((a.y - b.y) * (a.y - b.y));
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the projected vector in the projectOnto direction with magnitude is the projected length
+// of vectorToProject in that direction
+//
+const Vector2 GetProjectedVector(const Vector2& vectorToProject, const Vector2& projectOnto)
+{
+	// Optimized for efficiency - using distance squared instead of distance
+	float projectOntoMagnitudeSquared = projectOnto.GetLengthSquared();
+
+	float dotProdcut = DotProduct(vectorToProject, projectOnto);
+
+	return (dotProdcut / projectOntoMagnitudeSquared) * projectOnto;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the originalVector's representation in I,J space (from X, Y space)
+// ASSUMES I AND J ARE ORTHONORMAL
+//
+const Vector2 GetTransformedIntoBasis(const Vector2& originalVector, const Vector2& newBasisI, const Vector2& newBasisJ)
+{	
+	float iMagnitude = DotProduct(originalVector, newBasisI);
+	float jMagnitude = DotProduct(originalVector, newBasisJ);
+
+	return Vector2(iMagnitude, jMagnitude);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the originalVector's representation in X, Y space
+//
+const Vector2 GetTransformedOutOfBasis(const Vector2& vectorInBasis, const Vector2& oldBasisI, const Vector2& oldBasisJ)
+{
+	// Ensure the basis vectors are normalized
+	Vector2 iDirection = oldBasisI.GetNormalized();
+	Vector2 jDirection = oldBasisJ.GetNormalized();
+
+	Vector2 iComponent = iDirection * vectorInBasis.x;
+	Vector2 jComponent = jDirection * vectorInBasis.y;
+
+
+	// Sum up the corresponding components to get the result
+	float xValue = iComponent.x + jComponent.x;
+	float yValue = iComponent.y + jComponent.y;
+
+	return Vector2(xValue, yValue);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the components of originalVector in the I and J direction
+//
+void DecomposeVectorIntoBasis(const Vector2& originalVector, const Vector2& newBasisI, const Vector2& newBasisJ, Vector2& out_vectorAlongI, Vector2& out_vectorAlongJ)
+{
+	out_vectorAlongI = GetProjectedVector(originalVector, newBasisI);
+	out_vectorAlongJ = GetProjectedVector(originalVector, newBasisJ);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Finds the "bounce" vector of vectorToReflect after hitting a surface with normal 'normal'
+//
+const Vector2 Reflect(const Vector2& vectorToReflect, const Vector2& normal)
+{
+	// Ensure normal is normalized
+	Vector2 normalDirection = normal.GetNormalized();
+
+	float magnitudeInNormalDirection = DotProduct(vectorToReflect, normalDirection);
+	Vector2 componentInNormalDirection = magnitudeInNormalDirection * normalDirection;
+
+	// Remove the normal, then add its inverse, essentially removing it twice
+	Vector2 reflectedResult = vectorToReflect - (2.f * componentInNormalDirection);
+
+	return reflectedResult;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the vector that is fractionTowardEnd interpolated between start and end
+//
+const Vector2 Interpolate(const Vector2& start, const Vector2& end, float fractionTowardEnd)
+{
+	float interpolatedX = Interpolate(start.x, end.x, fractionTowardEnd);
+	float interpolatedY = Interpolate(start.y, end.y, fractionTowardEnd);
+
+	return Vector2(interpolatedX, interpolatedY);
 }

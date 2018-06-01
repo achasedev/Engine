@@ -17,8 +17,8 @@ public:
 
 	SpriteSheet(const Texture& texture, const IntVector2& spriteLayout);		// Only constructor, uses a reference as a member
 
-	AABB2 GetTexCoordFromSpriteCoords(const IntVector2& spriteCoords) const;	// Returns the texture coords given the 2D index in the atlas
-	AABB2 GetTexCoordFromSpriteIndex(int spriteIndex) const;					// Returns the texture coords given the linear index into the atlas
+	AABB2 GetTexUVsFromSpriteCoords(const IntVector2& spriteCoords) const;	// Returns the texture coords given the 2D index in the atlas
+	AABB2 GetTexUVsFromSpriteIndex(int spriteIndex) const;					// Returns the texture coords given the linear index into the atlas
 
 	int GetNumSprites() const;													// Returns the number of individual sprites in the atlas
 	const Texture& GetTexture() const;											// Returns a reference to the texture this sprite sheet comprises
