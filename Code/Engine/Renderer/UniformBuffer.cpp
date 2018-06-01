@@ -144,7 +144,7 @@ void UniformBuffer::CheckAndUpdateGPUData()
 {
 	if (m_isCPUDirty)
 	{
-		m_gpuBuffer.CopyToGPU(m_bufferSize, m_cpuBuffer, GL_ARRAY_BUFFER);
+		m_gpuBuffer.CopyToGPU(m_bufferSize, m_cpuBuffer);
 		m_isCPUDirty = false;
 	}
 }

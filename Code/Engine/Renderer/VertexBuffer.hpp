@@ -24,7 +24,7 @@ public:
 		const VertexLayout* layout = &VERT_TYPE::LAYOUT;
 
 		size_t byteCount = vertexCount * layout->GetStride();
-		bool succeeded = RenderBuffer::CopyToGPU(byteCount, (const void*)vertices, GL_ARRAY_BUFFER);
+		bool succeeded = RenderBuffer::CopyToGPU(byteCount, (const void*)vertices);
 
 		// Only update if data was copied
 		if (succeeded)

@@ -20,7 +20,7 @@ public:
 	GLuint GetHandle() const;
 
 	// Moves data into this render buffer, and sends it to the GPU
-	bool CopyToGPU(size_t const byte_count, void const *data, GLenum bufferType);
+	bool CopyToGPU(size_t const byte_count, void const *data);
 
 
 protected:

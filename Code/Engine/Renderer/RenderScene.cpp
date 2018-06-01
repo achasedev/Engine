@@ -5,7 +5,20 @@
 /* Description: Implementation of the RenderScene class
 /************************************************************************/
 #include "Engine/Renderer/Camera.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/RenderScene.hpp"
+
+
+RenderScene* RenderScene::s_currentScene = nullptr;
+std::map<std::string, RenderScene*> RenderScene::s_scenes;
+
+//-----------------------------------------------------------------------------------------------
+// Constructor
+//
+RenderScene::RenderScene(const std::string& name)
+	: m_name(name)
+{
+}
 
 
 //-----------------------------------------------------------------------------------------------

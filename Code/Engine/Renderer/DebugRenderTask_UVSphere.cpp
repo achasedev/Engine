@@ -40,7 +40,8 @@ void DebugRenderTask_UVSphere::BuildMesh()
 	mb.BeginBuilding(PRIMITIVE_TRIANGLES, true);
 	mb.PushUVSphere(m_position, m_radius, m_numWedges, m_numSlices);
 	mb.FinishBuilding();
-	m_renderable->SetMesh(mb.CreateMesh(), 0);
+
+	m_renderable->SetMesh(mb.CreateMesh<Vertex3D_PCU>(), 0);
 }
 
 

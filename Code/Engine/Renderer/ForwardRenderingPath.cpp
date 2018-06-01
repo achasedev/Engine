@@ -103,7 +103,12 @@ void ForwardRenderingPath::RenderSceneForCamera(Camera* camera, RenderScene* sce
 	for (int index = 0; index < numRenderables; ++index)
 	{	
 		Renderable* currRenderable = scene->m_renderables[index];
-		ConstructDrawCallsForRenderable(currRenderable, scene, drawCalls);
+
+		// Only construct draw calls if instances exist to draw in the renderable
+		if (currRenderable->GetInstanceCount() > 0)
+		{
+			ConstructDrawCallsForRenderable(currRenderable, scene, drawCalls);
+		}
 	}
 
 	// Sort the draw calls by their shader's layer and queue order

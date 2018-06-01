@@ -6,6 +6,7 @@
 /*				(Lights, renderables, cameras used for ForwardRenderingPath)
 /************************************************************************/
 #pragma once
+#include <map>
 #include <vector>
 #include "Engine/Core/Rgba.hpp"
 
@@ -16,6 +17,7 @@ class Skybox;
 
 class RenderScene
 {
+
 public:
 	//-----Public Methods-----
 
@@ -46,9 +48,18 @@ public:
 	Skybox* GetSkybox() const;
 
 
+public:
+	//-----Deleted Methods-----
+
+	RenderScene(const std::string& name);
+	~RenderScene() {}
+	RenderScene(const RenderScene& copy) = delete;
+
+
 private:
 	//-----Private Data-----
 
+	std::string m_name;
 	std::vector<Renderable*>	m_renderables;
 	std::vector<Light*>			m_lights;
 	std::vector<Camera*>		m_cameras;
@@ -56,5 +67,8 @@ private:
 	Rgba m_ambience;
 
 	Skybox* m_skybox = nullptr;
+
+	static RenderScene* s_currentScene;
+	static std::map<std::string, RenderScene*> s_scenes;
 
 };

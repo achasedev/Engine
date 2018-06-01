@@ -45,7 +45,7 @@ GLuint RenderBuffer::GetHandle() const
 //-----------------------------------------------------------------------------------------------
 // Moves the data given by "data" onto the GPU
 //
-bool RenderBuffer::CopyToGPU( size_t const byte_count, void const *data, GLenum bufferType) 
+bool RenderBuffer::CopyToGPU( size_t const byte_count, void const *data) 
 {
 	// Don't do anything if there's no data to copy
 	if (data == nullptr || byte_count <= 0)
@@ -62,8 +62,8 @@ bool RenderBuffer::CopyToGPU( size_t const byte_count, void const *data, GLenum 
 	// Bind the buffer to a slot, and copy memory
 	// GL_DYNAMIC_DRAW means the memory is likely going to change a lot (we'll get
 	// during the second project)
-	glBindBuffer( bufferType, m_handle ); 
-	glBufferData( bufferType, byte_count, data, GL_DYNAMIC_DRAW ); 
+	glBindBuffer( GL_COPY_WRITE_BUFFER, m_handle ); 
+	glBufferData( GL_COPY_WRITE_BUFFER, byte_count, data, GL_DYNAMIC_DRAW ); 
 
 	GL_CHECK_ERROR();
 

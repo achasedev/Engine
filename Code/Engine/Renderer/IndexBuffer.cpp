@@ -23,7 +23,7 @@ IndexBuffer::IndexBuffer()
 bool IndexBuffer::CopyToGPU(int indexCount, const unsigned int* indices)
 {
 	size_t byteCount = indexCount * m_indexStride;
-	bool succeeded = RenderBuffer::CopyToGPU(byteCount, (const void*)indices, GL_ELEMENT_ARRAY_BUFFER);
+	bool succeeded = RenderBuffer::CopyToGPU(byteCount, (const void*)indices);
 
 	// Only update if data was copied
 	if (succeeded)

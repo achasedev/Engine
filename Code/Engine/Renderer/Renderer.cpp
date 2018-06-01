@@ -85,10 +85,12 @@ struct SpecularBufferData
 Renderer::Renderer()
 {
 	// Ensure only one renderer exists
-	GUARANTEE_OR_DIE(s_instance==nullptr, "Error: Renderer constructor called when a renderer already exists.");
+	GUARANTEE_OR_DIE(s_instance == nullptr, "Error: Renderer constructor called when a renderer already exists.");
 
 	// Ensure a context already exists before creating this renderer (so gl functions handles are created and bound)
 	GUARANTEE_OR_DIE(gHDC != nullptr, "Error: Renderer constructed without a gl context established first.");
+
+	s_instance = this;
 
 	// Calls all GL functions necessary to set up the renderer
 	PostGLStartup();
@@ -136,7 +138,7 @@ Renderer::~Renderer()
 void Renderer::Initialize()
 {
 	GUARANTEE_OR_DIE(s_instance == nullptr, "Error: Renderer::Initialize() called when the Renderer instance exists.");
-	s_instance = new Renderer();
+	new Renderer();
 
 	// Static setup
 	s_UIOrthoBounds = AABB2(Vector2::ZERO, Vector2(UI_ORTHO_HEIGHT * Window::GetInstance()->GetWindowAspect(), UI_ORTHO_HEIGHT));
@@ -1037,7 +1039,9 @@ void Renderer::Draw(const DrawCall& drawCall)
 	if (matrixCount > 1)
 	{
 		// Buffer the model data
-		m_modelInstanceBuffer.CopyToGPU(sizeof(Matrix44) * matrixCount, drawCall.GetModelMatrixBuffer(), GL_ARRAY_BUFFER);
+		m_modelInstanceBuffer.CopyToGPU(sizeof(Matrix44) * matrixCount, drawCall.GetModelMatrixBuffer());
+
+		glBindBuffer(GL_ARRAY_BUFFER, m_modelInstanceBuffer.GetHandle());
 
 		// Bind the model matrix to the program as a vertex attribute
 		int bind = glGetAttribLocation(drawCall.GetMaterial()->GetShader()->GetProgram()->GetHandle(), "INSTANCE_MODEL_MATRIX");

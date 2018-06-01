@@ -9,8 +9,8 @@
 #include "Engine/Renderer/MeshGroup.hpp"
 #include "Engine/Renderer/Renderable.hpp"
 #include "Engine/Renderer/MeshBuilder.hpp"
+#include "Engine/Renderer/RenderScene.hpp"
 #include "Engine/Renderer/MaterialInstance.hpp"
-
 
 //-----------------------------------------------------------------------------------------------
 // Constructor from members
