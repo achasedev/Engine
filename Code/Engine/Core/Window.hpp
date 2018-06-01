@@ -5,6 +5,7 @@
 /* Description: Class to represent a Windows window
 /************************************************************************/
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Math/IntVector2.hpp"
 #include <vector>
 
 // Listeners to input that can be bound and passed input to, before the Engine gets it
@@ -24,14 +25,17 @@ public:
 
 	unsigned int	GetWidthInPixels() const;
 	unsigned int	GetHeightInPixels() const;
+	IntVector2		GetDimensions() const;
 	float			GetWindowAspect() const;
 	AABB2			GetWindowBounds() const;
+	bool			IsWindowInFocus() const;
 
 	//-----Static Methods-----
 
 	// Used to create the singleton instance (constructors private)
 	static Window*	Initialize(float clientAspect=1.77777f, const std::string& windowTitle="NO TITLE SET");
 	static Window*  Initialize(unsigned int widthInPixels, unsigned int heightInPixels, const std::string& windowTitle="NO TITLE SET");
+
 	static void		Shutdown();
 
 	// Getter for the singleton instance

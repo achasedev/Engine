@@ -30,6 +30,7 @@ public:
 	float	GetElapsedTimeNormalized() const;
 	bool	HasIntervalElapsed() const;
 	
+	float	GetTotalSeconds() const;
 	float	GetDeltaSeconds() const;
 
 

@@ -4,18 +4,20 @@
 /* Date: February 3rd, 2018
 /* Description: Implementation of the Developer Console class
 /************************************************************************/
-#include "Engine/Core/DevConsole.hpp"
-#include "Engine/Core/EngineCommon.hpp"
+#include <stdarg.h>
+#include "Engine/Core/File.hpp"
+#include "Engine/Core/Clock.hpp"
 #include "Engine/Core/Window.hpp"
 #include "Engine/Core/Command.hpp"
-#include "Engine/Core/File.hpp"
+#include "Engine/Core/AssetDB.hpp"
+#include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/DevConsole.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Renderer/SpriteAnim.hpp"
+#include "Engine/Core/ScopedProfiler.hpp"
 #include "Engine/Renderer/SpriteAnimDef.hpp"
 #include "Engine/Renderer/SpriteAnimSet.hpp"
-#include "Engine/Math/MathUtils.hpp"
-#include "Engine/Core/Clock.hpp"
-#include <stdarg.h>
 
 const int STRINGF_STACK_LOCAL_TEMP_LENGTH = 2048;	// Used for ConsolePrintf
 DevConsole* DevConsole::s_instance = nullptr;		// Singleton instance
@@ -115,7 +117,7 @@ void ConsoleWarningf(char const *format, ...)
 	// Construct the string
 	va_list variableArgumentList;
 	va_start( variableArgumentList, format );
-	ConsolePrintv(Rgba::YELLOW, format, variableArgumentList);
+	ConsolePrintv(Rgba::ORANGE, format, variableArgumentList);
 	va_end(variableArgumentList);
 }
 
@@ -143,6 +145,8 @@ DevConsole::DevConsole()
 	, m_cursorPosition(0)
 	, m_historyIndex(0)
 	, m_FLChanSecondsPerDance(4.0f)
+	, m_wasMouseShown(true)
+	, m_wasMouseLocked(false)
 {
 	Window* theWindow = Window::GetInstance();
 	GUARANTEE_OR_DIE(theWindow != nullptr, "Error: DevConsole::InitializeDevConsole called with no Window initialized");
@@ -328,17 +332,29 @@ void DevConsole::AddCharacterToInputBuffer(unsigned char character)
 
 
 //-----------------------------------------------------------------------------------------------
-// Sets up the Renderer to draw the developer console
+// Frees the mouse if the dev console is opened, or reverts to previous mouse settings if closed
 //
-Renderer* DevConsole::SetUpRenderState() const
+void DevConsole::UpdateMouseCursorSettings()
 {
-	Renderer* renderer = Renderer::GetInstance();
-	renderer->SetCurrentCamera(renderer->GetUICamera());
-	renderer->SetCurrentShaderProgram("Default");
-	renderer->BindTexture(0, "White");
-	renderer->DisableDepth();
+	Mouse& mouse = InputSystem::GetMouse();
+	if (m_isOpen)
+	{
+		m_wasMouseShown = mouse.IsCursorShown();
+		m_wasMouseLocked = mouse.IsCursorLocked();
+		m_prevMouseMode = mouse.GetCursorMode();
 
-	return renderer;
+		// Now free the mouse
+		mouse.ShowMouseCursor(true);
+		mouse.LockCursorToClient(false);
+		mouse.SetCursorMode(CURSORMODE_ABSOLUTE);
+	}
+	else
+	{
+		// Else the DevConsole was closed, so revert to original mouse state
+		mouse.ShowMouseCursor(m_wasMouseShown);
+		mouse.LockCursorToClient(m_wasMouseLocked);
+		mouse.SetCursorMode(m_prevMouseMode);
+	}
 }
 
 
@@ -348,7 +364,8 @@ Renderer* DevConsole::SetUpRenderState() const
 void DevConsole::RenderInputField(Renderer* renderer, BitmapFont* font) const
 {
 	// Draw the AABB2 background for the field
-	renderer->DrawAABB2(m_inputFieldBounds, AABB2::UNIT_SQUARE_OFFCENTER, INPUT_BOX_COLOR);
+	Material* uiMaterial = AssetDB::CreateOrGetSharedMaterial("UI");
+	renderer->Draw2DQuad(m_inputFieldBounds, AABB2::UNIT_SQUARE_OFFCENTER, INPUT_BOX_COLOR, uiMaterial);
 
 	// Draw the input text buffer
 	AABB2 inputTextBounds = m_inputFieldBounds;
@@ -372,8 +389,8 @@ void DevConsole::RenderInputField(Renderer* renderer, BitmapFont* font) const
 void DevConsole::RenderLogWindow(Renderer* renderer, BitmapFont* font) const
 {
 	// Draw the background
-	renderer->BindTexture(0, "White");
-	renderer->DrawAABB2(m_consoleLogBounds, AABB2::UNIT_SQUARE_OFFCENTER, LOG_BOX_COLOR);
+	Material* uiMaterial = AssetDB::CreateOrGetSharedMaterial("UI");
+	renderer->Draw2DQuad(m_consoleLogBounds, AABB2::UNIT_SQUARE_OFFCENTER, LOG_BOX_COLOR, uiMaterial);
 
 	//-----Draw the log text-----
 	AABB2 currentLogLineBounds = AABB2(Vector2(m_inputFieldBounds.mins.x, m_inputFieldBounds.mins.y + TEXT_HEIGHT), Vector2(m_consoleLogBounds.maxs.x, m_inputFieldBounds.maxs.y + TEXT_HEIGHT));
@@ -421,7 +438,7 @@ void DevConsole::RenderFPS() const
 	}
 
 	// Draw to screen
-	BitmapFont* font = renderer->CreateOrGetBitmapFont("SquirrelFixedFont");
+	BitmapFont* font = AssetDB::CreateOrGetBitmapFont("ConsoleFont.png");
 	Rgba color = Rgba::GREEN;
 	if (fps < 30.f)
 	{
@@ -452,12 +469,12 @@ void DevConsole::RenderFLChan() const
 
 	// Get the texture
 	Renderer* renderer = Renderer::GetInstance();
-	renderer->BindTexture(0, m_FLChanAnimations->GetTexture().GetHandle());
 
 	// Draw the current sprite in the animation
 	AABB2 uvs = m_FLChanAnimations->GetCurrentUVs();
-	renderer->DrawAABB2(smallDrawBounds, uvs, Rgba(255, 255, 255, 200));
-	renderer->DrawAABB2(largeDrawBounds, uvs, Rgba(255, 255, 255, 100));
+	Material* flChanMat = AssetDB::CreateOrGetSharedMaterial("FLChan");
+	renderer->Draw2DQuad(smallDrawBounds, uvs, Rgba(255, 255, 255, 200), flChanMat);
+	renderer->Draw2DQuad(largeDrawBounds, uvs, Rgba(255, 255, 255, 100), flChanMat);
 }
 
 
@@ -470,9 +487,8 @@ void DevConsole::SetUpFLChan()
 	m_FLChanAnimations = new SpriteAnimSet();
 
 	// Make the sprite sheet
-	Renderer* renderer = Renderer::GetInstance();
-	Texture* texture = renderer->CreateOrGetTexture("Data/Images/FLChan.png");
-	SpriteSheet* spriteSheet = new SpriteSheet("FLChan", *texture, IntVector2(8,10));
+	Texture* texture = AssetDB::CreateOrGetTexture("FLChan.png");
+	SpriteSheet* spriteSheet = new SpriteSheet(*texture, IntVector2(8,10));
 
 	// Iterate across all the animations of the sprite sheet
 	std::vector<int> currentAnimationIndices;
@@ -529,18 +545,20 @@ void DevConsole::Update()
 //
 void DevConsole::Render() const
 {
-	Renderer* renderer = SetUpRenderState();
-	BitmapFont* font = renderer->CreateOrGetBitmapFont("ConsoleFont");
+	Renderer* renderer = Renderer::GetInstance();
+	renderer->SetCurrentCamera(renderer->GetUICamera());
 
-	RenderInputField(renderer, font);
+	BitmapFont* font = AssetDB::CreateOrGetBitmapFont("ConsoleFont.png");
 
 	if (m_showLog)
 	{
+		RenderFLChan();	// Draw FLChan first, so text appears over her
 		RenderLogWindow(renderer, font);
 	}
 
+	RenderInputField(renderer, font);
+
 	RenderFPS();
-	RenderFLChan();
 }
 
 
@@ -550,6 +568,7 @@ void DevConsole::Render() const
 void DevConsole::Open()
 {
 	m_isOpen = true;
+	UpdateMouseCursorSettings();
 }
 
 
@@ -559,6 +578,7 @@ void DevConsole::Open()
 void DevConsole::Close()
 {
 	m_isOpen = false;
+	UpdateMouseCursorSettings();
 }
 
 
@@ -700,11 +720,14 @@ void DevConsole::Initialize()
 	s_instance = new DevConsole();
 
 	// Register commands related to the DevConsole
-	Command::Register("echo_with_color", "Prints the given text to screen with the given color",	Command_Echo);
+	Command::Register("echo",			"Prints the given text to screen with the given color",	Command_Echo);
 	Command::Register("save_log",		"Writes the output log to file",						Command_SaveLog);
 	Command::Register("clear",			"Clears the output log",								Command_Clear);
 	Command::Register("hide_log",		"Disables rendering of the log window and text",		Command_HideLog);
 	Command::Register("show_log",		"Enables rendering of the log window and text",			Command_ShowLog);
+
+	// Load the font here to prevent hitch on first log open
+	AssetDB::CreateOrGetBitmapFont("ConsoleFont.png");
 }
 
 
@@ -749,6 +772,7 @@ DevConsole* DevConsole::GetInstance()
 void DevConsole::ToggleConsole()
 {
 	s_instance->m_isOpen = !s_instance->m_isOpen;
+	s_instance->UpdateMouseCursorSettings();
 }
 
 
@@ -805,25 +829,37 @@ bool ConsoleMessageHandler(unsigned int msg, size_t wparam, size_t lparam)
 //
 void Command_Echo(Command& cmd)
 {
-	std::string textToEcho	= cmd.GetNextString();
-	std::string colorText	= cmd.GetNextString();
+	std::string textToEcho;
+	bool textSpecified = cmd.GetParam("t", textToEcho);
+	
+	std::string colorText;
+	bool colorSpecified	= cmd.GetParam("c", colorText);
 
-	if (colorText.size() > 0)
+	if (textSpecified)
 	{
-		Rgba color;
-		bool successful = color.SetFromText(colorText.c_str());
-		if (successful)
+		if (colorSpecified)
 		{
-			ConsolePrintf(color, textToEcho.c_str());
+			Rgba color;
+			bool successful = color.SetFromText(colorText.c_str());
+			if (successful)
+			{
+				ConsolePrintf(color, textToEcho.c_str());
+			}
+			else
+			{
+				ConsoleErrorf("Usage: echo -c <color> -t <text>");
+			}
 		}
 		else
 		{
-			ConsoleErrorf("Usage: echo <text_in_quotes> color");
+			// No color specified, so just print in white
+			ConsolePrintf(textToEcho.c_str());
 		}
 	}
 	else
 	{
-		ConsolePrintf(textToEcho.c_str());
+		ConsoleWarningf("No text specified to echo");
+		ConsoleErrorf("Usage: echo -c <color> -t <text>");
 	}
 }
 
@@ -834,8 +870,6 @@ void Command_Echo(Command& cmd)
 //
 void Command_SaveLog(Command& cmd)
 {
-	UNUSED(cmd);
-
 	// Assemble the log as a character array
 	std::vector<ConsoleOutputText> consoleLog = DevConsole::GetConsoleLog();
 	std::string result;
@@ -845,13 +879,13 @@ void Command_SaveLog(Command& cmd)
 	}
 
 	// Use the file name provided, or the default one if not
-	std::string filename = cmd.GetNextString();
-	if (filename.size() == 0)
-	{
-		filename = DEFAULT_LOG_FILENAME;
-	}
+	std::string filename;
+	cmd.GetParam("f", filename, &DEFAULT_LOG_FILENAME);
 	
 	std::string localLogFilePath = LOCAL_LOGS_DIRECTORY + filename;
+
+	// Check to see if the directory exists (will make it if it doesn't exist, do nothing otherwise)
+	CreateDirectoryA("Data/Logs", NULL);
 
 	// Attempt to write to the file
 	bool writeSucceeded = FileWriteFromBuffer(localLogFilePath.c_str(), result.c_str(), static_cast<int>(result.size()));
@@ -859,10 +893,6 @@ void Command_SaveLog(Command& cmd)
 	if (!writeSucceeded)
 	{
 		ConsoleErrorf("INVALID FILENAME: \"%s\"", filename.c_str());
-	}
-	else
-	{
-		ConsolePrintf("Console log saved to Data/Logs/%s.", filename.c_str());
 	}
 }
 

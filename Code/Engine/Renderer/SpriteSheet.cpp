@@ -4,14 +4,14 @@
 /* Date: March 14th, 2018
 /* Description: Implementation of the SpriteSheet class
 /************************************************************************/
+#include "Engine/Core/AssetDB.hpp"
 #include "Engine/Renderer/Sprite.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/XmlUtilities.hpp"
-#include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Renderer/SpriteSheet.hpp"
 
 // XML Format for a spritesheet
-// <spritesheet name="archer" texture="Data/Images/archer.png" layout="5,5"> // <--ROOT,  Layout currently not used with individual sprites
+// <spritesheet name="archer" texture="archer.png" layout="5,5"> // <--ROOT,  Layout currently not used with individual sprites
 //		<sprite name="archer_f.tr.idle">
 //			<ppu count="16" />
 //			<uv layout="pixel" or "normalized" uvs="10,14,25,40" or "0.1,0.2,0.4,0.5" flipX="true" flipY="false"/>
@@ -20,20 +20,14 @@
 //</spritesheet>
 
 
-// Map for all SpriteSheets used by the system
-std::map<std::string, SpriteSheet*> SpriteSheet::s_spriteSheets;
-
 //-----------------------------------------------------------------------------------------------
 // Only constructor for a SpriteSheet, no default (empty) constructor since the SpriteSheet
 // owns a Texture reference
 //
-SpriteSheet::SpriteSheet(const std::string& name, const Texture& texture, const IntVector2& spriteLayout)
-	: m_name(name) 
-	, m_texture(texture)
+SpriteSheet::SpriteSheet(const Texture& texture, const IntVector2& spriteLayout)
+	: m_texture(texture)
 	, m_spriteLayout(spriteLayout)
 {
-	// Add to the registry 
-	s_spriteSheets[name] = this;
 }
 
 
@@ -144,14 +138,13 @@ SpriteSheet* SpriteSheet::LoadSpriteSheet(const std::string& filePath)
 	// Texture
 	std::string textureName = ParseXmlAttribute(*rootElement, "texture");
 
-	Renderer* renderer = Renderer::GetInstance();
-	Texture* texture = renderer->CreateOrGetTexture(textureName);
+	Texture* texture = AssetDB::CreateOrGetTexture(textureName.c_str());
 
 	// Layout
 	IntVector2 layout = ParseXmlAttribute(*rootElement, "layout", IntVector2(1,1));
 
 	// Create the SpriteSheet
-	SpriteSheet* spriteSheet = new SpriteSheet(name, *texture, layout);
+	SpriteSheet* spriteSheet = new SpriteSheet(*texture, layout);
 
 	// Load the sprite information into the spritesheet
 	XMLElement* spriteElement = rootElement->FirstChildElement();
@@ -164,20 +157,6 @@ SpriteSheet* SpriteSheet::LoadSpriteSheet(const std::string& filePath)
 
 	// Return the sprite sheet
 	return spriteSheet;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Returns the SpriteSheet given by name, returns null if the spritesheet doesn't exist
-//
-SpriteSheet* SpriteSheet::GetResource(const std::string& name)
-{
-	if (s_spriteSheets.find(name) != s_spriteSheets.end())
-	{
-		return s_spriteSheets[name];
-	}
-
-	return nullptr;
 }
 
 

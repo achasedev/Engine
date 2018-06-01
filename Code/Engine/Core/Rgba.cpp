@@ -162,3 +162,32 @@ bool Rgba::SetFromText(const char* text)
 	return true;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns a random solid color
+//
+Rgba Rgba::GetRandomColor()
+{
+	unsigned char red,green,blue;
+
+	red = (unsigned char)GetRandomIntInRange(0, 255);
+	green = (unsigned char)GetRandomIntInRange(0, 255);
+	blue = (unsigned char)GetRandomIntInRange(0, 255);
+
+	return Rgba(red, green, blue, 255);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Comparison for Rgba's
+//
+bool Rgba::operator==(const Rgba& other) const
+{
+	bool rEquals = (r == other.r);
+	bool gEquals = (g == other.g);
+	bool bEquals = (b == other.b);
+	bool aEquals = (a == other.a);
+
+	return (rEquals && gEquals && bEquals && aEquals);
+}
+

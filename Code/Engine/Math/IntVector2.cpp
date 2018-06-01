@@ -58,6 +58,14 @@ IntVector2::IntVector2(const Vector2& floatVector)
 {
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Constructor - from single int value
+IntVector2::IntVector2(int initialValue)
+	: x(initialValue), y(initialValue)
+{
+}
+
 //------------------------------ Operator Overloads ---------------------------------------------
 
 //-----------------------------------------------------------------------------------------------

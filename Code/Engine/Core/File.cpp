@@ -22,6 +22,7 @@ void* FileReadToNewBuffer( char const *filename )
 	FILE *fp = nullptr; 
 	fopen_s( &fp, filename, "r" ); 
 	if (fp == nullptr) {
+		ERROR_RECOVERABLE(Stringf("Warning: FileReadToNewBuffer() couldn't open file \"%s\".", filename));
 		return nullptr; 
 	}
 
@@ -55,40 +56,13 @@ bool FileWriteFromBuffer(char const *filename, char const* buffer, int bufferSiz
 	int err = fclose(fp);
 	if (err == 0)
 	{
-		ConsolePrintf("File written to %s.", filename);
+		ConsolePrintf(Rgba::LIGHT_GREEN, "File written to %s.", filename);
 		return true;
 	}
-// 	else if (err == ENOENT)	// Directory doesn't exist, try making it
-// 	{
-// 		std::string localFilePath = std::string(filename);
-// 		unsigned int lastSlash = localFilePath.find_last_of('/');
-// 		if (lastSlash != std::string::npos)
-// 		{
-// 			std::string directoryPath = std::string(localFilePath, 0, lastSlash);
-// 			BOOL directorySuccess = CreateDirectoryA(directoryPath.c_str(), NULL);
-// 			if (directorySuccess)
-// 			{
-// 				ConsolePrintf("Directory made successfully, trying to write file again...");
-// 				fwrite(buffer, sizeof(char), bufferSize, fp);
-// 
-// 				int err = fclose(fp);
-// 				if (err == 0)
-// 				{
-// 					ConsolePrintf("File written to %s.", filename);
-// 					return true;
-// 				}
-// 
-// 			}
-// 			else
-// 			{
-// 				ConsoleErrorf("Could not create the directory %s!", directoryPath.c_str());
-// 				return false;
-// 			}
-// 		}
 
-		ConsoleErrorf("Could not write the file to the given path: %s!", filename);
-		return false;
-	//}
+
+	ConsoleErrorf("Could not write the file to the given path: %s!", filename);
+	return false;
 }
 
 

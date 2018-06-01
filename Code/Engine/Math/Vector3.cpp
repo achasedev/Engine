@@ -46,6 +46,7 @@ Vector3::Vector3( float initialX, float initialY, float initialZ)
 
 //-----------------------------------------------------------------------------------------------
 // Constructor - from an IntVector3
+//
 Vector3::Vector3(const IntVector3& intVector)
 {
 	x = static_cast<float>(intVector.x);
@@ -53,6 +54,14 @@ Vector3::Vector3(const IntVector3& intVector)
 	z = static_cast<float>(intVector.z);
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Constructor - from a single float value
+//
+Vector3::Vector3(float value)
+	: x(value), y(value), z(value)
+{
+}
 
 //------------------------------ Operator Overloads ---------------------------------------------
 
@@ -214,30 +223,41 @@ Vector3 Vector3::GetNormalized() const
 //-----------------------------------------------------------------------------------------------
 // Sets the Vector2 to the values represented in the text passed
 //
-void Vector3::SetFromText(const char* text)
+bool Vector3::SetFromText(const char* text)
 {
+	bool usingCommas = true;
 	std::string stringText = std::string(text);
 
 	int firstComma = static_cast<int>(stringText.find(","));
 
-	// No comma present in text
+	// No comma present in text, so instead look for spaces
 	if (firstComma == static_cast<int>(std::string::npos))
 	{
-		return;
+		usingCommas = false;
+		firstComma = static_cast<int>(stringText.find(" "));
+
+		// No spaces either, so return false
+		if (firstComma == static_cast<int>(std::string::npos))
+		{
+			return false;
+		}
 	}
 
-	int secondComma = static_cast<int>(stringText.find(",", firstComma + 1));
+	// Look for a comma or space, depending on the first comma/space
+	int secondComma = (usingCommas ? static_cast<int>(stringText.find(",", firstComma + 1)) : static_cast<int>(stringText.find(" ", firstComma + 1)));
 
-	// No second comma present in text
+	// No second comma/space present in text
 	if (secondComma == static_cast<int>(std::string::npos))
 	{
-		return;
+		return false;
 	}
 
 	// Set the values
 	x = static_cast<float>(atof(std::string(stringText, 0, firstComma).c_str()));
 	y = static_cast<float>(atof(std::string(stringText, firstComma + 1, secondComma - firstComma - 1).c_str()));
 	z = static_cast<float>(atof(std::string(stringText, secondComma + 1).c_str()));
+
+	return true;
 }
 
 
@@ -264,6 +284,24 @@ Vector3 Vector3::GetRandomVector(float desiredMagnitude)
 	Vector3 randomUnitVector = randomVector.GetNormalized();
 
 	return (desiredMagnitude * randomUnitVector);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the vector spherically lerped between start and end by percent
+//
+Vector3 Vector3::Slerp(const Vector3& start, const Vector3& end, float percent)
+{
+	float dot = DotProduct(start, end);
+	dot = ClampFloat(dot, -1.0f, 1.0f); // Clamp for safety
+
+	float theta = acosf(dot) * percent;	// Angle between start and the result we want
+	
+	Vector3 relative = (end - start * dot).GetNormalized(); // Direction we need to move towards result
+
+	Vector3 result = start * cosf(theta) + relative * sinf(theta); // Get the result
+
+	return result;
 }
 
 

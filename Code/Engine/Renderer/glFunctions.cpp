@@ -5,9 +5,9 @@
 /* Bugs: None
 /* Description: Initializes the gl functions handles to null
 /************************************************************************/
-#include "Engine/Renderer/glFunctions.hpp"
+#include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EngineCommon.hpp"
-
+#include "Engine/Renderer/glFunctions.hpp"
 // Members needed to create a modern context
 HMODULE gGLLibrary  = NULL; 
 HWND gGLwnd         = NULL;    // window our context is attached to; 
@@ -23,19 +23,39 @@ PFNWGLCREATECONTEXTATTRIBSARBPROC	wglCreateContextAttribsARB = nullptr;
 PFNGLCLEARPROC			glClear = nullptr;
 PFNGLCLEARCOLORPROC		glClearColor = nullptr;
 
-PFNGLENABLEPROC			glEnable = nullptr;
-PFNGLBLENDFUNCPROC		glBlendFunc = nullptr;
+PFNGLENABLEPROC					glEnable = nullptr;
+PFNGLDISABLEPROC				glDisable = nullptr;
+PFNGLBLENDFUNCPROC				glBlendFunc = nullptr;
+PFNGLBLENDFUNCSEPARATEPROC		glBlendFuncSeparate = nullptr;
+PFNGLBLENDEQUATIONPROC			glBlendEquation = nullptr;
+PFNGLBLENDEQUATIONSEPARATEPROC	glBlendEquationSeparate = nullptr;
+PFNGLLINEWIDTHPROC				glLineWidth = nullptr;
+PFNGLPOLYGONMODEPROC			glPolygonMode = nullptr;
+PFNGLFRONTFACEPROC				glFrontFace = nullptr;
+PFNGLCULLFACEPROC				glCullFace = nullptr;
 
 PFNGLGETATTRIBLOCATIONPROC			glGetAttribLocation = nullptr;
 PFNGLENABLEVERTEXATTRIBARRAYPROC	glEnableVertexAttribArray = nullptr;
 PFNGLVERTEXATTRIBPOINTERPROC		glVertexAttribPointer = nullptr;
+PFNGLVERTEXATTRIBDIVISORPROC		glVertexAttribDivisor = nullptr;
 PFNGLGETUNIFORMLOCATIONPROC			glGetUniformLocation = nullptr;
 PFNGLUNIFORMMATRIX4FVPROC			glUniformMatrix4fv = nullptr;
+PFNGLUNIFORM1IPROC					glUniform1i = nullptr;
+PFNGLUNIFORM1UIPROC					glUniform1ui = nullptr;
 PFNGLUNIFORM1FPROC					glUniform1f = nullptr;
+PFNGLUNIFORM2FPROC					glUniform2f = nullptr;
+PFNGLUNIFORM3FPROC					glUniform3f = nullptr;
+PFNGLUNIFORM4FPROC					glUniform4f = nullptr;
 PFNGLUSEPROGRAMPROC					glUseProgram = nullptr;
 PFNGLDRAWARRAYSPROC					glDrawArrays = nullptr;
 PFNGLDRAWELEMENTSPROC				glDrawElements = nullptr;
+PFNGLDRAWARRAYSINSTANCEDPROC		glDrawArraysInstanced = nullptr;
+PFNGLDRAWELEMENTSINSTANCEDPROC		glDrawElementsInstanced = nullptr;
 
+PFNGLGETACTIVEUNIFORMNAMEPROC		glGetActiveUniformName = nullptr;
+PFNGLGETACTIVEUNIFORMBLOCKIVPROC	glGetActiveUniformBlockiv = nullptr;
+PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC	glGetActiveUniformBlockName = nullptr;
+PFNGLGETACTIVEUNIFORMSIVPROC		glGetActiveUniformsiv = nullptr;
 
 //----------GL Shader functions----------
 PFNGLCREATESHADERPROC		glCreateShader = nullptr;
@@ -55,10 +75,13 @@ PFNGLGETPROGRAMINFOLOGPROC	glGetProgramInfoLog = nullptr;
 //----------Vertex Array Objects----------
 PFNGLGENVERTEXARRAYSPROC	glGenVertexArrays = nullptr;
 PFNGLBINDVERTEXARRAYPROC	glBindVertexArray = nullptr;
+PFNGLDELETEVERTEXARRAYSPROC	glDeleteVertexArrays = nullptr;
+PFNGLISVERTEXARRAYPROC		glIsVertexArray = nullptr;
 
 //----------Render Buffer----------
 PFNGLGENBUFFERSPROC			glGenBuffers = nullptr;
 PFNGLBINDBUFFERPROC			glBindBuffer = nullptr;
+PFNGLBINDBUFFERBASEPROC		glBindBufferBase = nullptr;
 PFNGLBUFFERDATAPROC			glBufferData = nullptr;
 PFNGLDELETEBUFFERSPROC      glDeleteBuffers = nullptr;
 
@@ -247,18 +270,39 @@ void BindGLFunctions()
 	GL_BIND_FUNCTION(glClearColor);
 
 	GL_BIND_FUNCTION(glEnable);
+	GL_BIND_FUNCTION(glDisable);
 	GL_BIND_FUNCTION(glBlendFunc);
+	GL_BIND_FUNCTION(glBlendFuncSeparate);
+	GL_BIND_FUNCTION(glBlendEquation);
+	GL_BIND_FUNCTION(glBlendEquationSeparate);
+	GL_BIND_FUNCTION(glLineWidth);
+	GL_BIND_FUNCTION(glPolygonMode);
+	GL_BIND_FUNCTION(glFrontFace);
+	GL_BIND_FUNCTION(glCullFace);
 
 	GL_BIND_FUNCTION(glGetAttribLocation);
 	GL_BIND_FUNCTION(glEnableVertexAttribArray);
+	GL_BIND_FUNCTION(glVertexAttribDivisor);
 	GL_BIND_FUNCTION(glVertexAttribPointer);
 	GL_BIND_FUNCTION(glGetUniformLocation);
 	GL_BIND_FUNCTION(glUniformMatrix4fv);
+	GL_BIND_FUNCTION(glUniform1i);
+	GL_BIND_FUNCTION(glUniform1ui);
 	GL_BIND_FUNCTION(glUniform1f);
+	GL_BIND_FUNCTION(glUniform2f);
+	GL_BIND_FUNCTION(glUniform3f);
+	GL_BIND_FUNCTION(glUniform4f);
+
+	GL_BIND_FUNCTION(glGetActiveUniformName);
+	GL_BIND_FUNCTION(glGetActiveUniformBlockiv);
+	GL_BIND_FUNCTION(glGetActiveUniformBlockName);
+	GL_BIND_FUNCTION(glGetActiveUniformsiv);
 
 	GL_BIND_FUNCTION(glUseProgram);
 	GL_BIND_FUNCTION(glDrawArrays);
 	GL_BIND_FUNCTION(glDrawElements);
+	GL_BIND_FUNCTION(glDrawArraysInstanced);
+	GL_BIND_FUNCTION(glDrawElementsInstanced);
 
 	// Shader functions
 	GL_BIND_FUNCTION(glCreateShader);
@@ -279,10 +323,13 @@ void BindGLFunctions()
 	// VAO
 	GL_BIND_FUNCTION(glGenVertexArrays);
 	GL_BIND_FUNCTION(glBindVertexArray);
+	GL_BIND_FUNCTION(glDeleteVertexArrays);
+	GL_BIND_FUNCTION(glIsVertexArray);
 
 	// Render Buffer
 	GL_BIND_FUNCTION(glGenBuffers);
 	GL_BIND_FUNCTION(glBindBuffer);
+	GL_BIND_FUNCTION(glBindBufferBase);
 	GL_BIND_FUNCTION(glBufferData);
 	GL_BIND_FUNCTION(glDeleteBuffers);
 
@@ -396,6 +443,7 @@ bool GLCheckError( char const *file, int line )
 	GLenum error = glGetError();
 	if (error != GL_NO_ERROR) {
 		DebuggerPrintf("GL ERROR [0x%04x] at [%s(%i)]\n", error, file, line);
+		ConsoleErrorf("GL ERROR [0x%04x] at [%s(%i)]\n", error, file, line);
 		return true; 
 	}
 #endif

@@ -1,10 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="General">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
     <Filter Include="Math">
       <UniqueIdentifier>{531de8da-7621-4a9a-81b4-b4b68221f775}</UniqueIdentifier>
     </Filter>
@@ -49,6 +45,27 @@
     </Filter>
     <Filter Include="Core\Time">
       <UniqueIdentifier>{594dfe6a-3eed-4c4a-b71e-8d250b3b0e64}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering\DebugRendering">
+      <UniqueIdentifier>{cadf7509-3dc4-4cc3-8796-cb14677478a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering\Buffers">
+      <UniqueIdentifier>{ebda6ede-0d32-4e42-9fd8-af2e552761d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Assets">
+      <UniqueIdentifier>{acd0c6bf-18c1-467b-85e5-af60570aaedd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\mikkt">
+      <UniqueIdentifier>{49202a51-d509-4d01-89fc-22f921d996c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering\Materials">
+      <UniqueIdentifier>{e1cfb48f-7d2a-41ec-b03d-d4caa2170c89}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering\Shaders">
+      <UniqueIdentifier>{4b65072b-87dd-4d0e-a627-c66c74f98426}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering\ParticleSystem">
+      <UniqueIdentifier>{7465d6cd-05da-4b3f-b0f4-73b3057566b5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -127,12 +144,6 @@
     <ClCompile Include="Renderer\glFunctions.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\ShaderProgram.cpp">
-      <Filter>Rendering</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\RenderBuffer.cpp">
-      <Filter>Rendering</Filter>
-    </ClCompile>
     <ClCompile Include="..\ThirdParty\stb\stb_image.c">
       <Filter>ThirdParty\stb</Filter>
     </ClCompile>
@@ -175,9 +186,6 @@
     <ClCompile Include="Renderer\Camera.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\FrameBuffer.cpp">
-      <Filter>Rendering</Filter>
-    </ClCompile>
     <ClCompile Include="Math\Vector4.cpp">
       <Filter>Math</Filter>
     </ClCompile>
@@ -201,6 +209,150 @@
     </ClCompile>
     <ClCompile Include="Core\Stopwatch.cpp">
       <Filter>Core\Time</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Mesh.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\MeshBuilder.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\AABB3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Transform.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Input\Mouse.cpp">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DebugRenderSystem.cpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DebugRenderTask.cpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DebugRenderTask_Point.cpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ScopedProfiler.cpp">
+      <Filter>Core\Time</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DebugRenderTask_Line3D.cpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DebugRenderTask_Basis.cpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Vertex.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DebugRenderTask_UVSphere.cpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DebugRenderTask_Cube.cpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DebugRenderTask_Quad3D.cpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DebugRenderTask_Quad2D.cpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DebugRenderTask_Line2D.cpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DebugRenderTask_Text2D.cpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\FrameBuffer.cpp">
+      <Filter>Rendering\Buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\IndexBuffer.cpp">
+      <Filter>Rendering\Buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\RenderBuffer.cpp">
+      <Filter>Rendering\Buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\VertexBuffer.cpp">
+      <Filter>Rendering\Buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\UniformBuffer.cpp">
+      <Filter>Rendering\Buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\glTypes.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\AssetCollection.cpp">
+      <Filter>Core\Assets</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\AssetDB.cpp">
+      <Filter>Core\Assets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\mikkt\mikktspace.c">
+      <Filter>ThirdParty\mikkt</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Material.cpp">
+      <Filter>Rendering\Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\ShaderSource.cpp">
+      <Filter>Rendering\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\ShaderProgram.cpp">
+      <Filter>Rendering\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Shader.cpp">
+      <Filter>Rendering\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\MaterialPropertyBlock.cpp">
+      <Filter>Rendering\Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\PropertyDescription.cpp">
+      <Filter>Rendering\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\PropertyBlockDescription.cpp">
+      <Filter>Rendering\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\ShaderDescription.cpp">
+      <Filter>Rendering\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Renderable.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\MaterialInstance.cpp">
+      <Filter>Rendering\Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\RenderScene.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\ForwardRenderingPath.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DrawCall.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Light.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\GameObject.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\MeshGroup.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\MeshGroupBuilder.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Particle.cpp">
+      <Filter>Rendering\ParticleSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\ParticleEmitter.cpp">
+      <Filter>Rendering\ParticleSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\TextureCube.cpp">
+      <Filter>Rendering\Image Data</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Skybox.cpp">
+      <Filter>Rendering\Image Data</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -279,12 +431,6 @@
     <ClInclude Include="Renderer\glFunctions.hpp">
       <Filter>Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\ShaderProgram.hpp">
-      <Filter>Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\RenderBuffer.hpp">
-      <Filter>Rendering</Filter>
-    </ClInclude>
     <ClInclude Include="..\ThirdParty\fmod\fmod.h">
       <Filter>ThirdParty\fmod</Filter>
     </ClInclude>
@@ -360,9 +506,6 @@
     <ClInclude Include="Renderer\Camera.hpp">
       <Filter>Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\FrameBuffer.hpp">
-      <Filter>Rendering</Filter>
-    </ClInclude>
     <ClInclude Include="Math\Vector4.hpp">
       <Filter>Math</Filter>
     </ClInclude>
@@ -374,9 +517,6 @@
     </ClInclude>
     <ClInclude Include="..\ThirdParty\stb\stb_image_write.h">
       <Filter>ThirdParty\stb</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\ShaderSource.hpp">
-      <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\Sprite.hpp">
       <Filter>Rendering\Image Data</Filter>
@@ -392,6 +532,150 @@
     </ClInclude>
     <ClInclude Include="Core\Stopwatch.hpp">
       <Filter>Core\Time</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Mesh.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\MeshBuilder.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\AABB3.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Transform.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\Mouse.hpp">
+      <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DebugRenderSystem.hpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DebugRenderTask.hpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DebugRenderTask_Point.hpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ScopedProfiler.hpp">
+      <Filter>Core\Time</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DebugRenderTask_Line3D.hpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DebugRenderTask_Basis.hpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Vertex.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DebugRenderTask_UVSphere.hpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DebugRenderTask_Cube.hpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DebugRenderTask_Quad3D.hpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DebugRenderTask_Quad2D.hpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DebugRenderTask_Line2D.hpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DebugRenderTask_Text2D.hpp">
+      <Filter>Rendering\DebugRendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\FrameBuffer.hpp">
+      <Filter>Rendering\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\IndexBuffer.hpp">
+      <Filter>Rendering\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\RenderBuffer.hpp">
+      <Filter>Rendering\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\VertexBuffer.hpp">
+      <Filter>Rendering\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\UniformBuffer.hpp">
+      <Filter>Rendering\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\glTypes.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\AssetCollection.hpp">
+      <Filter>Core\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\AssetDB.hpp">
+      <Filter>Core\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\mikkt\mikktspace.h">
+      <Filter>ThirdParty\mikkt</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Material.hpp">
+      <Filter>Rendering\Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\ShaderSource.hpp">
+      <Filter>Rendering\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\ShaderProgram.hpp">
+      <Filter>Rendering\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Shader.hpp">
+      <Filter>Rendering\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\MaterialPropertyBlock.hpp">
+      <Filter>Rendering\Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\PropertyDescription.hpp">
+      <Filter>Rendering\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\PropertyBlockDescription.hpp">
+      <Filter>Rendering\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\ShaderDescription.hpp">
+      <Filter>Rendering\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Renderable.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\MaterialInstance.hpp">
+      <Filter>Rendering\Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\RenderScene.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\ForwardRenderingPath.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DrawCall.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Light.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\GameObject.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\MeshGroup.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\MeshGroupBuilder.hpp">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Particle.hpp">
+      <Filter>Rendering\ParticleSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\ParticleEmitter.hpp">
+      <Filter>Rendering\ParticleSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\TextureCube.hpp">
+      <Filter>Rendering\Image Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Skybox.hpp">
+      <Filter>Rendering\Image Data</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

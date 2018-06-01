@@ -71,95 +71,20 @@ std::string Command::GetName()
 
 
 //-----------------------------------------------------------------------------------------------
-// Removes and returns the next string argument in the m_arguments member
-// If the next argument is in quotes, it returns the string within the quotes, ignoring whitespace
-// Otherwise, it returns the string ending at the first whitespace
-// If m_arguments is empty, it returns an empty string
+// Gets the parameter value for the given flag and returns it in out_string
+// Returns true if it exists, false otherwise
 //
-std::string Command::GetNextString()
-{
-	// If no arguments left return an empty string
-	if (m_arguments.size() == 0)
-	{
-		return m_arguments;
-	}
-
-	// Used to track when the argument ends
-	int endArgumentIndex = static_cast<int>(std::string::npos);
-	std::string nextArgument;
-
-	// If the first character of m_arguments is a quote, then next argument ends at the close quote
-	if (m_arguments[0] == '\"')
-	{
-		endArgumentIndex = static_cast<int>(m_arguments.find_first_of('\"', 1));
-		if (endArgumentIndex == static_cast<int>(std::string::npos))
-		{
-			ERROR_AND_DIE(Stringf("Quotes don't line up: %s", m_arguments.c_str()));
-		}
-
-		nextArgument = std::string(m_arguments, 1, endArgumentIndex - 1);
-	}
-	// Else the argument doesn't start with quote, so we just end the argument by the next white space
-	else
-	{
-		endArgumentIndex = static_cast<int>(m_arguments.find_first_of(' '));
-		
-		// No more white spaces exist, so return the rest of m_arguments
-		if (endArgumentIndex == static_cast<int>(std::string::npos))
-		{
-			nextArgument = m_arguments;
-			m_arguments = std::string("");
-			return nextArgument;
-		}
-		else
-		{
-			nextArgument = std::string(m_arguments, 0, endArgumentIndex);
-		}
-	}
-
-	// Cleaning up m_arguments by removing the next argument from it
-	int remainingArgumentIndex = static_cast<int>(m_arguments.find_first_not_of(' ', endArgumentIndex + 1));
-	if (remainingArgumentIndex == static_cast<int>(std::string::npos))
-	{
-		m_arguments = std::string("");
-	}
-	else
-	{
-		m_arguments = std::string(m_arguments, remainingArgumentIndex);
-	}
-
-	return nextArgument;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Reads the next argument and interprets it as an int
-//
-bool Command::GetNextInt(int *out_val)
-{
-	*out_val = TextToInt(GetNextString().c_str());
-	return true;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Adds the name and callback pair to the registry, checking for duplicates
-//
-bool Command::GetNextColor(Rgba *out_val)
-{
-	std::string text = GetNextString();
-	return out_val->SetFromText(text.c_str());
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Adds the name and callback pair to the registry, checking for duplicates
-//
-bool Command::GetNextVector2(Vector2 *out_val)
-{
-	std::string text = GetNextString();
-	return out_val->SetFromText(text.c_str());
-}
+// bool Command::GetParam(const std::string& flag, std::string& out_string)
+// {
+// 	bool flagExists = m_arguments.find(flag) != m_arguments.end();
+// 
+// 	if (flagExists)
+// 	{
+// 		out_string = m_arguments[flag];
+// 	}
+// 
+// 	return flagExists;
+// }
 
 
 //-----------------------------------------------------------------------------------------------
@@ -261,16 +186,86 @@ void Command::ParseNameAndArguments(const std::string& commandLine)
 		// Set the name
 		m_name = std::string(commandLine, nameStart, nameEnd - nameStart);
 
-		// Save the rest of the arguments
-		int argumentStart = static_cast<int>(commandLine.find_first_not_of(' ', nameEnd));
+		// Parse the rest of the arguments
+		int dashIndex = static_cast<int>(commandLine.find_first_of('-', nameEnd));
 
-		// Only set m_arguments if non-whitespace characters follow name
-		if (argumentStart != static_cast<int>(std::string::npos))
+		while (dashIndex != static_cast<int>(std::string::npos))
 		{
-			m_arguments = std::string(commandLine, argumentStart);
+			int endIndex = ParseSingleArgument(commandLine, dashIndex);
+
+			// Increment and continue
+			dashIndex = static_cast<int>(commandLine.find_first_of('-', endIndex));
 		}
 	}
 }
+
+
+//-----------------------------------------------------------------------------------------------
+// Parses the command line for the next flag/param from the start index
+//
+int Command::ParseSingleArgument(const std::string& commandLine, int dashIndex)
+{
+	int flagNameEnd = static_cast<int>(commandLine.find_first_of(' ', dashIndex));
+
+	// The rest of the line is just a single flag with no param value associated, so throw it out
+	if (flagNameEnd == static_cast<int>(std::string::npos))
+	{
+		return dashIndex + 1;
+	}
+
+	int flagLength = flagNameEnd - dashIndex - 1;
+
+	// Just a dash is specified, no name for the flag after it, so ignore it
+	if (flagLength == 0)
+	{
+		return dashIndex + 1;
+	}
+
+	std::string flagName = std::string(commandLine, dashIndex + 1, flagLength);
+	std::string paramValue;
+
+	// Get the parameter value
+	int paramValueStart = static_cast<int>(commandLine.find_first_not_of(' '), flagNameEnd + 1);
+
+	// No param value specified for the flag, and no other data is associated afterward so exit
+	if (paramValueStart == static_cast<int>(std::string::npos))
+	{
+		return dashIndex + 1;
+	}
+
+	int paramValueEnd = static_cast<int>(commandLine.find_first_of(' ', paramValueStart));
+
+	// No more spaces in the param value string, so pull the rest of the command line as the value
+	if (paramValueEnd == static_cast<int>(std::string::npos))
+	{
+		paramValue = std::string(commandLine, paramValueStart, paramValueEnd);
+	}
+	else
+	{
+		// Pull the param value
+		paramValue = std::string(commandLine, paramValueStart, paramValueEnd - paramValueStart);
+	}
+
+	// Add to the map of params
+	AddArgumentToMap(flagName, paramValue);
+
+	return paramValueEnd;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Adds the argument flag/value pair to the argument map if it doesn't exist
+//
+void Command::AddArgumentToMap(const std::string& flag, const std::string& value)
+{
+	bool alreadyExists = m_arguments.find(flag) != m_arguments.end();
+
+	if (!alreadyExists)
+	{
+		m_arguments[flag] = value;
+	}
+}
+
 
 //-----COMMANDS-----
 
@@ -284,12 +279,12 @@ void Command_Help(Command &cmd)
 	const std::map<std::string, CommandRegistration*>& commandRegistry = Command::GetCommands();
 	std::map<std::string, CommandRegistration*>::const_iterator itr = commandRegistry.begin();
 
-	ConsolePrintf("-----Begin Help-----");
+	ConsolePrintf(Rgba::LIGHT_GREEN, "-----Begin Help-----");
 	int commandCount = 0;
 	for (itr; itr != commandRegistry.end(); itr++)
 	{
 		ConsolePrintf("%s: %s", itr->second->m_name.c_str(), itr->second->m_description.c_str());
 		commandCount++;
 	}
-	ConsolePrintf("-----End Help, %i results-----", commandCount);
+	ConsolePrintf(Rgba::LIGHT_GREEN, "-----End Help, %i results-----", commandCount);
 }

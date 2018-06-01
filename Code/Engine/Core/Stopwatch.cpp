@@ -169,9 +169,18 @@ bool Stopwatch::HasIntervalElapsed() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the total time of the stopwatch's reference clock
+//
+float Stopwatch::GetTotalSeconds() const
+{
+	return m_referenceClock->GetTotalSeconds();
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the delta time of the stopwatch's reference clock
 //
 float Stopwatch::GetDeltaSeconds() const
 {
-	return m_referenceClock->GetFrameSeconds();
+	return m_referenceClock->GetDeltaTime();
 }

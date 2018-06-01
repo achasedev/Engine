@@ -7,9 +7,9 @@
 /* Description: Class used for keyboard and Xbox Controller input
 /************************************************************************/
 #pragma once
+#include "Engine/Input/Mouse.hpp"
 #include "Engine/Input/KeyButtonState.hpp"
 #include "Engine/Input/XboxController.hpp"
-
 
 class InputSystem
 {
@@ -25,7 +25,7 @@ public:
 
 	void OnKeyPressed(unsigned char keyCode);		// Used WM_KeyDown events
 	void OnKeyReleased(unsigned char keyCode);		// Used with WM_KeyUp events
-
+			
 	// Accessors for Keystates
 	bool IsKeyPressed(unsigned char keyCode) const;
 	bool WasKeyJustPressed(unsigned char keyCode) const;
@@ -36,7 +36,9 @@ public:
 
 	// Accessor for the singleton instance
 	static InputSystem* GetInstance();
+	static Mouse& GetMouse();
 	static XboxController& GetPlayerOneController();
+
 
 private:
 	//-----Private Methods-----
@@ -47,6 +49,7 @@ private:
 
 	void ResetJustKeyStates();	// Resets the 'Just' key states every frame
 	void UpdateControllers();	// Fetches controller input from XInput
+
 
 public:
 	//-----Public Data-----
@@ -71,11 +74,14 @@ public:
 	static const unsigned char  KEYBOARD_F10;
 	static const unsigned char  KEYBOARD_TILDE;
 
+
 private:
 	//-----Private Data-----
 
+	Mouse m_mouse;
 	KeyButtonState m_keyStates[NUM_KEYS];
 	XboxController m_xboxControllers[NUM_CONTROLLERS];
 
 	static InputSystem* s_instance;	// The singleton InputSystem instance
+
 };

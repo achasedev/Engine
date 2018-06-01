@@ -6,11 +6,12 @@
 /* Bugs: None
 /* Description: Implementation of the InputSystem class
 /************************************************************************/
+#include "Engine/Core/Window.hpp"
+#include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #define WIN32_LEAN_AND_MEAN			// Always #define this before #including <windows.h>
 #include <windows.h>
-#include "Engine/Core/EngineCommon.hpp"
-
 
 // Singleton instance
 InputSystem* InputSystem::s_instance = nullptr;
@@ -33,6 +34,50 @@ const unsigned char	InputSystem::KEYBOARD_UP_ARROW		= VK_UP;
 const unsigned char	InputSystem::KEYBOARD_DOWN_ARROW	= VK_DOWN;
 const unsigned char	InputSystem::KEYBOARD_RIGHT_ARROW	= VK_RIGHT;
 const unsigned char InputSystem::KEYBOARD_TILDE			= VK_OEM_3;
+
+
+//-----------------------------------------------------------------------------------------------
+// Handles messages for input from windows
+//
+bool InputMessageHandler(unsigned int msg, size_t wparam, size_t lparam)
+{
+	UNUSED(lparam);
+
+	// Process the message and pass to the input system if a key was pressed
+	unsigned char keyCode = (unsigned char) wparam;
+	switch( msg )
+	{
+	// Raw physical keyboard "key-was-just-pressed" event (case-insensitive, not translated)
+	case WM_KEYDOWN:
+	{
+		// Process which key was pressed
+		InputSystem::GetInstance()->OnKeyPressed(keyCode);
+		break;
+	}
+
+	// Raw physical keyboard "key-was-just-released" event (case-insensitive, not translated)
+	case WM_KEYUP:
+	{
+		// Process which key was released
+		InputSystem::GetInstance()->OnKeyReleased(keyCode);
+		break;
+	}
+
+	// Mouse input - all handled the same way
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+		InputSystem::GetMouse().OnMouseButton((unsigned short) wparam);
+		break;
+	case WM_MOUSEHWHEEL:
+		InputSystem::GetMouse().OnMouseWheel((unsigned short) wparam);
+		break;
+	} 
+
+	return true;
+}
+
 
 //-----------------------------------------------------------------------------------------------
 // Constructor - Creates 4 XboxControllers with their ID's equal to their index in the array
@@ -71,7 +116,7 @@ void RunMessagePump()
 		}
 
 		TranslateMessage( &queuedMessage );
-		DispatchMessage( &queuedMessage ); // This tells Windows to call our "WindowsMessageHandlingProcedure" function
+		DispatchMessage( &queuedMessage );
 	}
 }
 
@@ -83,6 +128,9 @@ void InputSystem::Initialize()
 {
 	GUARANTEE_OR_DIE(s_instance == nullptr, "Error: InputSystem::Initialize() called with an existing instance.");
 	s_instance = new InputSystem();
+
+	// Set up the message handler
+	Window::GetInstance()->RegisterHandler(InputMessageHandler);
 }
 
 
@@ -104,6 +152,7 @@ void InputSystem::Shutdown()
 //
 void InputSystem::BeginFrame()
 {
+	m_mouse.BeginFrame();
 	ResetJustKeyStates();
 	UpdateControllers();
 	RunMessagePump();
@@ -184,6 +233,15 @@ XboxController& InputSystem::GetController(int controllerNumber)
 InputSystem* InputSystem::GetInstance()
 {
 	return s_instance;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the mouse object for the input system
+//
+Mouse& InputSystem::GetMouse()
+{
+	return s_instance->m_mouse;
 }
 
 

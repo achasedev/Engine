@@ -33,17 +33,39 @@ extern PFNGLCLEARPROC					glClear;
 extern PFNGLCLEARCOLORPROC				glClearColor;
 
 extern PFNGLENABLEPROC					glEnable;
+extern PFNGLDISABLEPROC					glDisable;
 extern PFNGLBLENDFUNCPROC				glBlendFunc;
+extern PFNGLBLENDFUNCSEPARATEPROC		glBlendFuncSeparate;
+extern PFNGLBLENDEQUATIONPROC			glBlendEquation;
+extern PFNGLBLENDEQUATIONSEPARATEPROC	glBlendEquationSeparate;
+extern PFNGLLINEWIDTHPROC				glLineWidth;
+extern PFNGLPOLYGONMODEPROC				glPolygonMode;
+extern PFNGLFRONTFACEPROC				glFrontFace;
+extern PFNGLCULLFACEPROC				glCullFace;
 
+// Uniforms and attributes
 extern PFNGLGETATTRIBLOCATIONPROC		glGetAttribLocation;
 extern PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
 extern PFNGLVERTEXATTRIBPOINTERPROC		glVertexAttribPointer;
+extern PFNGLVERTEXATTRIBDIVISORPROC		glVertexAttribDivisor;
 extern PFNGLGETUNIFORMLOCATIONPROC		glGetUniformLocation;
 extern PFNGLUNIFORMMATRIX4FVPROC		glUniformMatrix4fv;
+extern PFNGLUNIFORM1IPROC				glUniform1i;
+extern PFNGLUNIFORM1UIPROC				glUniform1ui;
 extern PFNGLUNIFORM1FPROC				glUniform1f;
+extern PFNGLUNIFORM2FPROC				glUniform2f;
+extern PFNGLUNIFORM3FPROC				glUniform3f;
+extern PFNGLUNIFORM4FPROC				glUniform4f;
 extern PFNGLUSEPROGRAMPROC				glUseProgram;
 extern PFNGLDRAWARRAYSPROC				glDrawArrays;
 extern PFNGLDRAWELEMENTSPROC			glDrawElements;
+extern PFNGLDRAWARRAYSINSTANCEDPROC		glDrawArraysInstanced;
+extern PFNGLDRAWELEMENTSINSTANCEDPROC	glDrawElementsInstanced;
+
+extern PFNGLGETACTIVEUNIFORMNAMEPROC		glGetActiveUniformName;
+extern PFNGLGETACTIVEUNIFORMBLOCKIVPROC		glGetActiveUniformBlockiv;
+extern PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC	glGetActiveUniformBlockName;
+extern PFNGLGETACTIVEUNIFORMSIVPROC			glGetActiveUniformsiv;
 
 // GL shader functions
 extern PFNGLCREATESHADERPROC		glCreateShader;
@@ -63,10 +85,13 @@ extern PFNGLGETPROGRAMINFOLOGPROC	glGetProgramInfoLog;
 // For Vertex Array Objects
 extern PFNGLGENVERTEXARRAYSPROC		glGenVertexArrays;
 extern PFNGLBINDVERTEXARRAYPROC		glBindVertexArray;
+extern PFNGLDELETEVERTEXARRAYSPROC	glDeleteVertexArrays;
+extern PFNGLISVERTEXARRAYPROC		glIsVertexArray;
 
 // RenderBuffer
 extern PFNGLGENBUFFERSPROC			glGenBuffers;
 extern PFNGLBINDBUFFERPROC			glBindBuffer;
+extern PFNGLBINDBUFFERBASEPROC		glBindBufferBase;
 extern PFNGLBUFFERDATAPROC			glBufferData;
 extern PFNGLDELETEBUFFERSPROC       glDeleteBuffers;
 
@@ -132,4 +157,3 @@ bool GLCheckError(char const *file, int line);
 bool GLFailed();
 bool GLSucceeded();
 #define GL_CHECK_ERROR()  GLCheckError( __FILE__, __LINE__ )
-

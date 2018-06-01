@@ -14,6 +14,8 @@
 #include "Engine/Math/IntRange.hpp"
 #include "Engine/Math/IntVector2.hpp"
 
+// Constants
+const float PI = 3.1415926535897932384626433832795f;
 
 // Coordinate system
 Vector2 PolarToCartesian(float radius, float angleRadians);
@@ -24,7 +26,10 @@ Vector3 SphericalToCartesian(float radius, float rotationDegrees, float azimuthD
 float	ConvertRadiansToDegrees(float radians);									// Converts an angle in radians to degrees
 float	ConvertDegreesToRadians(float degrees);									// converts an angle in degrees to radians
 float	CosDegrees(float degrees);												// Calculates the cosine of an angle in degrees
+float   ACosDegrees(float ratio);												// Calculates the arccosine of the ratio given, in degrees
 float	SinDegrees(float degrees);												// Calculates the sine of an angle in degrees
+float   ASinDegrees(float ratio);												// Calculates the arcsine of the ratio given, in degrees
+float	TanDegrees(float degrees);												// Calculates the tangent of the angle in degrees
 float	Atan2Degrees(float y, float x);											// Calculates arctan(y, x) expressed in degrees
 float	Atan2Degrees(float ratio);												// Calculates arctan of the side ratio, expressed in degrees
 float	GetNearestCardinalAngle(float angle);									// Returns the nearest cardinal direction to the given angle
@@ -39,7 +44,7 @@ float	GetRandomFloatZeroToOne();												// Generates a random float between 
 int		GetRandomIntLessThan(int maxExclusive);									// Generates a random int between zero (inclusive) and maxExclusive
 bool	GetRandomTrueOrFalse();													// Randomly returns true or false
 bool	CheckRandomChance(float chanceForSuccess);								// Returns true if we generate a number less than chanceForSuccess,  between 0.f and 1.f
-
+Vector3 GetRandomPointOnSphere();													// Returns a random unit vector
 
 // Rounding, clamping, and range mapping
 int		RoundToNearestInt(float inValue);										// 0.5 rounds up to 1, -0.5 rounds up to 0
@@ -95,10 +100,13 @@ bool Quadratic(Vector2& out_solutions, float a, float b, float c);
 
 
 // General functions
+int		MinInt(int a, int b);
 float	MaxFloat(float a, float b, float c, float d);
 float	MinFloat(float a, float b, float c, float d);
 float	MinFloat(float a, float b);
 float	MaxFloat(float a, float b);
-int		TextToInt(const char* text);
 int		AbsoluteValue(int inValue);
 float	AbsoluteValue(float inValue);
+
+// Float comparison function
+bool AreMostlyEqual(const Vector3& a, const Vector3& b, float epsilon = 0.0001f);

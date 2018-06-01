@@ -9,6 +9,89 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/MathUtils.hpp"
 
+// Struct used for uniform buffer
+struct CameraBufferData
+{
+	Matrix44 m_viewMatrix;
+	Matrix44 m_projectionMatrix;
+
+	Matrix44 m_cameraMatrix;
+
+	Vector3 m_cameraRight;
+	float	m_padding0;
+	Vector3 m_cameraUp;
+	float	m_padding1;
+	Vector3 m_cameraForward;
+	float	m_padding2;
+	Vector3 m_cameraPosition;
+	float	m_padding3;
+};
+
+//-----------------------------------------------------------------------------------------------
+// Constructor
+//
+Camera::Camera()
+	: m_drawOrder(0)
+{
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Moves the camera in world space, given the direction and speed
+//
+void Camera::TranslateWorld(const Vector3& translation)
+{
+	m_transform.TranslateWorld(translation);
+	m_viewMatrix = InvertLookAtMatrix(m_transform.GetModelMatrix());
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Moves the camera in local space, given the direction and speed
+//
+void Camera::TranslateLocal(const Vector3& localTranslation)
+{
+	m_transform.TranslateLocal(localTranslation);
+	m_viewMatrix = InvertLookAtMatrix(m_transform.GetModelMatrix());
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Rotates the camera by the given euler angle values
+//
+void Camera::Rotate(const Vector3& rotation)
+{
+	m_transform.Rotate(rotation);
+
+	// For now prevent gimble lock explicitly
+	Vector3 currentRot = m_transform.rotation;
+
+	if (currentRot.x > 90.f && currentRot.x < 180.f)
+	{
+		currentRot.x = 90.f;
+	}
+
+	if (currentRot.x > 180.f && currentRot.x < 270.f)
+	{
+		currentRot.x = 270.f;
+	}
+
+	m_transform.SetRotation(currentRot);
+
+	m_viewMatrix = InvertLookAtMatrix(m_transform.GetModelMatrix());
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the camera transform to that specified, and updates the view matrix
+//
+void Camera::SetTransform(const Transform& transform)
+{
+	m_transform = transform;
+
+	m_viewMatrix = InvertLookAtMatrix(m_transform.GetModelMatrix());
+}
+
 
 //-----------------------------------------------------------------------------------------------
 // Sets the color target of the Camera's FrameBuffer to the one passed
@@ -31,7 +114,7 @@ void Camera::SetDepthTarget(Texture* depthTarget)
 //-----------------------------------------------------------------------------------------------
 // Finalizes the Camera's FrameBuffer
 //
-void Camera::Finalize()
+void Camera::FinalizeFrameBuffer()
 {
 	m_frameBuffer.Finalize();
 }
@@ -42,8 +125,10 @@ void Camera::Finalize()
 //
 void Camera::LookAt(const Vector3& position, const Vector3& target, const Vector3& up /*= Vector3::DIRECTION_UP*/)
 {
-	m_cameraMatrix	= Matrix44::MakeLookAt(position, target, up);
-	m_viewMatrix	= InvertLookAtMatrix(m_cameraMatrix);
+	Matrix44 cameraMatrix = Matrix44::MakeLookAt(position, target, up);
+
+	m_transform.SetModelMatrix(cameraMatrix);
+	m_viewMatrix = InvertLookAtMatrix(cameraMatrix);
 }
 
 
@@ -52,7 +137,8 @@ void Camera::LookAt(const Vector3& position, const Vector3& target, const Vector
 //
 void Camera::SetCameraMatrix(const Matrix44& cameraMatrix)
 {
-	m_cameraMatrix = cameraMatrix;
+	m_transform.SetModelMatrix(cameraMatrix);
+	m_viewMatrix = InvertLookAtMatrix(cameraMatrix);
 }
 
 
@@ -62,6 +148,7 @@ void Camera::SetCameraMatrix(const Matrix44& cameraMatrix)
 void Camera::SetViewMatrix(const Matrix44& viewMatrix)
 {
 	m_viewMatrix = viewMatrix;
+	m_transform.SetModelMatrix(InvertLookAtMatrix(viewMatrix));
 }
 
 
@@ -84,6 +171,18 @@ void Camera::SetProjectionOrtho(float height, float nearZ, float farZ)
 	m_farClipZ = farZ;
 	float width = Window::GetInstance()->GetWindowAspect() * height;
 	m_projectionMatrix = Matrix44::MakeOrtho(-width / 2.f, width / 2.f, -height / 2.f, height / 2.f, nearZ, farZ);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets this camera to be a perspective projection with the given params
+//
+void Camera::SetProjectionPerspective(float fovDegrees, float nearZ, float farZ)
+{
+	m_fov = fovDegrees;
+	m_nearClipZ = nearZ;
+	m_farClipZ = farZ;
+	m_projectionMatrix = Matrix44::MakePerspective(fovDegrees, nearZ, farZ);
 }
 
 
@@ -118,12 +217,50 @@ void Camera::SetOrthoSizeLimits(float min, float max)
 
 
 //-----------------------------------------------------------------------------------------------
+// Sets the draw order for the camera, used in ForwardRenderPath sorting
+//
+void Camera::SetDrawOrder(unsigned int order)
+{
+	m_drawOrder = order;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Update the camera's uniform buffer with the camera's current state
+//
+void Camera::FinalizeUniformBuffer()
+{
+	CameraBufferData bufferData;
+
+	bufferData.m_viewMatrix = m_viewMatrix;
+	bufferData.m_projectionMatrix = m_projectionMatrix;
+	bufferData.m_cameraMatrix = m_transform.GetModelMatrix();
+
+	bufferData.m_cameraRight	= GetRightVector();
+	bufferData.m_cameraUp		= GetUpVector();
+	bufferData.m_cameraForward	= GetForwardVector();
+	bufferData.m_cameraPosition = m_transform.position;
+
+	m_uniformBuffer.SetCPUAndGPUData(sizeof(CameraBufferData), &bufferData);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns this camera's gpu-side uniform buffer handle
+//
+GLuint Camera::GetUniformBufferHandle() const
+{
+	return m_uniformBuffer.GetHandle();
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the camera matrix (Camera's model matrix, inverse of the view matrix)
 // (local to world)
 //
 Matrix44 Camera::GetCameraMatrix() const
 {
-	return m_cameraMatrix;
+	return m_transform.GetModelMatrix();
 }
 
 
@@ -146,11 +283,20 @@ Matrix44 Camera::GetProjectionMatrix() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the position of the camera
+//
+Vector3 Camera::GetPosition() const
+{
+	return m_transform.position;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the forward (K) vector of the camera's transform
 //
 Vector3 Camera::GetForwardVector() const
 {
-	return Vector3(m_cameraMatrix.Kx, m_cameraMatrix.Ky, m_cameraMatrix.Kz);
+	return m_transform.GetModelMatrix().GetKVector().xyz();
 }
 
 
@@ -159,8 +305,7 @@ Vector3 Camera::GetForwardVector() const
 //
 Vector3 Camera::GetRightVector() const
 {
-	return Vector3(m_cameraMatrix.Ix, m_cameraMatrix.Iy, m_cameraMatrix.Iz);
-
+	return m_transform.GetModelMatrix().GetIVector().xyz();
 }
 
 
@@ -169,8 +314,7 @@ Vector3 Camera::GetRightVector() const
 //
 Vector3 Camera::GetUpVector() const
 {
-	return Vector3(m_cameraMatrix.Jx, m_cameraMatrix.Jy, m_cameraMatrix.Jz);
-
+	return m_transform.GetModelMatrix().GetJVector().xyz();
 }
 
 
@@ -180,6 +324,15 @@ Vector3 Camera::GetUpVector() const
 unsigned int Camera::GetFrameBufferHandle() const
 {
 	return m_frameBuffer.GetHandle();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the draw order of the camera
+//
+unsigned int Camera::GetDrawOrder() const
+{
+	return m_drawOrder;
 }
 
 

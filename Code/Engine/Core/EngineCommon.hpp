@@ -7,12 +7,11 @@
 				Game metadata
 /************************************************************************/
 #pragma once
-//#include "Engine/Renderer/SpriteSheet.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/StringUtils.hpp"
+#include "Engine/Core/ScopedProfiler.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 
 class Blackboard;
-class Window;
 
 extern Blackboard* g_gameConfigBlackboard;
 
@@ -32,3 +31,5 @@ extern Blackboard* g_gameConfigBlackboard;
 #define UNIMPLEMENTED()  QUOTE(__FILE__) " (" QUOTE(__LINE__) ")" ; ERROR_AND_DIE("Function unimplemented!") 
 #define UNUSED(x) (void)(x);
 //-----------------------------------------------------------------------------------------------
+
+#define ENGINE_RESERVED_UNIFORM_BLOCK_COUNT (8)

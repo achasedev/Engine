@@ -7,7 +7,6 @@
 #include "Engine/Renderer/Sampler.hpp"
 #include "Engine/Renderer/glFunctions.hpp"
 
-
 //-----------------------------------------------------------------------------------------------
 // Default Constructor
 //
@@ -29,7 +28,7 @@ Sampler::~Sampler()
 //-----------------------------------------------------------------------------------------------
 // Creates and sets up the sampler on the GPU
 //
-bool Sampler::Initialize()
+bool Sampler::Initialize(SamplerFilter samplerFilter, EdgeSampling edgeSampling)
 {
 	// create the sampler handle if needed; 
 	if (m_samplerHandle == NULL) {
@@ -39,14 +38,18 @@ bool Sampler::Initialize()
 		}
 	}
 
-	// setup wrapping
-	glSamplerParameteri( m_samplerHandle, GL_TEXTURE_WRAP_S, GL_REPEAT );  
-	glSamplerParameteri( m_samplerHandle, GL_TEXTURE_WRAP_T, GL_REPEAT );  
-	glSamplerParameteri( m_samplerHandle, GL_TEXTURE_WRAP_R, GL_REPEAT );  
+	// setup wrapping (edge sampling)
+	unsigned int glEdgeSampling = ToGLType(edgeSampling);
 
-	// Filtering; 
-	glSamplerParameteri( m_samplerHandle, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-	glSamplerParameteri( m_samplerHandle, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	glSamplerParameteri( m_samplerHandle, GL_TEXTURE_WRAP_S, glEdgeSampling );  
+	glSamplerParameteri( m_samplerHandle, GL_TEXTURE_WRAP_T, glEdgeSampling );  
+	glSamplerParameteri( m_samplerHandle, GL_TEXTURE_WRAP_R, glEdgeSampling );  
+
+	// Filtering
+	unsigned int glFilter = ToGLType(samplerFilter);
+
+	glSamplerParameteri( m_samplerHandle, GL_TEXTURE_MIN_FILTER, glFilter );
+	glSamplerParameteri( m_samplerHandle, GL_TEXTURE_MAG_FILTER, glFilter );
 	return true; 
 }
 

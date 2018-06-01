@@ -23,6 +23,7 @@ public:
 	Vector3( const Vector3& copyFrom );										// copy constructor (from another vec2)
 	explicit Vector3( float initialX, float initialY, float initialZ);		// explicit constructor (from x, y)
 	explicit Vector3(const IntVector3& intVector);							// constructor from an IntVector3
+	Vector3(float value);
 
 	// Operators
 	const	Vector3 operator+( const Vector3& vecToAdd ) const;				// vec3 + vec3
@@ -43,11 +44,12 @@ public:
 	float	GetLengthSquared() const;							// Calculates the squared magnitude of the vector
 	float	NormalizeAndGetLength();							// Normalizes the vector and returns its original length
 	Vector3 GetNormalized() const;								// Calculates the normalized form of the vector
-	void	SetFromText(const char* text);						// For turning a text representation into a Vector2
+	bool	SetFromText(const char* text);						// For turning a text representation into a Vector2
 
 	Vector2 xz() const;
 
 	static Vector3 GetRandomVector(float desiredMagnitude);		// Returns a random vector with the given magnitude
+	static Vector3 Slerp(const Vector3& start, const Vector3& end, float percent);
 
 																
 	// Static constants

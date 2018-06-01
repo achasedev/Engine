@@ -14,8 +14,8 @@
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Renderer/Texture.hpp"
 #include "Engine/Renderer/glFunctions.hpp"
+#include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/ShaderProgram.hpp"
-#include "Engine/Renderer/ShaderSource.hpp"
 #include "Engine/Renderer/RenderBuffer.hpp"
 #include "Engine/Renderer/Sampler.hpp"
 #include "Engine/Renderer/Camera.hpp"
@@ -23,8 +23,17 @@
 #include "Engine/Core/Command.hpp"
 #include "Engine/Core/File.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Renderer/MeshBuilder.hpp"
+#include "Engine/Renderer/DebugRenderSystem.hpp"
+#include "Engine/Core/AssetDB.hpp"
+#include "Engine/Core/Clock.hpp"
+#include "Engine/Renderer/Material.hpp"
+#include "Engine/Renderer/MaterialPropertyBlock.hpp"
+#include "Engine/Renderer/PropertyBlockDescription.hpp"
+#include "Engine/Renderer/Light.hpp"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "ThirdParty/gl/glcorearb.h"
 #include "ThirdParty/stb/stb_image.h"
 #include "ThirdParty/stb/stb_image_write.h"
 
@@ -37,26 +46,35 @@ const float			Renderer::UI_ORTHO_HEIGHT		= 1080.f;
 AABB2				Renderer::s_UIOrthoBounds;
 
 
-// For converting primitive types to GL types
-int g_openGlPrimitiveTypes[ NUM_PRIMITIVE_TYPES ] =
+//********************Structs for Uniform Buffer Data********************
+
+// Time
+struct TimeBufferData
 {
-	GL_POINTS,			// called PRIMITIVE_POINTS		in our engine
-	GL_LINES,			// called PRIMITIVE_LINES		in our engine
-	GL_TRIANGLES,		// called PRIMITIVE_TRIANGES	in our engine
-	GL_QUADS			// called PRIMITIVE_QUADS		in our engine
+	TimeBufferData()
+		: m_gameDeltaTime(0.f), m_gameTotalTime(0.f)
+		, m_systemDeltaTime(0.f), m_systemTotalTime(0.f) {}
+
+	float m_gameDeltaTime;
+	float m_gameTotalTime;
+	float m_systemDeltaTime;
+	float m_systemTotalTime;
 };
 
-// For converting primitive types to GL types
-int g_openGlDepthCompares[ NUM_COMPARES ] =
+// Buffer for light data for all lights
+struct LightBufferData
 {
-	GL_NEVER,       // called COMPARE_NEVER			in our engine
-	GL_LESS,        // called COMPARE_LESS			in our engine
-	GL_LEQUAL,      // called COMPARE_LEQUAL		in our engine
-	GL_GREATER,     // called COMPARE_GREATER		in our engine
-	GL_GEQUAL,      // called COMPARE_GEQUAL		in our engine
-	GL_EQUAL,       // called COMPARE_EQUAL			in our engine
-	GL_NOTEQUAL,	// called COMPARE_NOT_EQUAL		in our engine
-	GL_ALWAYS,      // called COMPARE_ALWAYS		in our engine
+	Vector4 m_ambience;		// xyz color, w intensity
+	LightData m_lights[MAX_NUMBER_OF_LIGHTS];
+};
+
+
+// Specular data, per object
+struct SpecularBufferData
+{
+	float m_specularAmount;
+	float m_specularPower;
+	Vector2	m_padding0;
 };
 
 
@@ -75,15 +93,7 @@ Renderer::Renderer()
 	// Calls all GL functions necessary to set up the renderer
 	PostGLStartup();
 
-	// Initializing member on Renderer - No GL functions are called in the lines below
-
-	// Set up the gpu render buffers
-	m_vertexBuffer	= new RenderBuffer();
-	m_indexBuffer	= new RenderBuffer();
-
-	// Set the default shader program as the current program
-	m_defaultShaderProgram	= CreateOrGetShaderProgram("Default");	// Should just "get" since the Default program is built in
-	m_currentShaderProgram	= m_defaultShaderProgram;
+	// Initializing member on Renderer - *****No GL functions are called in the lines below outside setcurrentcamera*****
 
 	// setup the initial camera
 	m_defaultCamera = new Camera();
@@ -109,37 +119,14 @@ Renderer::Renderer()
 //
 Renderer::~Renderer()
 {
-	//-----Free the loaded texture map-----
-	std::map<std::string, Texture*>::iterator texItr = m_loadedTextures.begin();
-	for(texItr; texItr != m_loadedTextures.end(); texItr++)
-	{
-		delete texItr->second;
-	}
-	m_loadedTextures.clear();
+	// Delete cameras
+	delete m_defaultCamera;
+	delete m_UICamera;
+	delete m_effectsCamera;
 
-
-	//-----Free the loaded fonts-----
-	std::map<std::string, BitmapFont*>::iterator fontItr = m_loadedFonts.begin();
-	for (fontItr; fontItr != m_loadedFonts.end(); fontItr++)
-	{
-		delete fontItr->second;
-	}
-	m_loadedFonts.clear();
-
-
-	//-----Free the loaded shader program map-----
-	std::set<ShaderProgram*> valuesDeleted;
-	std::map<std::string, ShaderProgram*>::iterator progItr = m_loadedShaderPrograms.begin();
-	for(progItr; progItr != m_loadedShaderPrograms.end(); progItr++)
-	{
-		// Ensure we don't double-delete the same pointer!
-		bool notDeleted = valuesDeleted.insert(progItr->second).second;
-		if (notDeleted)
-		{
-			delete progItr->second;
-		}
-	}
-	m_loadedShaderPrograms.clear();
+	// Free the vao 
+	glDeleteVertexArrays(1, &m_defaultVAO);
+	GL_CHECK_ERROR();
 }
 
 
@@ -183,10 +170,19 @@ Renderer* Renderer::GetInstance()
 //
 void Renderer::BeginFrame()
 {
+	// Leftover errors from the last frame?
+	GL_CHECK_ERROR();
+
 	// Set the default shader program to the current program reference
-	m_currentShaderProgram = m_defaultShaderProgram;
 	SetCurrentCamera(nullptr);
 	ClearScreen(Rgba::BLACK);
+	ClearDepth();
+
+	// Update the time uniform buffer on the gpu
+	UpdateTimeData();
+
+	// Clear the lights, making the game reset them
+	DisableAllLights();
 }
 
 
@@ -196,7 +192,7 @@ void Renderer::BeginFrame()
 void Renderer::EndFrame()
 {
 	// Copy the default frame buffer to the back buffer before swapping
-	m_defaultCamera->Finalize();
+	m_defaultCamera->FinalizeFrameBuffer();
 	CopyFrameBuffer( nullptr, &m_defaultCamera->m_frameBuffer ); 
 
 	// "Present" the backbuffer by swapping in our color target buffer
@@ -226,48 +222,40 @@ void Renderer::ClearScreen(const Rgba& clearColor)
 //-----------------------------------------------------------------------------------------------
 // Applies a single shader draw effect to the entire default render target
 //
-void Renderer::ApplyImageEffect(ShaderProgram* shader)
+void Renderer::ApplyImageEffect(ShaderProgram* program)
 {
-	DisableDepth();
-
-	// Set up the effects targets if they aren't already set up
-	if (m_effectsSource == nullptr)
-	{
-		m_effectsSource = m_defaultColorTarget;
-		if (m_effectsDestination == nullptr)
-		{
-			m_effectsDestination = new Texture();
-			m_effectsDestination->CreateRenderTarget(m_effectsSource->GetDimensions().x, m_effectsSource->GetDimensions().y, TEXTURE_FORMAT_RGBA8);
-		}
-	}
-
-	// Draw using the effects camera - to the scratch target
-	m_effectsCamera->SetColorTarget(m_effectsDestination);
-	SetCurrentCamera(m_effectsCamera);
-
-	// Set the shader program to the one provided
-	SetCurrentShaderProgram(shader);
-
-	// Bind the current source as a texture
-	BindTexture(0, m_effectsSource->GetHandle());
-	
-	// Draw the previous buffer as an AABB2 across the entire new render target
-	DrawAABB2(AABB2::UNIT_SQUARE_CENTERED, AABB2::UNIT_SQUARE_OFFCENTER, Rgba::WHITE);
-
-	// Swap the pointers around for the next effect
-	Texture* temp			= m_effectsSource;
-	m_effectsSource			= m_effectsDestination;
-	m_effectsDestination	= temp;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Applies a single shader draw effect to the entire default render target
-//
-void Renderer::ApplyImageEffect(const std::string& shaderName)
-{
-	ShaderProgram* program = CreateOrGetShaderProgram(shaderName);
-	ApplyImageEffect(program);
+	UNIMPLEMENTED();
+// 	DisableDepth();
+// 
+// 	// Set up the effects targets if they aren't already set up
+// 	if (m_effectsSource == nullptr)
+// 	{
+// 		m_effectsSource = m_defaultColorTarget;
+// 		if (m_effectsDestination == nullptr)
+// 		{
+// 			m_effectsDestination = new Texture();
+// 			m_effectsDestination->CreateRenderTarget(m_effectsSource->GetDimensions().x, m_effectsSource->GetDimensions().y, TEXTURE_FORMAT_RGBA8);
+// 		}
+// 	}
+// 
+// 	// Draw using the effects camera - to the scratch target
+// 	m_effectsCamera->SetColorTarget(m_effectsDestination);
+// 	SetCurrentCamera(m_effectsCamera);
+// 
+// 	// Set the shader program to the one provided
+// 	Shader* effectShader = new Shader(program);
+// 	SetCurrentShader(effectShader);
+// 
+// 	// Bind the current source as a texture
+// 	BindTexture(0, m_effectsSource->GetHandle());
+// 	
+// 	// Draw the previous buffer as an AABB2 across the entire new render target
+// 	Draw2DQuad(AABB2::UNIT_SQUARE_CENTERED, AABB2::UNIT_SQUARE_OFFCENTER, Rgba::WHITE);
+// 
+// 	// Swap the pointers around for the next effect
+// 	Texture* temp			= m_effectsSource;
+// 	m_effectsSource			= m_effectsDestination;
+// 	m_effectsDestination	= temp;
 }
 
 
@@ -276,76 +264,25 @@ void Renderer::ApplyImageEffect(const std::string& shaderName)
 //
 void Renderer::FinalizeImageEffects()
 {
-	// Null target means no effects have been applied, so nothing to finalize
-	if (m_effectsSource == nullptr)
-	{
-		return;
-	}
-
-	// An odd number of effects were applied, so ensure the default color target is the final result
-	if (m_effectsSource != m_defaultColorTarget)
-	{
-		Texture::CopyTexture(m_effectsSource, m_defaultColorTarget);
-		m_effectsDestination = m_effectsSource;
-	}
-
-	// Signal we're done with our current effects processing
-	m_effectsSource = nullptr;
-
-	SetCurrentShaderProgram(nullptr);
-	SetCurrentCamera(nullptr);
-	EnableDepth(COMPARE_LESS, true);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Sets the blend mode to the one specified by the enumeration
-//
-void Renderer::SetBlendMode(BlendMode nextMode)
-{
-	switch (nextMode)
-	{
-	case BLEND_MODE_ERROR:
-		break;
-	case BLEND_MODE_ALPHA:
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		break;
-	case BLEND_MODE_ADDITIVE:
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		break;
-	case NUM_BLEND_MODES:
-		break;
-	default:
-		break;
-	}
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Enables the OpenGL macro GL_BLEND
-//
-void Renderer::EnableBlendMacro()
-{
-	glEnable(GL_BLEND);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Returns a pointer to the texture pointer corresponding to the given path.
-// If no texture has been loaded for the given path yet, the texture is loaded and returned.
-//
-Texture* Renderer::CreateOrGetTexture(std::string texturePath)
-{
-	if (m_loadedTextures.find(texturePath) != m_loadedTextures.end())
-	{
-		return m_loadedTextures[texturePath];
-	}
-
-	Texture* newTexture = new Texture();
-	newTexture->CreateFromFile(texturePath);
-	m_loadedTextures[texturePath] = newTexture;
-
-	return m_loadedTextures[texturePath];
+	UNIMPLEMENTED();
+// 	// Null target means no effects have been applied, so nothing to finalize
+// 	if (m_effectsSource == nullptr)
+// 	{
+// 		return;
+// 	}
+// 
+// 	// An odd number of effects were applied, so ensure the default color target is the final result
+// 	if (m_effectsSource != m_defaultColorTarget)
+// 	{
+// 		Texture::CopyTexture(m_effectsSource, m_defaultColorTarget);
+// 		m_effectsDestination = m_effectsSource;
+// 	}
+// 
+// 	// Signal we're done with our current effects processing
+// 	m_effectsSource = nullptr;
+// 
+// 	SetCurrentCamera(nullptr);
+// 	EnableDepth(DEPTH_TEST_LESS, true);
 }
 
 
@@ -389,6 +326,15 @@ Texture* Renderer::GetDefaultDepthTarget() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the default camera of the renderer
+//
+Camera* Renderer::GetDefaultCamera() const
+{
+	return m_defaultCamera;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Sets the flag to take a screenshot during the next Renderer::EndFrame()
 //
 void Renderer::SaveScreenshotAtEndOfFrame(const std::string& filename)
@@ -402,125 +348,104 @@ void Renderer::SaveScreenshotAtEndOfFrame(const std::string& filename)
 // Draws a textured AABB2 from the provided texture data
 // textureUVs are the texture coordinates of the bottom left and top right of the box
 //
-void Renderer::DrawAABB2(const AABB2& bounds, const AABB2& textureUVs, const Rgba& tint)
+void Renderer::Draw2DQuad(const AABB2& bounds, const AABB2& textureUVs, const Rgba& tint, Material* material /*= nullptr*/)
 {
-	Vertex3D_PCU vertices[4];
-	unsigned int indices[6];
+	// Clear state
+	m_immediateBuilder.Clear();
 
-	int numVertices = 0; 
-	int numIndices = 0;
+	// Build the mesh
+	m_immediateBuilder.BeginBuilding(PRIMITIVE_TRIANGLES, true);
+	m_immediateBuilder.Push2DQuad(bounds, textureUVs, tint);
+	m_immediateBuilder.FinishBuilding();
+	m_immediateBuilder.UpdateMesh(m_immediateMesh);
 
-	// Construct the vertices/indices
-	AppendAABB2Vertices2D(vertices, numVertices, indices, numIndices, bounds, textureUVs, tint);
-
-	// Draw the AABB2
-	DrawMeshImmediate(vertices, numVertices, PRIMITIVE_TRIANGLES, indices, numIndices);
+	// Draw
+	if (material == nullptr)
+	{
+		DrawMesh(&m_immediateMesh);
+	}
+	else
+	{
+		DrawMeshWithMaterial(&m_immediateMesh, material);
+	}
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Draws an oriented AABB2 in 3D space given the parameters
 //
-void Renderer::DrawAABB2_3D(const Vector3& position, const Vector2& dimensions, const AABB2& textureUVs, const Vector3& right /*= Vector3::DIRECTION_RIGHT*/, const Vector3& up /*= Vector3::DIRECTION_UP*/, const Rgba& tint /*= Rgba::WHITE*/, const Vector2& pivot /*= Vector2(0.5f, 0.5f)*/)
+void Renderer::Draw3DQuad(const Vector3& position, const Vector2& dimensions, const AABB2& textureUVs, const Vector3& right /*= Vector3::DIRECTION_RIGHT*/, const Vector3& up /*= Vector3::DIRECTION_UP*/, const Rgba& tint /*= Rgba::WHITE*/, const Vector2& pivot /*= Vector2(0.5f, 0.5f)*/, Material* material /*= nullptr*/)
 {
-	Vertex3D_PCU vertices[4];
-	unsigned int indices[6];
-	int iCount = 0;
-	int vCount = 0;
+	// Clear state
+	m_immediateBuilder.Clear();
 
-	AppendAABB2Vertices3D(vertices, vCount, indices, iCount, position, dimensions, textureUVs, right, up, tint, pivot);
-	DrawMeshImmediate(vertices, vCount, PRIMITIVE_TRIANGLES, indices, iCount);
-}
+	// Build the mesh
+	m_immediateBuilder.BeginBuilding(PRIMITIVE_TRIANGLES, true);
+	m_immediateBuilder.Push3DQuad(position, dimensions, textureUVs, tint, right, up, pivot);
+	m_immediateBuilder.FinishBuilding();
+	m_immediateBuilder.UpdateMesh(m_immediateMesh);
 
-
-//-----------------------------------------------------------------------------------------------
-// Appends the vertices for the AABB2 described into the passed vertex/index arrays
-//
-void Renderer::AppendAABB2Vertices2D(Vertex3D_PCU* vertexArray, int& vertexOffset, unsigned int* indexArray, int& indexOffset, const AABB2& bounds, const AABB2& textureUVs, const Rgba& tint /*= Rgba::WHITE*/)
-{
-	//-----Set up the vertices-----
-
-	vertexArray[vertexOffset + 0] = Vertex3D_PCU(Vector3(bounds.mins.x, bounds.mins.y, 0.f), tint, textureUVs.GetBottomLeft());		// Bottom left
-	vertexArray[vertexOffset + 1] = Vertex3D_PCU(Vector3(bounds.maxs.x, bounds.mins.y, 0.f), tint, textureUVs.GetBottomRight());	// Bottom right
-	vertexArray[vertexOffset + 2] = Vertex3D_PCU(Vector3(bounds.maxs.x, bounds.maxs.y, 0.f), tint, textureUVs.GetTopRight());		// Top right
-	vertexArray[vertexOffset + 3] = Vertex3D_PCU(Vector3(bounds.mins.x, bounds.maxs.y, 0.f), tint, textureUVs.GetTopLeft());		// Top left
-
-	//-----Set up the indices-----
-
-	// 3 - 2
-	// | / |
-	// 0 - 1
-
-	indexArray[indexOffset + 0] = vertexOffset + 0;
-	indexArray[indexOffset + 1] = vertexOffset + 1;
-	indexArray[indexOffset + 2] = vertexOffset + 2;
-
-	indexArray[indexOffset + 3] = vertexOffset + 0;
-	indexArray[indexOffset + 4] = vertexOffset + 2;
-	indexArray[indexOffset + 5] = vertexOffset + 3;
-
-	// Update the offsets and return
-	vertexOffset += 4;
-	indexOffset += 6;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Appends the vertices for an oriented quad in 3D to a vertex array
-//
-void Renderer::AppendAABB2Vertices3D(Vertex3D_PCU* vertexArray, int& vertexOffset, unsigned int* indexArray, int& indexOffset, const Vector3& position,
-	const Vector2& dimensions, const AABB2& textureUVs, const Vector3& right /*= Vector3::DIRECTION_RIGHT*/, const Vector3& up/*= Vector3::DIRECTION_UP*/, const Rgba& tint /*= Rgba::WHITE*/, const Vector2& pivot /*= Vector2(0.5f, 0.5f)*/)
-{
-	//-----Set up the vertices-----
-	// Find the min and max X values for the AABB2 draw bounds
-	float minX = -1.0f * (pivot.x * dimensions.x);
-	float maxX = minX + dimensions.x;
-
-	// Find the min and max X values for the sprite AABB2 draw bounds
-	float minY = -1.0f * (pivot.y * dimensions.y);
-	float maxY = minY + dimensions.y;
-
-	Vector3 bottomLeft 		= position + minX * right + minY * up;
-	Vector3 bottomRight 	= position + maxX * right + minY * up;
-	Vector3 topLeft 		= position + minX * right + maxY * up;
-	Vector3 topRight 		= position + maxX * right + maxY * up;
-
-	vertexArray[vertexOffset + 0] = Vertex3D_PCU(bottomLeft,	tint, textureUVs.GetBottomLeft());		// Bottom left
-	vertexArray[vertexOffset + 1] = Vertex3D_PCU(bottomRight,	tint, textureUVs.GetBottomRight());		// Bottom right
-	vertexArray[vertexOffset + 2] = Vertex3D_PCU(topRight,		tint, textureUVs.GetTopRight());		// Top right
-	vertexArray[vertexOffset + 3] = Vertex3D_PCU(topLeft,		tint, textureUVs.GetTopLeft());			// Top left
-
-	//-----Set up the indices-----
-
-	indexArray[indexOffset + 0] = vertexOffset + 0;
-	indexArray[indexOffset + 1] = vertexOffset + 1;
-	indexArray[indexOffset + 2] = vertexOffset + 2;
-
-	indexArray[indexOffset + 3] = vertexOffset + 0;
-	indexArray[indexOffset + 4] = vertexOffset + 2;
-	indexArray[indexOffset + 5] = vertexOffset + 3;
-
-	// Update the offsets and return
-	vertexOffset += 4;
-	indexOffset += 6;
+	// Draw
+	if (material == nullptr)
+	{
+		DrawMesh(&m_immediateMesh);
+	}
+	else
+	{
+		DrawMeshWithMaterial(&m_immediateMesh, material);
+	}
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Draws a cube with the given corner positions and tint
 //
-void Renderer::DrawCube(const Vector3& center, const Vector3& dimensions, const Rgba& tint /*= Rgba::WHITE*/, /* Draws a cube (cuboid) with the given corner positions and tint */ const AABB2& topUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& sideUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& bottomUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/)
+void Renderer::DrawCube(const Vector3& center, const Vector3& dimensions, const Rgba& tint /*= Rgba::WHITE*/, const AABB2& topUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& sideUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& bottomUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, Material* material /*= nulltpr*/)
 {
-	Vertex3D_PCU vertices[24];
-	unsigned int indices[36];
+	// Clear state
+	m_immediateBuilder.Clear();
 
-	int vertexCount = 0;
-	int indexCount = 0;
+	// Build the mesh
+	m_immediateBuilder.BeginBuilding(PRIMITIVE_TRIANGLES, true);
+	m_immediateBuilder.PushCube(center, dimensions, tint, sideUVs, topUVs, bottomUVs);
+	m_immediateBuilder.FinishBuilding();
+	m_immediateBuilder.UpdateMesh(m_immediateMesh);
 
-	AppendCubeVertices(vertices, vertexCount, indices, indexCount, center, dimensions, tint, topUVs, sideUVs, bottomUVs);
+	// Draw
+	if (material == nullptr)
+	{
+		DrawMesh(&m_immediateMesh);
+	}
+	else
+	{
+		DrawMeshWithMaterial(&m_immediateMesh, material);
+	}
+}
 
-	// Draw the Cube
-	DrawMeshImmediate(vertices, vertexCount, PRIMITIVE_TRIANGLES, indices, indexCount);
+
+//-----------------------------------------------------------------------------------------------
+// Draws a sphere with the given parameters
+//
+void Renderer::DrawSphere(const Vector3& position, float radius, unsigned int numWedges, unsigned int numSlices, const Rgba& color /*= Rgba::WHITE*/, Material* material /*= nulltpr*/)
+{
+	// Clear state
+	m_immediateBuilder.Clear();
+
+	// Build the mesh
+	m_immediateBuilder.BeginBuilding(PRIMITIVE_TRIANGLES, true);
+	m_immediateBuilder.PushUVSphere(position, radius, numWedges, numSlices, color);
+	m_immediateBuilder.FinishBuilding();
+	m_immediateBuilder.UpdateMesh(m_immediateMesh);
+
+	// Draw
+	if (material == nullptr)
+	{
+		DrawMesh(&m_immediateMesh);
+	}
+	else
+	{
+		DrawMeshWithMaterial(&m_immediateMesh, material);
+	}
 }
 
 
@@ -529,143 +454,41 @@ void Renderer::DrawCube(const Vector3& center, const Vector3& dimensions, const 
 //
 void Renderer::DrawSprite(const Sprite* sprite, const Vector3& position, const Rgba& tint /*= Rgba::WHITE*/, const Vector3& right /*= Vector3::DIRECTION_RIGHT*/, const Vector3& up /*= Vector3::DIRECTION_UP*/)
 {
-	BindTexture(0, sprite->GetTexture().GetHandle());
-	Vector2 spriteDimensions	= sprite->GetDimensions();
-	Vector2 spritePivot			= sprite->GetPivot();
-	AABB2 spriteUVs				= sprite->GetUVs();
-
-	// Find the min and max X values for the sprite AABB2 draw bounds
-	float minX = -1.0f * (spritePivot.x * spriteDimensions.x);
-	float maxX = minX + spriteDimensions.x;
-
-	// Find the min and max X values for the sprite AABB2 draw bounds
-	float minY = -1.0f * (spritePivot.y * spriteDimensions.y);
-	float maxY = minY + spriteDimensions.y;
-
-	Vector3 bottomLeft 		= position + minX * right + minY * up;
-	Vector3 bottomRight 	= position + maxX * right + minY * up;
-	Vector3 topLeft 		= position + minX * right + maxY * up;
-	Vector3 topRight 		= position + maxX * right + maxY * up;
-
-	// Make the Vertex3D_PCU's (no indices)
-
-	Vertex3D_PCU vertices[6];
-
-	// First triangle
-	vertices[0] = Vertex3D_PCU(bottomLeft, tint, spriteUVs.GetBottomLeft());
-	vertices[1] = Vertex3D_PCU(bottomRight, tint, spriteUVs.GetBottomRight());
-	vertices[2] = Vertex3D_PCU(topRight, tint, spriteUVs.GetTopRight());
-	
-	// Second triangle
-	vertices[3] = vertices[0];
-	vertices[4] = vertices[2];
-	vertices[5] = Vertex3D_PCU(topLeft, tint, spriteUVs.GetTopLeft());
-
-	// Draw the sprite
-	DrawMeshImmediate(vertices, 6, PRIMITIVE_TRIANGLES);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Appends the vertices needed to draw the passed cube to the arrays passed and increments the offsets
-//
-void Renderer::AppendCubeVertices(Vertex3D_PCU* vertexArray, int& vertexOffset, unsigned int* indexArray, int& indexOffset, 
-	const Vector3& center, const Vector3& dimensions, const Rgba& tint /*= Rgba::WHITE*/, const AABB2& topUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, 
-	const AABB2& sideUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& bottomUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/)
-{
-	// Set up the corner vertices
-	Vector3 frontBottomLeft;
-	frontBottomLeft.x = center.x - dimensions.x * 0.5f;
-	frontBottomLeft.y = center.y - dimensions.y * 0.5f;
-	frontBottomLeft.z = center.z - dimensions.z * 0.5f;
-
-	Vector3 backTopRight;
-	backTopRight.x = center.x + dimensions.x * 0.5f;
-	backTopRight.y = center.y + dimensions.y * 0.5f;
-	backTopRight.z = center.z + dimensions.z * 0.5f;
-
-	// Assemble the vertices in the vertex buffer
-
-	//-------------------------------------Front face--------------------------------------------------------
-
-	vertexArray[vertexOffset + 0] = Vertex3D_PCU(frontBottomLeft,												tint, sideUVs.GetBottomLeft());			// Bottom Left
-	vertexArray[vertexOffset + 1] = Vertex3D_PCU(Vector3(backTopRight.x, frontBottomLeft.y, frontBottomLeft.z), tint, sideUVs.GetBottomRight());		// Bottom Right
-	vertexArray[vertexOffset + 2] = Vertex3D_PCU(Vector3(backTopRight.x, backTopRight.y, frontBottomLeft.z),	tint, sideUVs.GetTopRight());			// Top Right
-	vertexArray[vertexOffset + 3] = Vertex3D_PCU(Vector3(frontBottomLeft.x, backTopRight.y, frontBottomLeft.z), tint, sideUVs.GetTopLeft());			// Top Left
-
-	//-------------------------------------Back face--------------------------------------------------------
-
-	vertexArray[vertexOffset + 4]	= Vertex3D_PCU(Vector3(backTopRight.x, frontBottomLeft.y, backTopRight.z),		tint, sideUVs.GetBottomLeft());		// Bottom Left 
-	vertexArray[vertexOffset + 5]	= Vertex3D_PCU(Vector3(frontBottomLeft.x, frontBottomLeft.y, backTopRight.z),	tint, sideUVs.GetBottomRight());	// Bottom Right
-	vertexArray[vertexOffset + 6]	= Vertex3D_PCU(Vector3(frontBottomLeft.x, backTopRight.y, backTopRight.z),		tint, sideUVs.GetTopRight());		// Top Right
-	vertexArray[vertexOffset + 7]	= Vertex3D_PCU(backTopRight,													tint, sideUVs.GetTopLeft());		// Top Left
-
-	//-------------------------------------Left face--------------------------------------------------------
-
-	vertexArray[vertexOffset + 8]	= Vertex3D_PCU(Vector3(frontBottomLeft.x, frontBottomLeft.y, backTopRight.z),	tint, sideUVs.GetBottomLeft());		// Bottom Left
-	vertexArray[vertexOffset + 9]	= Vertex3D_PCU(frontBottomLeft,													tint, sideUVs.GetBottomRight());	// Bottom Right
-	vertexArray[vertexOffset + 10]	= Vertex3D_PCU(Vector3(frontBottomLeft.x, backTopRight.y, frontBottomLeft.z),	tint, sideUVs.GetTopRight());		// Top Right
-	vertexArray[vertexOffset + 11]	= Vertex3D_PCU(Vector3(frontBottomLeft.x, backTopRight.y, backTopRight.z),		tint, sideUVs.GetTopLeft());		// Top Left
-
-	//-------------------------------------Right face--------------------------------------------------------
-
-	vertexArray[vertexOffset + 12]	= Vertex3D_PCU(Vector3(backTopRight.x, frontBottomLeft.y, frontBottomLeft.z),	tint, sideUVs.GetBottomLeft());		// Bottom Left
-	vertexArray[vertexOffset + 13]	= Vertex3D_PCU(Vector3(backTopRight.x, frontBottomLeft.y, backTopRight.z),		tint, sideUVs.GetBottomRight());	// Bottom Right
-	vertexArray[vertexOffset + 14]	= Vertex3D_PCU(backTopRight,													tint, sideUVs.GetTopRight());		// Top Right
-	vertexArray[vertexOffset + 15]	= Vertex3D_PCU(Vector3(backTopRight.x, backTopRight.y, frontBottomLeft.z),		tint, sideUVs.GetTopLeft());		// Top Left
-
-	//-------------------------------------Top face--------------------------------------------------------
-
-	vertexArray[vertexOffset + 16]	= Vertex3D_PCU(Vector3(frontBottomLeft.x, backTopRight.y, frontBottomLeft.z),	tint, topUVs.GetBottomLeft());		// Bottom Left
-	vertexArray[vertexOffset + 17]	= Vertex3D_PCU(Vector3(backTopRight.x, backTopRight.y, frontBottomLeft.z),		tint, topUVs.GetBottomRight());		// Bottom Right
-	vertexArray[vertexOffset + 18]	= Vertex3D_PCU(backTopRight,													tint, topUVs.GetTopRight());		// Top Right
-	vertexArray[vertexOffset + 19]	= Vertex3D_PCU(Vector3(frontBottomLeft.x, backTopRight.y, backTopRight.z),		tint, topUVs.GetTopLeft());			// Top Left
-
-	//-------------------------------------Bottom face--------------------------------------------------------
-
-	vertexArray[vertexOffset + 20]	= Vertex3D_PCU(Vector3(frontBottomLeft.x, frontBottomLeft.y, backTopRight.z),	tint, bottomUVs.GetBottomLeft());	// Bottom Left
-	vertexArray[vertexOffset + 21]	= Vertex3D_PCU(Vector3(backTopRight.x, frontBottomLeft.y, backTopRight.z),		tint, bottomUVs.GetBottomRight());	// Bottom Right
-	vertexArray[vertexOffset + 22]	= Vertex3D_PCU(Vector3(backTopRight.x, frontBottomLeft.y, frontBottomLeft.z),	tint, bottomUVs.GetTopRight());		// Top Right
-	vertexArray[vertexOffset + 23]	= Vertex3D_PCU(frontBottomLeft,													tint, bottomUVs.GetTopLeft());		// Top Left
-
-
-	// Now add to the index buffer
-	for (int sideIndex = 0; sideIndex < 6; sideIndex++)
-	{
-		int sideOffset = sideIndex * 6;
-
-		// First triangle
-		indexArray[sideOffset + indexOffset]		= vertexOffset + (sideIndex * 4);
-		indexArray[sideOffset + indexOffset + 1]	= vertexOffset + (sideIndex * 4) + 1;
-		indexArray[sideOffset + indexOffset + 2]	= vertexOffset + (sideIndex * 4) + 2;
-
-		// Second triangle
-		indexArray[sideOffset + indexOffset + 3]	= vertexOffset + (sideIndex * 4);
-		indexArray[sideOffset + indexOffset + 4]	= vertexOffset + (sideIndex * 4) + 2;
-		indexArray[sideOffset + indexOffset + 5]	= vertexOffset + (sideIndex * 4) + 3;
-	}
-
-	// Update the offsets to reflect the new end positions in the arrays
-	vertexOffset += 24;
-	indexOffset += 36;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Draws text to the screen as a textured AABB2
-//
-BitmapFont* Renderer::CreateOrGetBitmapFont(const char* bitmapFontName)
-{
-	if (m_loadedFonts.find(bitmapFontName) != m_loadedFonts.end())
-	{
-		return m_loadedFonts[bitmapFontName];
-	}
-	      
-	Texture* fontTexture = CreateOrGetTexture(Stringf("%s%s.png", FONT_DIRECTORY, bitmapFontName));
-	SpriteSheet* glyphSheet = new SpriteSheet(bitmapFontName, *fontTexture, FONT_SPRITE_LAYOUT);
-	m_loadedFonts[bitmapFontName] = new BitmapFont(*glyphSheet, 1.0f);
-
-	return m_loadedFonts[bitmapFontName];
+	UNIMPLEMENTED();
+// 	BindTexture(0, sprite->GetTexture().GetHandle());
+// 	Vector2 spriteDimensions	= sprite->GetDimensions();
+// 	Vector2 spritePivot			= sprite->GetPivot();
+// 	AABB2 spriteUVs				= sprite->GetUVs();
+// 
+// 	// Find the min and max X values for the sprite AABB2 draw bounds
+// 	float minX = -1.0f * (spritePivot.x * spriteDimensions.x);
+// 	float maxX = minX + spriteDimensions.x;
+// 
+// 	// Find the min and max X values for the sprite AABB2 draw bounds
+// 	float minY = -1.0f * (spritePivot.y * spriteDimensions.y);
+// 	float maxY = minY + spriteDimensions.y;
+// 
+// 	Vector3 bottomLeft 		= position + minX * right + minY * up;
+// 	Vector3 bottomRight 	= position + maxX * right + minY * up;
+// 	Vector3 topLeft 		= position + minX * right + maxY * up;
+// 	Vector3 topRight 		= position + maxX * right + maxY * up;
+// 
+// 	// Make the Vertex3D_PCU's (no indices)
+// 
+// 	Vertex3D_PCU vertices[6];
+// 
+// 	// First triangle
+// 	vertices[0] = Vertex3D_PCU(bottomLeft, tint, spriteUVs.GetBottomLeft());
+// 	vertices[1] = Vertex3D_PCU(bottomRight, tint, spriteUVs.GetBottomRight());
+// 	vertices[2] = Vertex3D_PCU(topRight, tint, spriteUVs.GetTopRight());
+// 	
+// 	// Second triangle
+// 	vertices[3] = vertices[0];
+// 	vertices[4] = vertices[2];
+// 	vertices[5] = Vertex3D_PCU(topLeft, tint, spriteUVs.GetTopLeft());
+// 
+// 	// Draw the sprite
+// 	DrawMeshImmediate(vertices, 6, PRIMITIVE_TRIANGLES);
 }
 
 
@@ -676,12 +499,15 @@ void Renderer::DrawText2D(const std::string& text, const Vector2& drawMins, floa
 {	
 	ASSERT_OR_DIE(font != nullptr, Stringf("Error -  Renderer::DrawText2D was passed a null font."));
 
-	// Set up the text "mesh"
-	Vertex3D_PCU* vertices = (Vertex3D_PCU*) malloc(sizeof(Vertex3D_PCU) * 4 * text.size());
-	unsigned int* indices = (unsigned int*) malloc(sizeof(unsigned int) * 6 * text.size());
+	// Check if there's anything to draw, if not then return
+	if (text.size() == 0 || text.find_first_not_of(' ') == std::string::npos)
+	{
+		return;
+	}
 
-	int numVertices = 0;
-	int numIndices = 0;
+	// Build a mesh for the text
+	m_immediateBuilder.Clear();
+	m_immediateBuilder.BeginBuilding(PRIMITIVE_TRIANGLES, true);
 
 	// Break the text up by the new line characters
 	std::vector<std::string> textLines = Tokenize(text, '\n');
@@ -708,20 +534,23 @@ void Renderer::DrawText2D(const std::string& text, const Vector2& drawMins, floa
 
 			AABB2 drawBounds = AABB2(glyphBottomLeft, glyphTopRight);
 			AABB2 glyphUVs = font->GetGlyphUVs(currentChar);
-			AppendAABB2Vertices2D(vertices, numVertices, indices, numIndices, drawBounds, glyphUVs, color);
+			m_immediateBuilder.Push2DQuad(drawBounds, glyphUVs, color);
 
 			// Increment the next bottom left position
 			glyphBottomLeft += Vector2(glyphWidth, 0.f);
 		}
 	} 
 
-	// Set the texture and draw
-	BindTexture(0, font->m_spriteSheet.GetTexture().GetHandle());
-	DrawMeshImmediate(vertices, numVertices, PRIMITIVE_TRIANGLES, indices, numIndices);
+	// Construct the Mesh
+	m_immediateBuilder.FinishBuilding();
+	m_immediateBuilder.UpdateMesh(m_immediateMesh);
 
-	// Free memory
-	free(vertices);
-	free(indices);
+	// Set the texture and draw
+	Material fontMat = Material();
+	fontMat.SetDiffuse(&font->GetSpriteSheet().GetTexture());
+	fontMat.SetShader(AssetDB::CreateOrGetShader("UI"));
+
+	DrawMeshWithMaterial(&m_immediateMesh, &fontMat);
 }
 
 
@@ -738,43 +567,6 @@ void Renderer::DrawTextInBox2D(const std::string& text, const AABB2& drawBox, co
 	default:
 		break;
 	}
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Creates the Built-in shader programs from the source code defined in ShaderProgram.hpp
-// Should only be called once per renderer during PostStartup()
-//
-void Renderer::CreateBuiltInShaderPrograms()
-{
-	// Creating the invalid program - assumes it compiles correctly
-	ShaderProgram* invalidProgram = new ShaderProgram();
-	invalidProgram->LoadProgramFromSources(INVALID_VS, INVALID_FS);
-	m_loadedShaderPrograms[ShaderProgram::INVALID_SHADER_NAME] = invalidProgram;
-
-	// Default
-	ShaderProgram* defaultProgram = new ShaderProgram();
-	bool loadSuccessful = defaultProgram->LoadProgramFromSources(DEFAULT_VS, DEFAULT_FS);
-
-	// If default failed then assign it the invalid shader in the map
-	if (!loadSuccessful)
-	{
-		defaultProgram->LoadProgramFromSources(INVALID_VS, INVALID_FS);
-	}
-
-	m_loadedShaderPrograms[ShaderProgram::DEFAULT_SHADER_NAME] = defaultProgram;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Creates the textures that are part of the engine source
-//
-void Renderer::CreateBuiltInTextures()
-{
-	Texture* whiteTexture = new Texture();
-	whiteTexture->CreateFromImage(&Image::IMAGE_WHITE);
-
-	m_loadedTextures["White"] = whiteTexture;
 }
 
 
@@ -813,59 +605,6 @@ void Renderer::SaveScreenshotToFile()
 
 
 //-----------------------------------------------------------------------------------------------
-// Returns the shader program given by the programPath if it is already loaded, or attempts to make
-// a new shader program otherwise.
-// All built-i
-//
-ShaderProgram* Renderer::CreateOrGetShaderProgram(const std::string& shaderName)
-{
-	if (m_loadedShaderPrograms.find(shaderName) != m_loadedShaderPrograms.end())
-	{
-		return m_loadedShaderPrograms[shaderName];
-	}
-
-	// Program not already loaded, so attempt to load and compile it
-	ShaderProgram* newProgram = new ShaderProgram(); 
-	std::string rootName = Stringf("%s%s", SHADER_DIRECTORY, shaderName.c_str());
-	bool loadSuccessful = newProgram->LoadProgramFromFiles(rootName.c_str());
-
-	// If the program could not be compiled or linked correctly, then assign it the invalid shader
-	if (!loadSuccessful)
-	{
-		newProgram->LoadProgramFromSources(INVALID_VS, INVALID_FS);
-	}
-
-	// Store and return a reference to it
-	m_loadedShaderPrograms[shaderName] = newProgram;
-	return m_loadedShaderPrograms[shaderName];
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Sets the current shader program to the one specified
-//
-void Renderer::SetCurrentShaderProgram(const ShaderProgram* program)
-{
-	if (program == nullptr)
-	{
-		program = m_defaultShaderProgram;
-	}
-
-	m_currentShaderProgram = program;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Sets the current shader program to the one specified by name
-// Will attempt to load it from file if not found
-//
-void Renderer::SetCurrentShaderProgram(const std::string& programName)
-{
-	m_currentShaderProgram = CreateOrGetShaderProgram(programName);
-}
-
-
-//-----------------------------------------------------------------------------------------------
 // Sets the default camera to the one passed
 //
 void Renderer::SetCurrentCamera(Camera* camera)
@@ -875,113 +614,539 @@ void Renderer::SetCurrentCamera(Camera* camera)
 		camera = m_defaultCamera; 
 	}
 
-	camera->Finalize(); // make sure the framebuffer is finished being setup; 
+	camera->FinalizeFrameBuffer(); // make sure the framebuffer is finished being setup; 
+
+	// Update the uniform block for the camera
+	camera->FinalizeUniformBuffer();
+
+	// Need to update the binding, since each camera may point to a different GPU buffer
+	BindUniformBuffer(CAMERA_BUFFER_BINDING, camera->GetUniformBufferHandle());
+
 	m_currentCamera = camera;
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Sets the projection matrix to an orthographic one with the given width and height, centered
-// at (0,0)
+// Sets the game clock on the Renderer to the one specified
 //
-void Renderer::SetProjectionOrtho(float width, float height, float nearZ, float farZ)
+void Renderer::SetRendererGameClock(Clock* gameClock)
 {
-	m_currentCamera->SetProjection(Matrix44::MakeOrtho(-width / 2.f, width / 2.f, -height / 2.f, height / 2.f, nearZ, farZ));
+	m_gameClock = gameClock;
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Sets the projection matrix of the current camera to the one given
+// Adjust the intensity of the ambient 
 //
-void Renderer::SetProjectionMatrix(const Matrix44& projectionMatrix)
+void Renderer::AdjustAmbientIntensity(float deltaAmount)
 {
-	m_currentCamera->SetProjection(projectionMatrix);
+	LightBufferData* buffer = m_lightUniformBuffer.GetCPUBufferAsType<LightBufferData>();
+	float currAmbience = buffer->m_ambience.w;
+	buffer->m_ambience.w = ClampFloatZeroToOne(currAmbience + deltaAmount);
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Sets the view matrix of the current camera to the one given
+// Sets the ambient light intensity for the scene to render
 //
-void Renderer::SetViewMatrix(const Matrix44& viewMatrix)
+void Renderer::SetAmbientIntensity(float newIntensity)
 {
-	m_currentCamera->SetViewMatrix(viewMatrix);
+	LightBufferData* buffer = m_lightUniformBuffer.GetCPUBufferAsType<LightBufferData>();
+	buffer->m_ambience.w = ClampFloatZeroToOne(newIntensity);
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Sets the default camera's camera and view matrix to look at the target from position with the given up
+// Sets the ambient light for the scene to render
 //
-void Renderer::SetLookAt(const Vector3& position, const Vector3& target, const Vector3& up /*= Vector3::DIRECTION_UP*/)
+void Renderer::SetAmbientLight(const Rgba& color)
 {
-	m_currentCamera->LookAt(position, target, up);
+	LightBufferData* buffer = m_lightUniformBuffer.GetCPUBufferAsType<LightBufferData>();
+	color.GetAsFloats(buffer->m_ambience.x, buffer->m_ambience.y, buffer->m_ambience.z, buffer->m_ambience.w);
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Sets the current model matrix on the renderer, for all DrawMeshImmediate calls
+// Sets the ambient light for the scene to render
 //
-void Renderer::SetModelMatrix(const Matrix44& matrix)
+void Renderer::SetAmbientLight(const Vector4& color)
 {
-	m_currentModelMatrix = matrix;
+	LightBufferData* buffer = m_lightUniformBuffer.GetCPUBufferAsType<LightBufferData>();
+	buffer->m_ambience = color;
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Binds the texture to the given slot
+// Enables a single point light at the given index
 //
-void Renderer::BindTexture(unsigned int bindSlot, unsigned int textureHandle)
+void Renderer::EnablePointLight(unsigned int index, const Vector3& position, const Rgba& color /*= Rgba::WHITE*/, const Vector3& attenuation /*= Vector3(1.f, 0.f, 0.f)*/)
 {
-	glActiveTexture(GL_TEXTURE0 + bindSlot);
-	glBindTexture(GL_TEXTURE_2D, textureHandle);
+	LightBufferData* buffer = m_lightUniformBuffer.GetCPUBufferAsType<LightBufferData>();
+	LightData& currLight = buffer->m_lights[index];
 
-	glBindSampler(bindSlot, m_defaultSampler->GetHandle());
+	currLight.m_position = position;
+
+	float red, green, blue, intensity;
+	color.GetAsFloats(red, green, blue, intensity);
+	currLight.m_color = Vector4(red, green, blue, intensity);
+
+	currLight.m_attenuation = attenuation;
+
+	// Don't need dots since this isn't a spot light, and directional factor = 1.f indicates this is a point light
+	currLight.m_dotOuterAngle = -2.f;
+	currLight.m_dotInnerAngle = -1.f;
+	currLight.m_directionFactor = 1.0f;
+
+	// Light direction is unused, as point lights emit light in all directions
+	currLight.m_lightDirection = Vector3::ZERO;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Enables a single directional light at the given index
+//
+void Renderer::EnableDirectionalLight(unsigned int index, const Vector3& position, const Vector3& direction /*= Vector3::DIRECTION_DOWN*/, const Rgba& color /*= Rgba::WHITE*/, const Vector3& attenuation /*= Vector3(1.f, 0.f, 0.f)*/)
+{
+	LightBufferData* buffer = m_lightUniformBuffer.GetCPUBufferAsType<LightBufferData>();
+	LightData& currLight = buffer->m_lights[index];
+
+	currLight.m_position = position;
+	currLight.m_lightDirection = direction;
+
+	float red, green, blue, intensity;
+	color.GetAsFloats(red, green, blue, intensity);
+	currLight.m_color = Vector4(red, green, blue, intensity);
+
+	currLight.m_attenuation = attenuation;
+
+	// Don't need dots since this isn't a spot light, and directional factor = 0.f indicates this is a directional light
+	currLight.m_dotOuterAngle = -2.0f;
+	currLight.m_dotInnerAngle = -1.f;
+	currLight.m_directionFactor = 0.f;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Enables a single directional light at the given index
+//
+void Renderer::EnableSpotLight(unsigned int index, const Vector3& position, const Vector3& direction, float outerAngle, float innerAngle, const Rgba& color /*= Rgba::WHITE*/, const Vector3& attenuation /*= Vector3(1.f, 0.f, 0.f)*/)
+{
+	LightBufferData* buffer = m_lightUniformBuffer.GetCPUBufferAsType<LightBufferData>();
+	LightData& currLight = buffer->m_lights[index];
+
+	currLight.m_position = position;
+	currLight.m_lightDirection = direction;
+
+	float red, green, blue, intensity;
+	color.GetAsFloats(red, green, blue, intensity);
+	currLight.m_color = Vector4(red, green, blue, intensity);
+
+	currLight.m_attenuation = attenuation;
+
+	// Don't need dots since this isn't a spot light, and directional factor = 1.f indicates this is a point light
+	currLight.m_dotOuterAngle = CosDegrees(outerAngle * 0.5f);
+	currLight.m_dotInnerAngle = CosDegrees(innerAngle * 0.5f);
+	currLight.m_directionFactor = 1.0f;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Enables the lights specified in the given draw call
+//
+void Renderer::EnableLightsForDrawCall(const DrawCall* drawCall)
+{
+	int numLights = drawCall->GetNumLights();
+	LightBufferData* buffer = m_lightUniformBuffer.GetCPUBufferAsType<LightBufferData>();
+
+	for (int lightIndex = 0; lightIndex < MAX_NUMBER_OF_LIGHTS; ++lightIndex)
+	{
+		LightData& currLight = buffer->m_lights[lightIndex];
+
+		// Disable all extra lights
+		if (lightIndex >= numLights)
+		{
+			currLight.m_color.w = 0.f;
+			currLight.m_attenuation = Vector3(0.f, 0.f, 1.f);
+		}
+		else
+		{
+			currLight = drawCall->GetLight(lightIndex)->GetLightData();
+		}
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the intensity of all lights to 0, effectively disabling them
+//
+void Renderer::DisableAllLights()
+{
+	LightBufferData* buffer = m_lightUniformBuffer.GetCPUBufferAsType<LightBufferData>();
+
+	for (int lightIndex = 0; lightIndex < MAX_NUMBER_OF_LIGHTS; ++lightIndex)
+	{
+		LightData& currLight = buffer->m_lights[lightIndex];
+		currLight.m_color.w = 0.f;
+		currLight.m_attenuation = Vector3(0.f, 0.f, 1.f);
+	}
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Binds the texture given by the texturePath to the given slot
 //
-void Renderer::BindTexture(unsigned int bindSlot, const std::string& texturePath)
+void Renderer::BindTexture(unsigned int bindSlot, const std::string& filename)
 {
-	Texture* texture = CreateOrGetTexture(texturePath);
-	BindTexture(bindSlot, texture->GetHandle());
+	Texture* texture = AssetDB::CreateOrGetTexture(filename.c_str());
+	BindTexture(bindSlot, texture);
 }
 
-//-----------------------------------------------------------------------------------------------
-// Binds a uniform to the current shader program
-//
-void Renderer::BindUniformFloat(const std::string& uniformName, float uniformValue) const
-{
-	GLint programHandle = m_currentShaderProgram->GetHandle();
-	glUseProgram(programHandle);
 
-	GLint location = glGetUniformLocation(programHandle, uniformName.c_str());
-	if (location >= 0) 
+//-----------------------------------------------------------------------------------------------
+// Binds the texture and sampler together to the given slot
+//
+void Renderer::BindTexture(unsigned int bindSlot, const Texture* texture, const Sampler* sampler /*= nullptr*/)
+{
+	glActiveTexture(GL_TEXTURE0 + bindSlot);
+
+	// Get the texture target type
+	TextureType type = texture->GetTextureType();
+	GLenum glType = ToGLType(type);
+
+	glBindTexture(glType, texture->GetHandle());
+
+	// nullptr defaults the sampler to the default one on the renderer
+	if (sampler == nullptr)
 	{
-		glUniform1f(location, uniformValue);	// Acts on the currently bound program, hence it's after glUseProgram
+		sampler = m_defaultSampler;
+	}
+
+	glBindSampler(bindSlot, sampler->GetHandle());
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Binds the material state to the renderer
+//
+void Renderer::BindMaterial(Material* material)
+{
+	glUseProgram(material->GetShader()->GetProgram()->GetHandle());
+
+	// Bind all the textures/samplers
+	for (int textureIndex = 0; textureIndex < MAX_TEXTURES_SAMPLERS; ++textureIndex)
+	{
+		const Texture* texture = material->GetTexture(textureIndex);
+
+		if (texture != nullptr)
+		{
+			const Sampler* sampler = material->GetSampler(textureIndex);
+			BindTexture(textureIndex, texture, sampler);
+		}
+	}
+
+	// Bind the uniform property blocks
+	int numBlocks = material->GetPropertyBlockCount();
+
+	for (int blockIndex = 0; blockIndex < numBlocks; ++blockIndex)
+	{
+		MaterialPropertyBlock* block = material->GetPropertyBlock(blockIndex);
+
+		// Since we're in a draw, ensure the GPU data is up-to-date
+		block->CheckAndUpdateGPUData();
+
+		unsigned int binding = block->GetDescription()->GetBlockBinding();
+		BindUniformBuffer(binding, block->GetHandle());
 	}
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Enables the depth buffer on draw calls, and sets the compare operation to the one corresponding
-// to compareMethod, and whether or not it should write to the buffer
+// Binds a uniform buffer to the current shader program at the given slot
 //
-void Renderer::EnableDepth(DepthCompare compareMethod, bool shouldWrite)
+void Renderer::BindUniformBuffer(unsigned int bindSlot, unsigned int bufferHandle) const
 {
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(g_openGlDepthCompares[compareMethod]);
-
-	glDepthMask(shouldWrite ? GL_TRUE : GL_FALSE);
+	glBindBufferBase(GL_UNIFORM_BUFFER, bindSlot, bufferHandle);
+	GL_CHECK_ERROR();
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Disables depth by disabling writing to the depth buffer, and writing always regardless of depth
+// Binds a mesh's vertex layout of attributes to the specified program
 //
-void Renderer::DisableDepth()
+void Renderer::BindMeshToProgram(const ShaderProgram* program, const Mesh* mesh) const
 {
-	EnableDepth(COMPARE_ALWAYS, false);
+	glUseProgram(program->GetHandle());
+	GL_CHECK_ERROR();
+
+	// First bind the mesh information, vertices and indices
+	glBindBuffer(GL_ARRAY_BUFFER, mesh->GetVertexBuffer()->GetHandle());
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->GetIndexBuffer()->GetHandle());
+	GL_CHECK_ERROR();
+
+	const VertexLayout* vertexLayout = mesh->GetVertexLayout();
+	unsigned int vertexStride = vertexLayout->GetStride();
+
+	// Passing the data to the program
+	GLuint programHandle = program->GetHandle();
+	unsigned int numAttributes = vertexLayout->GetAttributeCount();
+
+	for (unsigned int attribIndex = 0; attribIndex < numAttributes; ++attribIndex)
+	{
+		const VertexAttribute& attribute = vertexLayout->GetAttribute(attribIndex);
+
+		// Try to find the attribute on the shader by its name
+		int bind = glGetAttribLocation(programHandle, attribute.m_name.c_str());
+
+		// If the attribute exists on the shader, then bind the data to it
+		if (bind >= 0)
+		{
+			glEnableVertexAttribArray(bind);
+			GL_CHECK_ERROR();
+
+			glVertexAttribPointer(bind,					// Where the bind point is at
+				attribute.m_elementCount,				// Number of components in this data type
+				ToGLType(attribute.m_dataType),									// glType of this data
+				attribute.m_isNormalized,				// Are they normalized
+				vertexStride,							// stride of the vertex
+				(GLvoid*)attribute.m_memberOffset		// offset into the layout this member is
+			);
+		}
+
+		GL_CHECK_ERROR();
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the OpenGL render state to the state specified in the state struct passed
+//
+void Renderer::BindRenderState(const RenderState& state) const
+{
+	//-----Cull Mode-----
+ 	switch (state.m_cullMode)
+ 	{
+ 	case CULL_MODE_NONE:
+ 		glDisable(GL_CULL_FACE);
+ 		break;
+ 	case CULL_MODE_BACK:
+ 		glEnable(GL_CULL_FACE);
+ 		glCullFace(GL_BACK);
+ 		break;
+ 	case CULL_MODE_FRONT:
+ 		glEnable(GL_CULL_FACE);
+ 		glCullFace(GL_FRONT);
+ 		break;
+ 	default:
+ 		break;
+ 	}
+
+	// Fill Mode
+	glPolygonMode(GL_FRONT_AND_BACK, ToGLType(state.m_fillMode));
+	GL_CHECK_ERROR();
+
+	// Winding Order
+	glFrontFace(ToGLType(state.m_windOrder));
+	GL_CHECK_ERROR();
+
+	// Blending
+	glEnable(GL_BLEND);
+	glBlendEquationSeparate(ToGLType(state.m_colorBlendOp), ToGLType(state.m_alphaBlendOp));
+	glBlendFuncSeparate(ToGLType(state.m_colorSrcFactor), ToGLType(state.m_colorDstFactor), ToGLType(state.m_alphaSrcFactor), ToGLType(state.m_alphaDstFactor));
+	GL_CHECK_ERROR();
+
+	// Depth
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(ToGLType(state.m_depthTest));
+	glDepthMask(state.m_shouldWriteDepth ? GL_TRUE : GL_FALSE);
+	GL_CHECK_ERROR();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Binds the model matrix to the buffer binding
+//
+void Renderer::BindModelMatrix(const Matrix44& model)
+{
+	m_modelUniformBuffer.SetCPUAndGPUData(sizeof(model), &model);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Binds the given VAO
+//
+void Renderer::BindVAO(unsigned int vaoHandle)
+{
+	glBindVertexArray(vaoHandle);
+	GL_CHECK_ERROR();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Updates the VAO by binding the mesh data to the program
+//
+void Renderer::UpdateVAO(unsigned int& vaoHandle, Mesh* mesh, Material* material)
+{
+	ASSERT_OR_DIE(mesh != nullptr && material != nullptr, Stringf("Error: Renderer::UpdateVAO() received null parameters."));
+
+	if (glIsVertexArray(vaoHandle) == GL_FALSE)
+	{
+		glGenVertexArrays(1, &vaoHandle);
+		GL_CHECK_ERROR();
+	}
+ 
+	glBindVertexArray(vaoHandle);
+
+	const Shader* shader = material->GetShader();
+	BindMeshToProgram(shader->GetProgram(), mesh);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Frees the Vertex Array Object on the gpu
+//
+void Renderer::DeleteVAO(unsigned int& vaoHandle) const
+{
+	glDeleteVertexArrays(1, &vaoHandle);
+	GL_CHECK_ERROR();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Draws the given draw call
+//
+void Renderer::Draw(const DrawCall& drawCall)
+{
+	// Bind all the state
+	BindVAO(drawCall.GetVAOHandle());
+	BindMaterial(drawCall.GetMaterial()); 
+	BindRenderState(drawCall.GetMaterial()->GetShader()->GetRenderState());
+
+	// Copy light data from draw call
+	SetAmbientLight(drawCall.GetAmbience());
+	EnableLightsForDrawCall(&drawCall);
+
+	// Update the GPU with the light data
+	m_lightUniformBuffer.CheckAndUpdateGPUData();
+
+	// Bind the frame buffer
+	glBindFramebuffer(GL_FRAMEBUFFER, m_currentCamera->GetFrameBufferHandle()); 
+	GL_CHECK_ERROR();
+
+	// MODEL BINDING - If there's more than one model, do instance draws
+	int matrixCount = drawCall.GetModelMatrixCount();
+	if (matrixCount > 1)
+	{
+		// Buffer the model data
+		m_modelInstanceBuffer.CopyToGPU(sizeof(Matrix44) * matrixCount, drawCall.GetModelMatrixBuffer(), GL_ARRAY_BUFFER);
+
+		// Bind the model matrix to the program as a vertex attribute
+		int bind = glGetAttribLocation(drawCall.GetMaterial()->GetShader()->GetProgram()->GetHandle(), "INSTANCE_MODEL_MATRIX");
+
+		// If the attribute exists on the shader, then bind the data to it as 4 separate vector4's (OpenGL doesn't support larger object bindings)
+		if (bind >= 0)
+		{
+			for (int offset = 0; offset < 4; offset++)
+			{
+				glEnableVertexAttribArray(bind + offset);
+				GL_CHECK_ERROR();
+
+				glVertexAttribPointer(bind + offset,		// Where the bind point is at, offsetting for each column of the matrix
+					4,										// Number of components in this data type (4 for Vector4)
+					GL_FLOAT,								// glType of this data, which is 4 floats
+					GL_FALSE,								// Don't normalize
+					sizeof(Matrix44),						// Stride by the size of a matrix, since we're doing a column at a time
+					(GLvoid*)(offset * sizeof(Vector4))		// offset into the matrix for this column
+				);
+			}	
+
+			// Make the bindings instanced, so they don't update per vertex
+			for (int offset = 0; offset < 4; offset++)
+			{
+				glVertexAttribDivisor(bind + offset, 1);
+			}
+		}
+		else
+		{
+			ConsoleWarningf("Warning: Renderer::Draw() attempted instanced draw with a shader that doesn't support instance draws");
+		}
+
+		// Instance draw using the instruction
+		DrawInstruction instruction = drawCall.GetMesh()->GetDrawInstruction();
+		if (instruction.m_usingIndices)
+		{
+			// Draw with indices
+			glDrawElementsInstanced(ToGLType(instruction.m_primType), instruction.m_elementCount, GL_UNSIGNED_INT, 0, matrixCount);
+		}
+		else
+		{
+			// Draw without indices
+			glDrawArraysInstanced(ToGLType(instruction.m_primType), instruction.m_startIndex, instruction.m_elementCount, matrixCount);
+		}
+	}
+	else
+	{
+		// Just bind the singular model matrix as a uniform buffer
+		BindModelMatrix(drawCall.GetModelMatrix(0)); 
+
+		// Draw using the instruction
+		DrawInstruction instruction = drawCall.GetMesh()->GetDrawInstruction();
+		if (instruction.m_usingIndices)
+		{
+			// Draw with indices
+			glDrawElements(ToGLType(instruction.m_primType), instruction.m_elementCount, GL_UNSIGNED_INT, 0);
+		}
+		else
+		{
+			// Draw without indices
+			glDrawArrays(ToGLType(instruction.m_primType), instruction.m_startIndex, instruction.m_elementCount);
+		}
+		GL_CHECK_ERROR();
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Draws the given mesh to screen
+//
+void Renderer::DrawMesh(Mesh* mesh)
+{
+	Material* material = AssetDB::CreateOrGetSharedMaterial("Default_Opaque");
+	DrawMeshWithMaterial(mesh, material);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Draws the given mesh with the given material
+// Assumes the model matrix is the identity
+//
+void Renderer::DrawMeshWithMaterial(Mesh* mesh, Material* material)
+{
+	MaterialMeshSet set;
+	set.m_sharedMaterial = material;
+	set.m_mesh = mesh;
+	set.m_vaoHandle = m_defaultVAO;
+
+	// Sets the pair, and also updates the default VAO
+	m_immediateRenderable.SetMaterialMeshSet(0, set);
+
+	DrawRenderable(&m_immediateRenderable);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Draws the renderable given
+//
+void Renderer::DrawRenderable(Renderable* renderable)
+{
+	int numDraws = renderable->GetDrawCountPerInstance();
+
+	for (int drawIndex = 0; drawIndex < numDraws; ++drawIndex)
+	{
+		TODO("Need to add light step here.");
+		DrawCall dc;
+		dc.SetDataFromRenderable(renderable, drawIndex);
+		Draw(dc);
+	}
 }
 
 
@@ -990,36 +1155,9 @@ void Renderer::DisableDepth()
 //
 void Renderer::ClearDepth(float clearDepth /*= 1.0f*/)
 {
+	glDepthMask(GL_TRUE);
 	glClearDepthf(clearDepth);
 	glClear(GL_DEPTH_BUFFER_BIT);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Reloads and compiles all shader programs from file that are already in the renderer's map
-// of shader programs
-//
-void Renderer::ReloadShaders()
-{
-	std::map<std::string, ShaderProgram*>::iterator progItr = m_loadedShaderPrograms.begin();
-	for(progItr; progItr != m_loadedShaderPrograms.end(); progItr++)
-	{
-		// Check to ensure that we don't attempt to load a built-in shader
-		ShaderProgram* currProgram = progItr->second;
-		if (currProgram->GetSourceFileName() == "")
-		{
-			continue;
-		}
-
-		// Attempt the reload
-		bool reloadSuccessful = currProgram->LoadProgramFromFiles(currProgram->GetSourceFileName().c_str());
-
-		// Again, if load was unsuccessful assign it the invalid shader
-		if (!reloadSuccessful)
-		{
-			currProgram->LoadProgramFromSources(INVALID_VS, INVALID_FS);
-		}
-	}
 }
 
 
@@ -1038,6 +1176,15 @@ Camera* Renderer::GetUICamera() const
 AABB2 Renderer::GetUIBounds()
 {
 	return s_UIOrthoBounds;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the default sampler of the renderer
+//
+const Sampler* Renderer::GetDefaultSampler() const
+{
+	return m_defaultSampler;
 }
 
 
@@ -1225,15 +1372,9 @@ void Renderer::DrawTextInBox2D_WordWrap(const std::string& text, const AABB2& dr
 //
 void Renderer::PostGLStartup()
 {
-	// Load the built in shaders automatically
-	CreateBuiltInShaderPrograms();
-
-	// Load the built in textures automatically
-	CreateBuiltInTextures();
-
 	// Create and bind a default texture sampler
 	m_defaultSampler = new Sampler();
-	bool successful = m_defaultSampler->Initialize();
+	bool successful = m_defaultSampler->Initialize(SAMPLER_FILTER_NEAREST, EDGE_SAMPLING_REPEAT);
 	GUARANTEE_OR_DIE(successful, Stringf("Error: Default Sampler could not be constructed successfully."));
 
 	// the default color and depth should match our output window
@@ -1245,140 +1386,129 @@ void Renderer::PostGLStartup()
 	m_defaultColorTarget = CreateRenderTarget(windowWidth, windowHeight);
 	m_defaultDepthTarget = CreateDepthTarget(windowWidth, windowHeight); 
 
-	// Bind a vertex array object - to be used later
+	// Create the immediate renderable and the default VAO
 	glGenVertexArrays(1, &m_defaultVAO); 
 	glBindVertexArray(m_defaultVAO);
 
-	// Enable blending
-	EnableBlendMacro();
-	SetBlendMode(BLEND_MODE_ALPHA);
+	MaterialMeshSet set;
+	set.m_mesh = &m_immediateMesh;
+	set.m_sharedMaterial = AssetDB::CreateOrGetSharedMaterial("Default_Opaque");
+	set.m_vaoHandle = m_defaultVAO;
+	m_immediateRenderable.SetMaterialMeshSet(0, set);
+
+	GL_CHECK_ERROR();
+
+	// Set up initial GL state, using the state specified in the default shader
+	Shader* defaultShader = AssetDB::GetShader("Default_Opaque");	// Should just "get" since the Default program is built in, already made
+
+	BindRenderState(defaultShader->GetRenderState());
+
+	// Setup Uniform buffers
+	m_timeUniformBuffer.InitializeCPUBufferForType<TimeBufferData>();
+	m_lightUniformBuffer.InitializeCPUBufferForType<LightBufferData>();
+	m_modelUniformBuffer.SetCPUAndGPUData(sizeof(Matrix44), &Matrix44::IDENTITY);
+
+	// Bind the UniformBuffers to the correct slots
+	BindUniformBuffer(TIME_BUFFER_BINDING, m_timeUniformBuffer.GetHandle());
+	BindUniformBuffer(LIGHT_BUFFER_BINDING, m_lightUniformBuffer.GetHandle());
+	BindUniformBuffer(MODEL_BUFFER_BINDING, m_modelUniformBuffer.GetHandle());
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Updates the GPU-side time data from the renderer
+//
+void Renderer::UpdateTimeData()
+{
+	Clock* master = Clock::GetMasterClock();
+
+	TimeBufferData* timeData = m_timeUniformBuffer.GetCPUBufferAsType<TimeBufferData>();
+
+	// In case we forgot to set the game clock on the renderer
+	if (m_gameClock != nullptr)
+	{
+		timeData->m_gameDeltaTime	= m_gameClock->GetDeltaTime();
+		timeData->m_gameTotalTime	= m_gameClock->GetTotalSeconds();
+	}
+
+	timeData->m_systemDeltaTime = master->GetDeltaTime();
+	timeData->m_systemTotalTime = master->GetTotalSeconds();
+
+	// CPU data set, now update the GPU
+	m_timeUniformBuffer.CheckAndUpdateGPUData();
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Draws to the screen given the vertices and the draw primitive type
 //
-void Renderer::DrawMeshImmediate(const Vertex3D_PCU* vertexBuffer, int numVertices, PrimitiveType primitiveType /*= PRIMITIVE_TRIANGLES*/, const unsigned int* indexBuffer /*= nullptr*/, int numIndices /*= -1*/)
+void Renderer::DrawMeshImmediate(const Vertex3D_PCU* vertices, int vertexCount, PrimitiveType primitiveType /*= PRIMITIVE_TRIANGLES*/, const unsigned int* indices /*= nullptr*/, int indexCount /*= -1*/)
 {
-	// first, copy the memory to the gpu buffer
-	m_vertexBuffer->CopyToGPU(sizeof(Vertex3D_PCU) * numVertices, vertexBuffer, GL_ARRAY_BUFFER); 
+	m_immediateMesh.SetVertices(vertexCount, vertices);
 
-	if (indexBuffer != nullptr)
+	bool isUsingIndices = indices != nullptr;
+	if (isUsingIndices)
 	{
-		m_indexBuffer->CopyToGPU(sizeof(int) * numIndices, indexBuffer, GL_ELEMENT_ARRAY_BUFFER);
+		m_immediateMesh.SetIndices(indexCount, indices);
 	}
-
-	// Tell GL what shader program to use.
-	GLuint program_handle = m_currentShaderProgram->GetHandle(); 
-
-	//-----DESCRIBING VERTEX DATA TO GPU-----
-
-	// Next, bind the buffer we want to use (buffer the renderer dumped vertex data into); 
-	glBindBuffer( GL_ARRAY_BUFFER, m_vertexBuffer->GetHandle() ); 
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, m_indexBuffer->GetHandle());
-
-	// Describe the buffer - first, figure out where the shader is expecting
-	// position and uvs to be.
-	GLint pos_bind = glGetAttribLocation(program_handle, "POSITION");
 	
-	// next, bind where position is in our buffer to that location; 
-	if (pos_bind >= 0) 
-	{
-		// enable this location
-		glEnableVertexAttribArray(pos_bind);
+	DrawInstruction instruction;
 
-		// describe the data for position...
-		glVertexAttribPointer(pos_bind,						// where?
-			3,												// how many (vec3 has 3 floats)
-			GL_FLOAT,										// type? (vec3 is 3 floats)
-			GL_FALSE,										// Should data be normalized
-			sizeof(Vertex3D_PCU),							// stride (how far between each vertex)
-			(GLvoid*)offsetof(Vertex3D_PCU, m_position));	// From the start of a vertex, where is this data?
-	}
+	instruction.m_primType = primitiveType;
+	instruction.m_startIndex = 0;
+	instruction.m_usingIndices = isUsingIndices;
+	instruction.m_elementCount = (isUsingIndices ? indexCount : vertexCount);
 
-	// Do the same for Color
-	GLint color_bind = glGetAttribLocation(program_handle, "COLOR");
-	if (color_bind >= 0) {
-		// enable this location
-		glEnableVertexAttribArray(color_bind);
-
-		// describe the data
-		glVertexAttribPointer(color_bind, // where?
-			4,                           // how many (RGBA is 4 unsigned chars)
-			GL_UNSIGNED_BYTE,            // type? (RGBA is 4 unsigned chars)
-			GL_TRUE,                     // Normalize components, maps 0-255 to 0-1.
-			sizeof(Vertex3D_PCU),             // stride (how far between each vertex)
-			(GLvoid*)offsetof(Vertex3D_PCU, m_color)); // From the start of a vertex, where is this data?
-	}
-
-	// Do the same for UV's
-	GLint uv_bind = glGetAttribLocation(program_handle, "UV");
-	if (uv_bind >= 0)
-	{
-		glEnableVertexAttribArray(uv_bind);
-		glVertexAttribPointer(uv_bind,						
-			2,												
-			GL_FLOAT,										
-			GL_FALSE,										
-			sizeof(Vertex3D_PCU),							
-			(GLvoid*)offsetof(Vertex3D_PCU, m_texUVs));	
-	}
-
-	//----------END VERTEX DATA----------
+	m_immediateMesh.SetDrawInstruction(instruction);
+	DrawMesh(&m_immediateMesh);
+}
 
 
-	// Binding uniforms
-	glUseProgram(program_handle); 
+//-----------------------------------------------------------------------------------------------
+// Draws a point at the given position with the given color and size
+//
+void Renderer::DrawPoint(const Vector3& position, const Rgba& color, float radius)
+{
+	Vertex3D_PCU vertices[14];
 
-	GLint projLocation = glGetUniformLocation(program_handle, "PROJECTION");
-	if (projLocation >= 0) 
-	{
-		Matrix44 projectionMatrix = m_currentCamera->GetProjectionMatrix();
-		glUniformMatrix4fv(projLocation, 1, GL_FALSE, (GLfloat*)&projectionMatrix);	// Acts on the currently bound program, hence it's after glUseProgram
-	}
+	vertices[0] = Vertex3D_PCU(position - Vector3::DIRECTION_RIGHT * radius, color, Vector2::ZERO);
+	vertices[1] = Vertex3D_PCU(position + Vector3::DIRECTION_RIGHT * radius, color, Vector2::ZERO);
 
-	GLint viewLocation = glGetUniformLocation(program_handle, "VIEW");
-	if (viewLocation >= 0) 
-	{
-		Matrix44 viewMatrix = m_currentCamera->GetViewMatrix();
-		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, (GLfloat*)&viewMatrix);	// Acts on the currently bound program, hence it's after glUseProgram
-	}
+	vertices[2] = Vertex3D_PCU(position - Vector3::DIRECTION_UP * radius, color, Vector2::ZERO);
+	vertices[3] = Vertex3D_PCU(position + Vector3::DIRECTION_UP * radius, color, Vector2::ZERO);
 
-	GLint modelLocation = glGetUniformLocation(program_handle, "MODEL");
-	if (modelLocation >= 0) 
-	{
-		Matrix44 modelMatrix = m_currentModelMatrix;
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, (GLfloat*)&modelMatrix);	// Acts on the currently bound program, hence it's after glUseProgram
-	}
+	vertices[4] = Vertex3D_PCU(position - Vector3::DIRECTION_FORWARD * radius, color, Vector2::ZERO);
+	vertices[5] = Vertex3D_PCU(position + Vector3::DIRECTION_FORWARD * radius, color, Vector2::ZERO);
 
-	// Bind the frame buffer
-	glBindFramebuffer(GL_FRAMEBUFFER, m_currentCamera->GetFrameBufferHandle()); 
+	vertices[6] = Vertex3D_PCU(position - Vector3(1.0f, 1.0f, 1.0f) * radius, color, Vector2::ZERO);
+	vertices[7] = Vertex3D_PCU(position + Vector3(1.0f, 1.0f, 1.0f) * radius, color, Vector2::ZERO);
 
-	if (indexBuffer != nullptr)
-	{
-		// Draw with indices
-		glDrawElements(g_openGlPrimitiveTypes[primitiveType], numIndices, GL_UNSIGNED_INT, 0);
-	}
-	else
-	{
-		// Draw without indices
-		glDrawArrays(g_openGlPrimitiveTypes[primitiveType], 0, numVertices);
-	}
+	vertices[8] = Vertex3D_PCU(position - Vector3(-1.0f, 1.0f, 1.0f) * radius, color, Vector2::ZERO);
+	vertices[9] = Vertex3D_PCU(position + Vector3(-1.0f, 1.0f, 1.0f) * radius, color, Vector2::ZERO);
+
+	vertices[10] = Vertex3D_PCU(position - Vector3(1.0f, 1.0f, -1.0f) * radius, color, Vector2::ZERO);
+	vertices[11] = Vertex3D_PCU(position + Vector3(1.0f, 1.0f, -1.0f) * radius, color, Vector2::ZERO);
+
+	vertices[12] = Vertex3D_PCU(position - Vector3(-1.0f, 1.0f, -1.0f) * radius, color, Vector2::ZERO);
+	vertices[13] = Vertex3D_PCU(position + Vector3(-1.0f, 1.0f, -1.0f) * radius, color, Vector2::ZERO);
+
+	DrawMeshImmediate(vertices, 14, PRIMITIVE_LINES);
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Draws a line from startPos to endPos with the given colors
 //
-void Renderer::DrawLine(const Vector3& startPos, const Rgba& startColor, const Vector3& endPos, const Rgba& endColor, float width)
+void Renderer::DrawLine(const Vector3& startPos, const Rgba& startColor, const Vector3& endPos, const Rgba& endColor, float width/*=1.0f*/)
 {
-	UNUSED(startPos);
-	UNUSED(endPos);
-	UNUSED(startColor);
-	UNUSED(endColor);
-	UNUSED(width);
+	glLineWidth(width);
 
-	UNIMPLEMENTED();
+	Vertex3D_PCU vertices[2];
+
+	vertices[0] = Vertex3D_PCU(startPos, startColor, Vector2::ZERO);
+	vertices[1] = Vertex3D_PCU(endPos, endColor, Vector2::ZERO);
+
+	DrawMeshImmediate(vertices, 2, PRIMITIVE_LINES);
 }
 
 
@@ -1443,12 +1573,8 @@ bool Renderer::CopyFrameBuffer( FrameBuffer *destination, FrameBuffer *source )
 
 void Command_Screenshot(Command& cmd)
 {
-	std::string filename = cmd.GetNextString();
-	
-	if (filename.size() == 0)
-	{
-		filename = "screenshot.png";
-	}
+	std::string filename = "screenshot.png";
+	cmd.GetParam("f", filename, &filename);
 
 	Renderer::GetInstance()->SaveScreenshotAtEndOfFrame(filename);
 }

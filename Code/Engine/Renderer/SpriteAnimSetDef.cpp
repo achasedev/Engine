@@ -5,12 +5,12 @@
 /* Bugs: None
 /* Description: Implementation of the SpriteAnimSetDef class
 /************************************************************************/
-#include "Engine/Renderer/SpriteAnimSetDef.hpp"
-#include "Engine/Renderer/SpriteAnimDef.hpp"
-#include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Core/AssetDB.hpp"
 #include "Engine/Core/StringUtils.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/XmlUtilities.hpp"
+#include "Engine/Renderer/SpriteAnimDef.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Renderer/SpriteAnimSetDef.hpp"
 
 
 //-----------------------------------------------------------------------------------------------
@@ -18,14 +18,12 @@
 //
 SpriteAnimSetDef::SpriteAnimSetDef(const XMLElement& animationSetElement)
 {
-	Renderer* renderer = Renderer::GetInstance();
-
 	// Create the spritesheet for the animation child elements
 	std::string		spriteSheetName		= ParseXmlAttribute(animationSetElement, "spriteSheet", nullptr);
 	std::string		spriteSheetFilePath = Stringf("Data/Images/%s", spriteSheetName.c_str());
 	IntVector2		spriteLayout		= ParseXmlAttribute(animationSetElement, "spriteLayout", spriteLayout);
-	Texture*		spriteSheetTexture	= renderer->CreateOrGetTexture(spriteSheetFilePath);
-	SpriteSheet		setSpriteSheet		= SpriteSheet(spriteSheetName, *spriteSheetTexture, spriteLayout);
+	Texture*		spriteSheetTexture	= AssetDB::CreateOrGetTexture(spriteSheetFilePath.c_str());
+	SpriteSheet		setSpriteSheet		= SpriteSheet(*spriteSheetTexture, spriteLayout);
 
 
 	// Iterate across animation elements to create animation definitions

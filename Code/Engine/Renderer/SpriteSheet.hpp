@@ -13,10 +13,11 @@ class Sprite;
 
 class SpriteSheet
 {
+
 public:
 	//-----Public Methods-----
 
-	SpriteSheet(const std::string& name, const Texture& texture, const IntVector2& spriteLayout);		// Only constructor, uses a reference as a member
+	SpriteSheet(const Texture& texture, const IntVector2& spriteLayout);		// Only constructor, uses a reference as a member
 	~SpriteSheet();
 
 	Sprite* GetSprite(const std::string& name) const;							// Returns the sprite corresponding to the given index
@@ -27,8 +28,7 @@ public:
 	int GetNumSprites() const;													// Returns the number of individual sprites in the atlas
 	const Texture& GetTexture() const;											// Returns a reference to the texture this sprite sheet comprises
 
-	static SpriteSheet* LoadSpriteSheet(const std::string& filePath);
-	static SpriteSheet* GetResource(const std::string& name);
+	static SpriteSheet* LoadSpriteSheet(const std::string& xmlFilepath);
 
 
 private:
@@ -40,11 +40,8 @@ private:
 private:
 	//-----Private Data
 
-	std::string m_name;
 	const Texture& m_texture;													// The texture of this sprite sheet
 	IntVector2 m_spriteLayout;													// The number of sprites in each row and column of this texture
 
 	std::map<std::string, Sprite*> m_sprites;
-
-	static std::map<std::string, SpriteSheet*> s_spriteSheets;
 };

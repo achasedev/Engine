@@ -8,6 +8,7 @@
 #include "Engine/Core/Rgba.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/Matrix44.hpp"
+#include "Engine/Input/InputSystem.hpp"
 #include <vector>
 
 class Renderer;
@@ -68,8 +69,10 @@ private:
 	void HandleDownArrow();
 	void AddCharacterToInputBuffer(unsigned char character);
 
+	// Input
+	void UpdateMouseCursorSettings();
+
 	// Rendering
-	Renderer*	SetUpRenderState() const;
 	void		RenderInputField(Renderer* renderer, BitmapFont* font) const;
 	void		RenderLogWindow(Renderer* renderer, BitmapFont* font) const;
 	void		RenderFPS() const;
@@ -97,6 +100,10 @@ private:
 	std::vector<std::string> m_commandHistory;				// List of previously entered strings (not the log)
 	int	m_historyIndex;										// Current location in history to render		
 	
+	// Mouse settings
+	bool		m_wasMouseShown;
+	bool		m_wasMouseLocked;
+	CursorMode	m_prevMouseMode;
 
 	float	m_cursorBlinkTimer;			// Timer to track if we should draw the end cursor
 	int		m_cursorPosition;			// Index position of the cursor in the input buffer

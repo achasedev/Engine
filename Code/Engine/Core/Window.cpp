@@ -9,7 +9,7 @@
 #include "Engine/Math/Vector2.hpp"
 #include "Engine/Core/Window.hpp"
 #include "Engine/Core/EngineCommon.hpp"
-
+#include "Engine/Input/InputSystem.hpp"
 
 // For singleton style classes, I like to had the instance variable within the CPP; 
 Window* Window::s_instance = nullptr;
@@ -105,8 +105,52 @@ HWND FinalizeWindow(RECT windowRect, const std::string& windowTitle)
 
 	HCURSOR cursor = LoadCursor(NULL, IDC_ARROW);
 	SetCursor(cursor);
-
+	
 	return activeWindow;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Message handler for updating a Window's state
+//
+bool WindowMessageHandler(unsigned int msg, size_t wparam, size_t lparam)
+{
+	UNUSED(lparam);
+
+	Mouse& mouse = InputSystem::GetMouse();
+
+	switch(msg)
+	{
+	case WM_ACTIVATE:		
+	{
+		bool inFocus = (WA_INACTIVE != LOWORD(wparam));
+
+		if (inFocus)
+		{
+			if (!mouse.IsCursorShown())
+			{
+				mouse.ShowMouseCursor(false);
+			}
+
+			if (mouse.IsCursorLocked())
+			{
+				mouse.LockCursorToClient(true);
+			}
+		}	
+	}
+
+	// For handling window moving and resizing
+	case WM_MOVE:
+	case WM_SIZE:
+	{
+		if (mouse.IsCursorLocked())
+		{
+			mouse.LockCursorToClient(true);	// Updates the mouse's clip bounds to the new Window dimensions
+		}
+		return false;
+	}
+	}
+	return true;
 }
 
 
@@ -239,8 +283,12 @@ Window* Window::Initialize(float clientAspect/*=1.77777*/, const std::string& wi
 	ASSERT_OR_DIE(s_instance == nullptr, "Error: Window::Initialize() called when an instance already exists.");
 
 	// Window is created, assigns itself to s_instance internally (otherwise callback throws exception)
-	return new Window(clientAspect, windowTitle);
+	Window* window = new Window(clientAspect, windowTitle);
 
+	// Register the handler for window resize and move messages
+	s_instance->RegisterHandler(WindowMessageHandler);
+
+	return window;
 }
 
 
@@ -253,8 +301,12 @@ Window* Window::Initialize(unsigned int widthInPixels, unsigned int heightInPixe
 	ASSERT_OR_DIE(s_instance == nullptr, "Error: Window constructor called when an instance already exists.");
 
 	// Window is created, assigns itself to s_instance internally (otherwise callback throws exception)
-	return new Window(widthInPixels, heightInPixels, windowTitle);
+	Window* window = new Window(widthInPixels, heightInPixels, windowTitle);
 
+	// Register the handler for window resize and move messages
+	s_instance->RegisterHandler(WindowMessageHandler);
+
+	return window;
 }
 
 
@@ -322,6 +374,15 @@ unsigned int Window::GetHeightInPixels() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the pixel dimensions for the window
+//
+IntVector2 Window::GetDimensions() const
+{
+	return IntVector2((int) m_widthInPixels, (int) m_heightInPixels);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the height of the window in pixels
 //
 float Window::GetWindowAspect() const
@@ -336,6 +397,16 @@ float Window::GetWindowAspect() const
 AABB2 Window::GetWindowBounds() const
 {
 	return AABB2(Vector2::ZERO, Vector2((float) m_widthInPixels, (float) m_heightInPixels));
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns whether the window is the active window
+//
+bool Window::IsWindowInFocus() const
+{
+	HWND active = GetActiveWindow();
+	return (m_hwnd == active);
 }
 
 

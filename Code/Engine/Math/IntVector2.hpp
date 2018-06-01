@@ -24,6 +24,7 @@ public:
 	explicit IntVector2( int initialX, int initialY );						// explicit constructor (from x, y)
 	explicit IntVector2( float initialX, float initialY );					// explicit float constructor
 	explicit IntVector2(const Vector2& floatVector);
+	IntVector2(int initialValue);
 																			// Operators
 	const IntVector2 operator+( const IntVector2& vecToAdd ) const;			// vec2 + vec2
 	const IntVector2 operator-( const IntVector2& vecToSubtract ) const;	// vec2 - vec2

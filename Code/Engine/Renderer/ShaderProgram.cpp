@@ -4,15 +4,17 @@
 /* Date: January 25th, 2018
 /* Description: Implementation of the ShaderProgram class
 /************************************************************************/
-#include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
-#include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/File.hpp"
+#include "Engine/Renderer/glTypes.hpp"
+#include "Engine/Core/StringUtils.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/glFunctions.hpp"
+#include "Engine/Renderer/PropertyDescription.hpp"
+#include "Engine/Renderer/ShaderSource.hpp"
 #include "Engine/Renderer/ShaderProgram.hpp"
-
-const std::string ShaderProgram::INVALID_SHADER_NAME = "Invalid";
-const std::string ShaderProgram::DEFAULT_SHADER_NAME = "Default";
+#include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Renderer/PropertyBlockDescription.hpp"
+#include "Engine/Renderer/ShaderDescription.hpp"
 
 //-----C functions declared here to ignore order-----
 
@@ -27,13 +29,6 @@ void			FormatAndPrintShaderError(const std::string& errorLog, const std::string&
 static GLuint	CreateAndLinkProgram( GLint vs, GLint fs );
 static void		LogProgramError(GLuint program_id);
 
-//-----------------------------------------------------------------------------------------------
-// Default constructor - Do nothing, use LoadProgramFromFiles or LoadProgramFromSources to initialize
-//
-ShaderProgram::ShaderProgram()
-{
-}
-
 
 //-----------------------------------------------------------------------------------------------
 // Deletes the program from the GPU
@@ -43,33 +38,208 @@ ShaderProgram::~ShaderProgram()
 	if (m_programHandle != NULL)
 	{
 		glDeleteProgram(m_programHandle);
+		m_programHandle = NULL;
 	}
-	m_programHandle = NULL;
+
+	// Delete the Uniform descriptions
+	delete m_uniformDescription;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Duplicates this shader program by using the source information to recompile a copy
+//
+const ShaderProgram* ShaderProgram::Clone() const
+{
+	ShaderProgram* program = new ShaderProgram(m_name);
+
+	if (m_areFilepaths)
+	{
+		program->LoadProgramFromFiles(m_vsFilePathOrSource.c_str(), m_fsFilePathOrSource.c_str());
+	}
+	else
+	{
+		program->LoadProgramFromSources(m_vsFilePathOrSource.c_str(), m_fsFilePathOrSource.c_str());
+	}
+
+	return program;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Base constructor
+//
+ShaderProgram::ShaderProgram(const std::string& name)
+	: m_name(name)
+{
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Returns the GLuint handle for this program on the GPU
 //
-GLuint ShaderProgram::GetHandle() const
+unsigned int ShaderProgram::GetHandle() const
 {
 	return m_programHandle;
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Returns the source file name of this shader, empty string denotes a built-in shader
+// Returns the vertex shader file path for this program, empty string denotes built-in shader
 //
-const std::string& ShaderProgram::GetSourceFileName() const
+const std::string& ShaderProgram::GetVSFilePathOrSource() const
 {
-	return m_sourceFilename;
+	return m_vsFilePathOrSource;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the fragment shader file path for this program, empty string denotes built-in shader
+//
+const std::string& ShaderProgram::GetFSFilePathOrSource() const
+{
+	return m_fsFilePathOrSource;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns this shader program's uniform block description
+//
+const ShaderDescription* ShaderProgram::GetUniformDescription() const
+{
+	return m_uniformDescription;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns whether or not this program was built directly from source code
+//
+bool ShaderProgram::WasBuiltFromSource() const
+{
+	return !m_areFilepaths;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Fetch the standalone uniforms
+//
+void ShaderProgram::SetupPropertyBlockInfos()
+{
+	m_uniformDescription = new ShaderDescription();
+	glUseProgram(m_programHandle);
+
+	GLint blockCount;
+	glGetProgramiv(m_programHandle, GL_ACTIVE_UNIFORM_BLOCKS, &blockCount);
+
+	const GLsizei MAX_LENGTH = 64;
+	char blockName[MAX_LENGTH];
+	GLsizei nameLength;
+
+	for (GLint blockIndex = 0; blockIndex < blockCount; ++blockIndex)
+	{
+		nameLength = 0;
+		glGetActiveUniformBlockName(m_programHandle, blockIndex, MAX_LENGTH, &nameLength, blockName);
+
+		if (nameLength > 0)
+		{
+			GLint blockBinding = -1;
+
+			glGetActiveUniformBlockiv(m_programHandle, blockIndex, GL_UNIFORM_BLOCK_BINDING, &blockBinding);
+
+			ASSERT_OR_DIE(blockBinding != -1, Stringf("Error: ShaderProgram::FillBlockInfo() found uniform block with binding not specifed in shader."));
+
+			// Get the block size
+			GLint blockSize = 0;
+			glGetActiveUniformBlockiv(m_programHandle, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize);
+
+			PropertyBlockDescription* blockInfo = new PropertyBlockDescription();
+			blockInfo->SetName(blockName);
+			blockInfo->SetShaderBinding((unsigned int) blockBinding);
+			blockInfo->SetBlockSize((unsigned int) blockSize);
+
+			// Get all properties in this block (includes all properties within structs)
+			FillBlockProperties(blockInfo, blockIndex);
+
+			// Add the info to this shader's ShaderInfo
+			m_uniformDescription->AddPropertyBlock(blockInfo);
+		}
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Fills in the given block info with the uniform data fetched from this shader program
+//
+void ShaderProgram::FillBlockProperties(PropertyBlockDescription* blockInfo, int blockIndex)
+{
+	GLint uniformCount;
+	glGetActiveUniformBlockiv(m_programHandle, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &uniformCount);
+
+	if (uniformCount <= 0) { return; } // No uniforms in this block
+
+	GLint* bufferIndices	= (GLint*) malloc(sizeof(GLint) * uniformCount);
+	GLint* offsets			= (GLint*) malloc(sizeof(GLint) * uniformCount);
+	GLint* types			= (GLint*) malloc(sizeof(GLint) * uniformCount);
+	GLint* counts			= (GLint*) malloc(sizeof(GLint) * uniformCount);
+
+	// Get the indices for each property (are kinda random each time, start at random value)
+	glGetActiveUniformBlockiv(m_programHandle, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, bufferIndices);
+
+	glGetActiveUniformsiv(m_programHandle,	uniformCount, (GLuint*)bufferIndices, GL_UNIFORM_OFFSET,	offsets); 
+	glGetActiveUniformsiv(m_programHandle,	uniformCount, (GLuint*)bufferIndices, GL_UNIFORM_TYPE,		types); 
+	glGetActiveUniformsiv(m_programHandle,	uniformCount, (GLuint*)bufferIndices, GL_UNIFORM_SIZE,		counts); 
+
+	for (GLint bufferIndex = 0; bufferIndex < uniformCount; ++bufferIndex)
+	{
+		GLint shaderPropertyIndex = bufferIndices[bufferIndex];
+		char propertyName[64];
+		GLint propertyNameLength = 0;
+
+		// We have the offset already, just need the name and the size
+
+		// Name
+		glGetActiveUniformName(m_programHandle, shaderPropertyIndex, sizeof(propertyName), &propertyNameLength, propertyName);
+
+		// Size
+		size_t propertySize = GetGLTypeSize((unsigned int) types[bufferIndex]) * counts[bufferIndex]; // Size of one * how many there are
+
+		PropertyDescription* propertyInfo = new PropertyDescription(propertyName, offsets[bufferIndex], propertySize);
+
+		blockInfo->AddProperty(propertyInfo);
+	}
+
+	// Done with the buffers
+	free(bufferIndices);
+	free(offsets);
+	free(types);
+	free(counts);
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Loads the shaders given by rootName, and compiles and links them into a shader program
+// Root name is the path without the extension, forces the program to be made from a vs and fs of
+// the same name
 //
 bool ShaderProgram::LoadProgramFromFiles(const char *rootName)
+{
+	// Assign the file paths to this program
+	std::string vsFilePath = rootName;
+	vsFilePath += ".vs"; 
+
+	std::string fsFilePath = rootName; 
+	fsFilePath += ".fs"; 
+
+	bool success = LoadProgramFromFiles(vsFilePath.c_str(), fsFilePath.c_str());
+
+	return success;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Creates a program by the given vs and fs file paths
+//
+bool ShaderProgram::LoadProgramFromFiles(const char* vsFilePath, const char* fsFilePath)
 {
 	// If this Shader Program already has a program ID on the gpu, free the memory there before
 	// attempting reload
@@ -79,16 +249,9 @@ bool ShaderProgram::LoadProgramFromFiles(const char *rootName)
 		m_programHandle = NULL;
 	}
 
-	// Assign the file paths to this program
-	std::string vsFilePath = rootName;
-	vsFilePath += ".vs"; 
-
-	std::string fsFilePath = rootName; 
-	fsFilePath += ".fs"; 
-
 	// Compile the two stages we're using 
-	GLuint vert_shader = CreateShader(vsFilePath.c_str(), GL_VERTEX_SHADER, true); 
-	GLuint frag_shader = CreateShader(fsFilePath.c_str(), GL_FRAGMENT_SHADER, true); 
+	GLuint vert_shader = CreateShader(vsFilePath, GL_VERTEX_SHADER, true); 
+	GLuint frag_shader = CreateShader(fsFilePath, GL_FRAGMENT_SHADER, true); 
 
 	// Only if both compilations were successful do we bother linking them
 	if (vert_shader != 0 && frag_shader != 0)
@@ -100,14 +263,29 @@ bool ShaderProgram::LoadProgramFromFiles(const char *rootName)
 	glDeleteShader( vert_shader ); 
 	glDeleteShader( frag_shader ); 
 
-	m_sourceFilename = rootName;
+	m_vsFilePathOrSource = vsFilePath;
+	m_fsFilePathOrSource = fsFilePath;
 
-	return (m_programHandle != NULL); 
+	// If the program could not be compiled or linked correctly, then assign it the invalid shader
+	if (m_programHandle == NULL)
+	{
+		LoadProgramFromSources(ShaderSource::INVALID_VS, ShaderSource::INVALID_FS);
+	}
+
+	// Get Uniform Block information from the created shader
+	bool succeeded = (m_programHandle != NULL);
+
+	if (succeeded)
+	{
+		SetupPropertyBlockInfos();
+	}
+
+	return succeeded; 
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Loads the shaders given by rootName, and compiles and links them into a shader program
+// Loads the shaders given by the string source code, and compiles and links them into a shader program
 //
 bool ShaderProgram::LoadProgramFromSources(const char *vertexShaderSource, const char* fragmentShaderSource)
 {
@@ -127,7 +305,35 @@ bool ShaderProgram::LoadProgramFromSources(const char *vertexShaderSource, const
 	glDeleteShader( vert_shader ); 
 	glDeleteShader( frag_shader ); 
 
-	return (m_programHandle != NULL);
+	m_vsFilePathOrSource = vertexShaderSource;
+	m_fsFilePathOrSource = fragmentShaderSource;
+
+	m_areFilepaths = false;
+
+	// If the program could not be compiled or linked correctly, then assign it the invalid shader
+	if (m_programHandle == NULL)
+	{
+		LoadProgramFromSources(ShaderSource::INVALID_VS, ShaderSource::INVALID_FS);
+	}
+
+	// Get Uniform Block information from the created shader
+	bool succeeded = (m_programHandle != NULL);
+
+	if (succeeded)
+	{
+		SetupPropertyBlockInfos();
+	}
+
+	return succeeded; 
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the name of the ShaderProgram
+//
+const std::string& ShaderProgram::GetName() const
+{
+	return m_name;
 }
 
 
@@ -168,7 +374,16 @@ static GLuint CreateShader(char const *filenameOrSource, GLenum type, bool isFil
 	GLint status;
 	glGetShaderiv(shader_id, GL_COMPILE_STATUS, &status);
 	if (status == GL_FALSE) {
-		LogShaderError(shader_id, filenameOrSource);
+
+		if (isFileName)
+		{
+			LogShaderError(shader_id, filenameOrSource);
+		}
+		else
+		{
+			LogShaderError(shader_id, "");
+		}
+
 		glDeleteShader(shader_id);
 		shader_id = NULL;
 	}

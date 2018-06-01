@@ -8,8 +8,11 @@
 
 #include <string>
 #include <map>
+#include "Engine/Core/StringUtils.hpp"
+#include "Engine/Core/DevConsole.hpp"
 
 class Vector2;
+class Vector3;
 class Rgba;
 
 // Command callbacks take a Command.
@@ -26,13 +29,6 @@ public:
 	~Command(); 
 
 	std::string GetName();			// Returns the name of the command (first token of the line)
-	std::string GetNextString();	// Returns the next string argument not parsed out of the line (DESTRUCTIVE)
-
-
-	// Helpers for getting arguments
-	bool GetNextInt( int *out_val ); 
-	bool GetNextColor( Rgba *out_val );
-	bool GetNextVector2( Vector2 *out_val );  
 
 	// For initialization/shutdown
 	static void Initialize();
@@ -44,17 +40,52 @@ public:
 	const static std::map<std::string, CommandRegistration*>& GetCommands();
 
 
+	// For getting params from the parsed command line
+	template <typename T> 
+	bool GetParam(const std::string& flag, T& out_value, const T* defaultValue = nullptr)
+	{
+		bool paramExists = m_arguments.find(flag) != m_arguments.end();
+
+		if (paramExists)
+		{
+			bool succeeded = SetFromText(m_arguments[flag], out_value);
+			if (!succeeded)
+			{
+				ConsoleErrorf("Could parse parameter value \"%s\" for flag \"-%s\"", m_arguments[flag].c_str(), flag.c_str());
+
+				if (defaultValue != nullptr)
+				{
+					ConsoleWarningf("Defaulting to value %s", ToString(defaultValue).c_str());
+					out_value = *defaultValue;
+				}
+			}
+		}
+		else
+		{
+			if (defaultValue != nullptr)
+			{
+				ConsoleWarningf("Flag \"-%s\" was not specified, defaulting to value %s", flag.c_str(), ToString(defaultValue).c_str());
+				out_value = *defaultValue;
+			}
+		}
+
+		return paramExists;
+	}
+
 private:
 	//-----Private Methods-----
 
-	void ParseNameAndArguments(const std::string& commandLine);				// Separates the name from the arguments, for Command constructor
+	void	ParseNameAndArguments(const std::string& commandLine);				// Separates the name from the arguments, for Command constructor
+	int		ParseSingleArgument(const std::string& commandLine, int startIndex);
+
+	void	AddArgumentToMap(const std::string& flag, const std::string& value);
 
 
 private:
 	//-----Private Data-----
 
-	std::string m_name;				// First token of the command line
-	std::string m_arguments;		// All other tokens of the line, is mutated as GetNextString() is called
+	std::string m_name;									// First token of the command line
+	std::map<std::string, std::string> m_arguments;		// All of the flag/value pairs from the command line
 
 	static std::map<std::string, CommandRegistration*> s_commandRegistry;		// Collection of registered commands by name
 };
@@ -65,14 +96,6 @@ private:
 // *********************************************************************//
 // ** EXTRAS - left here as a reminder of tasks to complete			 ** //
 // *********************************************************************//
-
-// [E02.00]
-// Returns a list containing the last entered
-// commands ordered by how recently they were used.
-// If a command is entered twice, it should not appear
-// twice, but instead just just move to the front. 
-// History length is up to you, but 32 or 64 is good.
-//std::vector<string> GetCommandHistory(); 
 
 // [E02.01]
 // Runs a "script", or multiple lines of commands (each line

@@ -45,7 +45,7 @@ public:
 
 
 	// Accessors
-	float		GetFrameSeconds() const;
+	float		GetDeltaTime() const;
 	uint64_t	GetFrameHPC() const;
 
 	float		GetTotalSeconds() const;

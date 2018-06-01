@@ -37,6 +37,12 @@ public:
 	// Sets the values for RGB(and optionally A) to the ones specified in the passed text
 	bool SetFromText(const char* text);
 
+	// Operators
+	bool	operator==(const Rgba& other) const;
+
+	static Rgba GetRandomColor();
+
+
 public:
 
 	unsigned char r;	// Red

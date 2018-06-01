@@ -11,6 +11,16 @@
 
 
 //-----------------------------------------------------------------------------------------------
+// Constructor - automatically generates a handle to a GPU-side buffer
+//
+RenderBuffer::RenderBuffer()
+{
+	glGenBuffers( 1, &m_handle ); 
+	GL_CHECK_ERROR();
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Destructor - deletes the buffer from the GPU
 //
 RenderBuffer::~RenderBuffer()
@@ -37,10 +47,16 @@ GLuint RenderBuffer::GetHandle() const
 //
 bool RenderBuffer::CopyToGPU( size_t const byte_count, void const *data, GLenum bufferType) 
 {
-	// handle is a GLuint member - used by OpenGL to identify this buffer
-	// if we don't have one, make one when we first need it [lazy instantiation]
+	// Don't do anything if there's no data to copy
+	if (data == nullptr || byte_count <= 0)
+	{
+		return false;
+	}
+
+	// In case we lose our handle somehow...
 	if (m_handle == NULL) {
 		glGenBuffers( 1, &m_handle ); 
+		GL_CHECK_ERROR();
 	}
 
 	// Bind the buffer to a slot, and copy memory
@@ -48,6 +64,8 @@ bool RenderBuffer::CopyToGPU( size_t const byte_count, void const *data, GLenum 
 	// during the second project)
 	glBindBuffer( bufferType, m_handle ); 
 	glBufferData( bufferType, byte_count, data, GL_DYNAMIC_DRAW ); 
+
+	GL_CHECK_ERROR();
 
 	// buffer_size is a size_t member variable I keep around for 
 	// convenience

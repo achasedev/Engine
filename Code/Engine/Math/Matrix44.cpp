@@ -2,9 +2,9 @@
 /* File: Matrix44.cpp
 /* Author: Andrew Chase
 /* Date: November 10th, 2017
-/* Bugs: None
 /* Description: Implementation of the Matrix44 class
 /************************************************************************/
+#include "Engine/Core/Window.hpp"
 #include "Engine/Math/Matrix44.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/EngineCommon.hpp"
@@ -243,28 +243,28 @@ void Matrix44::Append(const Matrix44& matrixToAppend)
 	Matrix44 oldValues = *this;
 
 	// New I basis vector
-	Ix = oldValues.Ix * matrixToAppend.Ix + oldValues.Jx * matrixToAppend.Iy + oldValues.Kx * matrixToAppend.Iz + oldValues.Tx * matrixToAppend.Iw;
-	Iy = oldValues.Iy * matrixToAppend.Ix + oldValues.Jy * matrixToAppend.Iy + oldValues.Ky * matrixToAppend.Iz + oldValues.Ty * matrixToAppend.Iw;
-	Iz = oldValues.Iz * matrixToAppend.Ix + oldValues.Jz * matrixToAppend.Iy + oldValues.Kz * matrixToAppend.Iz + oldValues.Tz * matrixToAppend.Iw;
-	Iw = oldValues.Iw * matrixToAppend.Ix + oldValues.Jw * matrixToAppend.Iy + oldValues.Kw * matrixToAppend.Iz + oldValues.Tw * matrixToAppend.Iw;
+	Ix = DotProduct(oldValues.GetXVector(), matrixToAppend.GetIVector());
+	Iy = DotProduct(oldValues.GetYVector(), matrixToAppend.GetIVector());
+	Iz = DotProduct(oldValues.GetZVector(), matrixToAppend.GetIVector());
+	Iw = DotProduct(oldValues.GetWVector(), matrixToAppend.GetIVector());
 
 	// New J basis vector
-	Jx = oldValues.Ix * matrixToAppend.Jx + oldValues.Jx * matrixToAppend.Jy + oldValues.Kx * matrixToAppend.Jz + oldValues.Tx * matrixToAppend.Jw;
-	Jy = oldValues.Iy * matrixToAppend.Jx + oldValues.Jy * matrixToAppend.Jy + oldValues.Ky * matrixToAppend.Jz + oldValues.Ty * matrixToAppend.Jw;
-	Jz = oldValues.Iz * matrixToAppend.Jx + oldValues.Jz * matrixToAppend.Jy + oldValues.Kz * matrixToAppend.Jz + oldValues.Tz * matrixToAppend.Jw;
-	Jw = oldValues.Iw * matrixToAppend.Jx + oldValues.Jw * matrixToAppend.Jy + oldValues.Kw * matrixToAppend.Jz + oldValues.Tw * matrixToAppend.Jw;
+	Jx = DotProduct(oldValues.GetXVector(), matrixToAppend.GetJVector());
+	Jy = DotProduct(oldValues.GetYVector(), matrixToAppend.GetJVector());
+	Jz = DotProduct(oldValues.GetZVector(), matrixToAppend.GetJVector());
+	Jw = DotProduct(oldValues.GetWVector(), matrixToAppend.GetJVector());
 
 	// New K basis vector
-	Kx = oldValues.Ix * matrixToAppend.Kx + oldValues.Jx * matrixToAppend.Ky + oldValues.Kx * matrixToAppend.Kz + oldValues.Tx * matrixToAppend.Kw;
-	Ky = oldValues.Iy * matrixToAppend.Kx + oldValues.Jy * matrixToAppend.Ky + oldValues.Ky * matrixToAppend.Kz + oldValues.Ty * matrixToAppend.Kw;
-	Kz = oldValues.Iz * matrixToAppend.Kx + oldValues.Jz * matrixToAppend.Ky + oldValues.Kz * matrixToAppend.Kz + oldValues.Tz * matrixToAppend.Kw;
-	Kw = oldValues.Iw * matrixToAppend.Kx + oldValues.Jw * matrixToAppend.Ky + oldValues.Kw * matrixToAppend.Kz + oldValues.Tw * matrixToAppend.Kw;
+	Kx = DotProduct(oldValues.GetXVector(), matrixToAppend.GetKVector());
+	Ky = DotProduct(oldValues.GetYVector(), matrixToAppend.GetKVector());
+	Kz = DotProduct(oldValues.GetZVector(), matrixToAppend.GetKVector());
+	Kw = DotProduct(oldValues.GetWVector(), matrixToAppend.GetKVector());
 
 	// New T basis vector
-	Tx = oldValues.Ix * matrixToAppend.Tx + oldValues.Jx * matrixToAppend.Ty + oldValues.Kx * matrixToAppend.Tz + oldValues.Tx * matrixToAppend.Tw;
-	Ty = oldValues.Iy * matrixToAppend.Tx + oldValues.Jy * matrixToAppend.Ty + oldValues.Ky * matrixToAppend.Tz + oldValues.Ty * matrixToAppend.Tw;
-	Tz = oldValues.Iz * matrixToAppend.Tx + oldValues.Jz * matrixToAppend.Ty + oldValues.Kz * matrixToAppend.Tz + oldValues.Tz * matrixToAppend.Tw;
-	Tw = oldValues.Iw * matrixToAppend.Tx + oldValues.Jw * matrixToAppend.Ty + oldValues.Kw * matrixToAppend.Tz + oldValues.Tw * matrixToAppend.Tw;
+	Tx = DotProduct(oldValues.GetXVector(), matrixToAppend.GetTVector());
+	Ty = DotProduct(oldValues.GetYVector(), matrixToAppend.GetTVector());
+	Tz = DotProduct(oldValues.GetZVector(), matrixToAppend.GetTVector());
+	Tw = DotProduct(oldValues.GetWVector(), matrixToAppend.GetTVector());
 }
 
 
@@ -381,23 +381,23 @@ Matrix44 Matrix44::MakeRotation(const Vector3& rotation)
 	rollMatrix.Jx = -SinDegrees(rotation.z);
 	rollMatrix.Jy = CosDegrees(rotation.z);
 
-	// Pitch matrix - rotation about x
-	Matrix44 pitchMatrix;
-
-	pitchMatrix.Ix = CosDegrees(rotation.x);
-	pitchMatrix.Iz = -SinDegrees(rotation.x);
-
-	pitchMatrix.Kx = SinDegrees(rotation.x);
-	pitchMatrix.Kz = CosDegrees(rotation.x);
-
 	// Yaw matrix - rotation about y
 	Matrix44 yawMatrix;
 
-	yawMatrix.Jy = CosDegrees(rotation.y);
-	yawMatrix.Jz = SinDegrees(rotation.y);
+	yawMatrix.Ix = CosDegrees(rotation.y);
+	yawMatrix.Iz = -SinDegrees(rotation.y);
 
-	yawMatrix.Ky = -SinDegrees(rotation.y);
+	yawMatrix.Kx = SinDegrees(rotation.y);
 	yawMatrix.Kz = CosDegrees(rotation.y);
+
+	// Pitch matrix - rotation about x
+	Matrix44 pitchMatrix;
+
+	pitchMatrix.Jy = CosDegrees(rotation.x);
+	pitchMatrix.Jz = SinDegrees(rotation.x);
+
+	pitchMatrix.Ky = -SinDegrees(rotation.x);
+	pitchMatrix.Kz = CosDegrees(rotation.x);
 
 	// Concatenate and return
 	return yawMatrix * pitchMatrix * rollMatrix;
@@ -488,6 +488,28 @@ Matrix44 Matrix44::MakeOrtho(const Vector2& bottomLeft, const Vector2& topRight,
 
 
 //-----------------------------------------------------------------------------------------------
+// Constructs a perspective matrix given the parameters
+//
+Matrix44 Matrix44::MakePerspective(float fovDegrees, float nearZ, float farZ)
+{
+	float d = (1.f / TanDegrees(0.5f * fovDegrees));
+	float aspect = Window::GetInstance()->GetWindowAspect();
+
+	Matrix44 perspective;
+
+	perspective.Ix = (d / aspect);
+	perspective.Jy = d;
+	perspective.Kz = (farZ + nearZ) / (farZ - nearZ);
+	perspective.Tz = (-2.f * nearZ * farZ) / (farZ - nearZ);
+
+	perspective.Kw = 1.f;
+	perspective.Tw = 0.f;
+
+	return perspective;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Constructs a Look At matrix from position looking at target with the given up reference vector
 //
 Matrix44 Matrix44::MakeLookAt(const Vector3& position, const Vector3& target, const Vector3& referenceUp /*= Vector3::DIRECTION_UP*/)
@@ -512,4 +534,62 @@ Matrix44 Matrix44::MakeLookAt(const Vector3& position, const Vector3& target, co
 	Vector3 lookUp = CrossProduct(forward, right);
 	
 	return Matrix44(right, lookUp, forward, position);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the translation component of the matrix
+//
+Vector3 Matrix44::ExtractTranslation(const Matrix44& translationMatrix)
+{
+	Vector3 translation;
+
+	translation.x = translationMatrix.Tx;
+	translation.y = translationMatrix.Ty;
+	translation.z = translationMatrix.Tz;
+
+	return translation;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Finds the Euler angles of the rotation represented by the rotation matrix
+//
+Vector3 Matrix44::ExtractRotationDegrees(const Matrix44& rotationMatrix)
+{
+	float xDegrees;
+	float yDegrees;
+	float zDegrees;
+
+	float sineX = -1.0f * rotationMatrix.Ky;
+	xDegrees = ASinDegrees(sineX);
+
+	float cosX = CosDegrees(xDegrees);
+	if (cosX != 0.f)
+	{
+		yDegrees = Atan2Degrees(rotationMatrix.Kx, rotationMatrix.Kz);
+		zDegrees = Atan2Degrees(rotationMatrix.Iy, rotationMatrix.Jy);
+	}
+	else
+	{
+		// Gimble lock, lose roll but keep yaw
+		zDegrees = 0.f;
+		yDegrees = Atan2Degrees(-rotationMatrix.Iz, rotationMatrix.Ix);
+	}
+
+	return Vector3(xDegrees, yDegrees, zDegrees);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Finds the scale factors of each basis vector in the given matrix and returns it
+//
+Vector3 Matrix44::ExtractScale(const Matrix44& scaleMatrix)
+{
+	TODO("Check signs of cross product to flip correct axes for negative scales");
+	float xScale = scaleMatrix.GetIVector().GetLength();
+	float yScale = scaleMatrix.GetJVector().GetLength();
+	float zScale = scaleMatrix.GetKVector().GetLength();
+
+	return Vector3(xScale, yScale, zScale);
 }

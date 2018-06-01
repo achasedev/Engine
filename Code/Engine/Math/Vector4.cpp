@@ -45,6 +45,14 @@ Vector4::Vector4( float initialX, float initialY, float initialZ, float initialW
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Constructor from Vector3
+Vector4::Vector4(const Vector3& xyzVector, float wValue)
+	: x(xyzVector.x), y(xyzVector.y), z(xyzVector.z), w(wValue)
+{
+}
+
+
 //------------------------------ Operator Overloads ---------------------------------------------
 
 //-----------------------------------------------------------------------------------------------
@@ -224,6 +232,15 @@ Vector4 Vector4::GetRandomVector(float desiredMagnitude)
 	Vector4 randomUnitVector = randomVector.GetNormalized();
 
 	return (desiredMagnitude * randomUnitVector);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the x, y, and z components of the Vector4
+//
+Vector3 Vector4::xyz() const
+{
+	return Vector3(x, y, z);
 }
 
 

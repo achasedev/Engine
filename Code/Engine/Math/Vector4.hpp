@@ -6,6 +6,7 @@
 /* Description: Class representing a vector of four elements, x, y, z, and w
 /************************************************************************/
 #pragma once
+#include "Engine/Math/Vector3.hpp"
 
 //-----------------------------------------------------------------------------------------------
 class Vector4
@@ -20,6 +21,7 @@ public:
 	Vector4( const Vector4& copyFrom );														// copy constructor (from another vec2)
 	explicit Vector4( float initialX, float initialY, float initialZ, float initialW);		// explicit constructor (from x, y, z, w)
 
+	explicit Vector4(const Vector3& xyzVector, float wValue);
 																			// Operators
 	const	Vector4 operator+( const Vector4& vecToAdd ) const;				// vec3 + vec3
 	const	Vector4 operator-( const Vector4& vecToSubtract ) const;		// vec3 - vec3
@@ -42,8 +44,9 @@ public:
 
 	static Vector4 GetRandomVector(float desiredMagnitude);		// Returns a random vector with the given magnitude
 
+	Vector3 xyz() const;
 
-																// Static constants
+	// Static constants
 	const static Vector4 ZERO;
 	const static Vector4 ONES;
 	const static Vector4 DIRECTION_UP;

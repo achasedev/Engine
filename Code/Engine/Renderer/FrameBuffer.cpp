@@ -81,7 +81,11 @@ unsigned int FrameBuffer::GetHandle() const
 //
 bool FrameBuffer::Finalize()
 {
+	GL_CHECK_ERROR();
+
 	glBindFramebuffer( GL_FRAMEBUFFER, m_handle ); 
+
+	GL_CHECK_ERROR();
 
 	// keep track of which outputs go to which attachments; 
 	GLenum targets[1]; 
@@ -94,8 +98,12 @@ bool FrameBuffer::Finalize()
 	// 0 to to attachment 0
 	targets[0] = GL_COLOR_ATTACHMENT0 + 0; 
 
+	GL_CHECK_ERROR();
+
 	// Update target bindings
 	glDrawBuffers( 1, targets ); 
+
+	GL_CHECK_ERROR();
 
 	// Bind depth if available;
 	if (m_depthTarget == nullptr) {

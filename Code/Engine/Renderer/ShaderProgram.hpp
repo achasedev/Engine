@@ -10,43 +10,58 @@
 #include <map>
 #include <string>
 
+class ShaderDescription;
+class PropertyBlockDescription;
+
 class ShaderProgram
 {
 public:
 	//-----Public Methods-----
 
-	// Do-nothing constructor
-	ShaderProgram();
+	ShaderProgram(const std::string& name);
+	~ShaderProgram(); // Destructor - free the program memory on the gpu
 
-	// Destructor - free the program memory on the gpu
-	~ShaderProgram();
+	const ShaderProgram* Clone() const;
 
 	// Loads the shaders given by rootName, compiles them, and links them to this program
 	bool LoadProgramFromFiles(const char *rootName);
+	bool LoadProgramFromFiles(const char* vsFilepath, const char* fsFilepath);
 
 	// Loads the shaders from the string literal source code provided, and links them to this program
 	bool LoadProgramFromSources(const char *vertexShaderSource, const char* fragmentShaderSource);
 
 	// Accessors
-	GLuint GetHandle() const;
-	const std::string& GetSourceFileName() const;
+	const std::string&	GetName() const;
+	unsigned int		GetHandle() const;
+	const std::string&	GetVSFilePathOrSource() const;
+	const std::string&	GetFSFilePathOrSource() const;
+
+	const ShaderDescription* GetUniformDescription() const;
+
+	bool WasBuiltFromSource() const;
 
 
-public:
-	//-----Public Data-----
+private:
+	//-----Private Methods-----
 
-	// Built-in shader names
-	const static std::string INVALID_SHADER_NAME;
-	const static std::string DEFAULT_SHADER_NAME;
+	// Shader reflection
+	void SetupPropertyBlockInfos();
+	void FillBlockProperties(PropertyBlockDescription* blockInfo, int blockIndex);
 
 
 private:
 	//-----Private Data-----
+	
+	std::string m_name;
 
 	// The handle identifying this program on the GPU
-	GLuint m_programHandle = NULL;
+	unsigned int m_programHandle = NULL;
 
 	// Source filename(s) of this program, empty string denotes this was a built-in shader
-	std::string m_sourceFilename;	
+	std::string m_vsFilePathOrSource;	
+	std::string m_fsFilePathOrSource;
 
+	bool m_areFilepaths = false;
+
+	ShaderDescription* m_uniformDescription = nullptr;
 };

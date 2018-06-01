@@ -18,7 +18,9 @@ public:
 
 	Image();
 	explicit Image(const std::string& imageFilePath);
+	Image(const IntVector2& dimensions, const Rgba& color = Rgba::WHITE);
 	~Image();
+
 
 	Rgba GetTexelColor(int x, int y) const;
 	unsigned char GetTexelGrayScale(int x, int y) const;
@@ -33,6 +35,7 @@ public:
 	//-----Public Data-----
 
 	const static Image IMAGE_WHITE;
+	const static Image IMAGE_FLAT;
 
 private:
 	//-----Private Data-----

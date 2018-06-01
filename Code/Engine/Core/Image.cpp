@@ -12,7 +12,8 @@
 
 
 // 4 texel white image, used for solid color rendering
-const Image Image::IMAGE_WHITE = Image();
+const Image Image::IMAGE_WHITE;
+const Image Image::IMAGE_FLAT = Image(IntVector2(2, 2), Rgba(127, 127, 255, 255));
 
 //-----------------------------------------------------------------------------------------------
 // Explicit constructor - loads a file from disk and converts the character data to RGBA object data
@@ -70,6 +71,30 @@ Image::Image()
 
 		temp += 4;
 	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Constructs an image of the given dimensions and color
+//
+Image::Image(const IntVector2& dimensions, const Rgba& color /*= Rgba::WHITE*/)
+	: m_dimensions(IntVector2(2,2))
+	, m_numComponentsPerTexel(4)
+{
+		m_imageData = (unsigned char*)malloc(sizeof(unsigned char) * m_numComponentsPerTexel * 4);
+
+		unsigned char* temp = m_imageData;
+		for (int i = 0; i < 4; ++i)
+		{
+			m_texels.push_back(Rgba(127, 127, 255, 255));	// Rgba default constructed to opaque white
+
+			temp[0]		= m_texels[i].r;
+			temp[1]		= m_texels[i].g;
+			temp[2]		= m_texels[i].b;
+			temp[3]		= m_texels[i].a;
+
+			temp += 4;
+		}
 }
 
 
@@ -170,7 +195,6 @@ void Image::FlipVertical()
 	{
 		for (int colIndex = 0; colIndex < m_dimensions.x; ++colIndex)
 		{
-			Rgba tempTexel = GetTexelColor(colIndex, rowIndex);
 			Rgba currTexel = GetTexelColor(colIndex, rowIndex);
 			result.push_back(currTexel);
 

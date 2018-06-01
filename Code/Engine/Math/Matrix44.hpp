@@ -37,9 +37,9 @@ public:
 
 	// Mutators
 	void SetIdentity();
-	void SetValues( const float* sixteenValuesBasisMajor );				// float[16] array in order Ix, Iy...
+	void SetValues(const float* sixteenValuesBasisMajor);		// float[16] array in order Ix, Iy...
 	
-	void Append(const Matrix44& matrixToAppend);	// Concatenate on the right	
+	void Append(const Matrix44& matrixToAppend);				// Concatenate on the right	
 	void Transpose();
 
 	// Accessor helpers
@@ -53,7 +53,9 @@ public:
 	Vector4 GetZVector() const;
 	Vector4 GetWVector() const;
 
-	// Static Producers
+	//--Static Producers--
+
+	// Model
 	static Matrix44 MakeTranslation(const Vector3& translation);
 	static Matrix44 MakeRotation(const Vector3& rotation);
 	static Matrix44 MakeScale(const Vector3& scale);
@@ -61,9 +63,18 @@ public:
 
 	static Matrix44 MakeModelMatrix(const Vector3& translation, const Vector3& rotation, const Vector3& scale);
 
+	// Projection
 	static Matrix44 MakeOrtho(float leftX, float rightX, float bottomY, float topY, float nearZ, float farZ);
 	static Matrix44 MakeOrtho(const Vector2& bottomLeft, const Vector2& topRight, float nearZ=0.f, float farZ=1.0f);
+	static Matrix44 MakePerspective(float fovDegrees, float nearZ, float farZ);
+
+	// Camera/View
 	static Matrix44 MakeLookAt(const Vector3& position, const Vector3& target, const Vector3& up = Vector3::DIRECTION_UP);
+
+	// Utilities
+	static Vector3 ExtractTranslation(const Matrix44& translationMatrix);
+	static Vector3 ExtractRotationDegrees(const Matrix44& rotationMatrix);
+	static Vector3 ExtractScale(const Matrix44& scaleMatrix);
 
 
 public:

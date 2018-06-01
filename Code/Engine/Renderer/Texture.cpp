@@ -8,12 +8,12 @@
 /************************************************************************/
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Image.hpp"
+#include "Engine/Core/AssetDB.hpp"
 #include "Engine/Renderer/Texture.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/glFunctions.hpp"
 #include "ThirdParty/stb/stb_image.h"
-
 
 // Texture Data
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36,46 +36,18 @@
 //-----For converting primitive types to GL types-----
 
 // Internal Formats
-int g_openGLInternalFormats[NUM_TEXTURE_FORMATS] =
-{
-	GL_R8,
-	GL_RG8,
-	GL_RGB8,
-	GL_RGBA8,
-	GL_DEPTH24_STENCIL8
-};
-
-// Channels
-int g_openGLChannels[NUM_TEXTURE_FORMATS] =
-{
-	GL_RED,
-	GL_RG,
-	GL_RGB,
-	GL_RGBA,
-	GL_DEPTH_STENCIL
-};
-
-// Pixel Layouts
-int g_openGLPixelLayouts[NUM_TEXTURE_FORMATS] = 
-{
-	GL_UNSIGNED_BYTE,
-	GL_UNSIGNED_BYTE,
-	GL_UNSIGNED_BYTE,
-	GL_UNSIGNED_BYTE,
-	GL_UNSIGNED_INT_24_8
-};
-
 
 Texture::Texture()
 	: m_textureHandle(0)
 	, m_dimensions(0, 0)
 	, m_textureFormat(TEXTURE_FORMAT_RGBA8)
+	, m_textureType(TEXTURE_TYPE_2D)
 {
 }
 
 void Texture::CreateFromFile(const std::string& filename)
 {
-	Image* loadedImage = new Image(filename);
+	Image* loadedImage = AssetDB::CreateOrGetImage(filename);
 
 	// Flip the image so it isn't upsidedown
 	loadedImage->FlipVertical();
@@ -98,7 +70,7 @@ void Texture::CreateFromImage(const Image* image)
 		glGenTextures(1, &m_textureHandle);
 		GL_CHECK_ERROR();
 	}
-
+	
 	m_dimensions = image->GetDimensions();
 	m_textureFormat = static_cast<TextureFormat>(image->GetNumComponentsPerTexel() - 1);
 
@@ -109,7 +81,7 @@ void Texture::CreateFromImage(const Image* image)
 	// Create the GPU-side buffer
 	glTexStorage2D(GL_TEXTURE_2D,
 		1,										  // Number of mipmap levels
-		g_openGLInternalFormats[m_textureFormat], // How is the memory stored on the GPU
+		ToGLInternalFormat(m_textureFormat), // How is the memory stored on the GPU
 		m_dimensions.x, m_dimensions.y);		  // Dimensions
 
 	GL_CHECK_ERROR();
@@ -119,8 +91,8 @@ void Texture::CreateFromImage(const Image* image)
 		0,										// Mip layer we're copying to
 		0, 0,									// Pixel offset
 		m_dimensions.x, m_dimensions.y,			// Dimensions
-		g_openGLChannels[m_textureFormat],      // Which channels exist in the CPU buffer
-		g_openGLPixelLayouts[m_textureFormat],  // How are those channels stored
+		ToGLChannel(m_textureFormat),      // Which channels exist in the CPU buffer
+		ToGLPixelLayout(m_textureFormat),  // How are those channels stored
 		image->GetImageData());					// Cpu buffer to copy
 
 	GL_CHECK_ERROR();
@@ -145,6 +117,15 @@ unsigned int Texture::GetHandle() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the texture type of this texture (2D or Cube Map)
+//
+TextureType Texture::GetTextureType() const
+{
+	return m_textureType;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Creates a target object on the GPU, full of garbage data, used as an intermediate render target
 //
 bool Texture::CreateRenderTarget(unsigned int width, unsigned int height, TextureFormat format)
@@ -163,7 +144,7 @@ bool Texture::CreateRenderTarget(unsigned int width, unsigned int height, Textur
 	// Create the GPU-side buffer
 	glTexStorage2D( GL_TEXTURE_2D,
 		1,								// Number of mipmap levels
-		g_openGLInternalFormats[format], // How is the memory stored on the GPU
+		ToGLInternalFormat(format), // How is the memory stored on the GPU
 		width, height );				// Dimensions
 
 	// Make sure it succeeded

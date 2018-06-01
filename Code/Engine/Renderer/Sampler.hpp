@@ -5,6 +5,7 @@
 /* Description: Class to represent a GPU texture sampler
 /************************************************************************/
 #pragma once
+#include "Engine/Renderer/glTypes.hpp"
 
 class Sampler
 {
@@ -14,7 +15,7 @@ public:
 	Sampler();
 	~Sampler();
 
-	bool Initialize();
+	bool Initialize(SamplerFilter filter, EdgeSampling edgeSampling);
 	void Destroy();
 
 	unsigned int GetHandle() const;

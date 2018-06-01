@@ -10,7 +10,6 @@
 #include <math.h>
 #include <cstdlib>
 
-
 //-----------------------------------------------------------------------------------------------
 // Converts the radius and radian angle to cartesian coordinates
 //
@@ -54,8 +53,7 @@ Vector3 SphericalToCartesian(float radius, float rotationDegrees, float azimuthD
 //
 float ConvertRadiansToDegrees(float radians) 
 {
-	float pi = 3.1415926535897932384626433832795f;
-	return radians * (180.f / pi);
+	return radians * (180.f / PI);
 }
 
 
@@ -64,8 +62,7 @@ float ConvertRadiansToDegrees(float radians)
 //
 float ConvertDegreesToRadians(float degrees)
 {
-	float pi = 3.1415926535897932384626433832795f;
-	return degrees * (pi / 180.f);
+	return degrees * (PI / 180.f);
 }
 
 
@@ -81,6 +78,17 @@ float CosDegrees(float degrees)
 
 
 //-----------------------------------------------------------------------------------------------
+// Caluclates the arcosine, in degrees
+//
+float ACosDegrees(float ratio)
+{
+	float radians = acosf(ratio);
+
+	return ConvertRadiansToDegrees(radians);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Calculates the sine of an angle in degrees and returns it
 //
 float SinDegrees(float degrees) 
@@ -88,6 +96,28 @@ float SinDegrees(float degrees)
 	float radians = ConvertDegreesToRadians(degrees);
 
 	return sinf(radians);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Calculates the arcsine, in degrees
+//
+float ASinDegrees(float ratio)
+{
+	float radians = asinf(ratio);
+
+	return ConvertRadiansToDegrees(radians);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Calculates the tan(theta), expressed in degrees
+//
+float TanDegrees(float degrees)
+{
+	float radians = ConvertDegreesToRadians(degrees);
+
+	return tanf(radians);
 }
 
 
@@ -256,6 +286,18 @@ bool CheckRandomChance(float chanceForSuccess)
 		float outcome = GetRandomFloatZeroToOne();
 		return (outcome <= chanceForSuccess);
 	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Rounds inValue to the nearest integer, with 0.5 rounding to 1, -0.5 rounding to 0
+//
+Vector3 GetRandomPointOnSphere()
+{
+	float theta = GetRandomFloatInRange(0.f, 360.f);
+	float phi = GetRandomFloatInRange(0.f, 360.f);
+
+	return SphericalToCartesian(1, theta, phi);
 }
 
 
@@ -618,7 +660,12 @@ int Interpolate(int start, int end, float fractionTowardEnd)
 unsigned char Interpolate(unsigned char start, unsigned char end, float fractionTowardEnd)
 {
 	float range = static_cast<float>(end - start);
-	return start + static_cast<unsigned char>(RoundToNearestInt(fractionTowardEnd * range));
+
+	int change = RoundToNearestInt(fractionTowardEnd * range);
+	int result = static_cast<int>(start) + change;
+	result = ClampInt(result, 0, 255);
+
+	return static_cast<unsigned char>(result);
 }
 
 
@@ -700,6 +747,15 @@ bool Quadratic(Vector2& out_solutions, float a, float b, float c)
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the min of 2 ints
+//
+int MinInt(int a, int b)
+{
+	return (a < b ? a : b);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the max of 4 floats
 //
 float MaxFloat(float a, float b, float c, float d)
@@ -742,15 +798,6 @@ float MinFloat(float a, float b)
 
 
 //-----------------------------------------------------------------------------------------------
-// Returns the text converted to an int (atoi)
-//
-int TextToInt(const char* text)
-{
-	return atoi(text);
-}
-
-
-//-----------------------------------------------------------------------------------------------
 // Returns the absolute value of the integer inValue
 //
 int AbsoluteValue(int inValue)
@@ -775,4 +822,17 @@ float AbsoluteValue(float inValue)
 	}
 
 	return inValue;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns true if the difference between each component is less than or equal to epsilon
+//
+bool AreMostlyEqual(const Vector3& a, const Vector3& b, float epsilon /*= 0.0001f*/)
+{
+	Vector3 difference = (a - b);
+
+	bool mostlyEqual = (AbsoluteValue(difference.x) <= epsilon) && (AbsoluteValue(difference.y) <= epsilon) && (AbsoluteValue(difference.z) <= epsilon);
+
+	return mostlyEqual;
 }

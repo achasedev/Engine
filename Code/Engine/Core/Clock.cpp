@@ -169,7 +169,7 @@ void Clock::SetPaused(bool pauseState)
 //-----------------------------------------------------------------------------------------------
 // Returns this clock's frame time (scaled) in seconds
 //
-float Clock::GetFrameSeconds() const
+float Clock::GetDeltaTime() const
 {
 	return (float) m_frameData.m_seconds;
 }
