@@ -493,7 +493,7 @@ Matrix44 Matrix44::MakeOrtho(const Vector2& bottomLeft, const Vector2& topRight,
 Matrix44 Matrix44::MakePerspective(float fovDegrees, float nearZ, float farZ)
 {
 	float d = (1.f / TanDegrees(0.5f * fovDegrees));
-	float aspect = Window::GetInstance()->GetWindowAspect();
+	float aspect = Window::GetInstance()->GetAspect();
 
 	Matrix44 perspective;
 

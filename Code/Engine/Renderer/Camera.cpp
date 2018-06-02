@@ -169,7 +169,7 @@ void Camera::SetProjectionOrtho(float height, float nearZ, float farZ)
 	m_orthoSize = height;
 	m_nearClipZ = nearZ;
 	m_farClipZ = farZ;
-	float width = Window::GetInstance()->GetWindowAspect() * height;
+	float width = Window::GetInstance()->GetAspect() * height;
 	m_projectionMatrix = Matrix44::MakeOrtho(-width / 2.f, width / 2.f, -height / 2.f, height / 2.f, nearZ, farZ);
 }
 

@@ -151,7 +151,7 @@ DevConsole::DevConsole()
 	Window* theWindow = Window::GetInstance();
 	GUARANTEE_OR_DIE(theWindow != nullptr, "Error: DevConsole::InitializeDevConsole called with no Window initialized");
 
-	float windowAspect		= theWindow->GetWindowAspect();
+	float windowAspect		= theWindow->GetAspect();
 	float consoleOrthoWidth	= windowAspect * Renderer::UI_ORTHO_HEIGHT;
 
 	m_inputFieldBounds = AABB2(Vector2::ZERO, Vector2(consoleOrthoWidth, TEXT_HEIGHT + 2.f * TEXT_PADDING));		// Leave space for padding above and below lines
@@ -369,7 +369,7 @@ void DevConsole::RenderInputField(Renderer* renderer, BitmapFont* font) const
 
 	// Draw the input text buffer
 	AABB2 inputTextBounds = m_inputFieldBounds;
-	inputTextBounds.Translate(Vector2(TEXT_PADDING * Window::GetInstance()->GetWindowAspect(), 0.f));
+	inputTextBounds.Translate(Vector2(TEXT_PADDING * Window::GetInstance()->GetAspect(), 0.f));
 	renderer->DrawTextInBox2D(m_inputBuffer, inputTextBounds, Vector2(0.f, 0.5f), TEXT_HEIGHT, TEXT_DRAW_OVERRUN, font, INPUT_TEXT_COLOR);
 
 	// Draw the input cursor if the timer is over 0.5f (timer goes from 0 to 1, blinks once per second)
@@ -394,7 +394,7 @@ void DevConsole::RenderLogWindow(Renderer* renderer, BitmapFont* font) const
 
 	//-----Draw the log text-----
 	AABB2 currentLogLineBounds = AABB2(Vector2(m_inputFieldBounds.mins.x, m_inputFieldBounds.mins.y + TEXT_HEIGHT), Vector2(m_consoleLogBounds.maxs.x, m_inputFieldBounds.maxs.y + TEXT_HEIGHT));
-	currentLogLineBounds.Translate(Vector2(TEXT_PADDING * Window::GetInstance()->GetWindowAspect(), TEXT_PADDING));
+	currentLogLineBounds.Translate(Vector2(TEXT_PADDING * Window::GetInstance()->GetAspect(), TEXT_PADDING));
 	std::vector<ConsoleOutputText>::const_reverse_iterator rItr = m_consoleOutputLog.rbegin();
 	for (rItr; rItr != m_consoleOutputLog.rend(); rItr++)
 	{
@@ -419,8 +419,8 @@ void DevConsole::RenderFPS() const
 	static float timeSinceLastCalculation = 1.f;
 
 	// Define the bounds
-	Vector2 topRight = m_consoleLogBounds.maxs - Vector2(Window::GetInstance()->GetWindowAspect() * TEXT_PADDING, TEXT_PADDING);
-	Vector2 bottomLeft = topRight - Vector2(Window::GetInstance()->GetWindowAspect() * TEXT_HEIGHT, TEXT_HEIGHT);
+	Vector2 topRight = m_consoleLogBounds.maxs - Vector2(Window::GetInstance()->GetAspect() * TEXT_PADDING, TEXT_PADDING);
+	Vector2 bottomLeft = topRight - Vector2(Window::GetInstance()->GetAspect() * TEXT_HEIGHT, TEXT_HEIGHT);
 	AABB2 fpsBounds = AABB2(bottomLeft, topRight);
 
 	// Calculate the fps

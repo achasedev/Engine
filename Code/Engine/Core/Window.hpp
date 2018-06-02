@@ -26,7 +26,7 @@ public:
 	unsigned int	GetWidthInPixels() const;
 	unsigned int	GetHeightInPixels() const;
 	IntVector2		GetDimensions() const;
-	float			GetWindowAspect() const;
+	float			GetAspect() const;
 	AABB2			GetWindowBounds() const;
 	bool			IsWindowInFocus() const;
 

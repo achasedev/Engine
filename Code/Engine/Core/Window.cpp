@@ -385,7 +385,7 @@ IntVector2 Window::GetDimensions() const
 //-----------------------------------------------------------------------------------------------
 // Returns the height of the window in pixels
 //
-float Window::GetWindowAspect() const
+float Window::GetAspect() const
 {
 	return static_cast<float>(m_widthInPixels)/static_cast<float>(m_heightInPixels);
 }
