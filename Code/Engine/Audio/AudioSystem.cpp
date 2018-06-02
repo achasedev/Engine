@@ -1,7 +1,7 @@
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
-#include "Engine/Core/StringUtils.hpp"
+#include "Engine/Core/Utility/ErrorWarningAssert.hpp"
+#include "Engine/Core/Utility/StringUtils.hpp"
 
 //-----------------------------------------------------------------------------------------------
 // To disable audio entirely (and remove requirement for fmod.dll / fmod64.dll) for any game,
@@ -11,7 +11,7 @@
 //	Purpose: Each game can now direct the engine via #defines to build differently for that game.
 //	Downside: ALL games must now have this Code/Game/EngineBuildPreferences.hpp file.
 //
-#include "Game/EngineBuildPreferences.hpp"
+#include "Game/Framework/EngineBuildPreferences.hpp"
 #if !defined( ENGINE_DISABLE_AUDIO )
 
 

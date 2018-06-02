@@ -6,8 +6,8 @@
 /* Description: Implementation of the Image class, indexed as top left (0,0)
 /************************************************************************/
 #include "Engine/Core/Image.hpp"
-#include "Engine/Core/StringUtils.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Core/Utility/StringUtils.hpp"
+#include "Engine/Core/Utility/ErrorWarningAssert.hpp"
 #include "ThirdParty/stb/stb_image.h"
 
 

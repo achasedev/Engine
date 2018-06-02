@@ -1,10 +1,10 @@
 /************************************************************************/
-/* File: GameObject.Cpp
+/* File: GameObject.cpp
 /* Author: Andrew Chase
 /* Date: May 9th, 2018
 /* Description: Implementation of the GameObject class
 /************************************************************************/
-#include "Game/GameCommon.hpp"
+#include "Game/Framework/GameCommon.hpp"
 #include "Engine/Core/GameObject.hpp"
 
 //-----------------------------------------------------------------------------------------------

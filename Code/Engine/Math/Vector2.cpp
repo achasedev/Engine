@@ -12,8 +12,8 @@
 #include "Engine/Math/IntVector2.hpp"
 
 #include "Engine/Math/MathUtils.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
-#include "Engine/Core/StringUtils.hpp"
+#include "Engine/Core/Utility/ErrorWarningAssert.hpp"
+#include "Engine/Core/Utility/StringUtils.hpp"
 
 
 // Initialize the static constants

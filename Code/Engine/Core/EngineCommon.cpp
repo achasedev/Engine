@@ -6,7 +6,7 @@
 /* Description: Defines the global variables shared across engine files
 /************************************************************************/
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/Blackboard.hpp"
-#include "Engine/Renderer/SpriteSheet.hpp"
+#include "Engine/Core/Utility/Blackboard.hpp"
+#include "Engine/Rendering/Resources/SpriteSheet.hpp"
 
 Blackboard* g_gameConfigBlackboard = nullptr;

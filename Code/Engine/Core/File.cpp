@@ -6,7 +6,7 @@
 /* Description: File for File utility functions
 /************************************************************************/
 #include "Engine/Core/File.hpp"
-#include "Engine/Core/DevConsole.hpp"
+#include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include <stdio.h>
 #include <cstdlib>
