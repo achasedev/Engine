@@ -618,7 +618,7 @@ const char* ShaderSource::PHONG_OPAQUE_FS = R"(
 	
 		//---------------------STEP 4: CALCULATE FINAL COLOR-----------------------
 		// Calculate the final color, surface gets w = 1 since it is multiplied in, reflected gets w = 0 since it is added in
-		vec4 finalColor = vec4(surfaceLight, 1) * surfaceColor + vec4(reflectedLight, 0);
+		vec4 finalColor = vec4(surfaceLight, 1) * surfaceColor * passColor + vec4(reflectedLight, 0);
 	
 		// Clamp the color
 		finalColor = clamp(finalColor, vec4(0), vec4(1));
@@ -851,7 +851,7 @@ const char* ShaderSource::PHONG_OPAQUE_INSTANCED_FS = R"(
 	
 		//---------------------STEP 4: CALCULATE FINAL COLOR-----------------------
 		// Calculate the final color, surface gets w = 1 since it is multiplied in, reflected gets w = 0 since it is added in
-		vec4 finalColor = vec4(surfaceLight, 1) * surfaceColor + vec4(reflectedLight, 0);
+		vec4 finalColor = vec4(surfaceLight, 1) * surfaceColor * passColor + vec4(reflectedLight, 0);
 	
 		// Clamp the color
 		finalColor = clamp(finalColor, vec4(0), vec4(1));
