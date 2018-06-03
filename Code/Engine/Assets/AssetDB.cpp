@@ -146,14 +146,14 @@ Image* AssetDB::GetImage(const std::string& filename)
 //-----------------------------------------------------------------------------------------------
 // Returns the image given by the filepath, attempting to construct it if it doesn't exist
 //
-Image* AssetDB::CreateOrGetImage(const std::string& filename)
+Image* AssetDB::CreateOrGetImage(const std::string& filepath)
 {
-	Image* img = AssetCollection<Image>::GetAsset(filename);
+	Image* img = AssetCollection<Image>::GetAsset(filepath);
 
 	if (img == nullptr)
 	{
-		img = new Image(filename);
-		AssetCollection<Image>::AddAsset(filename, img);
+		img = new Image(filepath);
+		AssetCollection<Image>::AddAsset(filepath, img);
 	}
 
 	return img;

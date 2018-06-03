@@ -4,7 +4,7 @@
 /* Date: February 17th, 2017
 /* Description: Implementation of the OrbitCamera class
 /************************************************************************/
-#include "Engine/Rendering/OrbitCamera.hpp"
+#include "Engine/Rendering/Core/OrbitCamera.hpp"
 #include "Engine/Math/MathUtils.hpp"
 
 //-----------------------------------------------------------------------------------------------

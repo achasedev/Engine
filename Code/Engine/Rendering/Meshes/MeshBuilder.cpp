@@ -243,8 +243,7 @@ void MeshBuilder::SetVertexTangent(int vboIndex, const Vector4& tangent)
 
 
 //-----------------------------------------------------------------------------------------------
-// Generates the normals for all vertices in the MeshBuilder on a per-face basis, with weighted
-// smoothing based on the shared face areas
+// Generates the normals for all vertices in the MeshBuilder on a per-face basis
 //
 void MeshBuilder::GenerateFlatTBN()
 {
