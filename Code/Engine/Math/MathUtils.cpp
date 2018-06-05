@@ -418,6 +418,18 @@ float RangeMapFloat(float inValue, float inStart, float inEnd, float outStart, f
 
 
 //-----------------------------------------------------------------------------------------------
+// Maps the in Vector2 from the input range to the output range
+//
+Vector2 RangeMap(Vector2 inValue, Vector2 inStart, Vector2 inEnd, Vector2 outStart, Vector2 outEnd)
+{
+	float x = RangeMapFloat(inValue.x, inStart.x, inEnd.x, outStart.x, outEnd.x);
+	float y = RangeMapFloat(inValue.y, inStart.y, inEnd.y, outStart.y, outEnd.y);
+
+	return Vector2(x, y);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the angular displacement from start to end, taking the shorter path
 //
 float GetAngularDisplacement(float startDegrees, float endDegrees)

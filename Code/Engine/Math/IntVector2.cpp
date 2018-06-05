@@ -196,6 +196,15 @@ void IntVector2::SetFromText(const char* text)
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the x,y value as floats
+//
+Vector2 IntVector2::GetAsFloats() const
+{
+	return Vector2(*this);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the distance between points a and b on a 2D plane
 //
 IntVector2 IntVector2::GetRandomVector(int maxDeviation)

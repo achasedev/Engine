@@ -55,7 +55,7 @@ float	ClampFloatNegativeOneToOne(float inValue);								// Clamps inValue to be 
 float	GetFractionInRange(float inValue, float rangeStart, float rangeEnd);	// Finds the % (as fraction) of inValue in [rangeStart, rangeEnd]																
 
 float	RangeMapFloat(float inValue, float inStart, float inEnd, float outStart, float outEnd);		// Maps inValue from an inRange to an outRange
-
+Vector2 RangeMap(Vector2 inValue, Vector2 inStart, Vector2 inEnd, Vector2 outStart, Vector2 outEnd);
 
 // Angle and vector utilities
 float	GetAngularDisplacement(float startDegrees, float endDegrees);					// Returns the angular displacement from start to end, taking the shorter path

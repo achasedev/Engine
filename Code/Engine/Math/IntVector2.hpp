@@ -45,6 +45,8 @@ public:
 	float	GetOrientationDegrees() const;				// Returns the degree angle of the IntVector2 as on a unit circle
 	void	SetFromText(const char* text);				// Sets the int values from the text passed
 
+	Vector2 GetAsFloats() const;
+
 	static IntVector2 GetRandomVector(int maxDeviation);
 
 public:
