@@ -11,8 +11,7 @@
 // Constructor
 //
 GameObject::GameObject()
-	: m_renderable(nullptr)
-	, m_markedForDelete(false)
+	: m_markedForDelete(false)
 {
 }
 
@@ -35,15 +34,6 @@ void GameObject::Update(float deltaTime)
 
 
 //-----------------------------------------------------------------------------------------------
-// Sets the renderable of the object to the one specified
-//
-void GameObject::SetRenderable(Renderable* renderable)
-{
-	m_renderable = renderable;
-}
-
-
-//-----------------------------------------------------------------------------------------------
 // Marks this GameObject for deletion at the end of the frame
 //
 void GameObject::SetMarkedForDelete(bool markedForDelete)
@@ -55,7 +45,7 @@ void GameObject::SetMarkedForDelete(bool markedForDelete)
 //-----------------------------------------------------------------------------------------------
 // Returns the renderable of the GameObject
 //
-Renderable* GameObject::GetRenderable() const
+Renderable& GameObject::GetRenderable()
 {
 	return m_renderable;
 }

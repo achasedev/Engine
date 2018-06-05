@@ -61,7 +61,6 @@ Material::Material(const std::string& xmlFilepath)
 		m_isInstancedShader = false;	// Always construct materials with shared materials
 	}
 
-
 	// Textures
 	const XMLElement* texturesElement = materialElement->FirstChildElement("textures");
 
@@ -97,6 +96,29 @@ Material::Material(const std::string& xmlFilepath)
 			Sampler* sampler = nullptr;
 
 			m_samplers[bindPoint] = sampler;
+
+			currElement = currElement->NextSiblingElement();
+		}
+	}
+
+	// Properties
+	const XMLElement* propertiesElement = materialElement->FirstChildElement("properties");
+
+	if (propertiesElement != nullptr)
+	{
+		const XMLElement* currElement = samplersElement->FirstChildElement();
+
+		while (currElement != nullptr)
+		{
+			TODO("Add functionality to set other types");
+
+			std::string propertyName	= ParseXmlAttribute(*currElement, "name", "");
+			float propertyValue			= ParseXmlAttribute(*currElement, "value", 0.f);
+
+			if (!IsStringNullOrEmpty(propertyName))
+			{
+				SetProperty(propertyName.c_str(), propertyValue);
+			}
 
 			currElement = currElement->NextSiblingElement();
 		}

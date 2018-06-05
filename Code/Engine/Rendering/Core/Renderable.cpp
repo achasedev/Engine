@@ -5,11 +5,13 @@
 /* Description: Implementation of the renderable class
 /************************************************************************/
 #include "Engine/Math/Transform.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Rendering/Core/Renderer.hpp"
-#include "Engine/Rendering/Meshes/MeshGroup.hpp"
 #include "Engine/Rendering/Core/Renderable.hpp"
-#include "Engine/Rendering/Meshes/MeshBuilder.hpp"
+#include "Engine/Core/Utility/XmlUtilities.hpp"
+#include "Engine/Rendering/Meshes/MeshGroup.hpp"
 #include "Engine/Rendering/Core/RenderScene.hpp"
+#include "Engine/Rendering/Meshes/MeshBuilder.hpp"
 #include "Engine/Rendering/Materials/MaterialInstance.hpp"
 
 //-----------------------------------------------------------------------------------------------

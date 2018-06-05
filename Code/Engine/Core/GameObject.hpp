@@ -6,8 +6,7 @@
 /************************************************************************/
 #pragma once
 #include "Engine/Math/Transform.hpp"
-
-class Renderable;
+#include "Engine/Rendering/Core/Renderable.hpp"
 
 class GameObject
 {
@@ -19,10 +18,9 @@ public:
 
 	virtual void Update(float deltaTime);
 
-	void SetRenderable(Renderable* renderable);
 	void SetMarkedForDelete(bool markedForDelete);
 
-	Renderable* GetRenderable() const;
+	Renderable& GetRenderable();
 	bool		IsMarkedForDelete() const;
 
 
@@ -35,7 +33,7 @@ public:
 protected:
 	//-----Protected Data-----
 
-	Renderable* m_renderable;		// For rendering
+	Renderable  m_renderable;		// For rendering
 	bool		m_markedForDelete;	// For end-of-frame deletion
 
 };
