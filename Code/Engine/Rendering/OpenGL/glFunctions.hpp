@@ -6,12 +6,13 @@
 /* Description: File to hold gl function handles for the renderer to use
 /************************************************************************/
 #pragma once
+#include "Engine/Core/Utility/ErrorWarningAssert.hpp"
+#include "Engine/Core/Utility/StringUtils.hpp"
+
 #include "ThirdParty/gl/glcorearb.h"
 #include "ThirdParty/gl/wglext.h"
 #include "ThirdParty/gl/glext.h"
-#include "Engine/Core/Utility/ErrorWarningAssert.hpp"
-#include "Engine/Core/Utility/StringUtils.hpp"
-#pragma comment( lib, "opengl32")	// Link in the OpenGL32.lib static library
+#pragma comment(lib, "opengl32")	// Link in the OpenGL32.lib static library
 
 // Members needed to create a modern context - declared here so header doesn't include windows.h
 extern HMODULE gGLLibrary; 
