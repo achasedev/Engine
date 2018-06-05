@@ -22,14 +22,17 @@ public:
 	~Image();
 
 
-	Rgba GetTexelColor(int x, int y) const;
-	unsigned char GetTexelGrayScale(int x, int y) const;
-	IntVector2 GetDimensions() const;
-	int GetNumComponentsPerTexel() const;
-	const unsigned char* GetImageData() const;
+	Rgba					GetTexelColor(int x, int y) const;
+	float					GetTexelGrayScale(int x, int y) const;
+	int						GetTexelCount() const;
+	IntVector2				GetTexelDimensions() const;
+	int						GetNumComponentsPerTexel() const;
+	const unsigned char*	GetImageData() const;
+	bool					IsFlippedForTextures() const;
 
 	void SetTexel( int x, int y, const Rgba& color );
 	void FlipVertical();
+
 
 public:
 	//-----Public Data-----
@@ -37,13 +40,13 @@ public:
 	const static Image IMAGE_WHITE;
 	const static Image IMAGE_FLAT;
 
+
 private:
 	//-----Private Data-----
 
 	IntVector2 m_dimensions;		// Width and height of the image in texels
 	int m_numComponentsPerTexel;	// The number of values for each texel (3 for RGB, 4 for RGBA, etc)
 		
-	std::vector<Rgba> m_texels;		// Ordered left to right, then down, so (0,0) is the texel at m_texels[0]
 	unsigned char* m_imageData;		// Raw string data of the image from stbi
-
+	bool m_isFlippedForTextures = false;
 };

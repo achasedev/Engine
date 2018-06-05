@@ -52,9 +52,6 @@ void TextureCube::CreateFromFile(const std::string& filename)
 
 	// Construct the Texture from the image
 	CreateFromImage(loadedImage);
-
-	// Free up the image data
-	delete loadedImage;
 }
 
 
@@ -69,9 +66,9 @@ void TextureCube::CreateFromImage(const Image* image)
 		GL_CHECK_ERROR();
 	}
 
-	unsigned int totalWidth = image->GetDimensions().x;
+	unsigned int totalWidth = image->GetTexelDimensions().x;
 	unsigned int tileSize = (totalWidth / 4);
-	m_dimensions = image->GetDimensions();
+	m_dimensions = image->GetTexelDimensions();
 
 	// Set the format based on the image components
 	m_textureFormat = static_cast<TextureFormat>(image->GetNumComponentsPerTexel() - 1);
@@ -103,7 +100,7 @@ void TextureCube::CreateFromImage(const Image* image)
 void TextureCube::BindImageToSide(TexCubeSide side, const Image& image, unsigned int xOffset, unsigned int yOffset)
 {
 	// Get the start of the image data at the current tile offset
-	unsigned int byteOffset = image.GetNumComponentsPerTexel() * (image.GetDimensions().x * yOffset + xOffset);
+	unsigned int byteOffset = image.GetNumComponentsPerTexel() * (image.GetTexelDimensions().x * yOffset + xOffset);
 	unsigned char* imageData = (unsigned char*)image.GetImageData();
 	imageData = &imageData[byteOffset];
 

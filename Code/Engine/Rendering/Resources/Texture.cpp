@@ -50,13 +50,13 @@ void Texture::CreateFromFile(const std::string& filename)
 	Image* loadedImage = AssetDB::CreateOrGetImage(filename);
 
 	// Flip the image so it isn't upsidedown
-	loadedImage->FlipVertical();
+	if (!loadedImage->IsFlippedForTextures())
+	{
+		loadedImage->FlipVertical();
+	}
 
 	// Construct the Texture from the image
 	CreateFromImage(loadedImage);
-
-	// Free up the image data
-	delete loadedImage;
 }
 
 
@@ -71,7 +71,7 @@ void Texture::CreateFromImage(const Image* image)
 		GL_CHECK_ERROR();
 	}
 	
-	m_dimensions = image->GetDimensions();
+	m_dimensions = image->GetTexelDimensions();
 	m_textureFormat = static_cast<TextureFormat>(image->GetNumComponentsPerTexel() - 1);
 
 	// Use texture slot 0 for the operation

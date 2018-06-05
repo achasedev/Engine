@@ -8,17 +8,18 @@
 #pragma once
 #include <string>
 
+class Mesh;
+class Image;
+class Shader;
+class Skybox;
 class Texture;
+class Material;
+class MeshGroup;
 class BitmapFont;
 class SpriteSheet;
-class Image;
-class Mesh;
-class MeshGroup;
-class ShaderProgram;
-class Shader;
-class Material;
-class MaterialInstance;
 class TextureCube;
+class ShaderProgram;
+class MaterialInstance;
 
 class AssetDB
 {
@@ -38,6 +39,10 @@ public:
 	// Texture Cubes
 	static TextureCube* GetTextureCube(const std::string& filename);
 	static TextureCube* CreateOrGetTextureCube(const std::string& filename);
+
+	// Skyboxes
+	static Skybox* GetSkybox(const std::string& textureName);
+	static Skybox* CreateOrGetSkybox(const std::string& textureName);
 
 	// SpriteSheets
 	static SpriteSheet* GetSpriteSheet(const std::string& name);

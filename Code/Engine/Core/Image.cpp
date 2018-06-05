@@ -28,25 +28,6 @@ Image::Image(const std::string& imageFilePath)
 	
 	// Ensure the image could be loaded
 	GUARANTEE_OR_DIE(m_imageData != nullptr, Stringf("Error: Image at path \"%s\" not found", imageFilePath.c_str()));
-
-	// Use the data to fill the texel array
-	bool hasAlpha = (m_numComponentsPerTexel == 4);
-	int numPixels = (m_dimensions.x * m_dimensions.y);
-	int totalNumComponents = (numPixels * m_numComponentsPerTexel);
-	m_texels.reserve(numPixels);
-	for (int componentIndex = 0; componentIndex < totalNumComponents; componentIndex+=m_numComponentsPerTexel)
-	{
-		unsigned char redValue		= m_imageData[componentIndex];
-		unsigned char greenValue	= m_imageData[componentIndex + 1];
-		unsigned char blueValue		= m_imageData[componentIndex + 2];
-		unsigned char alphaValue	= static_cast<unsigned char>(255);
-		if (hasAlpha)
-		{
-			alphaValue = m_imageData[componentIndex + 3];
-		}
-
-		m_texels.push_back(Rgba(redValue, greenValue, blueValue, alphaValue));	
-	}
 }
 
 
@@ -57,19 +38,11 @@ Image::Image()
 	: m_dimensions(IntVector2(2,2))
 	, m_numComponentsPerTexel(4)
 {
-	m_imageData = (unsigned char*)malloc(sizeof(unsigned char) * m_numComponentsPerTexel * 4);
+	m_imageData = (unsigned char*)malloc(sizeof(unsigned char) * m_numComponentsPerTexel * GetTexelCount());
 
-	unsigned char* temp = m_imageData;
-	for (int i = 0; i < 4; ++i)
+	for (int index = 0; index < GetTexelCount() * m_numComponentsPerTexel; ++index)
 	{
-		m_texels.push_back(Rgba());	// Rgba default constructed to opaque white
-
-		temp[0]		= m_texels[i].r;
-		temp[1]		= m_texels[i].g;
-		temp[2]		= m_texels[i].b;
-		temp[3]		= m_texels[i].a;
-
-		temp += 4;
+		m_imageData[index] = 255;
 	}
 }
 
@@ -78,22 +51,19 @@ Image::Image()
 // Constructs an image of the given dimensions and color
 //
 Image::Image(const IntVector2& dimensions, const Rgba& color /*= Rgba::WHITE*/)
-	: m_dimensions(IntVector2(2,2))
+	: m_dimensions(dimensions)
 	, m_numComponentsPerTexel(4)
 {
-		m_imageData = (unsigned char*)malloc(sizeof(unsigned char) * m_numComponentsPerTexel * 4);
+		m_imageData = (unsigned char*)malloc(sizeof(unsigned char) * m_numComponentsPerTexel * GetTexelCount());
 
-		unsigned char* temp = m_imageData;
-		for (int i = 0; i < 4; ++i)
+		for (int texelIndex = 0; texelIndex < GetTexelCount(); ++texelIndex)
 		{
-			m_texels.push_back(Rgba(127, 127, 255, 255));	// Rgba default constructed to opaque white
+			int offset = texelIndex * m_numComponentsPerTexel;
 
-			temp[0]		= m_texels[i].r;
-			temp[1]		= m_texels[i].g;
-			temp[2]		= m_texels[i].b;
-			temp[3]		= m_texels[i].a;
-
-			temp += 4;
+			m_imageData[offset + 0] = color.r;
+			m_imageData[offset + 1] = color.g;
+			m_imageData[offset + 2] = color.b;
+			m_imageData[offset + 3] = color.a;
 		}
 }
 
@@ -103,7 +73,8 @@ Image::Image(const IntVector2& dimensions, const Rgba& color /*= Rgba::WHITE*/)
 //
 Image::~Image()
 {
-	stbi_image_free((void*)m_imageData);
+	free((void*)m_imageData);
+	m_imageData = nullptr;
 }
 
 
@@ -112,31 +83,50 @@ Image::~Image()
 //
 Rgba Image::GetTexelColor(int x, int y) const
 {
-	int index = (m_dimensions.x * y) + x;
-
 	// Safety check
-	GUARANTEE_OR_DIE((index >= 0 && index < static_cast<int>(m_texels.size())), Stringf("Error - index into texels was out of range: Index was %d", index));
-	return m_texels[index];
+	GUARANTEE_OR_DIE(x >= 0 && y >= 0 && x < m_dimensions.x && y < m_dimensions.y, Stringf("Error: Image::SetTexel coords were out of bounds, coords were (%i, %i)", x, y));
+
+	int index = ((m_dimensions.x * y) + x) * m_numComponentsPerTexel;
+
+	Rgba color;
+	if (m_numComponentsPerTexel >= 1) {color.r = m_imageData[index + 0]; }
+	if (m_numComponentsPerTexel >= 2) {color.g = m_imageData[index + 1]; }
+	if (m_numComponentsPerTexel >= 3) {color.b = m_imageData[index + 2]; }
+	if (m_numComponentsPerTexel == 4) {color.a = m_imageData[index + 3]; }
+
+	return color;
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Returns the grayscale equivalent value of the texel color at (x, y)
 //
-unsigned char Image::GetTexelGrayScale(int x, int y) const
+float Image::GetTexelGrayScale(int x, int y) const
 {
 	Rgba color = GetTexelColor(x, y);
 
-	unsigned char grayscale = static_cast<unsigned char>(((float) color.r + (float) color.g + (float) color.b) / 3.f);
+	float red, green, blue, alpha;
+	color.GetAsFloats(red, green, blue, alpha);
+
+	float grayscale = 0.2126f * red + 0.7152f * green + 0.0722f * blue;
 
 	return grayscale;
 }
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the number of texels in this image
+//
+int Image::GetTexelCount() const
+{
+	return m_dimensions.x * m_dimensions.y;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the width x height dimensions of this image
 //
-IntVector2 Image::GetDimensions() const
+IntVector2 Image::GetTexelDimensions() const
 {
 	return m_dimensions;
 }
@@ -161,60 +151,58 @@ const unsigned char* Image::GetImageData() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the flag indicating whether or not this image has been flipped to be used for textures
+//
+bool Image::IsFlippedForTextures() const
+{
+	return m_isFlippedForTextures;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Sets the texel at (x, y) to the color specified
 //
 void Image::SetTexel(int x, int y, const Rgba& color)
 {
-	int index = (m_dimensions.x * y) + x;
-
 	// Safety check
-	GUARANTEE_OR_DIE((index > 0 && index < static_cast<int>(m_texels.size())), Stringf("Error - index into texels was out of range: Index was %d", index));
+	GUARANTEE_OR_DIE(x >= 0 && y >= 0 && x < m_dimensions.x && y < m_dimensions.y, Stringf("Error: Image::SetTexel coords were out of bounds, coords were (%i, %i)", x, y));
 
-	m_texels[index] = color;
+	int index = ((m_dimensions.x * y) + x) * m_numComponentsPerTexel;
+
+	if (m_numComponentsPerTexel >= 1) { m_imageData[index + 0] = color.r; }
+	if (m_numComponentsPerTexel >= 2) { m_imageData[index + 1] = color.g; }
+	if (m_numComponentsPerTexel >= 3) { m_imageData[index + 2] = color.b; }
+	if (m_numComponentsPerTexel == 4) { m_imageData[index + 3] = color.a; }
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Flips the image horizontally (over the X axis, making the top row the bottom row, and so on) 
-// Flips both the RGBA and the raw image data formats
 //
 void Image::FlipVertical()
 {
 	// Create a temp vector for assembly
-	int numTexels = m_dimensions.x * m_dimensions.y;
-	std::vector<Rgba> result;
-	result.reserve(numTexels);
+	int numTexels = GetTexelCount();
 
 	int numComponents = numTexels * m_numComponentsPerTexel;
-	stbi_image_free((void*)m_imageData);
-	m_imageData = (unsigned char*)malloc(sizeof(unsigned char) * numComponents);
-	unsigned char* currentComponentLocation = m_imageData;
-	bool hasAlpha = (m_numComponentsPerTexel > 3);
+	unsigned char* newBuffer = (unsigned char*)malloc(sizeof(unsigned char) * numComponents);
 
 	for (int rowIndex = m_dimensions.y - 1; rowIndex >= 0; --rowIndex)	// Start from the last (bottom) row and work back up
 	{
 		for (int colIndex = 0; colIndex < m_dimensions.x; ++colIndex)
 		{
 			Rgba currTexel = GetTexelColor(colIndex, rowIndex);
-			result.push_back(currTexel);
 
-			*currentComponentLocation = currTexel.r;
-			currentComponentLocation++;
-
-			*currentComponentLocation = currTexel.g;
-			currentComponentLocation++;
-
-			*currentComponentLocation = currTexel.b;
-			currentComponentLocation++;
-
-			if (hasAlpha)
-			{
-				*currentComponentLocation = currTexel.a;
-				currentComponentLocation++;
-			}
+			// Temporarily swap the buffers to make use of the SetTexel function
+			unsigned char* temp = m_imageData;
+			m_imageData = newBuffer;
+			SetTexel(colIndex, m_dimensions.y - rowIndex - 1, currTexel);
+			m_imageData = temp;
 		}
 	}
 
-	// Move the result into our image
-	m_texels = std::move(result);
+	free(m_imageData);
+	m_imageData = newBuffer;
+
+	m_isFlippedForTextures = !m_isFlippedForTextures;
 }

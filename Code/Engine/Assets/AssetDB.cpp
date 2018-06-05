@@ -6,16 +6,17 @@
 /************************************************************************/
 #include "Engine/Core/Image.hpp"
 #include "Engine/Assets/AssetDB.hpp"
-#include "Engine/Rendering/Shaders/Shader.hpp"
-#include "Engine/Rendering/Resources/Texture.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Assets/AssetCollection.hpp"
+#include "Engine/Rendering/Shaders/Shader.hpp"
+#include "Engine/Rendering/Resources/Skybox.hpp"
+#include "Engine/Rendering/Resources/Texture.hpp"
+#include "Engine/Rendering/Meshes/MeshBuilder.hpp"
+#include "Engine/Rendering/Shaders/ShaderSource.hpp"
 #include "Engine/Rendering/Resources/BitmapFont.hpp"
 #include "Engine/Rendering/Resources/TextureCube.hpp"
 #include "Engine/Rendering/Resources/SpriteSheet.hpp"
-#include "Engine/Assets/AssetCollection.hpp"
 #include "Engine/Rendering/Resources/SpriteSheet.hpp"
-#include "Engine/Rendering/Meshes/MeshBuilder.hpp"
-#include "Engine/Rendering/Shaders/ShaderSource.hpp"
 #include "Engine/Rendering/Shaders/ShaderProgram.hpp"
 #include "Engine/Rendering/Meshes/MeshGroupBuilder.hpp"
 #include "Engine/Rendering/Materials/MaterialInstance.hpp"
@@ -214,6 +215,34 @@ TextureCube* AssetDB::CreateOrGetTextureCube(const std::string& filename)
 	}
 
 	return textureCube;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the Skybox given by name, returning null if it doesn't exist
+//
+Skybox* AssetDB::GetSkybox(const std::string& textureName)
+{
+	return AssetCollection<Skybox>::GetAsset(textureName);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the Skybox given by name, attempting to construct it if it doesn't exist
+//
+Skybox* AssetDB::CreateOrGetSkybox(const std::string& textureName)
+{
+	Skybox* skybox = AssetCollection<Skybox>::GetAsset(textureName);
+
+	if (skybox == nullptr)
+	{
+		TextureCube* skyboxTexture = CreateOrGetTextureCube(textureName);
+		skybox = new Skybox(skyboxTexture);
+
+		AssetCollection<Skybox>::AddAsset(textureName, skybox);
+	}
+
+	return skybox;
 }
 
 
