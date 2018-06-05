@@ -21,6 +21,6 @@ ScopedProfiler::~ScopedProfiler()
 	uint64_t deltaHPC = GetPerformanceCounter() - m_startHPC;
 	float milliseconds = (float) TimeSystem::PerformanceCountToSeconds(deltaHPC) * 1000.f;
 
-	//ConsolePrintf("Profile for \"%s\" took %f milliseconds", m_name.c_str(), milliseconds);
+	ConsolePrintf("Profile for \"%s\" took %f milliseconds", m_name.c_str(), milliseconds);
 	DebuggerPrintf("Profile for \"%s\" took %f milliseconds\n", m_name.c_str(), milliseconds);
 }
