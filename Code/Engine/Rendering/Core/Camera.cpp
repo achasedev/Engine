@@ -127,6 +127,9 @@ void Camera::LookAt(const Vector3& position, const Vector3& target, const Vector
 {
 	Matrix44 cameraMatrix = Matrix44::MakeLookAt(position, target, up);
 
+	m_transform.position = position;
+	m_transform.rotation = Matrix44::ExtractRotationDegrees(cameraMatrix);
+
 	m_transform.SetModelMatrix(cameraMatrix);
 	m_viewMatrix = InvertLookAtMatrix(cameraMatrix);
 }
@@ -288,6 +291,15 @@ Matrix44 Camera::GetProjectionMatrix() const
 Vector3 Camera::GetPosition() const
 {
 	return m_transform.position;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the rotation of the camera's transform
+//
+Vector3 Camera::GetRotation() const
+{
+	return m_transform.rotation;
 }
 
 

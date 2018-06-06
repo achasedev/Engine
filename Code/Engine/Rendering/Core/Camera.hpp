@@ -60,6 +60,7 @@ public:
 	Matrix44 GetProjectionMatrix() const;
 
 	Vector3 GetPosition() const;
+	Vector3 GetRotation() const;
 
 	Vector3 GetForwardVector() const;
 	Vector3 GetRightVector() const;

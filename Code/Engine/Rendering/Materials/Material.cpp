@@ -106,7 +106,7 @@ Material::Material(const std::string& xmlFilepath)
 
 	if (propertiesElement != nullptr)
 	{
-		const XMLElement* currElement = samplersElement->FirstChildElement();
+		const XMLElement* currElement = propertiesElement->FirstChildElement();
 
 		while (currElement != nullptr)
 		{

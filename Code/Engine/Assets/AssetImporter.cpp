@@ -82,4 +82,6 @@ Mesh* AssetImporter::ProcessMesh(const aiScene* scene, aiMesh* mesh)
 
 		vertices.push_back(vertex);
 	}
+
+	return nullptr;
 }

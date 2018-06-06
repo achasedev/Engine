@@ -34,7 +34,7 @@ public:
 	// Accessors
 	Vector3 GetTarget() const;
 	float	GetRadius() const;
-	float	GetRotation() const;
+	float	GetHorizontalRotation() const;
 
 
 private:

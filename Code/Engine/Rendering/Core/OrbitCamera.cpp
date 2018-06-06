@@ -145,7 +145,7 @@ float OrbitCamera::GetRadius() const
 //-----------------------------------------------------------------------------------------------
 // Returns this camera's rotation (about the Y-axis)
 //
-float OrbitCamera::GetRotation() const
+float OrbitCamera::GetHorizontalRotation() const
 {
 	return m_rotation;
 }
