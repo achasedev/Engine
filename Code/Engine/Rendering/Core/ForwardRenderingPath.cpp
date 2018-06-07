@@ -96,6 +96,13 @@ void ForwardRenderingPath::RenderSceneForCamera(Camera* camera, RenderScene* sce
 	Renderer* renderer = Renderer::GetInstance();
 	renderer->SetCurrentCamera(camera);
 
+	Skybox* skybox = scene->GetSkybox();
+
+	if (skybox != nullptr)
+	{
+		skybox->Render();
+	}
+
 	std::vector<DrawCall> drawCalls;
 
 	// Create draw calls for all renderables
@@ -120,13 +127,6 @@ void ForwardRenderingPath::RenderSceneForCamera(Camera* camera, RenderScene* sce
 		DrawCall& dc = drawCalls[drawIndex];
 		renderer->Draw(dc);
 	} 
-
-	Skybox* skybox = scene->GetSkybox();
-
-	if (skybox != nullptr)
-	{
-		skybox->Render();
-	}
 }
 
 

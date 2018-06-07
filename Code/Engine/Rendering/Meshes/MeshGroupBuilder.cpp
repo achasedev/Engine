@@ -3,8 +3,16 @@
 #include "Engine/Rendering/Meshes/MeshBuilder.hpp"
 #include "Engine/Rendering/Meshes/MeshGroupBuilder.hpp"
 
+
+
+
+
+
+
+#include "Engine/Core/EngineCommon.hpp"
 MeshGroupBuilder::~MeshGroupBuilder()
 {
+	TODO("Comment this source file");
 	int numBuilders = (int) m_meshBuilders.size();
 
 	for (int builderIndex = 0; builderIndex < numBuilders; ++builderIndex)
@@ -111,19 +119,7 @@ void MeshGroupBuilder::LoadFromObjFile(const std::string& filePath)
 				// Flip the Mesh horizontally, since OBJ files use a right-handed basis
 				mb->FlipHorizontal();
 
-				// Generate normals (and tangents), only if none were specified in the OBJ file
-				bool normalsSpecified = (normals.size() > 0);
-
-				if (!normalsSpecified)
-				{
-					mb->GenerateFlatTBN();
-				}
-				else
-				{
-					// Generate tangents using existing normals
-					GenerateMikkTangents(*mb);
-				}
-
+				mb->GenerateSmoothNormals();
 				mb->FinishBuilding();
 
 				// Add the builder to the list
@@ -143,19 +139,7 @@ void MeshGroupBuilder::LoadFromObjFile(const std::string& filePath)
 		// Flip the Mesh horizontally, since OBJ files use a right-handed basis
 		mb->FlipHorizontal();
 
-		// Generate normals (and tangents), only if none were specified in the OBJ file
-		bool normalsSpecified = (normals.size() > 0);
-
-		if (!normalsSpecified)
-		{
-			mb->GenerateFlatTBN();
-		}
-		else
-		{
-			// Generate tangents using existing normals
-			GenerateMikkTangents(*mb);
-		}
-
+		mb->GenerateSmoothNormals();
 		mb->FinishBuilding();
 
 		// Add the builder to the list

@@ -49,9 +49,10 @@ public:
 	void SetCursorMode(CursorMode newMode);
 
 	// Accessors
-	IntVector2 GetCursorClientPosition();
-	IntVector2 GetCursorDesktopPosition();
-	IntVector2 GetMouseDelta() const;
+	IntVector2	GetCursorClientPosition();
+	IntVector2	GetCursorDesktopPosition();
+	IntVector2	GetMouseDelta() const;
+	float		GetMouseWheelDelta() const;
 
 	bool		IsCursorShown() const;
 	bool		IsCursorLocked() const;

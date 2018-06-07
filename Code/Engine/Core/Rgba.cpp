@@ -19,12 +19,12 @@ const Rgba Rgba::RED			= Rgba(255, 0, 0, 255);
 const Rgba Rgba::BLUE			= Rgba(0, 0, 255, 255);
 const Rgba Rgba::ORANGE			= Rgba(255, 128, 0, 255);
 const Rgba Rgba::PURPLE			= Rgba(128, 0, 255, 255);
-const Rgba Rgba::LIGHT_GREEN	= Rgba(0, 255, 0, 255);
+const Rgba Rgba::GREEN			= Rgba(0, 255, 0, 255);
 const Rgba Rgba::LIGHT_BLUE		= Rgba(0, 128, 255, 255);
 const Rgba Rgba::BROWN			= Rgba(153, 76, 0, 255);
 const Rgba Rgba::BLACK			= Rgba(0, 0, 0, 255);
 const Rgba Rgba::GRAY			= Rgba(128, 128, 128, 255);
-const Rgba Rgba::GREEN			= Rgba(100, 200, 0, 255);
+const Rgba Rgba::DARK_GREEN		= Rgba(100, 200, 0, 255);
 
 //-----------------------------------------------------------------------------------------------
 // Default constructor - initializes it to opaque white

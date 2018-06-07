@@ -56,7 +56,7 @@ bool FileWriteFromBuffer(char const *filename, char const* buffer, int bufferSiz
 	int err = fclose(fp);
 	if (err == 0)
 	{
-		ConsolePrintf(Rgba::LIGHT_GREEN, "File written to %s.", filename);
+		ConsolePrintf(Rgba::GREEN, "File written to %s.", filename);
 		return true;
 	}
 

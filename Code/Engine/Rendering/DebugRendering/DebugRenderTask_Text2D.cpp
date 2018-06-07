@@ -32,5 +32,5 @@ void DebugRenderTask_Text2D::Render() const
 
 	Renderer* renderer = Renderer::GetInstance();
 	BitmapFont* defaultFont = AssetDB::CreateOrGetBitmapFont("Default.png");
-	renderer->DrawTextInBox2D(m_text, m_pixelBounds, Vector2(0.5f, 0.5f), m_textHeight, TEXT_DRAW_OVERRUN, defaultFont, drawColor);
+	renderer->DrawTextInBox2D(m_text, m_pixelBounds, Vector2(0.f, 0.f), m_textHeight, TEXT_DRAW_OVERRUN, defaultFont, drawColor);
 }

@@ -217,17 +217,17 @@ const char* ShaderSource::SKYBOX_SHADER_FS = R"(
 	})";
 
 const RenderState ShaderSource::SKYBOX_SHADER_STATE = RenderState(
-	CULL_MODE_NONE,							// Cull mode
-	FILL_MODE_SOLID, 						// Fill mode
-	WIND_COUNTER_CLOCKWISE, 				// Wind order
-	DEPTH_TEST_LEQUAL, 						// Depth compare method
-	false, 									// Write to depth buffer on draws?
-	BLEND_OP_ADD, 							// Color blend OP
-	BLEND_FACTOR_ONE, 						// Color source factor // one_minus_dst_alpha, dst_alpha
-	BLEND_FACTOR_ZERO, 						// Color destination factor
-	BLEND_OP_ADD, 							// Alpha blend OP
-	BLEND_FACTOR_ONE, 						// Alpha source factor
-	BLEND_FACTOR_ONE						// Alpha destination factor
+	CULL_MODE_NONE,								// Cull mode
+	FILL_MODE_SOLID, 							// Fill mode
+	WIND_COUNTER_CLOCKWISE, 					// Wind order
+	DEPTH_TEST_LEQUAL, 							// Depth compare method
+	false, 										// Write to depth buffer on draws?
+	BLEND_OP_ADD, 								// Color blend OP
+	BLEND_FACTOR_ONE_MINUS_DESTINATION_ALPHA, 	// Color source factor
+	BLEND_FACTOR_DESTINATION_ALPHA, 			// Color destination factor
+	BLEND_OP_ADD, 								// Alpha blend OP
+	BLEND_FACTOR_ONE, 							// Alpha source factor
+	BLEND_FACTOR_ONE							// Alpha destination factor
 );
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------

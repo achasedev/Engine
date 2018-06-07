@@ -201,6 +201,15 @@ IntVector2 Mouse::GetMouseDelta() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the current frame's mouse wheel delta
+//
+float Mouse::GetMouseWheelDelta() const
+{
+	return m_currFrameWheel;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns whether the cursor is currently visible
 //
 bool Mouse::IsCursorShown() const

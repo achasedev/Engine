@@ -95,6 +95,8 @@ unsigned int g_openGLBlendFactors[NUM_BLEND_FACTORS] =
 	GL_ONE,
 	GL_SRC_ALPHA,
 	GL_ONE_MINUS_SRC_ALPHA,
+	GL_DST_ALPHA,
+	GL_ONE_MINUS_DST_ALPHA
 };
 
 unsigned int ToGLType(BlendOp op) { return g_openGLBlendOps[op]; }

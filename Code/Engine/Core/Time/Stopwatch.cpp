@@ -51,7 +51,7 @@ void Stopwatch::SetClock(Clock* clock)
 //-----------------------------------------------------------------------------------------------
 // Set the stopwatch start time to now and the interval time to be seconds into the future
 //
-void Stopwatch::SetTimer(float seconds)
+void Stopwatch::SetInterval(float seconds)
 {
 	uint64_t interval = TimeSystem::SecondsToPerformanceCount(seconds);
 	m_startHPC = m_referenceClock->GetTotalHPC();

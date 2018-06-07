@@ -38,6 +38,15 @@ struct DebugRenderOptions
 		, m_isWireFrame(false)
 	{}
 
+	void operator=(const DebugRenderOptions& copyFrom)
+	{
+		m_startColor	= copyFrom.m_startColor;
+		m_endColor		= copyFrom.m_endColor;
+		m_lifetime		= copyFrom.m_lifetime;
+		m_renderMode	= copyFrom.m_renderMode;
+		m_isWireFrame	= copyFrom.m_isWireFrame;
+	}
+
 	Rgba m_startColor;
 	Rgba m_endColor;
 	float m_lifetime;

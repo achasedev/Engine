@@ -151,7 +151,7 @@ void ParticleEmitter::SetSpawnRate(unsigned int particlesPerSecond)
 	else
 	{
 		m_spawnsOverTime = true;
-		m_stopwatch->SetTimer(1.0f / (float) particlesPerSecond);
+		m_stopwatch->SetInterval(1.0f / (float) particlesPerSecond);
 	}
 }
 

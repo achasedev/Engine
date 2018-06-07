@@ -41,7 +41,7 @@ void DebugRenderTask_Basis::BuildMesh()
 	mb.PushVertex(position + m_basis.GetIVector().xyz() * m_scale);
 
 	// J Basis
-	mb.SetColor(Rgba::GREEN);
+	mb.SetColor(Rgba::DARK_GREEN);
 	mb.PushVertex(position);
 	mb.PushVertex(position + m_basis.GetJVector().xyz() * m_scale);
 

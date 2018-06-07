@@ -177,7 +177,7 @@ void Renderer::BeginFrame()
 
 	// Set the default shader program to the current program reference
 	SetCurrentCamera(nullptr);
-	ClearScreen(Rgba::BLACK);
+	ClearScreen(Rgba(0,0,0,0));
 	ClearDepth();
 
 	// Update the time uniform buffer on the gpu

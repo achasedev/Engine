@@ -60,9 +60,9 @@ public:
 	static const Rgba RED;
 	static const Rgba PURPLE;
 	static const Rgba ORANGE;
-	static const Rgba LIGHT_GREEN;
+	static const Rgba GREEN;
 	static const Rgba BROWN;
 	static const Rgba BLACK;
 	static const Rgba GRAY;
-	static const Rgba GREEN;
+	static const Rgba DARK_GREEN;
 };

@@ -19,7 +19,7 @@ public:
 	// Mutators
 	void	Reset();
 	void	SetClock(Clock* clock);
-	void	SetTimer(float seconds);
+	void	SetInterval(float seconds);
 	void	SetElapsedTime(float secondsElapsed);
 	bool	CheckAndReset();
 	bool	DecrementByIntervalOnce();

@@ -18,6 +18,8 @@ const aiScene* AssetImporter::LoadFile(const std::string& filepath)
 	
 
 	aiReleaseImport(scene);
+
+	return scene;
 }
 
 void AssetImporter::ProcessNode(const aiScene* scene, aiNode* node)
@@ -42,6 +44,7 @@ void AssetImporter::ProcessNode(const aiScene* scene, aiNode* node)
 
 Mesh* AssetImporter::ProcessMesh(const aiScene* scene, aiMesh* mesh)
 {
+	UNUSED(scene);
 	// Lists for data
 	std::vector<VertexLit> vertices;
 	std::vector<unsigned int> indices;

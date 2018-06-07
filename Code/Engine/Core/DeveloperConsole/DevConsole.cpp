@@ -439,7 +439,7 @@ void DevConsole::RenderFPS() const
 
 	// Draw to screen
 	BitmapFont* font = AssetDB::CreateOrGetBitmapFont("ConsoleFont.png");
-	Rgba color = Rgba::GREEN;
+	Rgba color = Rgba::DARK_GREEN;
 	if (fps < 30.f)
 	{
 		color = Rgba::RED;

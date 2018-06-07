@@ -522,7 +522,7 @@ void Command_DebugRenderClear(Command& cmd)
 {
 	UNUSED(cmd);
 	DebugRenderSystem::Clear();
-	ConsolePrintf(Rgba::LIGHT_GREEN, "DebugRenderSystem task list cleared.");
+	ConsolePrintf(Rgba::GREEN, "DebugRenderSystem task list cleared.");
 }
 
 
@@ -534,7 +534,7 @@ void Command_DebugRenderPause(Command& cmd)
 {
 	UNUSED(cmd);
 	DebugRenderSystem::Pause();
-	ConsolePrintf(Rgba::LIGHT_GREEN, "DebugRenderSystem update paused.");
+	ConsolePrintf(Rgba::GREEN, "DebugRenderSystem update paused.");
 }
 
 
@@ -546,7 +546,7 @@ void Command_DebugRenderResume(Command& cmd)
 {
 	UNUSED(cmd);
 	DebugRenderSystem::Resume();
-	ConsolePrintf(Rgba::LIGHT_GREEN, "DebugRender update resumed.");
+	ConsolePrintf(Rgba::GREEN, "DebugRender update resumed.");
 }
 
 
@@ -563,14 +563,14 @@ void Command_DebugRenderShow(Command& cmd)
 	if (!paramSpecified)
 	{
 		DebugRenderSystem::ToggleShowRenderTasks();
-		ConsolePrintf(Rgba::LIGHT_GREEN, "Debug rendering toggled.");
+		ConsolePrintf(Rgba::GREEN, "Debug rendering toggled.");
 	}
 	else
 	{
 		DebugRenderSystem::ShowRenderTasks(showTasks);
 
-		if (showTasks)	{ ConsolePrintf(Rgba::LIGHT_GREEN, "Debug rendering enabled.");  }
-		else			{ ConsolePrintf(Rgba::LIGHT_GREEN, "Debug rendering disabled."); }	
+		if (showTasks)	{ ConsolePrintf(Rgba::GREEN, "Debug rendering enabled.");  }
+		else			{ ConsolePrintf(Rgba::GREEN, "Debug rendering disabled."); }	
 	}
 }
 

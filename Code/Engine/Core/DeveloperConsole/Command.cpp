@@ -279,12 +279,12 @@ void Command_Help(Command &cmd)
 	const std::map<std::string, CommandRegistration*>& commandRegistry = Command::GetCommands();
 	std::map<std::string, CommandRegistration*>::const_iterator itr = commandRegistry.begin();
 
-	ConsolePrintf(Rgba::LIGHT_GREEN, "-----Begin Help-----");
+	ConsolePrintf(Rgba::GREEN, "-----Begin Help-----");
 	int commandCount = 0;
 	for (itr; itr != commandRegistry.end(); itr++)
 	{
 		ConsolePrintf("%s: %s", itr->second->m_name.c_str(), itr->second->m_description.c_str());
 		commandCount++;
 	}
-	ConsolePrintf(Rgba::LIGHT_GREEN, "-----End Help, %i results-----", commandCount);
+	ConsolePrintf(Rgba::GREEN, "-----End Help, %i results-----", commandCount);
 }
