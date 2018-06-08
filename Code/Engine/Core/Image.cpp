@@ -34,6 +34,7 @@ Image::Image(const std::string& imageFilePath)
 //-----------------------------------------------------------------------------------------------
 // Default constructor, just makes a white 2x2 texel image
 //
+//
 Image::Image()
 	: m_dimensions(IntVector2(2,2))
 	, m_numComponentsPerTexel(4)
