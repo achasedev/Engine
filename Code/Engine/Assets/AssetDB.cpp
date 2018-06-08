@@ -6,6 +6,7 @@
 /************************************************************************/
 #include "Engine/Core/Image.hpp"
 #include "Engine/Assets/AssetDB.hpp"
+#include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Assets/AssetCollection.hpp"
 #include "Engine/Rendering/Shaders/Shader.hpp"
@@ -20,6 +21,9 @@
 #include "Engine/Rendering/Shaders/ShaderProgram.hpp"
 #include "Engine/Rendering/Meshes/MeshGroupBuilder.hpp"
 #include "Engine/Rendering/Materials/MaterialInstance.hpp"
+
+// Assimp
+#include "ThirdParty/assimp/include/assimp/Importer.hpp"
 
 // Directories
 const char* AssetDB::IMAGE_DIRECTORY = "Data/Images/";
@@ -467,4 +471,176 @@ Material* AssetDB::CreateOrGetSharedMaterial(const std::string& name)
 	}
 
 	return material;
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+// Assimp Functions
+//////////////////////////////////////////////////////////////////////////
+
+
+//-----------------------------------------------------------------------------------------------
+// Loads a scene file using the Assimp library.
+// Parses the information from the Node tree and stores all content in the asset database
+//
+std::vector<Renderable*> AssetDB::LoadFileWithAssimp(const std::string& filepath)
+{
+	Assimp::Importer importer;
+	const aiScene* scene = importer.ReadFile(filepath.c_str(), aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_ConvertToLeftHanded);
+
+	if (scene == nullptr || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || scene->mRootNode == nullptr)
+	{
+		ERROR_AND_DIE(Stringf("Error: AssetImporter::LoadFile ran into error \"%s\" while loading file \"%s\"", importer.GetErrorString(), filepath.c_str()));
+	}
+
+	// Process the nodes in the scene to extract the data
+	std::vector<Renderable*> renderables = ProcessAssimpNode(scene->mRootNode, scene);
+
+	importer.FreeScene();
+	return renderables;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Parses a given Assimp node for its data, and recursively processes children
+//
+std::vector<Renderable*> AssetDB::ProcessAssimpNode(aiNode* node, const aiScene* scene)
+{
+	std::vector<Renderable*> renderables;
+	aiMatrix4x4 transform = node->mTransformation;
+	
+	aiVector3D aiPosition, aiRotation, aiScale;
+	transform.Decompose(aiScale, aiRotation, aiPosition);
+
+	Vector3 position, rotation, scale;
+	position.x = aiPosition.x;
+	position.y = aiPosition.y;
+	position.z = aiPosition.z;
+
+	rotation.x = ConvertRadiansToDegrees(aiRotation.x);
+	rotation.y = ConvertRadiansToDegrees(aiRotation.y);
+	rotation.z = ConvertRadiansToDegrees(aiRotation.z);
+
+	scale.x = aiScale.x;
+	scale.y = aiScale.y;
+	scale.z = aiScale.z;
+
+	Matrix44 parentTransform = Matrix44::MakeModelMatrix(position, rotation, scale);
+
+	// Process meshes  
+	for (unsigned int meshIndex = 0; meshIndex < node->mNumMeshes; ++meshIndex)
+	{
+		aiMesh* aimesh = scene->mMeshes[node->mMeshes[meshIndex]];
+
+		Renderable* renderable = ProcessAssimpMesh(aimesh, scene);
+		renderable->SetModelMatrix(parentTransform, 0);
+
+		renderables.push_back(renderable);
+	}
+
+	// Recursively process the child nodes
+	for (unsigned int nodeIndex = 0; nodeIndex < node->mNumChildren; ++nodeIndex)
+	{
+		std::vector<Renderable*> childRenderables = ProcessAssimpNode(node->mChildren[nodeIndex], scene);
+
+		int numChildRenderables = (int) childRenderables.size();
+		for (int rendIndex = 0; rendIndex < numChildRenderables; ++rendIndex)
+		{
+			Renderable* currChild = childRenderables[rendIndex];
+			Matrix44 childTransform = currChild->GetModelMatrix(0);
+			childTransform = parentTransform * childTransform;
+			currChild->SetModelMatrix(childTransform, 0);
+			renderables.push_back(childRenderables[rendIndex]);
+		}
+	}
+
+	return renderables;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Parses an Assimp mesh for the mesh and material data and constructs a mesh, adding it to the AssetDB
+//
+Renderable* AssetDB::ProcessAssimpMesh(aiMesh* aimesh, const aiScene* scene)
+{
+	UNUSED(scene)
+	MeshBuilder mb;
+	mb.BeginBuilding(PRIMITIVE_TRIANGLES, true);
+
+	for (unsigned int vertexIndex = 0; vertexIndex < aimesh->mNumVertices; ++vertexIndex)
+	{
+		// Get position
+		Vector3 position;
+
+		position.x = aimesh->mVertices[vertexIndex].x;
+		position.y = aimesh->mVertices[vertexIndex].y;
+		position.z = aimesh->mVertices[vertexIndex].z;
+
+		// Get normal
+		Vector3 normal = Vector3::ZERO;
+		if (aimesh->HasNormals())
+		{
+			normal.x = aimesh->mNormals[vertexIndex].x;
+			normal.y = aimesh->mNormals[vertexIndex].y;
+			normal.z = aimesh->mNormals[vertexIndex].z;
+		}
+
+		mb.SetNormal(normal);
+
+
+		// Get tangent
+		Vector3 tangent = Vector3::ZERO;
+		if (aimesh->HasTangentsAndBitangents())
+		{
+			tangent.x = aimesh->mTangents[vertexIndex].x;
+			tangent.y = aimesh->mTangents[vertexIndex].y;
+			tangent.z = aimesh->mTangents[vertexIndex].z;
+		}
+
+		mb.SetTangent(Vector4(tangent, 1.0f));
+
+		// Get uvs, if they exist
+		Vector2 uvs = Vector2::ZERO;
+		if (aimesh->HasTextureCoords(0))
+		{
+			// Only one texture coordinate per vertex, so take the 0th one
+			uvs.x = aimesh->mTextureCoords[0][vertexIndex].x;
+			uvs.y = aimesh->mTextureCoords[0][vertexIndex].y;
+		}
+
+		mb.SetUVs(uvs);
+
+		// Push the vertex into the meshbuilder
+		mb.PushVertex(position);
+	}
+
+	// Mesh indices
+	for (unsigned int i = 0; i < aimesh->mNumFaces; ++i)
+	{
+		aiFace face = aimesh->mFaces[i];
+
+		for (unsigned int j = 0; j < face.mNumIndices; ++j)
+		{
+			mb.PushIndex(face.mIndices[j]);
+		}
+	}
+
+	mb.FinishBuilding();
+
+	Mesh* mesh = mb.CreateMesh();
+	if (mesh->GetDrawInstruction().m_elementCount == 6480)
+	{
+		int i = 0;
+		i = i;
+	}
+
+// 	aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+// 	material->
+
+	// Add each to the AssetDB
+	//AssetCollection<Mesh>::AddAsset(aimesh->mName.C_Str(), mesh);
+	//AssetCollection<Material>::AddAsset(aimesh->mName.C_Str(), set.m_sharedMaterial);
+
+	Renderable* renderable = new Renderable(Matrix44::IDENTITY, mesh, AssetDB::CreateOrGetSharedMaterial("Default_Opaque"));
+	return renderable;
 }

@@ -354,7 +354,6 @@
     <ClCompile Include="Core\Utility\XmlUtilities.cpp">
       <Filter>Core\Utilities</Filter>
     </ClCompile>
-    <ClCompile Include="Assets\AssetImporter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -678,6 +677,5 @@
     <ClInclude Include="Core\Utility\XmlUtilities.hpp">
       <Filter>Core\Utilities</Filter>
     </ClInclude>
-    <ClInclude Include="Assets\AssetImporter.hpp" />
   </ItemGroup>
 </Project>

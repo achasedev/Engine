@@ -428,6 +428,15 @@ unsigned int MeshBuilder::PushVertex(const VertexMaster& master)
 
 
 //-----------------------------------------------------------------------------------------------
+// Pushes a single index into the index buffer
+//
+void MeshBuilder::PushIndex(unsigned int index)
+{
+	m_indices.push_back(index);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Adds the given indices to the index list (for a triangle)
 //
 void MeshBuilder::PushIndices(unsigned int first, unsigned int second, unsigned int third)

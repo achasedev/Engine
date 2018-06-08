@@ -31,6 +31,7 @@ public:
 	unsigned int	PushVertex(const Vector3& position);
 	unsigned int	PushVertex(const VertexMaster& master);
 
+	void			PushIndex(unsigned int index);
 	void			PushIndices(unsigned int first, unsigned int second, unsigned int third);
 
 	// Helper Builder Functions

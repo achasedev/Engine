@@ -6,7 +6,14 @@
 				all game and engine assets
 /************************************************************************/
 #pragma once
+#include <vector>
 #include <string>
+#include "Engine/Rendering/Core/Renderable.hpp"
+
+// Assimp
+ #include "ThirdParty/assimp/include/assimp/scene.h"
+#include "ThirdParty/assimp/include/assimp/cimport.h"
+#include "ThirdParty/assimp/include/assimp/postprocess.h"
 
 class Mesh;
 class Image;
@@ -16,6 +23,7 @@ class Texture;
 class Material;
 class MeshGroup;
 class BitmapFont;
+class Renderable;
 class SpriteSheet;
 class TextureCube;
 class ShaderProgram;
@@ -69,6 +77,17 @@ public:
 	static Material*			GetSharedMaterial(const std::string& name);
 	static MaterialInstance*	CreateMaterialInstance(const std::string& name);
 	static Material*			CreateOrGetSharedMaterial(const std::string& name);
+
+	// For loading scene files using Assimp (will create many of the above filetypes)
+	static std::vector<Renderable*> LoadFileWithAssimp(const std::string& filepath);
+
+
+private:
+	//-----Private Methods-----
+
+	// For Assimp loading
+	static std::vector<Renderable*>		ProcessAssimpNode(aiNode* node,	const aiScene* scene);
+	static Renderable*					ProcessAssimpMesh(aiMesh* mesh,	const aiScene* scene);
 
 
 private:
