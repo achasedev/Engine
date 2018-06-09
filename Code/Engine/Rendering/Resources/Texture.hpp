@@ -23,7 +23,7 @@ public:
 	Texture(); // Texture constructor is now public, initializes everything to 0, needed for render targets
 
 	// Only the AssetDatabase can create textures for use other than render targets
-	virtual void CreateFromFile(const std::string& filename);
+	virtual bool CreateFromFile(const std::string& filename);
 	virtual void CreateFromImage(const Image* image);
 
 	IntVector2		GetDimensions() const;

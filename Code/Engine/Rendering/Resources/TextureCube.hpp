@@ -21,7 +21,7 @@ public:
 	~TextureCube();
 
 	// Constructs differently
-	virtual void CreateFromFile(const std::string& filename) override;
+	virtual bool CreateFromFile(const std::string& filename) override;
 	virtual void CreateFromImage(const Image* image) override;
 
 

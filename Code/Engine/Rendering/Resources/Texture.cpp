@@ -37,6 +37,10 @@
 
 // Internal Formats
 
+
+//-----------------------------------------------------------------------------------------------
+// Constructor
+//
 Texture::Texture()
 	: m_textureHandle(0)
 	, m_dimensions(0, 0)
@@ -45,9 +49,18 @@ Texture::Texture()
 {
 }
 
-void Texture::CreateFromFile(const std::string& filename)
+
+//-----------------------------------------------------------------------------------------------
+// Loads the image from file
+//
+bool Texture::CreateFromFile(const std::string& filename)
 {
 	Image* loadedImage = AssetDB::CreateOrGetImage(filename);
+
+	if (loadedImage == nullptr)
+	{
+		return false;
+	}
 
 	// Flip the image so it isn't upsidedown
 	if (!loadedImage->IsFlippedForTextures())
@@ -57,6 +70,8 @@ void Texture::CreateFromFile(const std::string& filename)
 
 	// Construct the Texture from the image
 	CreateFromImage(loadedImage);
+
+	return true;
 }
 
 

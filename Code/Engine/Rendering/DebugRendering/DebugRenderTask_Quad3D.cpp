@@ -28,7 +28,7 @@ DebugRenderTask_Quad3D::DebugRenderTask_Quad3D(const Vector3& position, const Ve
 	if (!options.m_isWireFrame)
 	{
 		Material* material = m_renderable->GetMaterialInstance(0);
-		material->SetDiffuse(AssetDB::CreateOrGetTexture("Debug.png"));
+		material->SetDiffuse(AssetDB::CreateOrGetTexture("Data/Images/Debug/Debug.png"));
 	}
 }
 

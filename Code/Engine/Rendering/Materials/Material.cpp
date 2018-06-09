@@ -18,6 +18,8 @@
 
 #define TEXTURE_DIFFUSE_BIND (0)
 #define TEXTURE_NORMAL_BIND (1)
+#define TEXTURE_SPECULAR_BIND (2)
+#define TEXTURE_EMISSIVE_BIND (3)
 
 //-----------------------------------------------------------------------------------------------
 // Constructor
@@ -307,6 +309,34 @@ void Material::SetNormal(const Texture* normal)
 	}
 
 	SetTexture(TEXTURE_NORMAL_BIND, normal);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the specular map of the material (bind point 2) to the one specified
+//
+void Material::SetSpecular(const Texture* specular)
+{
+	if (specular == nullptr)
+	{
+		specular = AssetDB::GetTexture("Black");
+	}
+
+	SetTexture(TEXTURE_SPECULAR_BIND, specular);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the emissive map of the material (bind point 3) to the one specified
+//
+void Material::SetEmissive(const Texture* emissive)
+{
+	if (emissive == nullptr)
+	{
+		emissive = AssetDB::GetTexture("Black");
+	}
+
+	SetTexture(TEXTURE_EMISSIVE_BIND, emissive);
 }
 
 

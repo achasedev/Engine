@@ -86,24 +86,13 @@ private:
 	//-----Private Methods-----
 
 	// For Assimp loading
-	static std::vector<Renderable*>		ProcessAssimpNode(aiNode* node,	const aiScene* scene);
-	static Renderable*					ProcessAssimpMesh(aiMesh* mesh,	const aiScene* scene);
+	static std::vector<Renderable*>		ProcessAssimpNode(aiNode* ainode,	const aiScene* aiscene);
+		static Matrix44		ParseTransformationMatrix(aiNode* ainode);
+		static Renderable*	ProcessAssimpMesh(aiMesh* aimesh,	const aiScene* aiscene);
+			static std::vector<Texture*> LoadAssimpMaterialTextures(aiMaterial* aimaterial, aiTextureType type);
 
 
 private:
 	//-----Private Data-----
-
-	static const char* IMAGE_DIRECTORY;
-	static const char* TEXTURE_DIRECTORY;
-	static const char* SPRITESHEET_XML_DIRECTORY;
-	static const char* FONT_DIRECTORY;
-
-	static const char* MESH_DIRECTORY;
-	static const char* MESH_XML_DIRECTORY;
-
-	static const char* SHADER_SOURCE_DIRECTORY;
-	static const char* SHADER_XML_DIRECTORY;
-
-	static const char* MATERIAL_XML_DIRECTORY;
 
 };

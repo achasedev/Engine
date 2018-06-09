@@ -22,7 +22,7 @@ DebugRenderTask_Cube::DebugRenderTask_Cube(const Vector3& position, const DebugR
 	if (!options.m_isWireFrame)
 	{
 		Material* material = m_renderable->GetMaterialInstance(0);
-		material->SetDiffuse(AssetDB::CreateOrGetTexture("Debug.png"));
+		material->SetDiffuse(AssetDB::CreateOrGetTexture("Data/Images/Debug/Debug.png"));
 	}
 }
 

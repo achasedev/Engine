@@ -34,6 +34,7 @@ const unsigned char	InputSystem::KEYBOARD_UP_ARROW		= VK_UP;
 const unsigned char	InputSystem::KEYBOARD_DOWN_ARROW	= VK_DOWN;
 const unsigned char	InputSystem::KEYBOARD_RIGHT_ARROW	= VK_RIGHT;
 const unsigned char InputSystem::KEYBOARD_TILDE			= VK_OEM_3;
+const unsigned char	InputSystem::KEYBOARD_SHIFT			= VK_SHIFT;
 
 
 //-----------------------------------------------------------------------------------------------

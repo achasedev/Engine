@@ -46,6 +46,8 @@ public:
 
 	void SetDiffuse(const Texture* diffuse);
 	void SetNormal(const Texture* normal);
+	void SetSpecular(const Texture* specular);
+	void SetEmissive(const Texture* emissive);
 
 	// Uniform block mutators
 	bool SetProperty(const char* propertyName, const void* data, size_t byteSize);
