@@ -22,7 +22,7 @@ DebugRenderTask_Quad2D::DebugRenderTask_Quad2D(const AABB2& bounds, const DebugR
 	if (!options.m_isWireFrame)
 	{
 		Material* material = m_renderable->GetMaterialInstance(0);
-		material->SetDiffuse(AssetDB::CreateOrGetTexture("Debug.png"));
+		material->SetDiffuse(AssetDB::CreateOrGetTexture("Data/Images/Debug/Debug.png"));
 	}
 }
 

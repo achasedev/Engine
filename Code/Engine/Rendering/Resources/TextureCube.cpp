@@ -46,9 +46,14 @@ TextureCube::~TextureCube()
 //-----------------------------------------------------------------------------------------------
 // Loads the cube from a file, overrides the base Texture::CreateFromFile() to avoid flipping the image
 //
-void TextureCube::CreateFromFile(const std::string& filename)
+bool TextureCube::CreateFromFile(const std::string& filename)
 {
 	Image* loadedImage = AssetDB::CreateOrGetImage(filename);
+
+	if (loadedImage == nullptr)
+	{
+		return false;
+	}
 
 	// Construct the Texture from the image
 	CreateFromImage(loadedImage);

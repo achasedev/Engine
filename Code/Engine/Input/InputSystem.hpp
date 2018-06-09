@@ -74,6 +74,8 @@ public:
 	static const unsigned char  KEYBOARD_F10;
 	static const unsigned char  KEYBOARD_TILDE;
 
+	static const unsigned char	KEYBOARD_SHIFT;
+
 
 private:
 	//-----Private Data-----

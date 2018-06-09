@@ -438,7 +438,7 @@ void DevConsole::RenderFPS() const
 	}
 
 	// Draw to screen
-	BitmapFont* font = AssetDB::CreateOrGetBitmapFont("ConsoleFont.png");
+	BitmapFont* font = AssetDB::CreateOrGetBitmapFont("Data/Images/Fonts/ConsoleFont.png");
 	Rgba color = Rgba::DARK_GREEN;
 	if (fps < 30.f)
 	{
@@ -487,7 +487,7 @@ void DevConsole::SetUpFLChan()
 	m_FLChanAnimations = new SpriteAnimSet();
 
 	// Make the sprite sheet
-	Texture* texture = AssetDB::CreateOrGetTexture("FLChan.png");
+	Texture* texture = AssetDB::CreateOrGetTexture("Data/Images/DevConsole/FLChan.png");
 	SpriteSheet* spriteSheet = new SpriteSheet(*texture, IntVector2(8,10));
 
 	// Iterate across all the animations of the sprite sheet
@@ -548,7 +548,7 @@ void DevConsole::Render() const
 	Renderer* renderer = Renderer::GetInstance();
 	renderer->SetCurrentCamera(renderer->GetUICamera());
 
-	BitmapFont* font = AssetDB::CreateOrGetBitmapFont("ConsoleFont.png");
+	BitmapFont* font = AssetDB::CreateOrGetBitmapFont("Data/Images/Fonts/ConsoleFont.png");
 
 	if (m_showLog)
 	{
@@ -727,7 +727,7 @@ void DevConsole::Initialize()
 	Command::Register("show_log",		"Enables rendering of the log window and text",			Command_ShowLog);
 
 	// Load the font here to prevent hitch on first log open
-	AssetDB::CreateOrGetBitmapFont("ConsoleFont.png");
+	AssetDB::CreateOrGetBitmapFont("Data/Images/Fonts/ConsoleFont.png");
 }
 
 

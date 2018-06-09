@@ -8,27 +8,14 @@
 #include "Engine/Core/Image.hpp"
 #include "Engine/Core/Utility/StringUtils.hpp"
 #include "Engine/Core/Utility/ErrorWarningAssert.hpp"
+#include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 #include "ThirdParty/stb/stb_image.h"
-
 
 // 4 texel white image, used for solid color rendering
 const Image Image::IMAGE_WHITE;
 const Image Image::IMAGE_FLAT = Image(IntVector2(2, 2), Rgba(127, 127, 255, 255));
-
-//-----------------------------------------------------------------------------------------------
-// Explicit constructor - loads a file from disk and converts the character data to RGBA object data
-//
-Image::Image(const std::string& imageFilePath)
-{
-	m_numComponentsPerTexel = 0;		// Filled in for us to indicate how many color/alpha components the image had (e.g. 3=RGB, 4=RGBA)
-	int numComponentsRequested = 0;		// don't care; we support 3 (RGB) or 4 (RGBA)
-
-	// Load (and decompress) the image RGB(A) bytes from a file on disk
-	m_imageData = stbi_load( imageFilePath.c_str(), &m_dimensions.x, &m_dimensions.y, &m_numComponentsPerTexel, numComponentsRequested );
-	
-	// Ensure the image could be loaded
-	GUARANTEE_OR_DIE(m_imageData != nullptr, Stringf("Error: Image at path \"%s\" not found", imageFilePath.c_str()));
-}
+const Image Image::IMAGE_BLACK = Image(IntVector2(2, 2), Rgba::BLACK);
+const Image Image::IMAGE_DEFAULT_TEXTURE = Image(IntVector2(64, 64), IntVector2(8, 8), Rgba::BLUE, Rgba::GRAY);
 
 
 //-----------------------------------------------------------------------------------------------
@@ -70,12 +57,75 @@ Image::Image(const IntVector2& dimensions, const Rgba& color /*= Rgba::WHITE*/)
 
 
 //-----------------------------------------------------------------------------------------------
+// Constructs a checkerboard pattern image of the given two colors
+//
+Image::Image(const IntVector2& dimensions, const IntVector2& patternLayout, const Rgba& color1, const Rgba& color2)
+	: m_dimensions(dimensions)
+	, m_numComponentsPerTexel(4)
+{
+	int cellWidth	= dimensions.x / patternLayout.x;
+	int cellHeight	= dimensions.y / patternLayout.y;
+	IntVector2 cellDimensions = IntVector2(cellWidth, cellHeight);
+
+	m_imageData = (unsigned char*)malloc(sizeof(unsigned char) * m_numComponentsPerTexel * GetTexelCount());
+
+	for (int xIndex = 0; xIndex < dimensions.x; ++xIndex)
+	{
+		for (int yIndex = 0; yIndex < dimensions.y; ++yIndex)
+		{
+			int dataOffset = (dimensions.x * yIndex + xIndex) * m_numComponentsPerTexel;
+
+			int xCellIndex = (xIndex / cellWidth);
+			int yCellIndex = (yIndex / cellHeight);
+
+			int sum = xCellIndex + yCellIndex;
+
+			Rgba colorToUse = color2;
+			if (sum % 2 == 0)
+			{
+				colorToUse = color1;
+			}
+
+			m_imageData[dataOffset + 0] = colorToUse.r;
+			m_imageData[dataOffset + 1] = colorToUse.g;
+			m_imageData[dataOffset + 2] = colorToUse.b;
+			m_imageData[dataOffset + 3] = colorToUse.a;
+		}
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Frees the image data used by this instance
 //
 Image::~Image()
 {
 	free((void*)m_imageData);
 	m_imageData = nullptr;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Loads the image from the given filepath, returning true on success and false otherwise
+//
+bool Image::LoadFromFile(const std::string& filepath)
+{
+	m_numComponentsPerTexel = 0;		// Filled in for us to indicate how many color/alpha components the image had (e.g. 3=RGB, 4=RGBA)
+	int numComponentsRequested = 0;		// don't care; we support 3 (RGB) or 4 (RGBA)
+
+	// Load (and decompress) the image RGB(A) bytes from a file on disk
+	m_imageData = stbi_load(filepath.c_str(), &m_dimensions.x, &m_dimensions.y, &m_numComponentsPerTexel, numComponentsRequested);
+
+	if (m_imageData == nullptr)
+	{
+		ConsoleErrorf("Couldn't load image file \"%s\"", filepath.c_str());
+	}
+	else if (DevConsole::GetInstance() != nullptr)
+	{
+		ConsolePrintf(Rgba::GREEN, "Loaded image \"%s\"", filepath.c_str());
+	}
+
+	return (m_imageData != nullptr);
 }
 
 

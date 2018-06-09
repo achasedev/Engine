@@ -41,6 +41,8 @@ public:
 	void SetInstanceMaterial(MaterialInstance* instanceMaterial, unsigned int drawIndex);
 	void SetMaterialMeshSet(unsigned int index, const MaterialMeshSet& set);
 
+	void AddMeshGroup(MeshGroup* meshGroup);
+
 	void SetModelMatrix(const Matrix44& model, unsigned int instanceIndex);
 	void AddModelMatrix(const Matrix44& model);
 	void RemoveModelMatrix(unsigned int instanceIndex);

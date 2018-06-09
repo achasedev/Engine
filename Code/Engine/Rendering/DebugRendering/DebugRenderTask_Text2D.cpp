@@ -31,6 +31,6 @@ void DebugRenderTask_Text2D::Render() const
 	Rgba drawColor = CalculateDrawColor();
 
 	Renderer* renderer = Renderer::GetInstance();
-	BitmapFont* defaultFont = AssetDB::CreateOrGetBitmapFont("Default.png");
+	BitmapFont* defaultFont = AssetDB::CreateOrGetBitmapFont("Data/Images/Fonts/Default.png");
 	renderer->DrawTextInBox2D(m_text, m_pixelBounds, Vector2(0.f, 0.f), m_textHeight, TEXT_DRAW_OVERRUN, defaultFont, drawColor);
 }

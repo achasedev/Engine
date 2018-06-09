@@ -17,11 +17,11 @@ public:
 	//-----Public Methods-----
 
 	Image();
-	explicit Image(const std::string& imageFilePath);
 	Image(const IntVector2& dimensions, const Rgba& color = Rgba::WHITE);
+	Image(const IntVector2& dimensions, const IntVector2& patternLayout, const Rgba& color1, const Rgba& color2);
 	~Image();
 
-
+	bool					LoadFromFile(const std::string& filepath);
 	Rgba					GetTexelColor(int x, int y) const;
 	float					GetTexelGrayScale(int x, int y) const;
 	int						GetTexelCount() const;
@@ -37,8 +37,10 @@ public:
 public:
 	//-----Public Data-----
 
-	const static Image IMAGE_WHITE;
 	const static Image IMAGE_FLAT;
+	const static Image IMAGE_WHITE;
+	const static Image IMAGE_BLACK;
+	const static Image IMAGE_DEFAULT_TEXTURE;
 
 
 private:
