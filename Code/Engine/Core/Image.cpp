@@ -167,6 +167,18 @@ float Image::GetTexelGrayScale(int x, int y) const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the grayscale equivalent value of the texel color at the index offset
+//
+float Image::GetTexelGrayScale(int texelIndex) const
+{
+	int x = texelIndex % m_dimensions.x;
+	int y = texelIndex / m_dimensions.x;
+
+	return GetTexelGrayScale(x, y);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the number of texels in this image
 //
 int Image::GetTexelCount() const

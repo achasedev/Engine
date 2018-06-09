@@ -54,6 +54,18 @@ public:
 	void	GenerateFlatTBN();
 	void	GenerateSmoothNormals();
 
+	// Accessors
+	template <typename VERT_TYPE>
+	VERT_TYPE GetVertex(int index)
+	{
+		VERT_TYPE vertex = VERT_TYPE(m_vertices[index]);
+		return vertex;
+	}
+
+	int		GetVertexCount();
+	int		GetIndexCount();
+	int		GetElementCount();
+
 
 public:
 	//-----Helpers for MikkTSpace generation-----

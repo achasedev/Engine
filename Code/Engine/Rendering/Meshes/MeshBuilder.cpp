@@ -274,7 +274,7 @@ void MeshBuilder::GenerateFlatTBN()
 
 
 //-----------------------------------------------------------------------------------------------
-// Generates the normals for all vertices in the MeshBuilder on a per-face basis, with no smoothing
+// Generates the normals for all vertices in the MeshBuilder on a per-face basis, with smoothing
 //
 void MeshBuilder::GenerateSmoothNormals()
 {
@@ -365,6 +365,38 @@ void MeshBuilder::GenerateSmoothNormals()
 
 	// Also generate tangents
 	GenerateMikkTangents(*this);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the vertex count of the MeshBuilder
+//
+int MeshBuilder::GetVertexCount()
+{
+	return (int) m_vertices.size();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the index count of the MeshBuilder
+//
+int MeshBuilder::GetIndexCount()
+{
+	return (int) m_indices.size();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the element count of the MeshBuilder (vertex count if not using indices, index count otherwise)
+//
+int MeshBuilder::GetElementCount()
+{
+	if (m_instruction.m_usingIndices)
+	{
+		return GetIndexCount();
+	}
+
+	return GetVertexCount();
 }
 
 

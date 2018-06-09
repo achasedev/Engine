@@ -23,6 +23,7 @@ public:
 
 	bool					LoadFromFile(const std::string& filepath);
 	Rgba					GetTexelColor(int x, int y) const;
+	float					GetTexelGrayScale(int texelIndex) const;
 	float					GetTexelGrayScale(int x, int y) const;
 	int						GetTexelCount() const;
 	IntVector2				GetTexelDimensions() const;
