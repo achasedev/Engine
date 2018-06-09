@@ -5,6 +5,7 @@
 /* Description: Class to represent a texture/sampler/shader set for drawing
 /************************************************************************/
 #pragma once
+#include <string>
 #include <vector>
 #include "Engine/Core/Utility/XmlUtilities.hpp"
 
@@ -23,8 +24,10 @@ public:
 	friend class MaterialInstance;
 
 	Material();
-	Material(const std::string& xmlFilepath); // For CreateOrGet() data driving
+	Material(const std::string& name);
 	virtual ~Material();
+
+	bool LoadFromFile(const std::string& filepath);
 
 	// Accessors
 	int GetPropertyBlockCount() const;
@@ -95,8 +98,9 @@ protected:
 private:
 	//-----Private Data-----
 
-	Shader* m_shader;
-	bool	m_isInstancedShader;
+	std::string		m_name;
+	Shader*			m_shader;
+	bool			m_isInstancedShader;
 
 	// Parallel vectors
 	const Texture* m_textures[MAX_TEXTURES_SAMPLERS];

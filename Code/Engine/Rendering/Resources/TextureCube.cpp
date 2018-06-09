@@ -57,6 +57,8 @@ bool TextureCube::CreateFromFile(const std::string& filename)
 
 	// Construct the Texture from the image
 	CreateFromImage(loadedImage);
+
+	return true;
 }
 
 

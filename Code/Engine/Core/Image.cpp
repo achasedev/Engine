@@ -116,14 +116,15 @@ bool Image::LoadFromFile(const std::string& filepath)
 	// Load (and decompress) the image RGB(A) bytes from a file on disk
 	m_imageData = stbi_load(filepath.c_str(), &m_dimensions.x, &m_dimensions.y, &m_numComponentsPerTexel, numComponentsRequested);
 
-	if (m_imageData == nullptr)
+	if (DevConsole::GetInstance() != nullptr)
 	{
-		ConsoleErrorf("Couldn't load image file \"%s\"", filepath.c_str());
+		if (m_imageData == nullptr)
+		{
+			ConsoleErrorf("Error: Couldn't load image file \"%s\"", filepath.c_str());
+			DebuggerPrintf("Error: Couldn't load image file \"%s\"", filepath.c_str());
+		}
 	}
-	else if (DevConsole::GetInstance() != nullptr)
-	{
-		ConsolePrintf(Rgba::GREEN, "Loaded image \"%s\"", filepath.c_str());
-	}
+
 
 	return (m_imageData != nullptr);
 }

@@ -107,31 +107,31 @@ void AssetDB::CreateBuiltInAssets()
 	AssetCollection<Shader>::AddAsset(ShaderSource::PHONG_ALPHA_INSTANCED_NAME,		phongAlphaInstanced);
 
 	// Materials
-	Material* debugMaterial = new Material();
+	Material* debugMaterial = new Material("Debug_Render");
 	debugMaterial->SetDiffuse(whiteTexture);
 	debugMaterial->SetShader(debugShader);
 
 	AssetCollection<Material>::AddAsset("Debug_Render", debugMaterial);
 
-	Material* defaultMaterial = new Material();
+	Material* defaultMaterial = new Material("Default");
 	defaultMaterial->SetDiffuse(whiteTexture);
 	defaultMaterial->SetShader(defaultOpaque);
 
 	AssetCollection<Material>::AddAsset("Default_Opaque", defaultMaterial);
 
-	Material* uiMat = new Material();
+	Material* uiMat = new Material("UI");
 	uiMat->SetDiffuse(whiteTexture);
 	uiMat->SetShader(uiShader);
 
 	AssetCollection<Material>::AddAsset("UI", uiMat);
 
-	Material* flChanMat = new Material();
+	Material* flChanMat = new Material("FLChan");
 	flChanMat->SetDiffuse(CreateOrGetTexture("Data/Images/DevConsole/FLChan.png"));
 	flChanMat->SetShader(uiShader);
 
 	AssetCollection<Material>::AddAsset("FLChan", flChanMat);
 
-	Material* skyboxMat = new Material();
+	Material* skyboxMat = new Material("Skybox");
 	skyboxMat->SetDiffuse(whiteTexture);
 	skyboxMat->SetShader(skybox);
 
@@ -460,8 +460,13 @@ MaterialInstance* AssetDB::CreateMaterialInstance(const std::string& name)
 {
 	Material* sharedMaterial = CreateOrGetSharedMaterial(name);
 
-	MaterialInstance* instance = new MaterialInstance(sharedMaterial);
-	return instance;
+	if (sharedMaterial != nullptr)
+	{
+		MaterialInstance* instance = new MaterialInstance(sharedMaterial);
+		return instance;
+	}
+
+	return nullptr;
 }
 
 
@@ -475,6 +480,14 @@ Material* AssetDB::CreateOrGetSharedMaterial(const std::string& materialPath)
 	if (material == nullptr)
 	{
 		material = new Material(materialPath);
+		bool success = material->LoadFromFile(materialPath);
+
+		if (!success)
+		{
+			delete material;
+			return nullptr;
+		}
+
 		AssetCollection<Material>::AddAsset(materialPath, material);
 	}
 

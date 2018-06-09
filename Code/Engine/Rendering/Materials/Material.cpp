@@ -5,12 +5,13 @@
 /* Description: Implementation of the Material class
 /************************************************************************/
 #include "Engine/Assets/AssetDB.hpp"
-#include "Engine/Rendering/Shaders/Shader.hpp"
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Rendering/Core/Renderer.hpp"
-#include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Rendering/Shaders/Shader.hpp"
 #include "Engine/Rendering/Materials/Material.hpp"
 #include "Engine/Rendering/Shaders/ShaderProgram.hpp"
+#include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 #include "Engine/Rendering/Shaders/ShaderDescription.hpp"
 #include "Engine/Rendering/Shaders/PropertyDescription.hpp"
 #include "Engine/Rendering/Materials/MaterialPropertyBlock.hpp"
@@ -24,8 +25,19 @@
 //-----------------------------------------------------------------------------------------------
 // Constructor
 //
+Material::Material(const std::string& name)
+	: Material()
+{
+	m_name = name;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Default Constructor
+//
 Material::Material()
 	: m_isInstancedShader(false)
+	, m_name("NO_NAME_SPECIFIED")
 {
 	for (int index = 0; index < MAX_TEXTURES_SAMPLERS; ++index)
 	{
@@ -36,18 +48,44 @@ Material::Material()
 
 
 //-----------------------------------------------------------------------------------------------
-// Constructor from XML
+// Destructor
 //
-Material::Material(const std::string& xmlFilepath)
+Material::~Material()
+{
+	if (m_isInstancedShader)
+	{
+		delete m_shader;
+	}
+
+	// Delete property blocks
+	int numBlocks = (int) m_propertyBlocks.size();
+	for (int blockIndex = 0; blockIndex < numBlocks; ++blockIndex)
+	{
+		delete m_propertyBlocks[blockIndex];
+	}
+
+	m_propertyBlocks.clear();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Loads the material from an xml file given by filepath
+// Returns true on success, false otherwise
+//
+bool Material::LoadFromFile(const std::string& filepath)
 {
 	// Load the document
 	XMLDocument document;
-	XMLError error = document.LoadFile(xmlFilepath.c_str());
+	XMLError error = document.LoadFile(filepath.c_str());
 
 	if (error != tinyxml2::XML_SUCCESS)
 	{
-		ERROR_AND_DIE(Stringf("Error: Material::LoadMaterialFromXML couldn't load file \"%s\"", xmlFilepath.c_str()));
-		return;
+		if (DevConsole::GetInstance() != nullptr)
+		{
+			ConsoleErrorf("Error: Couldn't load material file \"%s\"", filepath.c_str());
+			DebuggerPrintf("Error: Couldn't load material file \"%s\"", filepath.c_str());
+			return false;
+		}
 	}
 
 	// I keep a root around just because I like having a single root element
@@ -125,27 +163,8 @@ Material::Material(const std::string& xmlFilepath)
 			currElement = currElement->NextSiblingElement();
 		}
 	}
-}
 
-
-//-----------------------------------------------------------------------------------------------
-// Destructor
-//
-Material::~Material()
-{
-	if (m_isInstancedShader)
-	{
-		delete m_shader;
-	}
-
-	// Delete property blocks
-	int numBlocks = (int) m_propertyBlocks.size();
-	for (int blockIndex = 0; blockIndex < numBlocks; ++blockIndex)
-	{
-		delete m_propertyBlocks[blockIndex];
-	}
-
-	m_propertyBlocks.clear();
+	return true;
 }
 
 
