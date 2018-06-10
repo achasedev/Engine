@@ -19,15 +19,13 @@
 //
 Renderable::Renderable(const Matrix44& model, Mesh* mesh, Material* sharedMaterial)
 {
-	ClearAll();
-
 	m_instanceModels.push_back(model);
 
-	MaterialMeshSet set;
-	set.m_sharedMaterial = sharedMaterial;
-	set.m_mesh = mesh;
+	RenderableDraw_t draw;
+	draw.sharedMaterial = sharedMaterial;
+	draw.mesh = mesh;
 
-	m_matMeshSets.push_back(set);
+	m_draws.push_back(draw);
 
 	if (mesh != nullptr && sharedMaterial != nullptr)
 	{
@@ -41,52 +39,6 @@ Renderable::Renderable(const Matrix44& model, Mesh* mesh, Material* sharedMateri
 //
 Renderable::Renderable()
 {	
-	// Always ensure one is in place
-	m_instanceModels.push_back(Matrix44::IDENTITY);
-
-	MaterialMeshSet set;
-	m_matMeshSets.push_back(set);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Constructor - from a mesh group. Assigns the default material to all meshes
-//
-Renderable::Renderable(const Matrix44& model, MeshGroup* meshGroup, Material* defaultMaterial)
-{
-	ClearAll();
-
-	m_instanceModels.push_back(model);
-
-	int numMeshes = meshGroup->GetMeshCount();
-	for (int meshIndex = 0; meshIndex < numMeshes; ++meshIndex)
-	{
-		MaterialMeshSet set;
-		set.m_sharedMaterial = defaultMaterial;
-		set.m_mesh = meshGroup->GetMesh(meshIndex);
-
-		m_matMeshSets.push_back(set);
-		BindMeshToMaterial(meshIndex);
-	}
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Constructor - from a position
-//
-Renderable::Renderable(const Vector3& position, Mesh* mesh, Material* sharedMaterial)
-{
-	ClearAll();
-
-	Matrix44 model = Matrix44::MakeModelMatrix(position, Vector3::ZERO, Vector3::ONES);
-	m_instanceModels.push_back(model);
-
-	MaterialMeshSet set;
-	set.m_sharedMaterial = sharedMaterial;
-	set.m_mesh = mesh;
-
-	m_matMeshSets.push_back(set);
-	BindMeshToMaterial(0);
 }
 
 
@@ -100,56 +52,12 @@ Renderable::~Renderable()
 
 
 //-----------------------------------------------------------------------------------------------
-// Sets the mesh on the renderable to the one specified
+// Adds a draw to the list of draws for each instance
 //
-void Renderable::SetMesh(Mesh* mesh, unsigned int drawIndex)
+void Renderable::AddDraw(const RenderableDraw_t& draw)
 {
-	m_matMeshSets[drawIndex].m_mesh = mesh;
-	BindMeshToMaterial(drawIndex);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Sets the shared material on the renderable to the one specified
-// Also deletes the instance material if one was created from the previous shared material
-//
-void Renderable::SetSharedMaterial(Material* material, unsigned int drawIndex)
-{
-	// If we have a material instance, delete it
-	// We'll render with the new shared material
-	if (m_matMeshSets[drawIndex].m_materialInstance != nullptr)
-	{
-		delete m_matMeshSets[drawIndex].m_materialInstance;
-		m_matMeshSets[drawIndex].m_materialInstance = nullptr;
-	}
-
-	m_matMeshSets[drawIndex].m_sharedMaterial = material;
-	BindMeshToMaterial(drawIndex);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Sets the material instance to the one specified, deleting the old one if there was one
-//
-void Renderable::SetInstanceMaterial(MaterialInstance* instanceMaterial, unsigned int drawIndex)
-{
-	if (m_matMeshSets[drawIndex].m_materialInstance != nullptr)
-	{
-		delete m_matMeshSets[drawIndex].m_materialInstance;
-	}
-
-	m_matMeshSets[drawIndex].m_materialInstance = instanceMaterial;
-	BindMeshToMaterial(drawIndex);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Sets the material/mesh set at the given index to that specified
-//
-void Renderable::SetMaterialMeshSet(unsigned int index, const MaterialMeshSet& set)
-{
-	m_matMeshSets[index] = set;
-	BindMeshToMaterial(index);
+	m_draws.push_back(draw);
+	BindMeshToMaterial((int) m_draws.size() - 1);
 }
 
 
@@ -157,7 +65,7 @@ void Renderable::SetMaterialMeshSet(unsigned int index, const MaterialMeshSet& s
 // Sets the model matrix at the given index to the one specified
 // For instanced rendering
 //
-void Renderable::SetModelMatrix(const Matrix44& model, unsigned int instanceIndex)
+void Renderable::SetInstanceMatrix(unsigned int instanceIndex, const Matrix44& model)
 {
 	m_instanceModels[instanceIndex] = model;
 }
@@ -166,7 +74,7 @@ void Renderable::SetModelMatrix(const Matrix44& model, unsigned int instanceInde
 // Adds the given matrix to the list of instanced model matrices
 // Used for instance drawing
 //
-void Renderable::AddModelMatrix(const Matrix44& model)
+void Renderable::AddInstanceMatrix(const Matrix44& model)
 {
 	m_instanceModels.push_back(model);
 }
@@ -175,9 +83,18 @@ void Renderable::AddModelMatrix(const Matrix44& model)
 //-----------------------------------------------------------------------------------------------
 // Removes the matrix at the given index
 //
-void Renderable::RemoveModelMatrix(unsigned int instanceIndex)
+void Renderable::RemoveInstanceMatrix(unsigned int instanceIndex)
 {
 	m_instanceModels.erase(m_instanceModels.begin() + instanceIndex);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the given draw object at the index
+//
+RenderableDraw_t Renderable::GetDraw(unsigned int drawIndex) const
+{
+	return m_draws[drawIndex];
 }
 
 
@@ -186,7 +103,7 @@ void Renderable::RemoveModelMatrix(unsigned int instanceIndex)
 //
 Mesh* Renderable::GetMesh(unsigned int drawIndex) const
 {
-	return m_matMeshSets[drawIndex].m_mesh;
+	return m_draws[drawIndex].mesh;
 }
 
 
@@ -195,7 +112,7 @@ Mesh* Renderable::GetMesh(unsigned int drawIndex) const
 //
 Material* Renderable::GetSharedMaterial(unsigned int drawIndex) const
 {
-	return m_matMeshSets[drawIndex].m_sharedMaterial;
+	return m_draws[drawIndex].sharedMaterial;
 }
 
 
@@ -206,19 +123,19 @@ Material* Renderable::GetSharedMaterial(unsigned int drawIndex) const
 Material* Renderable::GetMaterialInstance(unsigned int drawIndex)
 {
 	// Make an instance now if one doesn't exist
-	if (m_matMeshSets[drawIndex].m_materialInstance == nullptr)
+	if (m_draws[drawIndex].materialInstance == nullptr)
 	{
-		m_matMeshSets[drawIndex].m_materialInstance = new MaterialInstance(m_matMeshSets[drawIndex].m_sharedMaterial);
+		m_draws[drawIndex].materialInstance = new MaterialInstance(m_draws[drawIndex].sharedMaterial);
 	}
 
-	return m_matMeshSets[drawIndex].m_materialInstance;
+	return m_draws[drawIndex].materialInstance;
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Returns the model matrix of the renderable instance at the index
 //
-Matrix44 Renderable::GetModelMatrix(unsigned int instanceIndex) const
+Matrix44 Renderable::GetInstanceMatrix(unsigned int instanceIndex) const
 {
 	return m_instanceModels[instanceIndex];
 }
@@ -229,12 +146,12 @@ Matrix44 Renderable::GetModelMatrix(unsigned int instanceIndex) const
 //
 Material* Renderable::GetMaterialForRender(unsigned int drawIndex) const
 {
-	if (m_matMeshSets[drawIndex].m_materialInstance != nullptr)
+	if (m_draws[drawIndex].materialInstance != nullptr)
 	{
-		return m_matMeshSets[drawIndex].m_materialInstance;
+		return m_draws[drawIndex].materialInstance;
 	}
 	
-	return m_matMeshSets[drawIndex].m_sharedMaterial;
+	return m_draws[drawIndex].sharedMaterial;
 }
 
 
@@ -243,14 +160,14 @@ Material* Renderable::GetMaterialForRender(unsigned int drawIndex) const
 //
 unsigned int Renderable::GetVAOHandleForDraw(unsigned int drawIndex) const
 {
-	return m_matMeshSets[drawIndex].m_vaoHandle;
+	return m_draws[drawIndex].vaoHandle;
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Returns the position of the renderable if it has a transform, or (0,0,0) otherwise
 //
-Vector3 Renderable::GetPosition(unsigned int instanceIndex) const
+Vector3 Renderable::GetInstancePosition(unsigned int instanceIndex) const
 {
 	return m_instanceModels[instanceIndex].GetTVector().xyz();
 }
@@ -261,7 +178,7 @@ Vector3 Renderable::GetPosition(unsigned int instanceIndex) const
 //
 int Renderable::GetDrawCountPerInstance() const
 {
-	return (int) m_matMeshSets.size();
+	return (int) m_draws.size();
 }
 
 
@@ -288,22 +205,22 @@ void Renderable::ClearInstances()
 //
 void Renderable::ClearDraws()
 {
-	int numSets = (int) m_matMeshSets.size();
+	int numSets = (int) m_draws.size();
 
 	Renderer* renderer = Renderer::GetInstance();
 
 	for (int setIndex = 0; setIndex < numSets; ++setIndex)
 	{
-		if (m_matMeshSets[setIndex].m_materialInstance != nullptr)
+		if (m_draws[setIndex].materialInstance != nullptr)
 		{
-			delete m_matMeshSets[setIndex].m_materialInstance;
+			delete m_draws[setIndex].materialInstance;
 
 			// Also check to free the VAO
-			renderer->DeleteVAO(m_matMeshSets[setIndex].m_vaoHandle);
+			renderer->DeleteVAO(m_draws[setIndex].vaoHandle);
 		}
 	}
 
-	m_matMeshSets.clear();
+	m_draws.clear();
 }
 
 
@@ -322,7 +239,7 @@ void Renderable::ClearAll()
 //
 void Renderable::BindMeshToMaterial(unsigned int drawIndex)
 {
-	Mesh* mesh = m_matMeshSets[drawIndex].m_mesh;
+	Mesh* mesh = m_draws[drawIndex].mesh;
 	Material* material = GetMaterialForRender(drawIndex);
 
 	// Don't bind them to the VAO if one is missing
@@ -332,5 +249,5 @@ void Renderable::BindMeshToMaterial(unsigned int drawIndex)
 	}
 
 	Renderer* renderer = Renderer::GetInstance();
-	renderer->UpdateVAO(m_matMeshSets[drawIndex].m_vaoHandle, mesh, material);
+	renderer->UpdateVAO(m_draws[drawIndex].vaoHandle, mesh, material);
 }

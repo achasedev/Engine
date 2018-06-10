@@ -46,7 +46,7 @@ private:
 	Mesh*		m_mesh;
 	Material*	m_material;
 
-	std::vector<Matrix44> m_modelMatrices;
+	std::vector<Matrix44> m_drawMatrices;
 
 	// Lights
 	Rgba m_ambience;

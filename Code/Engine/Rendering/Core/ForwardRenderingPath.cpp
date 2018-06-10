@@ -45,7 +45,7 @@ void ForwardRenderingPath::ConstructDrawCallsForRenderable(Renderable* renderabl
 		if (material->IsUsingLights())
 		{
 			TODO("Figure out how to find the 8 lights for each instance(?)");
-			ComputeLightsForDrawCall(dc, scene, renderable->GetPosition(0));
+			ComputeLightsForDrawCall(dc, scene, renderable->GetInstancePosition(0));
 		}
 
 		bool hasModels = dc.SetDataFromRenderable(renderable, dcIndex);

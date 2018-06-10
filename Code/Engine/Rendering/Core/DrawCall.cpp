@@ -23,7 +23,7 @@ Mesh* DrawCall::GetMesh() const
 //
 Matrix44 DrawCall::GetModelMatrix(unsigned int index) const
 {
-	return m_modelMatrices[index];
+	return m_drawMatrices[index];
 }
 
 
@@ -32,7 +32,7 @@ Matrix44 DrawCall::GetModelMatrix(unsigned int index) const
 //
 const Matrix44* DrawCall::GetModelMatrixBuffer() const
 {
-	return m_modelMatrices.data();
+	return m_drawMatrices.data();
 }
 
 
@@ -42,7 +42,7 @@ const Matrix44* DrawCall::GetModelMatrixBuffer() const
 //
 int DrawCall::GetModelMatrixCount() const
 {
-	return (int) m_modelMatrices.size();
+	return (int) m_drawMatrices.size();
 }
 
 
@@ -110,7 +110,7 @@ bool DrawCall::SetDataFromRenderable(Renderable* renderable, int dcIndex)
 	m_material = renderable->GetMaterialForRender(dcIndex);
 
 	// Set all the matrix data
-	m_modelMatrices.clear();
+	m_drawMatrices.clear();
 
 	int numMatrices = renderable->GetInstanceCount();
 
@@ -119,9 +119,13 @@ bool DrawCall::SetDataFromRenderable(Renderable* renderable, int dcIndex)
 		return false;
 	}
 
-	for (int matrixIndex = 0; matrixIndex < numMatrices; ++matrixIndex)
+	for (int instanceIndex = 0; instanceIndex < numMatrices; ++instanceIndex)
 	{
-		m_modelMatrices.push_back(renderable->GetModelMatrix(matrixIndex));
+		Matrix44& instanceMatrix = renderable->GetInstanceMatrix(instanceIndex);
+		Matrix44& drawMatrix = renderable->GetDraw(dcIndex).drawMatrix;
+
+		Matrix44 matrixForRender = instanceMatrix * drawMatrix;
+		m_drawMatrices.push_back(matrixForRender);
 	}
 
 	const Shader* shader = m_material->GetShader();

@@ -1125,13 +1125,14 @@ void Renderer::DrawMesh(Mesh* mesh)
 //
 void Renderer::DrawMeshWithMaterial(Mesh* mesh, Material* material)
 {
-	MaterialMeshSet set;
-	set.m_sharedMaterial = material;
-	set.m_mesh = mesh;
-	set.m_vaoHandle = m_defaultVAO;
+	RenderableDraw_t draw;
+	draw.sharedMaterial = material;
+	draw.mesh = mesh;
+	draw.vaoHandle = m_defaultVAO;
 
 	// Sets the pair, and also updates the default VAO
-	m_immediateRenderable.SetMaterialMeshSet(0, set);
+	m_immediateRenderable.ClearDraws();
+	m_immediateRenderable.AddDraw(draw);
 
 	DrawRenderable(&m_immediateRenderable);
 }
@@ -1146,7 +1147,6 @@ void Renderer::DrawRenderable(Renderable* renderable)
 
 	for (int drawIndex = 0; drawIndex < numDraws; ++drawIndex)
 	{
-		TODO("Need to add light step here.");
 		DrawCall dc;
 		dc.SetDataFromRenderable(renderable, drawIndex);
 		Draw(dc);
@@ -1394,11 +1394,12 @@ void Renderer::PostGLStartup()
 	glGenVertexArrays(1, &m_defaultVAO); 
 	glBindVertexArray(m_defaultVAO);
 
-	MaterialMeshSet set;
-	set.m_mesh = &m_immediateMesh;
-	set.m_sharedMaterial = AssetDB::CreateOrGetSharedMaterial("Default_Opaque");
-	set.m_vaoHandle = m_defaultVAO;
-	m_immediateRenderable.SetMaterialMeshSet(0, set);
+	RenderableDraw_t draw;
+	draw.mesh = &m_immediateMesh;
+	draw.sharedMaterial = AssetDB::CreateOrGetSharedMaterial("Default_Opaque");
+	draw.vaoHandle = m_defaultVAO;
+	m_immediateRenderable.AddDraw(draw);
+	m_immediateRenderable.AddInstanceMatrix(Matrix44::IDENTITY);
 
 	GL_CHECK_ERROR();
 

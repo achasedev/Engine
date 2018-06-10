@@ -22,27 +22,36 @@ DebugRenderTask_Quad3D::DebugRenderTask_Quad3D(const Vector3& position, const Ve
 	, m_rightVector(rightVector)
 	, m_upVector(upVector)
 {
-	BuildMesh();
+	RenderableDraw_t draw;
+	draw.sharedMaterial = AssetDB::GetSharedMaterial("Debug_Render");
+	draw.mesh = BuildMesh();
 
+	m_renderable->AddDraw(draw);
+	m_renderable->AddInstanceMatrix(Matrix44::IDENTITY);
 
 	if (!options.m_isWireFrame)
 	{
 		Material* material = m_renderable->GetMaterialInstance(0);
 		material->SetDiffuse(AssetDB::CreateOrGetTexture("Data/Images/Debug/Debug.png"));
 	}
+
+	Material* materialInstance = m_renderable->GetMaterialInstance(0);
+	materialInstance->GetEditableShader()->SetFillMode(m_options.m_isWireFrame ? FILL_MODE_WIRE : FILL_MODE_SOLID);
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Builds the 3D quad mesh
 //
-void DebugRenderTask_Quad3D::BuildMesh()
+Mesh* DebugRenderTask_Quad3D::BuildMesh()
 {
 	MeshBuilder mb;
 	mb.BeginBuilding(PRIMITIVE_TRIANGLES, true);
 	mb.Push3DQuad(m_position, m_dimensions, AABB2::UNIT_SQUARE_OFFCENTER, Rgba::WHITE, m_rightVector, m_upVector);
 	mb.FinishBuilding();
-	m_renderable->SetMesh(mb.CreateMesh(), 0);
+	
+	m_deleteMesh = true;
+	return mb.CreateMesh();
 }
 
 

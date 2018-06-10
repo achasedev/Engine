@@ -20,7 +20,7 @@ public:
 
 	void SetMarkedForDelete(bool markedForDelete);
 
-	Renderable& GetRenderable();
+	Renderable* GetRenderable();
 	bool		IsMarkedForDelete() const;
 
 
@@ -33,7 +33,7 @@ public:
 protected:
 	//-----Protected Data-----
 
-	Renderable  m_renderable;		// For rendering
-	bool		m_markedForDelete;	// For end-of-frame deletion
+	Renderable*		m_renderable;		// For rendering
+	bool			m_markedForDelete;	// For end-of-frame deletion
 
 };

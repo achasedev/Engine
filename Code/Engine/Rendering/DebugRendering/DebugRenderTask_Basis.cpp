@@ -19,14 +19,24 @@ DebugRenderTask_Basis::DebugRenderTask_Basis(const Matrix44& basis, const DebugR
 	, m_basis(basis)
 	, m_scale(scale)
 {
-	BuildMesh();
+	Mesh* mesh = BuildMesh();
+
+	RenderableDraw_t draw;
+	draw.sharedMaterial = AssetDB::GetSharedMaterial("Debug_Render");
+	draw.mesh = mesh;
+
+	m_renderable->AddDraw(draw);
+	m_renderable->AddInstanceMatrix(Matrix44::IDENTITY);
+
+	Material* materialInstance = m_renderable->GetMaterialInstance(0);
+	materialInstance->GetEditableShader()->SetFillMode(m_options.m_isWireFrame ? FILL_MODE_WIRE : FILL_MODE_SOLID);
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Builds the mesh for the basis
 //
-void DebugRenderTask_Basis::BuildMesh()
+Mesh* DebugRenderTask_Basis::BuildMesh()
 {
 	// Set up the mesh vertices
 	MeshBuilder mb;
@@ -52,7 +62,8 @@ void DebugRenderTask_Basis::BuildMesh()
 
 	mb.FinishBuilding();
 
-	m_renderable->SetMesh(mb.CreateMesh<Vertex3D_PCU>(), 0);
+	m_deleteMesh = true;
+	return mb.CreateMesh();
 }
 
 

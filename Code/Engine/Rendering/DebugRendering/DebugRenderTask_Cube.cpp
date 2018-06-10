@@ -14,31 +14,22 @@
 //
 DebugRenderTask_Cube::DebugRenderTask_Cube(const Vector3& position, const DebugRenderOptions& options, const Vector3& dimensions)
 	: DebugRenderTask(options, DEBUG_CAMERA_WORLD)
-	, m_position(position)
-	, m_dimensions(dimensions)
 {
-	BuildMesh();
+	RenderableDraw_t draw;
+	draw.sharedMaterial = AssetDB::GetSharedMaterial("Debug_Render");
+	draw.mesh = AssetDB::GetMesh("Cube");
+
+	m_renderable->AddDraw(draw);
+	m_renderable->AddInstanceMatrix(Matrix44::MakeModelMatrix(position, Vector3::ZERO, dimensions));
 
 	if (!options.m_isWireFrame)
 	{
 		Material* material = m_renderable->GetMaterialInstance(0);
 		material->SetDiffuse(AssetDB::CreateOrGetTexture("Data/Images/Debug/Debug.png"));
 	}
-}
 
-
-//-----------------------------------------------------------------------------------------------
-// Builds the mesh for the cube
-//
-void DebugRenderTask_Cube::BuildMesh()
-{
-	MeshBuilder mb;
-
-	mb.BeginBuilding(PRIMITIVE_TRIANGLES, true);
-	mb.PushCube(m_position, m_dimensions);
-	mb.FinishBuilding();
-
-	m_renderable->SetMesh(mb.CreateMesh<Vertex3D_PCU>(), 0);
+	Material* materialInstance = m_renderable->GetMaterialInstance(0);
+	materialInstance->GetEditableShader()->SetFillMode(m_options.m_isWireFrame ? FILL_MODE_WIRE : FILL_MODE_SOLID);
 }
 
 

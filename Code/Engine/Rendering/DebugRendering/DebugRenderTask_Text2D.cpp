@@ -18,7 +18,8 @@ DebugRenderTask_Text2D::DebugRenderTask_Text2D(const std::string& text, const AA
 	, m_pixelBounds(bounds)
 	, m_textHeight(textHeight)
 {
-	m_renderable->GetMaterialInstance(0)->SetShader(AssetDB::CreateOrGetShader("UI"));
+	delete m_renderable;
+	m_renderable = nullptr;
 }
 
 
@@ -27,7 +28,6 @@ DebugRenderTask_Text2D::DebugRenderTask_Text2D(const std::string& text, const AA
 //
 void DebugRenderTask_Text2D::Render() const
 {
-	SetupDrawState(m_options.m_renderMode);
 	Rgba drawColor = CalculateDrawColor();
 
 	Renderer* renderer = Renderer::GetInstance();

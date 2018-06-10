@@ -34,6 +34,24 @@
 void AssetDB::CreateBuiltInAssets()
 {
 	//--------------------Textures--------------------
+	CreateTextures();
+
+	//--------------------Shaders--------------------
+	CreateShaders();
+
+	//-------------------Materials-------------------
+	CreateMaterials();
+
+	//---------------------Meshes--------------------
+	CreateMeshes();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Creates all built-in textures for the engine, and stores them in the AssetDB
+//
+void AssetDB::CreateTextures()
+{
 	Texture* whiteTexture = new Texture();
 	whiteTexture->CreateFromImage(&Image::IMAGE_WHITE);
 	AssetCollection<Texture>::AddAsset("White", whiteTexture);
@@ -49,9 +67,14 @@ void AssetDB::CreateBuiltInAssets()
 	Texture* defaultTexture = new Texture();
 	defaultTexture->CreateFromImage(&Image::IMAGE_DEFAULT_TEXTURE);
 	AssetCollection<Texture>::AddAsset("Default", defaultTexture);
+}
 
 
-	//--------------------Shaders--------------------
+//-----------------------------------------------------------------------------------------------
+// Creates all built-in shaders for the engine, and stores them in the AssetDB
+//
+void AssetDB::CreateShaders()
+{
 	ShaderProgram* invalidProgram = new ShaderProgram(ShaderSource::INVALID_SHADER_NAME);
 	bool loadSuccessful = invalidProgram->LoadProgramFromSources(ShaderSource::INVALID_VS, ShaderSource::INVALID_FS);
 	ASSERT_OR_DIE(loadSuccessful, "Error: Renderer::CreateBuildInShaders() could not build the Invalid Shader.");
@@ -77,7 +100,7 @@ void AssetDB::CreateBuiltInAssets()
 	Shader* lighting		= Shader::BuildShader(ShaderSource::LIGHTING_NAME,			ShaderSource::LIGHTING_VS,			ShaderSource::LIGHTING_FS,			ShaderSource::LIGHTING_STATE,			ShaderSource::DEFAULT_OPAQUE_LAYER, ShaderSource::DEFAULT_OPAQUE_QUEUE);
 	Shader* uv				= Shader::BuildShader(ShaderSource::UV_NAME,				ShaderSource::UV_VS,				ShaderSource::UV_FS,				ShaderSource::UV_STATE,					ShaderSource::DEFAULT_OPAQUE_LAYER, ShaderSource::DEFAULT_OPAQUE_QUEUE);
 	Shader* skybox			= Shader::BuildShader(ShaderSource::SKYBOX_SHADER_NAME,		ShaderSource::SKYBOX_SHADER_VS,		ShaderSource::SKYBOX_SHADER_FS,		ShaderSource::SKYBOX_SHADER_STATE,		ShaderSource::DEFAULT_OPAQUE_LAYER, ShaderSource::DEFAULT_OPAQUE_QUEUE);
-	
+
 	Shader* opaqueInstanced			= Shader::BuildShader(ShaderSource::DEFAULT_OPAQUE_INSTANCED_NAME,	ShaderSource::DEFAULT_OPAQUE_INSTANCED_VS,	ShaderSource::DEFAULT_OPAQUE_INSTANCED_FS,	ShaderSource::DEFAULT_OPAQUE_INSTANCED_STATE,		ShaderSource::DEFAULT_OPAQUE_LAYER, ShaderSource::DEFAULT_OPAQUE_QUEUE);
 	Shader* alphaInstanced			= Shader::BuildShader(ShaderSource::DEFAULT_ALPHA_INSTANCED_NAME,	ShaderSource::DEFAULT_ALPHA_INSTANCED_VS,	ShaderSource::DEFAULT_ALPHA_INSTANCED_FS,	ShaderSource::DEFAULT_ALPHA_INSTANCED_STATE,		ShaderSource::DEFAULT_ALPHA_LAYER,	ShaderSource::DEFAULT_ALPHA_QUEUE);
 	Shader* phongOpaqueInstanced	= Shader::BuildShader(ShaderSource::PHONG_OPAQUE_INSTANCED_NAME,	ShaderSource::PHONG_OPAQUE_INSTANCED_VS,	ShaderSource::PHONG_OPAQUE_INSTANCED_FS,	ShaderSource::PHONG_OPAQUE_INSTANCED_STATE,			ShaderSource::DEFAULT_OPAQUE_LAYER, ShaderSource::DEFAULT_OPAQUE_QUEUE);
@@ -105,37 +128,77 @@ void AssetDB::CreateBuiltInAssets()
 	AssetCollection<Shader>::AddAsset(ShaderSource::DEFAULT_ALPHA_INSTANCED_NAME,	alphaInstanced);
 	AssetCollection<Shader>::AddAsset(ShaderSource::PHONG_OPAQUE_INSTANCED_NAME,	phongOpaqueInstanced);
 	AssetCollection<Shader>::AddAsset(ShaderSource::PHONG_ALPHA_INSTANCED_NAME,		phongAlphaInstanced);
+}
 
-	// Materials
+
+//-----------------------------------------------------------------------------------------------
+// Creates all built-in materials for the engine, and stores them in the AssetDB
+//
+void AssetDB::CreateMaterials()
+{
 	Material* debugMaterial = new Material("Debug_Render");
-	debugMaterial->SetDiffuse(whiteTexture);
-	debugMaterial->SetShader(debugShader);
+	debugMaterial->SetDiffuse(AssetDB::GetTexture("White"));
+	debugMaterial->SetShader(AssetDB::GetShader(ShaderSource::DEBUG_RENDER_NAME));
 
 	AssetCollection<Material>::AddAsset("Debug_Render", debugMaterial);
 
-	Material* defaultMaterial = new Material("Default");
-	defaultMaterial->SetDiffuse(whiteTexture);
-	defaultMaterial->SetShader(defaultOpaque);
+	Material* defaultMaterial = new Material("Default_Opaque");
+	defaultMaterial->SetDiffuse(AssetDB::GetTexture("White"));
+	defaultMaterial->SetShader(AssetDB::GetShader(ShaderSource::DEFAULT_OPAQUE_NAME));
 
 	AssetCollection<Material>::AddAsset("Default_Opaque", defaultMaterial);
 
 	Material* uiMat = new Material("UI");
-	uiMat->SetDiffuse(whiteTexture);
-	uiMat->SetShader(uiShader);
+	uiMat->SetDiffuse(AssetDB::GetTexture("White"));
+	uiMat->SetShader(AssetDB::GetShader(ShaderSource::UI_SHADER_NAME));
 
 	AssetCollection<Material>::AddAsset("UI", uiMat);
 
 	Material* flChanMat = new Material("FLChan");
 	flChanMat->SetDiffuse(CreateOrGetTexture("Data/Images/DevConsole/FLChan.png"));
-	flChanMat->SetShader(uiShader);
+	flChanMat->SetShader(AssetDB::GetShader(ShaderSource::UI_SHADER_NAME));
 
 	AssetCollection<Material>::AddAsset("FLChan", flChanMat);
 
 	Material* skyboxMat = new Material("Skybox");
-	skyboxMat->SetDiffuse(whiteTexture);
-	skyboxMat->SetShader(skybox);
+	skyboxMat->SetDiffuse(AssetDB::GetTexture("White"));
+	skyboxMat->SetShader(AssetDB::GetShader(ShaderSource::SKYBOX_SHADER_NAME));
 
 	AssetCollection<Material>::AddAsset("Skybox", skyboxMat);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Creates all built-in meshes for the engine, and stores them in the AssetDB
+//
+void AssetDB::CreateMeshes()
+{
+	// Cube
+	MeshBuilder mb;
+	mb.BeginBuilding(PRIMITIVE_TRIANGLES, true);
+	mb.PushCube(Vector3::ZERO, Vector3::ONES);
+	mb.FinishBuilding();
+	Mesh* cube = mb.CreateMesh();
+
+	AssetCollection<Mesh>::AddAsset("Cube", cube);
+
+	// Point
+	mb.Clear();
+	mb.BeginBuilding(PRIMITIVE_LINES, false);
+	mb.PushPoint(Vector3::ZERO);
+	mb.FinishBuilding();
+	Mesh* point = mb.CreateMesh();
+
+	AssetCollection<Mesh>::AddAsset("Point", point);
+
+	// Sphere
+	mb.Clear();
+	mb.BeginBuilding(PRIMITIVE_TRIANGLES, true);
+	mb.PushUVSphere(Vector3::ZERO, 1.f, 8, 4);
+	mb.FinishBuilding();
+	Mesh* sphere = mb.CreateMesh();
+
+	AssetCollection<Mesh>::AddAsset("Sphere", sphere);
 }
 
 
@@ -504,7 +567,7 @@ Material* AssetDB::CreateOrGetSharedMaterial(const std::string& materialPath)
 // Loads a scene file using the Assimp library.
 // Parses the information from the Node tree and stores all content in the asset database
 //
-std::vector<Renderable*> AssetDB::LoadFileWithAssimp(const std::string& filepath)
+Renderable* AssetDB::LoadFileWithAssimp(const std::string& filepath)
 {
 	ScopedProfiler sp = ScopedProfiler(Stringf("LoadFile: \"%s\"", filepath.c_str()));
 	UNUSED(sp);
@@ -518,52 +581,51 @@ std::vector<Renderable*> AssetDB::LoadFileWithAssimp(const std::string& filepath
 	}
 
 	// Process the nodes in the scene to extract the data
-	std::vector<Renderable*> renderables = ProcessAssimpNode(scene->mRootNode, scene);
+	Renderable* renderable = ProcessAssimpNode(scene->mRootNode, scene);
 
 	importer.FreeScene();
-	return renderables;
+
+	return renderable;
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Parses a given Assimp node for its data, and recursively processes children
 //
-std::vector<Renderable*> AssetDB::ProcessAssimpNode(aiNode* ainode, const aiScene* aiscene)
+Renderable* AssetDB::ProcessAssimpNode(aiNode* ainode, const aiScene* aiscene)
 {
-	std::vector<Renderable*> renderables;
-	Matrix44 parentTransform = ParseTransformationMatrix(ainode);
+	Renderable* renderable = new Renderable();
+	Matrix44 nodeTransform = ParseTransformationMatrix(ainode);
 
 	// Process meshes  
 	for (unsigned int meshIndex = 0; meshIndex < ainode->mNumMeshes; ++meshIndex)
 	{
 		aiMesh* aimesh = aiscene->mMeshes[ainode->mMeshes[meshIndex]];
 
-		Renderable* renderable = ProcessAssimpMesh(aimesh, aiscene);
-		renderable->SetModelMatrix(parentTransform, 0);
+		RenderableDraw_t renderableDraw = ProcessAssimpMesh(aimesh, aiscene);
+		renderableDraw.drawMatrix = nodeTransform;
 
-		renderables.push_back(renderable);
+		renderable->AddDraw(renderableDraw);
 	}
 
 	// Recursively process the child nodes
 	for (unsigned int nodeIndex = 0; nodeIndex < ainode->mNumChildren; ++nodeIndex)
 	{
-		std::vector<Renderable*> childRenderables = ProcessAssimpNode(ainode->mChildren[nodeIndex], aiscene);
+		Renderable* childRend = ProcessAssimpNode(ainode->mChildren[nodeIndex], aiscene);
 
-		int numChildRenderables = (int) childRenderables.size();
-		for (int rendIndex = 0; rendIndex < numChildRenderables; ++rendIndex)
+		int numChildDraws = childRend->GetDrawCountPerInstance();
+		for (int drawIndex = 0; drawIndex < numChildDraws; ++drawIndex)
 		{
 			// Ensure we apply the parent's transform to the child transforms (hierarchy)
-			Renderable* currChild = childRenderables[rendIndex];
-			Matrix44 childTransform = currChild->GetModelMatrix(0);
-
-			childTransform = parentTransform * childTransform;
-			currChild->SetModelMatrix(childTransform, 0);
-
-			renderables.push_back(childRenderables[rendIndex]);
+			RenderableDraw_t currDraw = childRend->GetDraw(drawIndex);
+			currDraw.drawMatrix = nodeTransform * currDraw.drawMatrix;
+			renderable->AddDraw(currDraw);
 		}
+
+		delete childRend;
 	}
 
-	return renderables;
+	return renderable;
 }
 
 
@@ -599,9 +661,8 @@ Matrix44 AssetDB::ParseTransformationMatrix(aiNode* ainode)
 //-----------------------------------------------------------------------------------------------
 // Parses an Assimp mesh for the mesh and material data and constructs a mesh, adding it to the AssetDB
 //
-Renderable* AssetDB::ProcessAssimpMesh(aiMesh* aimesh, const aiScene* aiscene)
+RenderableDraw_t AssetDB::ProcessAssimpMesh(aiMesh* aimesh, const aiScene* aiscene)
 {
-	UNUSED(aiscene)
 	MeshBuilder mb;
 	mb.BeginBuilding(PRIMITIVE_TRIANGLES, true);
 
@@ -716,8 +777,12 @@ Renderable* AssetDB::ProcessAssimpMesh(aiMesh* aimesh, const aiScene* aiscene)
 		material->SetShader(AssetDB::GetShader("Phong_Opaque"));
 	}
 	
-	Renderable* renderable = new Renderable(Matrix44::IDENTITY, mesh, material);
-	return renderable;
+
+	RenderableDraw_t draw;
+	draw.sharedMaterial = material;
+	draw.mesh = mesh;
+
+	return draw;
 }
 
 

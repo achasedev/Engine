@@ -83,8 +83,8 @@ protected:
 	DebugCamera			m_cameraSpace;
 
 	Renderable*			m_renderable = nullptr;
-	//Mesh*				m_mesh = nullptr;
 
 	float m_timeToLive;
 	bool m_isFinished = false;
+	bool m_deleteMesh = false;
 };

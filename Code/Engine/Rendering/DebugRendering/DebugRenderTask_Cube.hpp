@@ -20,7 +20,6 @@ public:
 
 private:
 	//-----Private Methods-----
-	void BuildMesh();
 
 
 private:

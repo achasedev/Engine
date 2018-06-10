@@ -19,15 +19,6 @@ public:
 
 
 private:
-	//-----Private Methods-----
-
-	void BuildMesh();
-
-
-private:
 	//-----Private Data-----
-
-	Vector3 m_position;
-	float	m_radius;
 
 };

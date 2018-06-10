@@ -45,7 +45,7 @@ void GameObject::SetMarkedForDelete(bool markedForDelete)
 //-----------------------------------------------------------------------------------------------
 // Returns the renderable of the GameObject
 //
-Renderable& GameObject::GetRenderable()
+Renderable* GameObject::GetRenderable()
 {
 	return m_renderable;
 }

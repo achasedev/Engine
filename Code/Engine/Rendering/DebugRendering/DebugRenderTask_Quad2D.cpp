@@ -17,20 +17,29 @@ DebugRenderTask_Quad2D::DebugRenderTask_Quad2D(const AABB2& bounds, const DebugR
 	: DebugRenderTask(options, DEBUG_CAMERA_SCREEN)
 	, m_pixelBounds(bounds)
 {
-	BuildMesh();
+
+	RenderableDraw_t draw;
+	draw.sharedMaterial = AssetDB::GetSharedMaterial("Debug_Render");
+	draw.mesh = BuildMesh();
+
+	m_renderable->AddDraw(draw);
+	m_renderable->AddInstanceMatrix(Matrix44::IDENTITY);
 
 	if (!options.m_isWireFrame)
 	{
 		Material* material = m_renderable->GetMaterialInstance(0);
 		material->SetDiffuse(AssetDB::CreateOrGetTexture("Data/Images/Debug/Debug.png"));
 	}
+
+	Material* materialInstance = m_renderable->GetMaterialInstance(0);
+	materialInstance->GetEditableShader()->SetFillMode(m_options.m_isWireFrame ? FILL_MODE_WIRE : FILL_MODE_SOLID);
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Builds the simple quad mesh
 //
-void DebugRenderTask_Quad2D::BuildMesh()
+Mesh* DebugRenderTask_Quad2D::BuildMesh()
 {
 	MeshBuilder mb;
 
@@ -38,7 +47,8 @@ void DebugRenderTask_Quad2D::BuildMesh()
 	mb.Push2DQuad(m_pixelBounds, AABB2::UNIT_SQUARE_OFFCENTER);
 	mb.FinishBuilding();
 
-	m_renderable->SetMesh(mb.CreateMesh(), 0);
+	m_deleteMesh = true;
+	return mb.CreateMesh();
 }
 
 

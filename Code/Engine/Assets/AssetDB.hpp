@@ -35,6 +35,10 @@ public:
 	//-----Public Methods-----
 
 	static void CreateBuiltInAssets();
+		static void CreateTextures();
+		static void CreateShaders();
+		static void CreateMaterials();
+		static void CreateMeshes();
 
 	// Images
 	static Image* GetImage(const std::string& filename);
@@ -79,16 +83,16 @@ public:
 	static Material*			CreateOrGetSharedMaterial(const std::string& name);
 
 	// For loading scene files using Assimp (will create many of the above filetypes)
-	static std::vector<Renderable*> LoadFileWithAssimp(const std::string& filepath);
+	static Renderable* LoadFileWithAssimp(const std::string& filepath);
 
 
 private:
 	//-----Private Methods-----
 
 	// For Assimp loading
-	static std::vector<Renderable*>		ProcessAssimpNode(aiNode* ainode,	const aiScene* aiscene);
-		static Matrix44		ParseTransformationMatrix(aiNode* ainode);
-		static Renderable*	ProcessAssimpMesh(aiMesh* aimesh,	const aiScene* aiscene);
+	static Renderable* ProcessAssimpNode(aiNode* ainode, const aiScene* aiscene);
+		static Matrix44	ParseTransformationMatrix(aiNode* ainode);
+		static RenderableDraw_t	ProcessAssimpMesh(aiMesh* aimesh, const aiScene* aiscene);
 			static std::vector<Texture*> LoadAssimpMaterialTextures(aiMaterial* aimaterial, aiTextureType type);
 
 

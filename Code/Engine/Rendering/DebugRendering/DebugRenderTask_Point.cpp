@@ -4,36 +4,30 @@
 /* Date: March 29th, 2018
 /* Description: Implementation of the DebugRenderTask_Point class
 /************************************************************************/
+#include "Engine/Assets/AssetDB.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Rendering/Core/Renderer.hpp"
 #include "Engine/Rendering/Meshes/MeshBuilder.hpp"
+#include "Engine/Rendering/Materials/MaterialInstance.hpp"
 #include "Engine/Rendering/DebugRendering/DebugRenderSystem.hpp"
 #include "Engine/Rendering/DebugRendering/DebugRenderTask_Point.hpp"
+
 
 //-----------------------------------------------------------------------------------------------
 // Constructor
 //
 DebugRenderTask_Point::DebugRenderTask_Point(const Vector3& position, const DebugRenderOptions& options, float radius/*=1.0f*/)
 	: DebugRenderTask(options, DEBUG_CAMERA_WORLD)
-	, m_position(position)
-	, m_radius(radius)
 {
-	BuildMesh();
-}
+	RenderableDraw_t draw;
+	draw.sharedMaterial = AssetDB::GetSharedMaterial("Debug_Render");
+	draw.mesh = AssetDB::GetMesh("Point");
 
+	m_renderable->AddDraw(draw);
+	m_renderable->AddInstanceMatrix(Matrix44::MakeModelMatrix(position, Vector3::ZERO, Vector3(radius, radius, radius)));
 
-//-----------------------------------------------------------------------------------------------
-//  Builds the mesh for the point draw
-//
-void DebugRenderTask_Point::BuildMesh()
-{
-	MeshBuilder mb;
-	mb.BeginBuilding(PRIMITIVE_LINES, false);
-
-	mb.PushPoint(m_position, Rgba::WHITE, m_radius);
-	mb.FinishBuilding();
-
-	m_renderable->SetMesh(mb.CreateMesh(), 0);
+	Material* materialInstance = m_renderable->GetMaterialInstance(0);
+	materialInstance->GetEditableShader()->SetFillMode(m_options.m_isWireFrame ? FILL_MODE_WIRE : FILL_MODE_SOLID);
 }
 
 

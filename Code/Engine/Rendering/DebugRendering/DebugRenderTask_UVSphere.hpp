@@ -22,7 +22,7 @@ public:
 private:
 	//-----Private Methods-----
 
-	void BuildMesh();
+	Mesh* BuildMesh();
 
 
 private:

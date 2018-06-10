@@ -22,13 +22,8 @@ DebugRenderTask::DebugRenderTask(const DebugRenderOptions& options, DebugCamera 
 	m_isFinished = false;
 	m_cameraSpace = renderSpace;
 
-	// Set up the renderable
-	Material* material = AssetDB::CreateOrGetSharedMaterial("Debug_Render");
-	m_renderable = new Renderable(Matrix44::IDENTITY, (Mesh*)nullptr, material);	// Set up the mesh in the subclasses, no transform needed
-
 	// Set the fill mode, depth will be set during draws
-	Material* materialInstance = m_renderable->GetMaterialInstance(0);
-	materialInstance->GetEditableShader()->SetFillMode(m_options.m_isWireFrame ? FILL_MODE_WIRE : FILL_MODE_SOLID);
+	m_renderable = new Renderable();
 }
 
 
@@ -38,13 +33,16 @@ DebugRenderTask::DebugRenderTask(const DebugRenderOptions& options, DebugCamera 
 DebugRenderTask::~DebugRenderTask()
 {
 	// Renderable destructor doesn't delete meshes, so do it here
-	Mesh* mesh = m_renderable->GetMesh(0);
-	if (mesh != nullptr)
+	if (m_renderable != nullptr)
 	{
-		delete mesh;
-	}
+		Mesh* mesh = m_renderable->GetMesh(0);
+		if (mesh != nullptr && m_deleteMesh)
+		{
+			delete mesh;
+		}
 
-	delete m_renderable;
+		delete m_renderable;
+	}
 }
 
 

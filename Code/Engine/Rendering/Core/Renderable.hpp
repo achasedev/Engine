@@ -14,13 +14,14 @@ class MeshBuilder;
 class MaterialInstance;
 class MeshGroup;
 
-struct MaterialMeshSet
+struct RenderableDraw_t
 {
-	Mesh* m_mesh = nullptr;
-	Material*			m_sharedMaterial = nullptr;
-	MaterialInstance*	m_materialInstance = nullptr;
+	Matrix44			drawMatrix;
+	Mesh*				mesh = nullptr;
+	Material*			sharedMaterial = nullptr;
+	MaterialInstance*	materialInstance = nullptr;
 
-	unsigned int m_vaoHandle = 0;
+	unsigned int vaoHandle = 0;
 };
 
 class Renderable
@@ -29,39 +30,32 @@ public:
 	//-----Public Methods-----
 
 	Renderable();
-	Renderable(const Vector3& position, Mesh* mesh, Material* sharedMaterial);
-	Renderable(const Matrix44& modelMatrix, Mesh* mesh, Material* sharedMaterial);
-	Renderable(const Matrix44& modelMatrix, MeshGroup* meshGroup, Material* defaultMaterial);
-
+	Renderable(const Matrix44& instanceMatrix, Mesh* mesh, Material* sharedMaterial);
 	~Renderable();
 
 	// Mutators
-	void SetMesh(Mesh* mesh, unsigned int drawIndex);
-	void SetSharedMaterial(Material* material, unsigned int drawIndex);
-	void SetInstanceMaterial(MaterialInstance* instanceMaterial, unsigned int drawIndex);
-	void SetMaterialMeshSet(unsigned int index, const MaterialMeshSet& set);
+	void AddDraw(const RenderableDraw_t& draw);
 
-	void AddMeshGroup(MeshGroup* meshGroup);
-
-	void SetModelMatrix(const Matrix44& model, unsigned int instanceIndex);
-	void AddModelMatrix(const Matrix44& model);
-	void RemoveModelMatrix(unsigned int instanceIndex);
+	void SetInstanceMatrix(unsigned int instanceIndex, const Matrix44& model);
+	void AddInstanceMatrix(const Matrix44& model);
+	void RemoveInstanceMatrix(unsigned int instanceIndex);
 
 	// Accessors
-	Mesh*			GetMesh(unsigned int drawIndex) const;
-	Material*		GetSharedMaterial(unsigned int drawIndex) const;
-	Material*		GetMaterialInstance(unsigned int drawIndex);
-	Matrix44		GetModelMatrix(unsigned int instanceIndex) const;
+	RenderableDraw_t	GetDraw(unsigned int drawIndex) const;
+	Mesh*				GetMesh(unsigned int drawIndex) const;
+	Material*			GetSharedMaterial(unsigned int drawIndex) const;
+	Material*			GetMaterialInstance(unsigned int drawIndex);
+	Matrix44			GetInstanceMatrix(unsigned int instanceIndex) const;
 
-	Material*		GetMaterialForRender(unsigned int drawIndex) const;
+	Material*			GetMaterialForRender(unsigned int drawIndex) const;
 
-	unsigned int	GetVAOHandleForDraw(unsigned int drawIndex) const;
+	unsigned int		GetVAOHandleForDraw(unsigned int drawIndex) const;
 
 	// Producers
-	Vector3 GetPosition(unsigned int instanceIndex) const;
+	Vector3 GetInstancePosition(unsigned int instanceIndex) const;
 
-	int		GetDrawCountPerInstance() const;
-	int		GetInstanceCount() const;
+	int	GetDrawCountPerInstance() const;
+	int	GetInstanceCount() const;
 
 	void ClearInstances();
 	void ClearDraws();
@@ -77,7 +71,7 @@ private:
 private:
 	//-----Private Data-----
 
-	std::vector<Matrix44> m_instanceModels;
-	std::vector<MaterialMeshSet> m_matMeshSets;
+	std::vector<Matrix44>			m_instanceModels;
+	std::vector<RenderableDraw_t>	m_draws;
 
 };
