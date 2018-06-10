@@ -4,10 +4,10 @@
 /* Date: May 2nd, 2018
 /* Description: Implementation of the DrawCall class
 /************************************************************************/
-#include "Engine/Rendering/Materials/Material.hpp"
 #include "Engine/Rendering/Core/DrawCall.hpp"
 #include "Engine/Rendering/Core/Renderable.hpp"
-
+#include "Engine/Rendering/Materials/Material.hpp"
+#include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 
 //-----------------------------------------------------------------------------------------------
 // Returns the mesh of the draw call
@@ -116,13 +116,14 @@ bool DrawCall::SetDataFromRenderable(Renderable* renderable, int dcIndex)
 
 	if (numMatrices == 0)
 	{
+		ConsoleWarningf("Warning: DrawCall intialized with renderable with no instance matrices.");
 		return false;
 	}
 
 	for (int instanceIndex = 0; instanceIndex < numMatrices; ++instanceIndex)
 	{
-		Matrix44& instanceMatrix = renderable->GetInstanceMatrix(instanceIndex);
-		Matrix44& drawMatrix = renderable->GetDraw(dcIndex).drawMatrix;
+		Matrix44 instanceMatrix = renderable->GetInstanceMatrix(instanceIndex);
+		Matrix44 drawMatrix = renderable->GetDraw(dcIndex).drawMatrix;
 
 		Matrix44 matrixForRender = instanceMatrix * drawMatrix;
 		m_drawMatrices.push_back(matrixForRender);
