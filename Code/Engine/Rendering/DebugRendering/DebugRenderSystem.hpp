@@ -20,8 +20,7 @@ public:
 	static void Initialize(Camera* worldCamera = nullptr);
 	static void Shutdown();
 
-	void Update();
-	void Render() const;
+	void UpdateAndRender();
 
 	static void SetWorldCamera(Camera* worldCamera);	// No setter for ScreenSpace camera, for now we ensure we use one with height = pixel height of screen
 
@@ -92,6 +91,10 @@ private:
 	~DebugRenderSystem();
 	DebugRenderSystem(const DebugRenderSystem& copy) = delete;
 
+	// Called by UpdateAndRender()
+	void Update();
+	void Render() const;
+
 
 private:
 	//-----Private Data-----
@@ -99,7 +102,7 @@ private:
 	Camera* m_screenCamera; // For 2D drawing in pixel coordinates
 	Camera* m_worldCamera;	// For 3D drawing in world space
 
-	bool m_updateTasks = false;
+	bool m_updatePaused = false;
 	bool m_renderTasks = true;
 
 	// All rendering tasks currently being drawn

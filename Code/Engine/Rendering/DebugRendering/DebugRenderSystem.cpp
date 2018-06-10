@@ -114,11 +114,21 @@ void DebugRenderSystem::Shutdown()
 
 
 //-----------------------------------------------------------------------------------------------
+// Calls Update and Render on all tasks in the system, deleting finished tasks
+//
+void DebugRenderSystem::UpdateAndRender()
+{
+	Update();
+	Render();
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Calls update on all current tasks
 //
 void DebugRenderSystem::Update()
 {
-	if (m_updateTasks)
+	if (m_updatePaused)
 	{
 		return;
 	}
@@ -209,7 +219,7 @@ Vector3 DebugRenderSystem::GetDefaultSpawnLocation()
 //
 bool DebugRenderSystem::AreTasksBeingUpdated()
 {
-	return !s_instance->m_updateTasks;
+	return !s_instance->m_updatePaused;
 }
 
 
@@ -227,7 +237,7 @@ bool DebugRenderSystem::AreTasksBeingRendered()
 //
 void DebugRenderSystem::Pause()
 {
-	s_instance->m_updateTasks = true;
+	s_instance->m_updatePaused = true;
 }
 
 
@@ -236,7 +246,7 @@ void DebugRenderSystem::Pause()
 //
 void DebugRenderSystem::Resume()
 {
-	s_instance->m_updateTasks = false;
+	s_instance->m_updatePaused = false;
 }
 
 

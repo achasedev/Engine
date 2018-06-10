@@ -7,6 +7,7 @@
 #include "Engine/Assets/AssetDB.hpp"
 #include "Engine/Rendering/Core/Renderer.hpp"
 #include "Engine/Rendering/Materials/Material.hpp"
+#include "Engine/Rendering/DebugRendering/DebugRenderSystem.hpp"
 #include "Engine/Rendering/DebugRendering/DebugRenderTask_Text2D.hpp"
 
 //-----------------------------------------------------------------------------------------------
@@ -31,6 +32,7 @@ void DebugRenderTask_Text2D::Render() const
 	Rgba drawColor = CalculateDrawColor();
 
 	Renderer* renderer = Renderer::GetInstance();
+	renderer->SetCurrentCamera(DebugRenderSystem::GetScreenCamera());
 	BitmapFont* defaultFont = AssetDB::CreateOrGetBitmapFont("Data/Images/Fonts/Default.png");
 	renderer->DrawTextInBox2D(m_text, m_pixelBounds, Vector2(0.f, 0.f), m_textHeight, TEXT_DRAW_OVERRUN, defaultFont, drawColor);
 }
