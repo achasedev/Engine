@@ -21,7 +21,7 @@ const unsigned int Vertex3D_PCU::NUM_ATTRIBUTES = (sizeof(ATTRIBUTES) / sizeof(V
 const VertexLayout Vertex3D_PCU::LAYOUT = VertexLayout(sizeof(Vertex3D_PCU), NUM_ATTRIBUTES, Vertex3D_PCU::ATTRIBUTES);
 
 
-//-----Vertex3D_PCU (position, color, UVs)-----
+//-----VertexLit (position, color, UVs, Normal, Tangent)-----
 const VertexAttribute VertexLit::ATTRIBUTES[] =
 {
 	VertexAttribute("POSITION",		RDT_FLOAT,			3,		false,		offsetof(VertexLit, m_position)),
@@ -34,6 +34,21 @@ const VertexAttribute VertexLit::ATTRIBUTES[] =
 const unsigned int VertexLit::NUM_ATTRIBUTES = (sizeof(ATTRIBUTES) / sizeof(VertexAttribute));
 const VertexLayout VertexLit::LAYOUT = VertexLayout(sizeof(VertexLit), NUM_ATTRIBUTES, VertexLit::ATTRIBUTES);
 
+
+//-----VertexSkinned (position, color, UVs, Normal, Tangent, bones indices, bone weights)-----
+const VertexAttribute VertexSkinned::ATTRIBUTES[] =
+{
+	VertexAttribute("POSITION",			RDT_FLOAT,			3,						false,		offsetof(VertexSkinned, m_position)),
+	VertexAttribute("COLOR",			RDT_UNSIGNED_BYTE,	4,						true,		offsetof(VertexSkinned, m_color)), 
+	VertexAttribute("UV",				RDT_FLOAT,			2,						false,		offsetof(VertexSkinned, m_texUVs)),
+	VertexAttribute("NORMAL",			RDT_FLOAT,			3,						false,		offsetof(VertexSkinned, m_normal)),
+	VertexAttribute("TANGENT",			RDT_FLOAT,			3,						false,		offsetof(VertexSkinned, m_tangent)),
+	VertexAttribute("BONE_INDICES",		RDT_UNSIGNED_INT,	MAX_BONES_PER_VERTEX,	false,		offsetof(VertexSkinned, m_bones)),
+	VertexAttribute("BONE_WEIGHTS",		RDT_FLOAT,			MAX_BONES_PER_VERTEX,	false,		offsetof(VertexSkinned, m_boneWeights))
+};
+
+const unsigned int VertexSkinned::NUM_ATTRIBUTES = (sizeof(ATTRIBUTES) / sizeof(VertexAttribute));
+const VertexLayout VertexSkinned::LAYOUT = VertexLayout(sizeof(VertexSkinned), NUM_ATTRIBUTES, VertexSkinned::ATTRIBUTES);
 //--------------------END VERTEX TYPES--------------------
 
 

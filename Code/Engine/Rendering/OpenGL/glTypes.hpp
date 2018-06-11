@@ -32,6 +32,7 @@ enum RenderDataType
 {
 	RDT_FLOAT,
 	RDT_UNSIGNED_BYTE,
+	RDT_UNSIGNED_INT,
 	NUM_RDTS
 };
 

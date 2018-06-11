@@ -33,7 +33,8 @@ unsigned int ToGLType(DepthTest mode) { return g_openGLDepthModes[mode]; }
 unsigned int g_openGLDataTypes[NUM_RDTS] =
 {
 	GL_FLOAT,
-	GL_UNSIGNED_BYTE
+	GL_UNSIGNED_BYTE,
+	GL_UNSIGNED_INT
 };
 
 unsigned int ToGLType(RenderDataType type) { return g_openGLDataTypes[type]; }

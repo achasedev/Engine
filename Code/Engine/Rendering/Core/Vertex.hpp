@@ -12,11 +12,12 @@
 #include "Engine/Math/Vector4.hpp"
 #include "Engine/Rendering/OpenGL/glTypes.hpp"
 
+#define MAX_BONES_PER_VERTEX (4)
 
 //-----Description for a single attribute of a vertex, a layout is made up of a collection of these-----
 struct VertexAttribute
 {
-	VertexAttribute() : m_name("") {} // For null terminator in ATTRIBUTES array
+	VertexAttribute() : m_name("") {} // For null terminator in ATTRIBUTES array (unused)
 	VertexAttribute(const std::string name, RenderDataType type, unsigned int elementCount, bool isNormalized, unsigned int memberOffset)
 	: m_name(name), m_dataType(type), m_elementCount(elementCount), m_isNormalized(isNormalized), m_memberOffset(memberOffset) 
 	{}
@@ -61,6 +62,9 @@ struct VertexMaster
 	Rgba	m_color		= Rgba::WHITE;
 	Vector3 m_normal	= Vector3::ZERO;
 	Vector4 m_tangent	= Vector4::ZERO;
+
+	unsigned int	m_bones[MAX_BONES_PER_VERTEX] = {0, 0, 0, 0};
+	float			m_boneWeights[MAX_BONES_PER_VERTEX] = {0.f, 0.f, 0.f, 0.f};
 };
 
 //-----------------------------------------------------------------------------------------------
@@ -98,7 +102,10 @@ struct VertexLit
 
 	// Construction from the master
 	VertexLit(const VertexMaster& master)
-		: m_position(master.m_position), m_color(master.m_color), m_texUVs(master.m_uvs), m_normal(master.m_normal), m_tangent(master.m_tangent) {}
+		: m_position(master.m_position), m_color(master.m_color), m_texUVs(master.m_uvs), m_normal(master.m_normal), m_tangent(master.m_tangent) 
+	{
+
+	}
 
 	Vector3 m_position;	// Position of the Vertex
 	Rgba	m_color;	// Color of the Vertex
@@ -106,6 +113,46 @@ struct VertexLit
 
 	Vector3 m_normal;	// Normal to the surface at this vertex
 	Vector4 m_tangent;	// Tangent to the surface at this vertex, w = 1 signals the cross direction for the bitangent
+
+	static const VertexAttribute	ATTRIBUTES[];
+	static const VertexLayout		LAYOUT;
+	static const unsigned int		NUM_ATTRIBUTES;
+};
+
+
+//-----------------------------------------------------------------------------------------------
+// Skinned Vertex
+//
+struct VertexSkinned
+{
+	// Constructors
+	VertexSkinned() {};
+	VertexSkinned(const Vector3& position, const Rgba& color, const Vector2& texUVs, const Vector3& normal, const Vector4& tangent)
+		: m_position(position), m_color(color), m_texUVs(texUVs), m_normal(normal), m_tangent(tangent) 
+	{
+		
+	}
+
+	// Construction from the master
+	VertexSkinned(const VertexMaster& master)
+		: m_position(master.m_position), m_color(master.m_color), m_texUVs(master.m_uvs), m_normal(master.m_normal), m_tangent(master.m_tangent) 
+	{
+		for (int i = 0; i < MAX_BONES_PER_VERTEX; ++i)
+		{
+			m_bones[i] = master.m_bones[i];
+			m_boneWeights[i] = master.m_boneWeights[i];
+		}
+	}
+
+	Vector3 m_position;	// Position of the Vertex
+	Rgba	m_color;	// Color of the Vertex
+	Vector2 m_texUVs;	// Texture UV coordinates for this vertex
+
+	Vector3 m_normal;	// Normal to the surface at this vertex
+	Vector4 m_tangent;	// Tangent to the surface at this vertex, w = 1 signals the cross direction for the bitangent
+
+	unsigned int	m_bones[MAX_BONES_PER_VERTEX];			// Max number of bones this vertex can be weighted to
+	float			m_boneWeights[MAX_BONES_PER_VERTEX];	// Weights corresponding to the bones this vertex is weighted to
 
 	static const VertexAttribute	ATTRIBUTES[];
 	static const VertexLayout		LAYOUT;

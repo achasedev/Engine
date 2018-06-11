@@ -76,6 +76,8 @@ public:
 	static Vector3 ExtractRotationDegrees(const Matrix44& rotationMatrix);
 	static Vector3 ExtractScale(const Matrix44& scaleMatrix);
 
+	static Matrix44 GetInverse(const Matrix44& matrix);
+
 
 public:
 	//-----Public data----- 

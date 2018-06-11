@@ -593,3 +593,168 @@ Vector3 Matrix44::ExtractScale(const Matrix44& scaleMatrix)
 
 	return Vector3(xScale, yScale, zScale);
 }
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the inverse of the given matrix
+//
+Matrix44 Matrix44::GetInverse(const Matrix44& matrix)
+{
+	double inv[16];
+	double det;
+	double m[16];
+	unsigned int i;
+
+	m[0]	= (double) matrix.Ix;
+	m[1]	= (double) matrix.Iy;
+	m[2]	= (double) matrix.Iz;
+	m[3]	= (double) matrix.Iw;
+	m[4]	= (double) matrix.Jx;
+	m[5]	= (double) matrix.Jy;
+	m[6]	= (double) matrix.Jz;
+	m[7]	= (double) matrix.Jw;
+	m[8]	= (double) matrix.Kx;
+	m[9]	= (double) matrix.Ky;
+	m[10]	= (double) matrix.Kz;
+	m[11]	= (double) matrix.Kw;
+	m[12]	= (double) matrix.Tx;
+	m[13]	= (double) matrix.Ty;
+	m[14]	= (double) matrix.Tz;
+	m[15]	= (double) matrix.Tw;
+
+	inv[0] = m[5]  * m[10] * m[15] - 
+		m[5]  * m[11] * m[14] - 
+		m[9]  * m[6]  * m[15] + 
+		m[9]  * m[7]  * m[14] +
+		m[13] * m[6]  * m[11] - 
+		m[13] * m[7]  * m[10];
+
+	inv[4] = -m[4]  * m[10] * m[15] + 
+		m[4]  * m[11] * m[14] + 
+		m[8]  * m[6]  * m[15] - 
+		m[8]  * m[7]  * m[14] - 
+		m[12] * m[6]  * m[11] + 
+		m[12] * m[7]  * m[10];
+
+	inv[8] = m[4]  * m[9] * m[15] - 
+		m[4]  * m[11] * m[13] - 
+		m[8]  * m[5] * m[15] + 
+		m[8]  * m[7] * m[13] + 
+		m[12] * m[5] * m[11] - 
+		m[12] * m[7] * m[9];
+
+	inv[12] = -m[4]  * m[9] * m[14] + 
+		m[4]  * m[10] * m[13] +
+		m[8]  * m[5] * m[14] - 
+		m[8]  * m[6] * m[13] - 
+		m[12] * m[5] * m[10] + 
+		m[12] * m[6] * m[9];
+
+	inv[1] = -m[1]  * m[10] * m[15] + 
+		m[1]  * m[11] * m[14] + 
+		m[9]  * m[2] * m[15] - 
+		m[9]  * m[3] * m[14] - 
+		m[13] * m[2] * m[11] + 
+		m[13] * m[3] * m[10];
+
+	inv[5] = m[0]  * m[10] * m[15] - 
+		m[0]  * m[11] * m[14] - 
+		m[8]  * m[2] * m[15] + 
+		m[8]  * m[3] * m[14] + 
+		m[12] * m[2] * m[11] - 
+		m[12] * m[3] * m[10];
+
+	inv[9] = -m[0]  * m[9] * m[15] + 
+		m[0]  * m[11] * m[13] + 
+		m[8]  * m[1] * m[15] - 
+		m[8]  * m[3] * m[13] - 
+		m[12] * m[1] * m[11] + 
+		m[12] * m[3] * m[9];
+
+	inv[13] = m[0]  * m[9] * m[14] - 
+		m[0]  * m[10] * m[13] - 
+		m[8]  * m[1] * m[14] + 
+		m[8]  * m[2] * m[13] + 
+		m[12] * m[1] * m[10] - 
+		m[12] * m[2] * m[9];
+
+	inv[2] = m[1]  * m[6] * m[15] - 
+		m[1]  * m[7] * m[14] - 
+		m[5]  * m[2] * m[15] + 
+		m[5]  * m[3] * m[14] + 
+		m[13] * m[2] * m[7] - 
+		m[13] * m[3] * m[6];
+
+	inv[6] = -m[0]  * m[6] * m[15] + 
+		m[0]  * m[7] * m[14] + 
+		m[4]  * m[2] * m[15] - 
+		m[4]  * m[3] * m[14] - 
+		m[12] * m[2] * m[7] + 
+		m[12] * m[3] * m[6];
+
+	inv[10] = m[0]  * m[5] * m[15] - 
+		m[0]  * m[7] * m[13] - 
+		m[4]  * m[1] * m[15] + 
+		m[4]  * m[3] * m[13] + 
+		m[12] * m[1] * m[7] - 
+		m[12] * m[3] * m[5];
+
+	inv[14] = -m[0]  * m[5] * m[14] + 
+		m[0]  * m[6] * m[13] + 
+		m[4]  * m[1] * m[14] - 
+		m[4]  * m[2] * m[13] - 
+		m[12] * m[1] * m[6] + 
+		m[12] * m[2] * m[5];
+
+	inv[3] = -m[1] * m[6] * m[11] + 
+		m[1] * m[7] * m[10] + 
+		m[5] * m[2] * m[11] - 
+		m[5] * m[3] * m[10] - 
+		m[9] * m[2] * m[7] + 
+		m[9] * m[3] * m[6];
+
+	inv[7] = m[0] * m[6] * m[11] - 
+		m[0] * m[7] * m[10] - 
+		m[4] * m[2] * m[11] + 
+		m[4] * m[3] * m[10] + 
+		m[8] * m[2] * m[7] - 
+		m[8] * m[3] * m[6];
+
+	inv[11] = -m[0] * m[5] * m[11] + 
+		m[0] * m[7] * m[9] + 
+		m[4] * m[1] * m[11] - 
+		m[4] * m[3] * m[9] - 
+		m[8] * m[1] * m[7] + 
+		m[8] * m[3] * m[5];
+
+	inv[15] = m[0] * m[5] * m[10] - 
+		m[0] * m[6] * m[9] - 
+		m[4] * m[1] * m[10] + 
+		m[4] * m[2] * m[9] + 
+		m[8] * m[1] * m[6] - 
+		m[8] * m[2] * m[5];
+
+	det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
+	det = 1.0 / det;
+
+	Matrix44 inverse;
+
+	inverse.Ix = (float)(inv[0] * det);
+	inverse.Iy = (float)(inv[1] * det);
+	inverse.Iz = (float)(inv[2] * det);
+	inverse.Iw = (float)(inv[3] * det);
+	inverse.Jx = (float)(inv[4] * det);
+	inverse.Jy = (float)(inv[5] * det);
+	inverse.Jz = (float)(inv[6] * det);
+	inverse.Jw = (float)(inv[7] * det);
+	inverse.Kx = (float)(inv[8] * det);
+	inverse.Ky = (float)(inv[9] * det);
+	inverse.Kz = (float)(inv[10] * det);
+	inverse.Kw = (float)(inv[11] * det);
+	inverse.Tx = (float)(inv[12] * det);
+	inverse.Ty = (float)(inv[13] * det);
+	inverse.Tz = (float)(inv[14] * det);
+	inverse.Tw = (float)(inv[15] * det);
+
+	return inverse;
+}
