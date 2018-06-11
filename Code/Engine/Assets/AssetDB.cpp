@@ -759,6 +759,10 @@ RenderableDraw_t AssetDB::ProcessAssimpMesh(aiMesh* aimesh, const aiScene* aisce
 		{
 			material->SetDiffuse(diffuse[0]);
 		}
+		else
+		{
+			material->SetDiffuse(AssetDB::CreateOrGetTexture("Default"));
+		}
 
 		if (normal.size() > 0)
 		{
