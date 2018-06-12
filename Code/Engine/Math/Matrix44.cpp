@@ -5,6 +5,7 @@
 /* Description: Implementation of the Matrix44 class
 /************************************************************************/
 #include "Engine/Core/Window.hpp"
+#include "Engine/Math/Vector4.hpp"
 #include "Engine/Math/Matrix44.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/EngineCommon.hpp"
@@ -68,6 +69,33 @@ Matrix44::Matrix44(const Vector3& iBasis, const Vector3& jBasis, const Vector3& 
 	Tx = translation.x;
 	Ty = translation.y;
 	Tz = translation.z;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Constructor from Vector4 column vectors
+//
+Matrix44::Matrix44(const Vector4& iBasis, const Vector4& jBasis, const Vector4& kBasis, const Vector4& translation/*=Vector3::ZERO*/)
+{
+	Ix = iBasis.x;
+	Iy = iBasis.y;
+	Iz = iBasis.z;
+	Iw = iBasis.w;
+
+	Jx = jBasis.x;
+	Jy = jBasis.y;
+	Jz = jBasis.z;
+	Jw = iBasis.w;
+
+	Kx = kBasis.x;
+	Ky = kBasis.y;
+	Kz = kBasis.z;
+	Kw = kBasis.w;
+
+	Tx = translation.x;
+	Ty = translation.y;
+	Tz = translation.z;
+	Tw = translation.w;
 }
 
 
@@ -592,4 +620,30 @@ Vector3 Matrix44::ExtractScale(const Matrix44& scaleMatrix)
 	float zScale = scaleMatrix.GetKVector().GetLength();
 
 	return Vector3(xScale, yScale, zScale);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Interpolates between the two matrices and returns the result
+//
+Matrix44 Interpolate(const Matrix44& start, const Matrix44& end, float fractionTowardEnd)
+{
+	Vector4 startI = start.GetIVector();
+	Vector4 endI = end.GetIVector();
+
+	Vector4 startJ = start.GetJVector();
+	Vector4 endJ = end.GetJVector();
+
+	Vector4 startK = start.GetKVector();
+	Vector4 endK = end.GetKVector();
+
+	Vector4 startT = start.GetTVector();
+	Vector4 endT = end.GetTVector();
+
+	Vector4 resultI = Interpolate(startI, endI, fractionTowardEnd);
+	Vector4 resultJ = Interpolate(startJ, endJ, fractionTowardEnd);
+	Vector4 resultK = Interpolate(startK, endK, fractionTowardEnd);
+	Vector4 resultT = Interpolate(startT, endT, fractionTowardEnd);
+
+	return Matrix44(resultI, resultJ, resultK, resultT);
 }

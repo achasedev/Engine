@@ -33,6 +33,7 @@ public:
 
 	Matrix44 GetToParentMatrix();		// Matrix that transforms this space to parent's space
 	Matrix44 GetToWorldMatrix();	// Matrix that transforms this space to absolute world space
+	Matrix44 GetParentsToWorldMatrix();
 
 	Vector3 GetWorldRight();
 	Vector3 GetWorldUp();

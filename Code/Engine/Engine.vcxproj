@@ -294,6 +294,7 @@
     <ClCompile Include="Math\IntVector3.cpp" />
     <ClCompile Include="Math\MathUtils.cpp" />
     <ClCompile Include="Math\Matrix44.cpp" />
+    <ClCompile Include="Math\Quaternion.cpp" />
     <ClCompile Include="Math\Trajectory.cpp" />
     <ClCompile Include="Math\Transform.cpp" />
     <ClCompile Include="Math\Vector2.cpp" />
@@ -403,6 +404,7 @@
     <ClInclude Include="Math\IntVector3.hpp" />
     <ClInclude Include="Math\MathUtils.hpp" />
     <ClInclude Include="Math\Matrix44.hpp" />
+    <ClInclude Include="Math\Quaternion.hpp" />
     <ClInclude Include="Math\Trajectory.hpp" />
     <ClInclude Include="Math\Transform.hpp" />
     <ClInclude Include="Math\Vector2.hpp" />

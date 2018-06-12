@@ -159,6 +159,20 @@ Matrix44 Transform::GetToWorldMatrix()
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the parent's matrix transformation, from parent space to world space
+//
+Matrix44 Transform::GetParentsToWorldMatrix()
+{
+	if (m_parentTransform != nullptr)
+	{
+		return m_parentTransform->GetToWorldMatrix();
+	}
+
+	return Matrix44::IDENTITY;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the world right vector for this transform
 //
 Vector3 Transform::GetWorldRight()
