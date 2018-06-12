@@ -148,6 +148,15 @@ void AssetDB::CreateMaterials()
 
 	AssetCollection<Material>::AddAsset("Default_Opaque", defaultMaterial);
 
+	Material* phongMaterial = new Material("Phong_Opaque");
+	phongMaterial->SetDiffuse(GetTexture("Default"));
+	phongMaterial->SetShader(GetShader(ShaderSource::PHONG_OPAQUE_NAME));
+
+	AssetCollection<Material>::AddAsset("Phong_Opaque", phongMaterial);
+
+
+	AssetCollection<Material>::AddAsset("Default_Opaque", defaultMaterial);
+
 	Material* uiMat = new Material("UI");
 	uiMat->SetDiffuse(AssetDB::GetTexture("White"));
 	uiMat->SetShader(AssetDB::GetShader(ShaderSource::UI_SHADER_NAME));
@@ -759,6 +768,10 @@ RenderableDraw_t AssetDB::ProcessAssimpMesh(aiMesh* aimesh, const aiScene* aisce
 		{
 			material->SetDiffuse(diffuse[0]);
 		}
+		else
+		{
+			material->SetDiffuse(GetTexture("Default"));
+		}
 
 		if (normal.size() > 0)
 		{
@@ -775,6 +788,8 @@ RenderableDraw_t AssetDB::ProcessAssimpMesh(aiMesh* aimesh, const aiScene* aisce
 		}
 
 		material->SetShader(AssetDB::GetShader("Phong_Opaque"));
+		material->SetProperty("SPECULAR_AMOUNT", 0.3f);
+		material->SetProperty("SPECULAR_POWER", 10.f);
 	}
 	
 

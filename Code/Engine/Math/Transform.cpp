@@ -132,7 +132,7 @@ void Transform::Scale(const Vector3& deltaScale)
 //-----------------------------------------------------------------------------------------------
 // Returns the model matrix of this transform, recalculating it if it's outdated
 //
-Matrix44 Transform::GetModelMatrix()
+Matrix44 Transform::GetToParentMatrix()
 {
 	CheckAndUpdateModelMatrix();
 	return m_modelMatrix;
@@ -163,7 +163,7 @@ Matrix44 Transform::GetToWorldMatrix()
 //
 Vector3 Transform::GetWorldRight()
 {
-	return GetModelMatrix().GetIVector().xyz();
+	return GetToWorldMatrix().GetIVector().xyz();
 }
 
 
@@ -172,7 +172,7 @@ Vector3 Transform::GetWorldRight()
 //
 Vector3 Transform::GetWorldUp()
 {
-	return GetModelMatrix().GetJVector().xyz();
+	return GetToWorldMatrix().GetJVector().xyz();
 }
 
 
@@ -181,7 +181,7 @@ Vector3 Transform::GetWorldUp()
 //
 Vector3 Transform::GetWorldForward()
 {
-	return GetModelMatrix().GetKVector().xyz();
+	return GetToWorldMatrix().GetKVector().xyz();
 }
 
 

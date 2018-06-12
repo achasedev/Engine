@@ -26,13 +26,12 @@ public:
 	void SetParentTransform(Transform* parent);
 
 	void TranslateWorld(const Vector3& worldTranslation);
-	void TranslateParent(const Vector3& parentTranslation);
 	void TranslateLocal(const Vector3& localTranslation);
 
 	void Rotate(const Vector3& deltaRotation);
 	void Scale(const Vector3& deltaScale);
 
-	Matrix44 GetModelMatrix();		// Matrix that transforms this space to parent's space
+	Matrix44 GetToParentMatrix();		// Matrix that transforms this space to parent's space
 	Matrix44 GetToWorldMatrix();	// Matrix that transforms this space to absolute world space
 
 	Vector3 GetWorldRight();
