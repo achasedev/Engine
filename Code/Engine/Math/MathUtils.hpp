@@ -14,6 +14,8 @@
 #include "Engine/Math/IntRange.hpp"
 #include "Engine/Math/IntVector2.hpp"
 
+class Quaternion;
+
 // Constants
 const float PI = 3.1415926535897932384626433832795f;
 
@@ -63,6 +65,7 @@ float	TurnToward(float currentDegrees, float goalDegrees, float maxTurnDegrees);
 float	DotProduct(const Vector2& a, const Vector2& b);									// Returns the dot product between a and b
 float	DotProduct(const Vector3& a, const Vector3& b);	
 float	DotProduct(const Vector4& a, const Vector4& b);
+float	DotProduct(const Quaternion& a, const Quaternion& b);
 Vector3 CrossProduct(const Vector3& a, const Vector3& b);								// Returns the cross product between a and b
 
 // Bitflag utilities
@@ -109,4 +112,5 @@ int		AbsoluteValue(int inValue);
 float	AbsoluteValue(float inValue);
 
 // Float comparison function
+bool AreMostlyEqual(float a, float b, float epsilon = 0.0001f);
 bool AreMostlyEqual(const Vector3& a, const Vector3& b, float epsilon = 0.0001f);
