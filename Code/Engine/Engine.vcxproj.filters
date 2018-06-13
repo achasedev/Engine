@@ -355,6 +355,8 @@
       <Filter>Core\Utilities</Filter>
     </ClCompile>
     <ClCompile Include="Math\Quaternion.cpp" />
+    <ClCompile Include="Rendering\Animation\SkeletonBase.cpp" />
+    <ClCompile Include="Assets\AssimpLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -679,5 +681,7 @@
       <Filter>Core\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="Math\Quaternion.hpp" />
+    <ClInclude Include="Rendering\Animation\SkeletonBase.hpp" />
+    <ClInclude Include="Assets\AssimpLoader.hpp" />
   </ItemGroup>
 </Project>

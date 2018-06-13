@@ -1,3 +1,9 @@
+/************************************************************************/
+/* File: Quaternion.hpp
+/* Author: Andrew Chase
+/* Date: June 12th, 2018
+/* Description: Class to represent a Quaternion rotation
+/************************************************************************/
 #include "Engine/Math/Vector3.hpp"
 
 class Quaternion
@@ -20,7 +26,6 @@ public:
 
 	const Quaternion operator*(float scalar) const;
 	friend const Quaternion operator*(float scalar, const Quaternion& quat);
-
 
 	void operator+=(const Quaternion& other);
 	void operator-=(const Quaternion& other);
@@ -51,6 +56,7 @@ public:
 	float s;
 	Vector3 v;
 
+	// Statics
 	static const Quaternion IDENTITY;
 
 };

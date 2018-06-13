@@ -1,26 +1,48 @@
+/************************************************************************/
+/* File: Quaternion.cpp
+/* Author: Andrew Chase
+/* Date: June 13th, 2018
+/* Description: Implementation of the Quaternion class
+/************************************************************************/
 #include <math.h>
 #include "Engine/Math/Matrix44.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/Quaternion.hpp"
 
+// Constants
 const Quaternion Quaternion::IDENTITY = Quaternion();
 
+
+//-----------------------------------------------------------------------------------------------
+// Constructor
+//
 Quaternion::Quaternion(float scalar, const Vector3& vector)
 	: v(vector), s(scalar)
 {
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Default constructor
+//
 Quaternion::Quaternion()
 	: v(Vector3::ZERO), s(1.f)
 {
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Copy constructor
+//
 Quaternion::Quaternion(const Quaternion& copy)
 	: v(copy.v), s(copy.s)
 {
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// + operator, component-wise
+//
 const Quaternion Quaternion::operator+(const Quaternion& other) const
 {
 	Quaternion result;
@@ -30,6 +52,10 @@ const Quaternion Quaternion::operator+(const Quaternion& other) const
 	return result;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// - operator, component-wise
+//
 const Quaternion Quaternion::operator-(const Quaternion& other) const
 {
 	Quaternion result;
@@ -39,6 +65,10 @@ const Quaternion Quaternion::operator-(const Quaternion& other) const
 	return result;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// * operator, inner product
+//
 const Quaternion Quaternion::operator*(const Quaternion& other) const
 {
 	Quaternion result;
@@ -49,6 +79,10 @@ const Quaternion Quaternion::operator*(const Quaternion& other) const
 	return result;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// * float operator, component-wise
+//
 const Quaternion Quaternion::operator*(float scalar) const
 {
 	Quaternion result;
@@ -59,6 +93,10 @@ const Quaternion Quaternion::operator*(float scalar) const
 	return result;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// * float operator, component-wise
+//
 const Quaternion operator*(float scalar, const Quaternion& quat)
 {
 	Quaternion result;
@@ -69,6 +107,10 @@ const Quaternion operator*(float scalar, const Quaternion& quat)
 	return result;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Linearly interpolates between the two quaternions
+//
 Quaternion Quaternion::Lerp(const Quaternion& a, const Quaternion& b, float fractionTowardEnd)
 {
 	float sResult	= Interpolate(a.s, b.s, fractionTowardEnd);
@@ -77,6 +119,10 @@ Quaternion Quaternion::Lerp(const Quaternion& a, const Quaternion& b, float frac
 	return Quaternion(sResult, vResult);
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// *= operator
+//
 void Quaternion::operator*=(const Quaternion& other)
 {
 	Quaternion old = (*this);
@@ -86,13 +132,50 @@ void Quaternion::operator*=(const Quaternion& other)
 }
 
 
-
+//-----------------------------------------------------------------------------------------------
+// *= float operator, component-wise
+//
 void Quaternion::operator*=(float scalar)
 {
 	s = s * scalar;
 	v = v * scalar;
 }
 
+
+
+//-----------------------------------------------------------------------------------------------
+// += operator
+//
+void Quaternion::operator+=(const Quaternion& other)
+{
+	v += other.v;
+	s += other.s;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// -= operator
+//
+void Quaternion::operator-=(const Quaternion& other)
+{
+	v -= other.v;
+	s -= other.s;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// = assignment operator
+//
+void Quaternion::operator=(const Quaternion& copy)
+{
+	v = copy.v;
+	s = copy.s;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the norm (magnitude) of the quaternion
+//
 float Quaternion::GetMagnitude() const
 {
 	float squaredNorm = (s * s) + (v.x * v.x) + (v.y * v.y) + (v.z * v.z);
@@ -101,6 +184,10 @@ float Quaternion::GetMagnitude() const
 	return magnitude;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the normalized version of the quaternion
+//
 Quaternion Quaternion::GetNormalized() const
 {
 	float magnitude = GetMagnitude();
@@ -115,6 +202,10 @@ Quaternion Quaternion::GetNormalized() const
 	return result * oneOverMag;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the inverse of this quaternion
+//
 Quaternion Quaternion::GetInverse() const
 {
 	float absoluteValue = GetMagnitude();
@@ -129,6 +220,10 @@ Quaternion Quaternion::GetInverse() const
 	return Quaternion(scalar, vector);
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// returns the Euler angle representation of this quaternion
+//
 Vector3 Quaternion::GetAsEulerAngles() const
 {
 	Matrix44 matrix = Matrix44::MakeRotation(*this);
@@ -137,11 +232,19 @@ Vector3 Quaternion::GetAsEulerAngles() const
 	return eulerAngles;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Normalizes this quaternion to have a magnitude of 1
+//
 void Quaternion::Normalize()
 {
 	(*this) = GetNormalized();
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Converts this quaternion to a unit norm (special form of a normalized quaternion)
+//
 void Quaternion::ConvertToUnitNorm()
 {
 	float angleDegrees = s;
@@ -152,6 +255,9 @@ void Quaternion::ConvertToUnitNorm()
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Returns the minimum angle between quaternions a and b, in degrees
+//
 float Quaternion::GetAngleBetweenDegrees(const Quaternion& a, const Quaternion& b)
 {	
 	float newReal = a.s * b.s - DotProduct(-1.0f * a.v, b.v);
@@ -160,6 +266,10 @@ float Quaternion::GetAngleBetweenDegrees(const Quaternion& a, const Quaternion& 
 	return result;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// constructs a Quaternion given the Euler angles in degrees
+//
 Quaternion Quaternion::FromEuler(const Vector3& eulerAnglesDegrees)
 {
 	const Vector3 he = 0.5f * eulerAnglesDegrees;
@@ -183,6 +293,10 @@ Quaternion Quaternion::FromEuler(const Vector3& eulerAnglesDegrees)
 	return result;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the quaternion rotation between start and end, moving a maximum of maxAngleDegrees from start
+//
 Quaternion Quaternion::RotateToward(const Quaternion& start, const Quaternion& end, float maxAngleDegrees)
 {
 	float angleBetween = GetAngleBetweenDegrees(start, end);
@@ -203,6 +317,10 @@ Quaternion Quaternion::RotateToward(const Quaternion& start, const Quaternion& e
 	return result;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Spherically interpolates between quaternion a and b by an amount given by fractionTowardEnd
+//
 Quaternion Quaternion::Slerp(const Quaternion& a, const Quaternion& b, float fractionTowardEnd)
 {
 	fractionTowardEnd = ClampFloatZeroToOne(fractionTowardEnd);
@@ -239,6 +357,10 @@ Quaternion Quaternion::Slerp(const Quaternion& a, const Quaternion& b, float fra
 	return Quaternion(r0.s + r1.s, r0.v + r1.v); 
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the conjugate of this quaternion
+//
 Quaternion Quaternion::GetConjugate() const
 {
 	Quaternion result;
@@ -247,22 +369,4 @@ Quaternion Quaternion::GetConjugate() const
 	result.v = -1.0f * v;
 
 	return result;
-}
-
-void Quaternion::operator+=(const Quaternion& other)
-{
-	v += other.v;
-	s += other.s;
-}
-
-void Quaternion::operator-=(const Quaternion& other)
-{
-	v -= other.v;
-	s -= other.s;
-}
-
-void Quaternion::operator=(const Quaternion& copy)
-{
-	v = copy.v;
-	s = copy.s;
 }

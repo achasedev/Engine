@@ -679,7 +679,6 @@ Matrix44 Matrix44::GetInverse(const Matrix44& matrix)
 	double inv[16];
 	double det;
 	double m[16];
-	unsigned int i;
 
 	m[0]	= (double) matrix.Ix;
 	m[1]	= (double) matrix.Iy;

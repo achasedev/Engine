@@ -8,12 +8,6 @@
 #pragma once
 #include <vector>
 #include <string>
-#include "Engine/Rendering/Core/Renderable.hpp"
-
-// Assimp
- #include "ThirdParty/assimp/include/assimp/scene.h"
-#include "ThirdParty/assimp/include/assimp/cimport.h"
-#include "ThirdParty/assimp/include/assimp/postprocess.h"
 
 class Mesh;
 class Image;
@@ -26,6 +20,7 @@ class BitmapFont;
 class Renderable;
 class SpriteSheet;
 class TextureCube;
+class SkeletonBase;
 class ShaderProgram;
 class MaterialInstance;
 
@@ -81,19 +76,6 @@ public:
 	static Material*			GetSharedMaterial(const std::string& name);
 	static MaterialInstance*	CreateMaterialInstance(const std::string& name);
 	static Material*			CreateOrGetSharedMaterial(const std::string& name);
-
-	// For loading scene files using Assimp (will create many of the above filetypes)
-	static Renderable* LoadFileWithAssimp(const std::string& filepath);
-
-
-private:
-	//-----Private Methods-----
-
-	// For Assimp loading
-	static Renderable* ProcessAssimpNode(aiNode* ainode, const aiScene* aiscene);
-		static Matrix44	ParseTransformationMatrix(aiNode* ainode);
-		static RenderableDraw_t	ProcessAssimpMesh(aiMesh* aimesh, const aiScene* aiscene);
-			static std::vector<Texture*> LoadAssimpMaterialTextures(aiMaterial* aimaterial, aiTextureType type);
 
 
 private:
