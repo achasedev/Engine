@@ -42,7 +42,7 @@ Camera::Camera()
 void Camera::TranslateWorld(const Vector3& translation)
 {
 	m_transform.TranslateWorld(translation);
-	m_viewMatrix = InvertLookAtMatrix(m_transform.GetModelMatrix());
+	m_viewMatrix = InvertLookAtMatrix(m_transform.GetToWorldMatrix());
 }
 
 
@@ -52,7 +52,7 @@ void Camera::TranslateWorld(const Vector3& translation)
 void Camera::TranslateLocal(const Vector3& localTranslation)
 {
 	m_transform.TranslateLocal(localTranslation);
-	m_viewMatrix = InvertLookAtMatrix(m_transform.GetModelMatrix());
+	m_viewMatrix = InvertLookAtMatrix(m_transform.GetToWorldMatrix());
 }
 
 
@@ -64,7 +64,7 @@ void Camera::Rotate(const Vector3& rotation)
 	m_transform.Rotate(rotation);
 
 	// For now prevent gimble lock explicitly
-	Vector3 currentRot = m_transform.rotation;
+	Vector3 currentRot = m_transform.rotation.GetAsEulerAngles();
 
 	if (currentRot.x > 90.f && currentRot.x < 180.f)
 	{
@@ -78,7 +78,7 @@ void Camera::Rotate(const Vector3& rotation)
 
 	m_transform.SetRotation(currentRot);
 
-	m_viewMatrix = InvertLookAtMatrix(m_transform.GetModelMatrix());
+	m_viewMatrix = InvertLookAtMatrix(m_transform.GetToWorldMatrix());
 }
 
 
@@ -89,7 +89,7 @@ void Camera::SetTransform(const Transform& transform)
 {
 	m_transform = transform;
 
-	m_viewMatrix = InvertLookAtMatrix(m_transform.GetModelMatrix());
+	m_viewMatrix = InvertLookAtMatrix(m_transform.GetToWorldMatrix());
 }
 
 
@@ -128,7 +128,7 @@ void Camera::LookAt(const Vector3& position, const Vector3& target, const Vector
 	Matrix44 cameraMatrix = Matrix44::MakeLookAt(position, target, up);
 
 	m_transform.position = position;
-	m_transform.rotation = Matrix44::ExtractRotationDegrees(cameraMatrix);
+	m_transform.rotation = Quaternion::FromEuler(Matrix44::ExtractRotationDegrees(cameraMatrix));
 
 	m_transform.SetModelMatrix(cameraMatrix);
 	m_viewMatrix = InvertLookAtMatrix(cameraMatrix);
@@ -237,7 +237,7 @@ void Camera::FinalizeUniformBuffer()
 
 	bufferData.m_viewMatrix = m_viewMatrix;
 	bufferData.m_projectionMatrix = m_projectionMatrix;
-	bufferData.m_cameraMatrix = m_transform.GetModelMatrix();
+	bufferData.m_cameraMatrix = m_transform.GetToWorldMatrix();
 
 	bufferData.m_cameraRight	= GetRightVector();
 	bufferData.m_cameraUp		= GetUpVector();
@@ -263,7 +263,7 @@ GLuint Camera::GetUniformBufferHandle() const
 //
 Matrix44 Camera::GetCameraMatrix() const
 {
-	return m_transform.GetModelMatrix();
+	return m_transform.GetToWorldMatrix();
 }
 
 
@@ -299,7 +299,7 @@ Vector3 Camera::GetPosition() const
 //
 Vector3 Camera::GetRotation() const
 {
-	return m_transform.rotation;
+	return m_transform.rotation.GetAsEulerAngles();
 }
 
 
@@ -308,7 +308,7 @@ Vector3 Camera::GetRotation() const
 //
 Vector3 Camera::GetForwardVector() const
 {
-	return m_transform.GetModelMatrix().GetKVector().xyz();
+	return m_transform.GetToWorldMatrix().GetKVector().xyz();
 }
 
 
@@ -317,7 +317,7 @@ Vector3 Camera::GetForwardVector() const
 //
 Vector3 Camera::GetRightVector() const
 {
-	return m_transform.GetModelMatrix().GetIVector().xyz();
+	return m_transform.GetToWorldMatrix().GetIVector().xyz();
 }
 
 
@@ -326,7 +326,7 @@ Vector3 Camera::GetRightVector() const
 //
 Vector3 Camera::GetUpVector() const
 {
-	return m_transform.GetModelMatrix().GetJVector().xyz();
+	return m_transform.GetToWorldMatrix().GetJVector().xyz();
 }
 
 

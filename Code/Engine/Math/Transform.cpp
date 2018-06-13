@@ -6,14 +6,16 @@
 /************************************************************************/
 #include "Engine/Math/Transform.hpp"
 #include "Engine/Math/MathUtils.hpp"
-
+#include "Engine/Core/EngineCommon.hpp"
 
 //-----------------------------------------------------------------------------------------------
 // Constructor from position, rotation, and scale
 //
-Transform::Transform(const Vector3& position, const Vector3& rotation, const Vector3& scale)
-	: position(position), rotation(rotation), scale(scale)
+Transform::Transform(const Vector3& position, const Vector3& rotationP, const Vector3& scale)
+	: position(position), scale(scale)
 {
+	rotation = Quaternion::FromEuler(rotationP);
+
 	CheckAndUpdateModelMatrix();
 }
 
@@ -22,8 +24,10 @@ Transform::Transform(const Vector3& position, const Vector3& rotation, const Vec
 // Default Constructor
 //
 Transform::Transform()
-	: position(Vector3::ZERO), rotation(Vector3::ZERO), scale(Vector3::ONES)
+	: position(Vector3::ZERO), scale(Vector3::ONES)
 {
+	rotation = Quaternion::IDENTITY;
+
 	CheckAndUpdateModelMatrix();
 }
 
@@ -53,7 +57,7 @@ void Transform::SetPosition(const Vector3& newPosition)
 //
 void Transform::SetRotation(const Vector3& newRotation)
 {
-	rotation = newRotation;
+	rotation = Quaternion::FromEuler(newRotation);
 }
 
 
@@ -74,7 +78,7 @@ void Transform::SetModelMatrix(const Matrix44& model)
 	m_modelMatrix = model;
 
 	position	= Matrix44::ExtractTranslation(model);
-	rotation	= Matrix44::ExtractRotationDegrees(model);
+	rotation	= Quaternion::FromEuler(Matrix44::ExtractRotationDegrees(model));
 	scale		= Matrix44::ExtractScale(model);
 }
 
@@ -112,9 +116,17 @@ void Transform::TranslateLocal(const Vector3& localTranslation)
 //
 void Transform::Rotate(const Vector3& deltaRotation)
 {
-	rotation.x = GetAngleBetweenZeroThreeSixty(rotation.x + deltaRotation.x);
-	rotation.y = GetAngleBetweenZeroThreeSixty(rotation.y + deltaRotation.y);
-	rotation.z = GetAngleBetweenZeroThreeSixty(rotation.z + deltaRotation.z);
+	TODO("Try just doing quats here")
+	CheckAndUpdateModelMatrix();
+
+	Vector3 oldRotation = Matrix44::ExtractRotationDegrees(m_modelMatrix);
+
+	Vector3 newRotation;
+	newRotation.x = GetAngleBetweenZeroThreeSixty(oldRotation.x + deltaRotation.x);
+	newRotation.y = GetAngleBetweenZeroThreeSixty(oldRotation.y + deltaRotation.y);
+	newRotation.z = GetAngleBetweenZeroThreeSixty(oldRotation.z + deltaRotation.z);
+
+	rotation = Quaternion::FromEuler(newRotation);
 }
 
 
@@ -132,7 +144,7 @@ void Transform::Scale(const Vector3& deltaScale)
 //-----------------------------------------------------------------------------------------------
 // Returns the model matrix of this transform, recalculating it if it's outdated
 //
-Matrix44 Transform::GetModelMatrix()
+Matrix44 Transform::GetToParentMatrix()
 {
 	CheckAndUpdateModelMatrix();
 	return m_modelMatrix;
@@ -159,11 +171,25 @@ Matrix44 Transform::GetToWorldMatrix()
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the parent's matrix transformation, from parent space to world space
+//
+Matrix44 Transform::GetParentsToWorldMatrix()
+{
+	if (m_parentTransform != nullptr)
+	{
+		return m_parentTransform->GetToWorldMatrix();
+	}
+
+	return Matrix44::IDENTITY;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the world right vector for this transform
 //
 Vector3 Transform::GetWorldRight()
 {
-	return GetModelMatrix().GetIVector().xyz();
+	return GetToWorldMatrix().GetIVector().xyz();
 }
 
 
@@ -172,7 +198,7 @@ Vector3 Transform::GetWorldRight()
 //
 Vector3 Transform::GetWorldUp()
 {
-	return GetModelMatrix().GetJVector().xyz();
+	return GetToWorldMatrix().GetJVector().xyz();
 }
 
 
@@ -181,7 +207,7 @@ Vector3 Transform::GetWorldUp()
 //
 Vector3 Transform::GetWorldForward()
 {
-	return GetModelMatrix().GetKVector().xyz();
+	return GetToWorldMatrix().GetKVector().xyz();
 }
 
 

@@ -7,6 +7,7 @@
 /* Description: Implementation of the MathUtils class
 /************************************************************************/
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/Quaternion.hpp"
 #include <math.h>
 #include <cstdlib>
 
@@ -500,6 +501,15 @@ float DotProduct(const Vector4& a, const Vector4& b)
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the inner (dot) product between a and b
+//
+float DotProduct(const Quaternion& a, const Quaternion& b)
+{
+	return (a.s * b.s) + (a.v.x * b.v.x) + (a.v.y * b.v.y) + (a.v.z * b.v.z);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the cross product between a and b
 //
 Vector3 CrossProduct(const Vector3& a, const Vector3& b)
@@ -847,4 +857,27 @@ bool AreMostlyEqual(const Vector3& a, const Vector3& b, float epsilon /*= 0.0001
 	bool mostlyEqual = (AbsoluteValue(difference.x) <= epsilon) && (AbsoluteValue(difference.y) <= epsilon) && (AbsoluteValue(difference.z) <= epsilon);
 
 	return mostlyEqual;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns true if the difference between the floats are less than or equal to epsilon
+//
+bool AreMostlyEqual(float a, float b, float epsilon /*= 0.0001f*/)
+{
+	float difference = b - a;
+
+	bool mostlyEqual = (AbsoluteValue(difference) <= epsilon);
+	return mostlyEqual;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns true if the difference between the quaternions is less than or equal to epsilon
+//
+bool AreMostlyEqual(const Quaternion& a, const Quaternion& b, float epsilon /*= 0.0001f*/)
+{
+	float angleBetween = Quaternion::GetAngleBetweenDegrees(a, b);
+
+	return (angleBetween <= epsilon);
 }

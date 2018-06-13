@@ -10,6 +10,7 @@
 #include "Engine/Math/Vector3.hpp"
 #include "Engine/Math/Vector4.hpp"
 
+class Quaternion;
 
 class Matrix44
 {
@@ -20,6 +21,7 @@ public:
 	Matrix44(); // default-construct to Identity matrix (via variable initialization), for speed
 	explicit Matrix44(const float* sixteenValuesBasisMajor); // float[16] array in order Ix, Iy...
 	explicit Matrix44(const Vector3& iBasis, const Vector3& jBasis, const Vector3& kBasis, const Vector3& translation=Vector3::ZERO);
+	explicit Matrix44(const Vector4& iBasis, const Vector4& jBasis, const Vector4& kBasis, const Vector4& translation=Vector4::ZERO);
 
 	// Operators
 	const Matrix44	operator*(const Matrix44& rightMat) const;			
@@ -58,6 +60,7 @@ public:
 	// Model
 	static Matrix44 MakeTranslation(const Vector3& translation);
 	static Matrix44 MakeRotation(const Vector3& rotation);
+	static Matrix44 MakeRotation(const Quaternion& rotation);
 	static Matrix44 MakeScale(const Vector3& scale);
 	static Matrix44 MakeScaleUniform(float uniformScale);
 
@@ -112,3 +115,5 @@ public:
 
 	const static Matrix44 IDENTITY;
 };
+
+Matrix44 Interpolate(const Matrix44& start, const Matrix44& end, float fractionTowardEnd);
