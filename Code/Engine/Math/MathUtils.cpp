@@ -870,3 +870,14 @@ bool AreMostlyEqual(float a, float b, float epsilon /*= 0.0001f*/)
 	bool mostlyEqual = (AbsoluteValue(difference) <= epsilon);
 	return mostlyEqual;
 }
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns true if the difference between the quaternions is less than or equal to epsilon
+//
+bool AreMostlyEqual(const Quaternion& a, const Quaternion& b, float epsilon /*= 0.0001f*/)
+{
+	float angleBetween = Quaternion::GetAngleBetweenDegrees(a, b);
+
+	return (angleBetween <= epsilon);
+}

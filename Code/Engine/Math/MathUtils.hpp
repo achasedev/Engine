@@ -114,3 +114,4 @@ float	AbsoluteValue(float inValue);
 // Float comparison function
 bool AreMostlyEqual(float a, float b, float epsilon = 0.0001f);
 bool AreMostlyEqual(const Vector3& a, const Vector3& b, float epsilon = 0.0001f);
+bool AreMostlyEqual(const Quaternion& a, const Quaternion& b, float epsilon = 0.0001f);

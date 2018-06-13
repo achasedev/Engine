@@ -31,14 +31,15 @@ public:
 	Quaternion	GetNormalized() const;
 	Quaternion	GetConjugate() const;
 	Quaternion	GetInverse() const;
+	Vector3		GetAsEulerAngles() const;
 
 	void		Normalize();
 	void		ConvertToUnitNorm();
 
 
-	static float GetAngleBetweenDegrees(const Quaternion& a, const Quaternion& b);
-	static Quaternion FromEuler(const Vector3& eulerAnglesDegrees);
-	static Quaternion RotateToward(const Quaternion& start, const Quaternion& end, float maxAngleDegrees);
+	static float		GetAngleBetweenDegrees(const Quaternion& a, const Quaternion& b);
+	static Quaternion	FromEuler(const Vector3& eulerAnglesDegrees);
+	static Quaternion	RotateToward(const Quaternion& start, const Quaternion& end, float maxAngleDegrees);
 
 	static Quaternion Lerp(const Quaternion& a, const Quaternion& b, float fractionTowardEnd);
 	static Quaternion Slerp(const Quaternion& start, const Quaternion& end, float fractionTowardEnd);
@@ -49,5 +50,7 @@ public:
 
 	float s;
 	Vector3 v;
+
+	static const Quaternion IDENTITY;
 
 };

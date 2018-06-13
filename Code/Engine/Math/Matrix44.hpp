@@ -10,6 +10,7 @@
 #include "Engine/Math/Vector3.hpp"
 #include "Engine/Math/Vector4.hpp"
 
+class Quaternion;
 
 class Matrix44
 {
@@ -59,6 +60,7 @@ public:
 	// Model
 	static Matrix44 MakeTranslation(const Vector3& translation);
 	static Matrix44 MakeRotation(const Vector3& rotation);
+	static Matrix44 MakeRotation(const Quaternion& rotation);
 	static Matrix44 MakeScale(const Vector3& scale);
 	static Matrix44 MakeScaleUniform(float uniformScale);
 

@@ -35,7 +35,7 @@ ParticleEmitter::~ParticleEmitter()
 void ParticleEmitter::SetTransform(const Vector3& position, const Vector3& rotation, const Vector3& scale)
 {
 	transform.position = position;
-	transform.rotation = rotation;
+	transform.rotation = Quaternion::FromEuler(rotation);
 	transform.scale = scale;
 }
 

@@ -1,7 +1,9 @@
 #include <math.h>
-#include "Engine/Math/Quaternion.hpp"
+#include "Engine/Math/Matrix44.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/Quaternion.hpp"
 
+const Quaternion Quaternion::IDENTITY = Quaternion();
 
 Quaternion::Quaternion(float scalar, const Vector3& vector)
 	: v(vector), s(scalar)
@@ -125,6 +127,14 @@ Quaternion Quaternion::GetInverse() const
 	Vector3 vector = conjugate.v * absoluteValue;
 
 	return Quaternion(scalar, vector);
+}
+
+Vector3 Quaternion::GetAsEulerAngles() const
+{
+	Matrix44 matrix = Matrix44::MakeRotation(*this);
+	Vector3 eulerAngles = Matrix44::ExtractRotationDegrees(matrix);
+
+	return eulerAngles;
 }
 
 void Quaternion::Normalize()

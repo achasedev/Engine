@@ -8,6 +8,7 @@
 #include "Engine/Math/Vector4.hpp"
 #include "Engine/Math/Matrix44.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/Quaternion.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 
 const Matrix44 Matrix44::IDENTITY = Matrix44();
@@ -433,7 +434,54 @@ Matrix44 Matrix44::MakeRotation(const Vector3& rotation)
 
 
 //-----------------------------------------------------------------------------------------------
-// Constructs a 2D translation matrix for the given 2D translation and returns it
+// Constructs a rotation matrix from the given quaternion and returns it
+//
+Matrix44 Matrix44::MakeRotation(const Quaternion& rotation)
+{
+	// Imaginary part
+	float const x = rotation.v.x;
+	float const y = rotation.v.y;
+	float const z = rotation.v.z;
+
+	// Cache off some squares
+	float const x2 = x * x;
+	float const y2 = y * y;
+	float const z2 = z * z;
+
+	// I Basis
+	Vector4 iCol = Vector4( 
+		1.0f - 2.0f * y2 - 2.0f * z2, 
+		2.0f * x * y + 2.0f * rotation.s * z, 
+		2.0f * x * z - 2.0f * rotation.s * y,
+		0.f
+	);
+
+	// J Basis
+	Vector4 jCol = Vector4(	
+		2 * x * y - 2.0f * rotation.s * z, 
+		1.0f - 2.0f * x2 - 2.0f * z2, 
+		2.0f * y * z + 2.0f * rotation.s * x,
+		0.f
+	);
+
+	// K Basis
+	Vector4 kCol = Vector4( 
+		2.0f * x * z + 2.0f * rotation.s * y, 
+		2.0f * y * z - 2.0f * rotation.s * x, 
+		1.0f - 2.0f * x2 - 2.0f * y2,
+		0.f
+	);
+
+	// T Basis
+	Vector4 tCol = Vector4(0.f, 0.f, 0.f, 1.0f);
+
+	Matrix44 result = Matrix44(iCol, jCol, kCol, tCol);
+	return result;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Constructs a 3D translation matrix for the given 3D translation and returns it
 //
 Matrix44 Matrix44::MakeTranslation(const Vector3& translation)
 {

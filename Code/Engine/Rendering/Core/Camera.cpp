@@ -64,7 +64,7 @@ void Camera::Rotate(const Vector3& rotation)
 	m_transform.Rotate(rotation);
 
 	// For now prevent gimble lock explicitly
-	Vector3 currentRot = m_transform.rotation;
+	Vector3 currentRot = m_transform.rotation.GetAsEulerAngles();
 
 	if (currentRot.x > 90.f && currentRot.x < 180.f)
 	{
@@ -128,7 +128,7 @@ void Camera::LookAt(const Vector3& position, const Vector3& target, const Vector
 	Matrix44 cameraMatrix = Matrix44::MakeLookAt(position, target, up);
 
 	m_transform.position = position;
-	m_transform.rotation = Matrix44::ExtractRotationDegrees(cameraMatrix);
+	m_transform.rotation = Quaternion::FromEuler(Matrix44::ExtractRotationDegrees(cameraMatrix));
 
 	m_transform.SetModelMatrix(cameraMatrix);
 	m_viewMatrix = InvertLookAtMatrix(cameraMatrix);
@@ -299,7 +299,7 @@ Vector3 Camera::GetPosition() const
 //
 Vector3 Camera::GetRotation() const
 {
-	return m_transform.rotation;
+	return m_transform.rotation.GetAsEulerAngles();
 }
 
 
