@@ -92,7 +92,7 @@ void Renderable::RemoveInstanceMatrix(unsigned int instanceIndex)
 //-----------------------------------------------------------------------------------------------
 // Sets the base skeleton (bind pose) for the renderable
 //
-void Renderable::SetSkeleton(const SkeletonBase* skeleton)
+void Renderable::SetSkeleton(SkeletonBase* skeleton)
 {
 	m_skeleton = skeleton;
 }
@@ -147,6 +147,15 @@ Material* Renderable::GetMaterialInstance(unsigned int drawIndex)
 Matrix44 Renderable::GetInstanceMatrix(unsigned int instanceIndex) const
 {
 	return m_instanceModels[instanceIndex];
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the current skeleton of this renderable
+//
+SkeletonBase* Renderable::GetSkeletonBase() const
+{
+	return m_skeleton;
 }
 
 

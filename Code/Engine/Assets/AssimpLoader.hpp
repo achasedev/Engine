@@ -27,34 +27,28 @@ public:
 
 	// Accessors
 	Renderable*		GetRenderable();
-	SkeletonBase*	GetSkeleton();
 
 
 private:
 	//-----Private Methods-----
 
 	// Loading Order
-	void ParseMeshAndModelDataFromScene();
-	//void ParseSkeletonDataFromScene();
+	void BuildAllMeshesAndMaterials();
+	void BuildMeshAndMaterialForMesh(aiMesh* aimesh);
+
+	void BuildSkeletonHierarchy();
 
 	// Mesh and Material Loading
-	void					ExtractMeshAndMaterialsFromNode(aiNode* ainode);
-	void					BuildMeshAndMaterialsFromMesh(aiMesh* aimesh, const Matrix44& transform);
+	void ProcessNodeAndChildren(aiNode* ainode);
 
 	// Skeletal and Animation Loading
 	//void ExtractSkeletonFromNode(aiNode* ainode);
-	//void ExtractSkeletonFromNode_NoMesh(aiNode* ainode);
-	//void ExtractSkeletonFromNode_WithMesh(aiNode* ainode);
-
-	// Assimp Utility
-	static Matrix44	ExtractTransformationFromNode(aiNode* ainode);
 
 
 private:
 	//-----Private Data-----
 
 	Renderable*		m_renderable = nullptr;
-	SkeletonBase*	m_skeleton = nullptr;
 
 	const aiScene* m_scene = nullptr;
 

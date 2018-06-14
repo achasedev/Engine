@@ -79,6 +79,12 @@ public:
 
 
 public:
+	//-----For Skeleton Animation-----
+
+	void AddBoneData(int vboIndex, unsigned int boneIndex, float weight);
+
+
+public:
 	//-----Templates for creating meshes-----
 
 	// Return Mesh as a pointer

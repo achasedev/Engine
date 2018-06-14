@@ -63,7 +63,7 @@ struct VertexMaster
 	Vector3 m_normal	= Vector3::ZERO;
 	Vector4 m_tangent	= Vector4::ZERO;
 
-	unsigned int	m_bones[MAX_BONES_PER_VERTEX] = {0, 0, 0, 0};
+	unsigned int	m_boneIndices[MAX_BONES_PER_VERTEX] = {0, 0, 0, 0};
 	float			m_boneWeights[MAX_BONES_PER_VERTEX] = {0.f, 0.f, 0.f, 0.f};
 };
 
@@ -139,7 +139,7 @@ struct VertexSkinned
 	{
 		for (int i = 0; i < MAX_BONES_PER_VERTEX; ++i)
 		{
-			m_bones[i] = master.m_bones[i];
+			m_bones[i] = master.m_boneIndices[i];
 			m_boneWeights[i] = master.m_boneWeights[i];
 		}
 	}

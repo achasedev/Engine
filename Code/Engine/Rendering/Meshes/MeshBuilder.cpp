@@ -243,6 +243,28 @@ void MeshBuilder::SetVertexTangent(int vboIndex, const Vector4& tangent)
 
 
 //-----------------------------------------------------------------------------------------------
+// Adds the given bone index/weight information to the vertex at vboIndex
+//
+void MeshBuilder::AddBoneData(int vboIndex, unsigned int boneIndex, float weight)
+{
+	VertexMaster& vertex = m_vertices[vboIndex];
+
+	// Find the next weight slot
+	for (int i = 0; i < MAX_BONES_PER_VERTEX; ++i)
+	{
+		if (vertex.m_boneWeights[i] == 0.f)
+		{
+			vertex.m_boneWeights[i] = weight;
+			vertex.m_boneIndices[i] = boneIndex;
+			return;
+		}
+	}
+
+	ERROR_AND_DIE("Error: Tried to set more than 4 bone weights for a single vertex.");
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Generates the normals for all vertices in the MeshBuilder on a per-face basis
 //
 void MeshBuilder::GenerateFlatTBN()
