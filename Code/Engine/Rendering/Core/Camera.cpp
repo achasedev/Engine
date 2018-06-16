@@ -42,7 +42,7 @@ Camera::Camera()
 void Camera::TranslateWorld(const Vector3& translation)
 {
 	m_transform.TranslateWorld(translation);
-	m_viewMatrix = InvertLookAtMatrix(m_transform.GetToWorldMatrix());
+	m_viewMatrix = InvertLookAtMatrix(m_transform.GetWorldMatrix());
 }
 
 
@@ -52,7 +52,7 @@ void Camera::TranslateWorld(const Vector3& translation)
 void Camera::TranslateLocal(const Vector3& localTranslation)
 {
 	m_transform.TranslateLocal(localTranslation);
-	m_viewMatrix = InvertLookAtMatrix(m_transform.GetToWorldMatrix());
+	m_viewMatrix = InvertLookAtMatrix(m_transform.GetWorldMatrix());
 }
 
 
@@ -79,7 +79,7 @@ void Camera::Rotate(const Vector3& rotation)
 
 	m_transform.SetRotation(newRotation);
 
-	m_viewMatrix = InvertLookAtMatrix(m_transform.GetToWorldMatrix());
+	m_viewMatrix = InvertLookAtMatrix(m_transform.GetWorldMatrix());
 }
 
 
@@ -90,7 +90,7 @@ void Camera::SetTransform(const Transform& transform)
 {
 	m_transform = transform;
 
-	m_viewMatrix = InvertLookAtMatrix(m_transform.GetToWorldMatrix());
+	m_viewMatrix = InvertLookAtMatrix(m_transform.GetWorldMatrix());
 }
 
 
@@ -238,7 +238,7 @@ void Camera::FinalizeUniformBuffer()
 
 	bufferData.m_viewMatrix = m_viewMatrix;
 	bufferData.m_projectionMatrix = m_projectionMatrix;
-	bufferData.m_cameraMatrix = m_transform.GetToWorldMatrix();
+	bufferData.m_cameraMatrix = m_transform.GetWorldMatrix();
 
 	bufferData.m_cameraRight	= GetRightVector();
 	bufferData.m_cameraUp		= GetUpVector();
@@ -264,7 +264,7 @@ GLuint Camera::GetUniformBufferHandle() const
 //
 Matrix44 Camera::GetCameraMatrix() const
 {
-	return m_transform.GetToWorldMatrix();
+	return m_transform.GetWorldMatrix();
 }
 
 
@@ -309,7 +309,7 @@ Vector3 Camera::GetRotation() const
 //
 Vector3 Camera::GetForwardVector() const
 {
-	return m_transform.GetToWorldMatrix().GetKVector().xyz();
+	return m_transform.GetWorldMatrix().GetKVector().xyz();
 }
 
 
@@ -318,7 +318,7 @@ Vector3 Camera::GetForwardVector() const
 //
 Vector3 Camera::GetRightVector() const
 {
-	return m_transform.GetToWorldMatrix().GetIVector().xyz();
+	return m_transform.GetWorldMatrix().GetIVector().xyz();
 }
 
 
@@ -327,7 +327,7 @@ Vector3 Camera::GetRightVector() const
 //
 Vector3 Camera::GetUpVector() const
 {
-	return m_transform.GetToWorldMatrix().GetJVector().xyz();
+	return m_transform.GetWorldMatrix().GetJVector().xyz();
 }
 
 

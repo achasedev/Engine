@@ -43,6 +43,7 @@ public:
 	
 	void Append(const Matrix44& matrixToAppend);				// Concatenate on the right	
 	void Transpose();
+	void Invert();
 
 	// Accessor helpers
 	Vector4 GetIVector() const;
@@ -54,6 +55,8 @@ public:
 	Vector4 GetYVector() const;
 	Vector4 GetZVector() const;
 	Vector4 GetWVector() const;
+
+	Matrix44 GetInverse() const;
 
 	//--Static Producers--
 

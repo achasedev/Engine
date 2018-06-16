@@ -74,7 +74,7 @@ void ParticleEmitter::Update()
 		Particle& p = m_particles[particleIndex];
 		p.m_force = m_force;
 		p.Update(m_stopwatch->GetDeltaSeconds());
-		m_renderable->SetInstanceMatrix(particleIndex, p.m_transform.GetToWorldMatrix());
+		m_renderable->SetInstanceMatrix(particleIndex, p.m_transform.GetWorldMatrix());
 
 		if (p.IsDead(m_stopwatch->GetTotalSeconds()))
 		{
@@ -112,7 +112,7 @@ void ParticleEmitter::SpawnParticle()
 		particle.m_transform.position = transform.position;
 	}
 
-	m_renderable->AddInstanceMatrix(particle.m_transform.GetToWorldMatrix());
+	m_renderable->AddInstanceMatrix(particle.m_transform.GetWorldMatrix());
 	m_particles.push_back(particle);
 }
 

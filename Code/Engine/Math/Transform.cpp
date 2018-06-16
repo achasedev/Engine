@@ -16,7 +16,7 @@ Transform::Transform(const Vector3& position, const Vector3& rotationP, const Ve
 {
 	rotation = Quaternion::FromEuler(rotationP);
 
-	CheckAndUpdateModelMatrix();
+	CheckAndUpdateLocalMatrix();
 }
 
 
@@ -28,7 +28,7 @@ Transform::Transform()
 {
 	rotation = Quaternion::IDENTITY;
 
-	CheckAndUpdateModelMatrix();
+	CheckAndUpdateLocalMatrix();
 }
 
 
@@ -75,7 +75,7 @@ void Transform::SetScale(const Vector3& newScale)
 //
 void Transform::SetModelMatrix(const Matrix44& model)
 {
-	m_modelMatrix = model;
+	m_localMatrix = model;
 
 	position	= Matrix44::ExtractTranslation(model);
 	rotation	= Quaternion::FromEuler(Matrix44::ExtractRotationDegrees(model));
@@ -106,7 +106,7 @@ void Transform::TranslateWorld(const Vector3& worldTranslation)
 //
 void Transform::TranslateLocal(const Vector3& localTranslation)
 {
-	Vector4 worldTranslation = GetToWorldMatrix() * Vector4(localTranslation, 0.f);
+	Vector4 worldTranslation = GetWorldMatrix() * Vector4(localTranslation, 0.f);
 	TranslateWorld(worldTranslation.xyz());
 }
 
@@ -117,9 +117,9 @@ void Transform::TranslateLocal(const Vector3& localTranslation)
 void Transform::Rotate(const Vector3& deltaRotation)
 {
 	TODO("Try just doing quats here")
-	CheckAndUpdateModelMatrix();
+	CheckAndUpdateLocalMatrix();
 
-	Vector3 oldRotation = Matrix44::ExtractRotationDegrees(m_modelMatrix);
+	Vector3 oldRotation = Matrix44::ExtractRotationDegrees(m_localMatrix);
 
 	Vector3 newRotation;
 	newRotation.x = GetAngleBetweenZeroThreeSixty(oldRotation.x + deltaRotation.x);
@@ -144,28 +144,28 @@ void Transform::Scale(const Vector3& deltaScale)
 //-----------------------------------------------------------------------------------------------
 // Returns the model matrix of this transform, recalculating it if it's outdated
 //
-Matrix44 Transform::GetToParentMatrix()
+Matrix44 Transform::GetLocalMatrix()
 {
-	CheckAndUpdateModelMatrix();
-	return m_modelMatrix;
+	CheckAndUpdateLocalMatrix();
+	return m_localMatrix;
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Returns the matrix that transforms this space to absolute world space
 //
-Matrix44 Transform::GetToWorldMatrix()
+Matrix44 Transform::GetWorldMatrix()
 {
-	CheckAndUpdateModelMatrix();
+	CheckAndUpdateLocalMatrix();
 
 	if (m_parentTransform != nullptr)
 	{
-		Matrix44 parentToWorld = m_parentTransform->GetToWorldMatrix();
-		return parentToWorld * m_modelMatrix;
+		Matrix44 parentWorld = m_parentTransform->GetWorldMatrix();
+		return parentWorld * m_localMatrix;
 	}
 	else
 	{
-		return m_modelMatrix;
+		return m_localMatrix;
 	}
 }
 
@@ -177,7 +177,7 @@ Matrix44 Transform::GetParentsToWorldMatrix()
 {
 	if (m_parentTransform != nullptr)
 	{
-		return m_parentTransform->GetToWorldMatrix();
+		return m_parentTransform->GetWorldMatrix();
 	}
 
 	return Matrix44::IDENTITY;
@@ -189,7 +189,7 @@ Matrix44 Transform::GetParentsToWorldMatrix()
 //
 Vector3 Transform::GetWorldRight()
 {
-	return GetToWorldMatrix().GetIVector().xyz();
+	return GetWorldMatrix().GetIVector().xyz();
 }
 
 
@@ -198,7 +198,7 @@ Vector3 Transform::GetWorldRight()
 //
 Vector3 Transform::GetWorldUp()
 {
-	return GetToWorldMatrix().GetJVector().xyz();
+	return GetWorldMatrix().GetJVector().xyz();
 }
 
 
@@ -207,19 +207,19 @@ Vector3 Transform::GetWorldUp()
 //
 Vector3 Transform::GetWorldForward()
 {
-	return GetToWorldMatrix().GetKVector().xyz();
+	return GetWorldMatrix().GetKVector().xyz();
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Recalculates the model matrix of this transform given its current position, rotation, and scale
 //
-void Transform::CheckAndUpdateModelMatrix()
+void Transform::CheckAndUpdateLocalMatrix()
 {
 	// Check if it needs to be updated first
-	bool translationUpToDate = AreMostlyEqual(position, m_oldPosition);
-	bool rotationUpToDate = AreMostlyEqual(rotation, m_oldRotation);
-	bool scaleUpToDate = AreMostlyEqual(scale, m_oldScale);
+	bool translationUpToDate	= AreMostlyEqual(position, m_oldPosition);
+	bool rotationUpToDate		= AreMostlyEqual(rotation, m_oldRotation);
+	bool scaleUpToDate			= AreMostlyEqual(scale, m_oldScale);
 
 	// If any out of date, recalculate the matrix
 	if (!translationUpToDate || !rotationUpToDate || !scaleUpToDate)
@@ -228,7 +228,7 @@ void Transform::CheckAndUpdateModelMatrix()
 		Matrix44 rotationMatrix		= Matrix44::MakeRotation(rotation);
 		Matrix44 scaleMatrix		= Matrix44::MakeScale(scale);
 
-		m_modelMatrix = translationMatrix * rotationMatrix * scaleMatrix;
+		m_localMatrix = translationMatrix * rotationMatrix * scaleMatrix;
 
 		// Set old values for the next call
 		m_oldPosition = position;

@@ -325,6 +325,15 @@ void Matrix44::Transpose()
 
 
 //-----------------------------------------------------------------------------------------------
+// Inverts the given matrix
+//
+void Matrix44::Invert()
+{
+	(*this) = Matrix44::GetInverse(*this);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the I vector of the matrix
 //
 Vector4 Matrix44::GetIVector() const
@@ -832,6 +841,16 @@ Matrix44 Matrix44::GetInverse(const Matrix44& matrix)
 	inverse.Tw = (float)(inv[15] * det);
 
 	return inverse;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the inverse of the matrix
+//
+Matrix44 Matrix44::GetInverse() const
+{
+	Matrix44 temp = Matrix44::GetInverse(*this);
+	return temp;
 }
 
 

@@ -32,8 +32,8 @@ public:
 	void Rotate(const Vector3& deltaRotation);
 	void Scale(const Vector3& deltaScale);
 
-	Matrix44 GetToParentMatrix();		// Matrix that transforms this space to parent's space
-	Matrix44 GetToWorldMatrix();	// Matrix that transforms this space to absolute world space
+	Matrix44 GetLocalMatrix();		// Matrix that transforms this space to parent's space
+	Matrix44 GetWorldMatrix();	// Matrix that transforms this space to absolute world space
 	Matrix44 GetParentsToWorldMatrix();
 
 	Vector3 GetWorldRight();
@@ -44,16 +44,16 @@ public:
 private:
 	//-----Private Methods-----
 
-	void CheckAndUpdateModelMatrix();
+	void CheckAndUpdateLocalMatrix();
 
 
 public:
 	//-----Public Data-----
 
-	// All defined in ABSOLUTE WORLD space!
-	Vector3		position;	// WORLD position
-	Quaternion	rotation;	// WORLD rotation
-	Vector3		scale;		// WORLD scale
+	// All defined in local space!
+	Vector3		position;	
+	Quaternion	rotation;	
+	Vector3		scale;		
 
 
 private:
@@ -63,7 +63,7 @@ private:
 	Quaternion m_oldRotation = Quaternion::IDENTITY;
 	Vector3 m_oldScale = Vector3::ONES;
 
-	Matrix44 m_modelMatrix;
+	Matrix44 m_localMatrix;
 
 	Transform* m_parentTransform = nullptr;
 };
