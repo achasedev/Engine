@@ -110,7 +110,7 @@ void Transform::TranslateLocal(const Vector3& localTranslation)
 	TranslateWorld(worldTranslation.xyz());
 }
 
-
+#include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 //-----------------------------------------------------------------------------------------------
 // Rotates the translation by deltaRotation
 //

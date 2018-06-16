@@ -458,7 +458,7 @@ Matrix44 Matrix44::MakeRotation(const Quaternion& rotation)
 
 	// J Basis
 	Vector4 jCol = Vector4(	
-		2 * x * y - 2.0f * rotation.s * z, 
+		2.f * x * y - 2.0f * rotation.s * z, 
 		1.0f - 2.0f * x2 - 2.0f * z2, 
 		2.0f * y * z + 2.0f * rotation.s * x,
 		0.f

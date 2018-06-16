@@ -22,6 +22,7 @@
 #include "Engine/Rendering/DebugRendering/DebugRenderTask_Quad3D.hpp"
 #include "Engine/Rendering/DebugRendering/DebugRenderTask_Text2D.hpp"
 #include "Engine/Rendering/DebugRendering/DebugRenderTask_UVSphere.hpp"
+#include "Engine/Rendering/DebugRendering/DebugRenderTask_Skeleton.hpp"
 
 // Singleton instance
 DebugRenderSystem*	DebugRenderSystem::s_instance = nullptr;
@@ -444,6 +445,28 @@ void DebugRenderSystem::DrawCube(const Vector3& position, float lifetime, const 
 	options.m_endColor = color;
 
 	DrawCube(position, options, dimensions);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Draws an animation skeleton, helper function
+//
+void DebugRenderSystem::DrawSkeleton(SkeletonBase* skeleton, const Matrix44& transform, float lifetime)
+{
+	DebugRenderOptions options;
+	options.m_lifetime = lifetime;
+
+	DrawSkeleton(skeleton, transform, options);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Draws an animation skeleton, base function
+//
+void DebugRenderSystem::DrawSkeleton(SkeletonBase* skeleton, const Matrix44& transform, const DebugRenderOptions& options)
+{
+	DebugRenderTask_Skeleton* skeletonTask = new DebugRenderTask_Skeleton(skeleton, transform, options);
+	s_instance->m_tasks.push_back(skeletonTask);
 }
 
 

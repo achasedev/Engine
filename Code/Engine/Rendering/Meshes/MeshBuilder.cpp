@@ -502,7 +502,22 @@ void MeshBuilder::PushIndices(unsigned int first, unsigned int second, unsigned 
 
 
 //-----------------------------------------------------------------------------------------------
-// Pushes the vertices and indices needed to construt a point with the given params
+// Pushes the vertices needed to draw a line from start to end
+//
+void MeshBuilder::PushLine(const Vector3& start, const Vector3& end, const Rgba& color /*= Rgba::WHITE*/)
+{
+	AssertBuildState(true, PRIMITIVE_LINES, false);
+
+	SetColor(color);
+	SetUVs(Vector2::ZERO);
+
+	PushVertex(start);
+	PushVertex(end);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Pushes the vertices and indices needed to construct a point with the given params
 //
 void MeshBuilder::PushPoint(const Vector3& position, const Rgba& color /*= Rgba::WHITE*/, float radius /*= 1.0f*/)
 {

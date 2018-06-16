@@ -11,6 +11,7 @@
 #include "Engine/Rendering/Core/Vertex.hpp"
 
 typedef Vector3 (*SurfacePatchFunction)(const Vector2&);
+class Matrix44;
 
 class MeshBuilder
 {
@@ -35,6 +36,7 @@ public:
 	void			PushIndices(unsigned int first, unsigned int second, unsigned int third);
 
 	// Helper Builder Functions
+	void PushLine(const Vector3& start, const Vector3& end, const Rgba& color = Rgba::WHITE);
 	void PushPoint(const Vector3& position, const Rgba& color = Rgba::WHITE, float radius = 1.0f);
 	void Push2DQuad(const AABB2& bounds, const AABB2& uvs, const Rgba& color = Rgba::WHITE);
 	void Push3DQuad(const Vector3& position, const Vector2& dimensions, const AABB2& uvs, const Rgba& color = Rgba::WHITE, 

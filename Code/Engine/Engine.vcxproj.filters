@@ -357,6 +357,7 @@
     <ClCompile Include="Math\Quaternion.cpp" />
     <ClCompile Include="Rendering\Animation\SkeletonBase.cpp" />
     <ClCompile Include="Assets\AssimpLoader.cpp" />
+    <ClCompile Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -683,5 +684,6 @@
     <ClInclude Include="Math\Quaternion.hpp" />
     <ClInclude Include="Rendering\Animation\SkeletonBase.hpp" />
     <ClInclude Include="Assets\AssimpLoader.hpp" />
+    <ClInclude Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.hpp" />
   </ItemGroup>
 </Project>

@@ -302,6 +302,7 @@
     <ClCompile Include="Math\Vector3.cpp" />
     <ClCompile Include="Math\Vector4.cpp" />
     <ClCompile Include="Rendering\Animation\SkeletonBase.cpp" />
+    <ClCompile Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.cpp" />
     <ClCompile Include="Rendering\Resources\BitmapFont.cpp" />
     <ClCompile Include="Rendering\Core\Camera.cpp" />
     <ClCompile Include="Rendering\DebugRendering\DebugRenderSystem.cpp" />
@@ -414,6 +415,7 @@
     <ClInclude Include="Math\Vector3.hpp" />
     <ClInclude Include="Math\Vector4.hpp" />
     <ClInclude Include="Rendering\Animation\SkeletonBase.hpp" />
+    <ClInclude Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.hpp" />
     <ClInclude Include="Rendering\Resources\BitmapFont.hpp" />
     <ClInclude Include="Rendering\Core\Camera.hpp" />
     <ClInclude Include="Rendering\DebugRendering\DebugRenderSystem.hpp" />

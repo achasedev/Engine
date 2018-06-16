@@ -206,6 +206,36 @@ void AssetDB::CreateMeshes()
 	Mesh* sphere = mb.CreateMesh();
 
 	AssetCollection<Mesh>::AddAsset("Sphere", sphere);
+
+	// Bone
+	mb.Clear();
+	mb.BeginBuilding(PRIMITIVE_LINES, false);
+
+	// Small "back" facing shape
+	mb.PushLine(Vector3(0.f, 0.f, -0.5f), Vector3(0.f, 0.5f, 0.f));
+	mb.PushLine(Vector3(0.f, 0.f, -0.5f), Vector3(0.f, -0.5f, 0.f));
+	mb.PushLine(Vector3(0.f, 0.f, -0.5f), Vector3(0.5f, 0.f, 0.f));
+	mb.PushLine(Vector3(0.f, 0.f, -0.5f), Vector3(-0.5f, 0.f, 0.f));
+
+	// Larget "forward" shape
+	mb.PushLine(Vector3(0.f, 0.5f, 0.f), Vector3(0.f, 0.f, 2.f));
+	mb.PushLine(Vector3(0.f, -0.5f, 0.f), Vector3(0.f, 0.f, 2.f));
+	mb.PushLine(Vector3(0.5f, 0.f, 0.f), Vector3(0.f, 0.f, 2.f));
+	mb.PushLine(Vector3(-0.5f, 0.f, 0.f), Vector3(0.f, 0.f, 2.f));
+
+	// Line going right
+	mb.PushLine(Vector3::ZERO, Vector3(0.5f, 0.f, 0.f), Rgba::RED);
+
+	// Line going up
+	mb.PushLine(Vector3::ZERO, Vector3(0.f, 0.5f, 0.f), Rgba::GREEN);
+
+	// Line through the center
+	mb.PushLine(Vector3(0.f, 0.f, -0.5f), Vector3(0.f, 0.f, 2.f), Rgba::BLUE);
+
+	mb.FinishBuilding();
+	Mesh* boneMesh = mb.CreateMesh<Vertex3D_PCU>();
+
+	AssetCollection<Mesh>::AddAsset("Bone", boneMesh);
 }
 
 

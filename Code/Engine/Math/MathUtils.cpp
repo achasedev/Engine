@@ -83,6 +83,7 @@ float CosDegrees(float degrees)
 //
 float ACosDegrees(float ratio)
 {
+	ClampFloat(ratio, -1.f, 1.f);
 	float radians = acosf(ratio);
 
 	return ConvertRadiansToDegrees(radians);
@@ -105,6 +106,7 @@ float SinDegrees(float degrees)
 //
 float ASinDegrees(float ratio)
 {
+	ratio = ClampFloat(ratio, -1.f, 1.f);
 	float radians = asinf(ratio);
 
 	return ConvertRadiansToDegrees(radians);

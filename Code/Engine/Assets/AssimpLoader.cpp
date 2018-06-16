@@ -15,6 +15,8 @@
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 #include "Engine/Rendering/Animation/SkeletonBase.hpp"
 
+#include "Engine/Rendering/DebugRendering/DebugRenderSystem.hpp"
+
 // Assimp
 #include "ThirdParty/assimp/include/assimp/scene.h"
 #include "ThirdParty/assimp/include/assimp/cimport.h"
@@ -81,11 +83,23 @@ bool AssimpLoader::LoadFile(const std::string& filepath)
 		ERROR_AND_DIE(Stringf("Error: AssimpLoader::LoadFile ran into error \"%s\" while loading file \"%s\"", importer.GetErrorString(), filepath.c_str()));
 	}
 
-	m_renderable = new Renderable();
-	m_renderable->SetSkeleton(new SkeletonBase());
+	// Debugging
 
-	// Load Mesh, Material, and Skeletal data
-	BuildAllMeshesAndMaterials();
+	m_renderable = new Renderable();
+	SkeletonBase* skeleton = new SkeletonBase();
+	aiMatrix4x4 inverseGlobal = m_scene->mRootNode->mTransformation;
+	inverseGlobal.Inverse();
+
+	skeleton->SetGlobalInverseTransform(ConvertAiMatrixToMyMatrix(inverseGlobal));
+	m_renderable->SetSkeleton(skeleton);
+
+	// Create mesh and material data
+	BuildMeshesAndMaterials_FromScene();
+
+	// Load the skeletal hierarchy
+	BuildBoneHierarchy();
+
+	// Load animations
 
 	importer.FreeScene();
 
@@ -103,47 +117,43 @@ Renderable* AssimpLoader::GetRenderable()
 
 
 //-----------------------------------------------------------------------------------------------
-// Parses the aiScene loaded from the file for all Mesh and Material data, and assembles a renderable
+// Returns the renderable created from the loaded file
 //
-void AssimpLoader::BuildAllMeshesAndMaterials()
+void AssimpLoader::BuildMeshesAndMaterials_FromScene()
 {
-	// Iterate across all meshes in the scene object
-	unsigned int numMeshes = m_scene->mNumMeshes;
-	for (unsigned int meshIndex = 0; meshIndex < numMeshes; ++meshIndex)
-	{
-		BuildMeshAndMaterialForMesh(m_scene->mMeshes[meshIndex]);
-	}
+	BuildMeshesAndMaterials_FromNode(m_scene->mRootNode, Matrix44::IDENTITY);
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Constructs all Mesh and Material data from the given node
+// Builds all meshes and materials from the data on the given node
 //
-void AssimpLoader::ProcessNodeAndChildren(aiNode* ainode)
+void AssimpLoader::BuildMeshesAndMaterials_FromNode(aiNode* node, const Matrix44& parentTransform)
 {
-	Matrix44 nodeTransform = ConvertAiMatrixToMyMatrix(ainode->mTransformation);
+	 Matrix44 currTransform = ConvertAiMatrixToMyMatrix(node->mTransformation);
+	 currTransform = parentTransform * currTransform;
 
-	// Process meshes  
-	for (unsigned int meshIndex = 0; meshIndex < ainode->mNumMeshes; ++meshIndex)
-	{
-		aiMesh* aimesh =  m_scene->mMeshes[ainode->mMeshes[meshIndex]];
+	 int numMeshes = (int) node->mNumMeshes;
 
-		// NOTE: Don't set the draw matrix, since all vertices are now in model ("world") space, no need to transform again
-		BuildMeshAndMaterialForMesh(aimesh);
-	}
+	 for (int meshIndex = 0; meshIndex < numMeshes; ++meshIndex)
+	 {
+		 BuildMeshAndMaterial_FromAIMesh(m_scene->mMeshes[node->mMeshes[meshIndex]], currTransform);
+	 }
 
-	// Recursively process the child nodes
-	for (unsigned int nodeIndex = 0; nodeIndex < ainode->mNumChildren; ++nodeIndex)
-	{
-		ProcessNodeAndChildren(ainode->mChildren[nodeIndex]);
-	}
+	 int numChildren = node->mNumChildren;
+	 for (int childIndex = 0; childIndex < numChildren; ++childIndex)
+	 {
+		 BuildMeshesAndMaterials_FromNode(node->mChildren[childIndex], currTransform);
+	 }
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Builds the mesh and the materials from the given aiMesh
+// Constructs the mesh and material data from the given aiMesh structure
+// The transformation passed is the space the current mesh exists in, and is used to convert
+// all mesh vertices into "model" space
 //
-void AssimpLoader::BuildMeshAndMaterialForMesh(aiMesh* aimesh)
+void AssimpLoader::BuildMeshAndMaterial_FromAIMesh(aiMesh* aimesh, const Matrix44& transformation)
 {
 	MeshBuilder mb;
 	mb.BeginBuilding(PRIMITIVE_TRIANGLES, true);
@@ -185,6 +195,12 @@ void AssimpLoader::BuildMeshAndMaterialForMesh(aiMesh* aimesh)
 			uvs.y = aimesh->mTextureCoords[0][vertexIndex].y;
 		}
 
+		Matrix44 toModelTransform = m_renderable->GetSkeletonBase()->GetGlobalInverseTransform() * transformation;
+
+		normal = toModelTransform.TransformVector(normal).xyz();
+		tangent = toModelTransform.TransformVector(tangent).xyz();
+		position = toModelTransform.TransformPoint(position).xyz();
+
 		mb.SetNormal(normal);
 		mb.SetTangent(Vector4(tangent, 1.0f));
 		mb.SetUVs(uvs);
@@ -204,7 +220,7 @@ void AssimpLoader::BuildMeshAndMaterialForMesh(aiMesh* aimesh)
 		}
 	}
 
-	// Bone information
+	// Bone Vertex Information
 	unsigned int numBones = aimesh->mNumBones;
 	for (unsigned int boneIndex = 0; boneIndex < numBones; ++boneIndex)
 	{
@@ -221,6 +237,7 @@ void AssimpLoader::BuildMeshAndMaterialForMesh(aiMesh* aimesh)
 			unsigned int vertexIndex = currBone->mWeights[weightIndex].mVertexId;
 			float weightValue = currBone->mWeights[weightIndex].mWeight;
 
+			// Set the index and weight data in the vertex buffer
 			mb.AddBoneData(vertexIndex, mappingIndex, weightValue);
 		}
 	}
@@ -229,6 +246,7 @@ void AssimpLoader::BuildMeshAndMaterialForMesh(aiMesh* aimesh)
 
 	Mesh* mesh;
 	
+	// Only build with skinned vertices if bones are present, slight optimization
 	if (numBones > 0)
 	{
 		mesh = mb.CreateMesh<VertexSkinned>();
@@ -249,6 +267,7 @@ void AssimpLoader::BuildMeshAndMaterialForMesh(aiMesh* aimesh)
 		normal		= LoadAssimpMaterialTextures(aimaterial,	aiTextureType_NORMALS);
 		emissive	= LoadAssimpMaterialTextures(aimaterial,	aiTextureType_EMISSIVE);
 
+		// In case the model has multiple textures of the same type on a single mesh
 		if (diffuse.size() > 1)
 		{
 			ConsoleWarningf("Warning: multiple diffuse textures for a single mesh detected.");
@@ -264,7 +283,7 @@ void AssimpLoader::BuildMeshAndMaterialForMesh(aiMesh* aimesh)
 			ConsoleWarningf("Warning: multiple emissive textures for a single mesh detected.");
 		}
 
-		// Make the material
+		// Make the material, defaulting missing textures to built-in engine textures
 		material = new Material();
 		if (diffuse.size() > 0)
 		{
@@ -284,6 +303,7 @@ void AssimpLoader::BuildMeshAndMaterialForMesh(aiMesh* aimesh)
 			material->SetNormal(AssetDB::GetTexture("Flat"));
 		}
 
+		// Setting emissive, even though we don't support them yet
 		if (emissive.size() > 0)
 		{
 			material->SetEmissive(emissive[0]);
@@ -298,6 +318,7 @@ void AssimpLoader::BuildMeshAndMaterialForMesh(aiMesh* aimesh)
 		material->SetProperty("SPECULAR_POWER", 10.f);
 	}
 
+	// Add the draw!
 	RenderableDraw_t draw;
 	draw.sharedMaterial = material;
 	draw.mesh = mesh;
@@ -307,36 +328,87 @@ void AssimpLoader::BuildMeshAndMaterialForMesh(aiMesh* aimesh)
 
 
 //-----------------------------------------------------------------------------------------------
-// Builds the skeleton transforms by traversing the assimp node hierarchy
+// Constructs all Mesh and Material data from the given node
 //
-void AssimpLoader::BuildSkeletonHierarchy()
+void AssimpLoader::ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTransform, int parentBoneIndex)
 {
+	std::string nodeName = ainode->mName.data;
 
+	Matrix44 nodeTransform = ConvertAiMatrixToMyMatrix(ainode->mTransformation);
+
+	Matrix44 currentTransform = parentTransform * nodeTransform;
+
+	// Check if this name is a bone by searching for it's name mapping in the hierarchy
+	SkeletonBase* skeleton = m_renderable->GetSkeletonBase();
+	int thisBoneIndex = skeleton->GetBoneMapping(nodeName);
+
+	// If it is a bone, update the matrix in the skeleton (might be unnecessary for bind pose, as you get the same result!)
+	if (thisBoneIndex >= 0)
+	{
+		Matrix44 offset = skeleton->GetBoneData(thisBoneIndex).offsetMatrix;
+		Matrix44 finalTransformation = skeleton->GetGlobalInverseTransform() * currentTransform * skeleton->GetBoneData(thisBoneIndex).offsetMatrix;
+
+		skeleton->SetFinalTransformation(thisBoneIndex, finalTransformation);
+
+		// For debugging
+		skeleton->SetWorldTransform(thisBoneIndex, currentTransform);
+		skeleton->SetParentBoneIndex(thisBoneIndex, parentBoneIndex);
+	}
+	
+	// Determine what the parent index of the children bones are (either us if we're a bone, or our last bone ancestor)
+	int childParentIndex = (thisBoneIndex >= 0 ? thisBoneIndex : parentBoneIndex);
+
+	// Recursively process the child nodes for bone information (even if this one wasn't a bone)
+	for (unsigned int nodeIndex = 0; nodeIndex < ainode->mNumChildren; ++nodeIndex)
+	{
+		ExtractBoneTransform(ainode->mChildren[nodeIndex], currentTransform, childParentIndex);
+	}
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Extracts the transformation matrix from the aiNode
+// Builds the skeleton transforms by traversing the assimp node hierarchy
+//
+void AssimpLoader::BuildBoneHierarchy()
+{
+	// Set up the skeleton global inverse first, to convert vertices from world to local model space
+	aiMatrix4x4 globalInverse = m_scene->mRootNode->mTransformation;
+	globalInverse.Inverse();
+
+	SkeletonBase* skeleton = m_renderable->GetSkeletonBase();
+	skeleton->SetGlobalInverseTransform(ConvertAiMatrixToMyMatrix(globalInverse));
+
+	// Recursively traverse the tree to assemble the bone transformations
+	ExtractBoneTransform(m_scene->mRootNode, Matrix44::IDENTITY, -1);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Constructs a Matrix44 object from the aiMatrix4x4 by pulling rows as columns (row major to column major)
 //
 Matrix44 ConvertAiMatrixToMyMatrix(aiMatrix4x4 aimatrix)
 {
-	aiVector3D aiPosition, aiRotation, aiScale;
-	aimatrix.Decompose(aiScale, aiRotation, aiPosition);
+	Matrix44 result;
 
-	Vector3 position, rotation, scale;
-	position.x = aiPosition.x;
-	position.y = aiPosition.y;
-	position.z = aiPosition.z;
+	result.Ix = aimatrix.a1;
+	result.Iy = aimatrix.b1;
+	result.Iz = aimatrix.c1;
+	result.Iw = aimatrix.d1;
 
-	rotation.x = ConvertRadiansToDegrees(aiRotation.x);
-	rotation.y = ConvertRadiansToDegrees(aiRotation.y);
-	rotation.z = ConvertRadiansToDegrees(aiRotation.z);
+	result.Jx = aimatrix.a2;
+	result.Jy = aimatrix.b2;
+	result.Jz = aimatrix.c2;
+	result.Jw = aimatrix.d2;
 
-	scale.x = aiScale.x;
-	scale.y = aiScale.y;
-	scale.z = aiScale.z;
+	result.Kx = aimatrix.a3;
+	result.Ky = aimatrix.b3;
+	result.Kz = aimatrix.c3;
+	result.Kw = aimatrix.d3;
 
-	Matrix44 transform = Matrix44::MakeModelMatrix(position, rotation, scale);
+	result.Tx = aimatrix.a4;
+	result.Ty = aimatrix.b4;
+	result.Tz = aimatrix.c4;
+	result.Tw = aimatrix.d4;
 
-	return transform;
+	return result;
 }

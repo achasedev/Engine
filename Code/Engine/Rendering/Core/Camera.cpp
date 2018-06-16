@@ -57,26 +57,27 @@ void Camera::TranslateLocal(const Vector3& localTranslation)
 
 
 //-----------------------------------------------------------------------------------------------
-// Rotates the camera by the given euler angle values
+// Rotates the camera by the given euler angle values - do it here ourselves so we can clamp it
 //
 void Camera::Rotate(const Vector3& rotation)
 {
-	m_transform.Rotate(rotation);
+	Vector3 newRotation = m_transform.rotation.GetAsEulerAngles() + rotation;
 
-	// For now prevent gimble lock explicitly
-	Vector3 currentRot = m_transform.rotation.GetAsEulerAngles();
+	newRotation.x = GetAngleBetweenZeroThreeSixty(newRotation.x);
+	newRotation.y = GetAngleBetweenZeroThreeSixty(newRotation.y);
+	newRotation.z = GetAngleBetweenZeroThreeSixty(newRotation.z);
 
-	if (currentRot.x > 90.f && currentRot.x < 180.f)
+	if (newRotation.x > 90.f && newRotation.x < 180.f)
 	{
-		currentRot.x = 90.f;
+		newRotation.x = 90.f;
 	}
 
-	if (currentRot.x > 180.f && currentRot.x < 270.f)
+	if (newRotation.x > 180.f && newRotation.x < 270.f)
 	{
-		currentRot.x = 270.f;
+		newRotation.x = 270.f;
 	}
 
-	m_transform.SetRotation(currentRot);
+	m_transform.SetRotation(newRotation);
 
 	m_viewMatrix = InvertLookAtMatrix(m_transform.GetToWorldMatrix());
 }

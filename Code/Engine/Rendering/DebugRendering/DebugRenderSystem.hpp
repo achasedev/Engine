@@ -60,6 +60,7 @@ public:
 	static void DrawUVSphere(const Vector3& position, const DebugRenderOptions& options,  float radius = 1.0f, unsigned int numSlices = 4, unsigned int numWedges = 8);
 	static void DrawCube(const Vector3& position, const DebugRenderOptions& options, const Vector3& dimensions);
 
+	static void DrawSkeleton(SkeletonBase* skeleton, const Matrix44& transform, const DebugRenderOptions& options);
 
 	// Helper functions
 
@@ -75,6 +76,8 @@ public:
 	static void DrawBasis(const Vector3& position, const Vector3& rotation, float lifeTime, float scale = 1.0f);
 	static void DrawUVSphere(const Vector3& position, float lifetime, const Rgba& color = Rgba::WHITE, float radius = 1.0f);
 	static void DrawCube(const Vector3& position, float lifetime, const Rgba& color = Rgba::WHITE, const Vector3& dimensions = Vector3::ONES);
+
+	static void DrawSkeleton(SkeletonBase* skeleton, const Matrix44& transform, float lifetime);
 
 
 public:

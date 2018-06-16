@@ -17,6 +17,9 @@ struct aiNode;
 struct aiMesh;
 struct aiScene;
 struct aiMaterial;
+struct aiNodeAnim;
+struct aiAnimation;
+struct aiString;
 
 class AssimpLoader
 {
@@ -32,24 +35,22 @@ public:
 private:
 	//-----Private Methods-----
 
-	// Loading Order
-	void BuildAllMeshesAndMaterials();
-	void BuildMeshAndMaterialForMesh(aiMesh* aimesh);
+	// Meshes (including bone vertex data) and materials
+	void BuildMeshesAndMaterials_FromScene();
+		void BuildMeshesAndMaterials_FromNode(aiNode* node, const Matrix44& parentTransform);
+			void BuildMeshAndMaterial_FromAIMesh(aiMesh* mesh, const Matrix44& transformation);
 
-	void BuildSkeletonHierarchy();
+	// Build skeletal structure
+	void BuildBoneHierarchy();
+		void ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTransfrom, int parentBoneIndex);
 
-	// Mesh and Material Loading
-	void ProcessNodeAndChildren(aiNode* ainode);
-
-	// Skeletal and Animation Loading
-	//void ExtractSkeletonFromNode(aiNode* ainode);
+	// Build Animations
 
 
 private:
 	//-----Private Data-----
 
 	Renderable*		m_renderable = nullptr;
-
 	const aiScene* m_scene = nullptr;
 
 };
