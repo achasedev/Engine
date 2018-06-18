@@ -20,6 +20,8 @@ DebugRenderTask_Line3D::DebugRenderTask_Line3D(const Vector3& startPosition, con
 	, m_endStartColor(endStartColor)
 	, m_endEndColor(endEndColor)
 {
+	delete m_renderable;
+	m_renderable = nullptr;
 }
 
 
@@ -28,8 +30,6 @@ DebugRenderTask_Line3D::DebugRenderTask_Line3D(const Vector3& startPosition, con
 //
 void DebugRenderTask_Line3D::Render() const
 {
-	SetupDrawState(m_options.m_renderMode);
-
 	Rgba startColor = CalculateDrawColor();
 
 	// Get the end color
@@ -49,7 +49,6 @@ void DebugRenderTask_Line3D::Render() const
 	// Draw twice in XRAY mode
 	if (m_options.m_renderMode == DEBUG_RENDER_XRAY)
 	{
-		SetupDrawState(DEBUG_RENDER_HIDDEN, DebugRenderSystem::DEFAULT_XRAY_COLOR_SCALE);
 		startColor.ScaleRGB(0.25f);
 		endColor.ScaleRGB(0.25f);
 
