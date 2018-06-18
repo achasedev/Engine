@@ -6,6 +6,7 @@
 /************************************************************************/
 #pragma once
 #include <map>
+#include <vector>
 #include "Engine/Math/Matrix44.hpp"
 
 #define MAX_BONES_PER_VERTEX (4) // Only support up to 4 bone weights per vertex
@@ -25,8 +26,8 @@ public:
 	//-----Public Methods-----
 
 	// Accessors
-	BoneData_t	GetBoneData(unsigned int boneIndex);
-	int			GetBoneMapping(const std::string name);
+	BoneData_t	GetBoneData(unsigned int boneIndex) const;
+	int			GetBoneMapping(const std::string name) const;
 	int			CreateOrGetBoneMapping(const std::string& boneName);
 	
 	unsigned int	GetBoneCount() const;

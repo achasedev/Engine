@@ -53,4 +53,6 @@ private:
 	Renderable*		m_renderable = nullptr;
 	const aiScene* m_scene = nullptr;
 
+	//std::vector<AnimationClip*> m_animationClips;
+
 };

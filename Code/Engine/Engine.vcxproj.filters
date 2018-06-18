@@ -358,6 +358,9 @@
     <ClCompile Include="Rendering\Animation\SkeletonBase.cpp" />
     <ClCompile Include="Assets\AssimpLoader.cpp" />
     <ClCompile Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.cpp" />
+    <ClCompile Include="Rendering\Animation\Pose.cpp" />
+    <ClCompile Include="Rendering\Animation\AnimationClip.cpp" />
+    <ClCompile Include="Rendering\Animation\SkeletonInstance.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -685,5 +688,8 @@
     <ClInclude Include="Rendering\Animation\SkeletonBase.hpp" />
     <ClInclude Include="Assets\AssimpLoader.hpp" />
     <ClInclude Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.hpp" />
+    <ClInclude Include="Rendering\Animation\Pose.hpp" />
+    <ClInclude Include="Rendering\Animation\AnimationClip.hpp" />
+    <ClInclude Include="Rendering\Animation\SkeletonInstance.hpp" />
   </ItemGroup>
 </Project>

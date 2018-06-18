@@ -11,7 +11,7 @@
 //-----------------------------------------------------------------------------------------------
 // Returns the bone data structure for the bone at the given index
 //
-BoneData_t SkeletonBase::GetBoneData(unsigned int boneIndex)
+BoneData_t SkeletonBase::GetBoneData(unsigned int boneIndex) const
 {
 	ASSERT_OR_DIE(boneIndex < m_boneData.size(), Stringf("Error: SkeletonBase::SetOffsetMatrix received index out of bounds - size is %i, index is %i.", m_boneData.size(), boneIndex));
 
@@ -23,13 +23,13 @@ BoneData_t SkeletonBase::GetBoneData(unsigned int boneIndex)
 // Returns the index of the bone given by name in the mappings array
 // Returns -1 if a bone of the given name doesn't exist
 //
-int SkeletonBase::GetBoneMapping(const std::string name)
+int SkeletonBase::GetBoneMapping(const std::string name) const
 {
 	bool nameExists = m_boneNameMappings.find(name) != m_boneNameMappings.end();
 
 	if (nameExists)
 	{
-		return m_boneNameMappings[name];
+		return m_boneNameMappings.at(name);
 	}
 
 	return -1;
