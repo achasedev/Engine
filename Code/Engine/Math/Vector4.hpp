@@ -44,6 +44,7 @@ public:
 
 	static Vector4 GetRandomVector(float desiredMagnitude);		// Returns a random vector with the given magnitude
 
+	Vector2 xz() const;
 	Vector3 xyz() const;
 
 	// Static constants

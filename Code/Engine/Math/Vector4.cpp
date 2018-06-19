@@ -236,6 +236,15 @@ Vector4 Vector4::GetRandomVector(float desiredMagnitude)
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the x and z components of the Vector4
+//
+Vector2 Vector4::xz() const
+{
+	return Vector2(x, z);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the x, y, and z components of the Vector4
 //
 Vector3 Vector4::xyz() const
