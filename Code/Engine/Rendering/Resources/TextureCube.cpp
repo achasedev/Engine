@@ -6,8 +6,9 @@
 /************************************************************************/
 #include "Engine/Core/Image.hpp"
 #include "Engine/Assets/AssetDB.hpp"
-#include "Engine/Rendering/Resources/TextureCube.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Rendering/OpenGL/glFunctions.hpp"
+#include "Engine/Rendering/Resources/TextureCube.hpp"
 
 // Texture Data
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -46,8 +47,10 @@ TextureCube::~TextureCube()
 //-----------------------------------------------------------------------------------------------
 // Loads the cube from a file, overrides the base Texture::CreateFromFile() to avoid flipping the image
 //
-bool TextureCube::CreateFromFile(const std::string& filename)
+bool TextureCube::CreateFromFile(const std::string& filename, bool useMipMaps /*= false*/)
 {
+	UNUSED(useMipMaps);
+
 	Image* loadedImage = AssetDB::CreateOrGetImage(filename);
 
 	if (loadedImage == nullptr)
@@ -55,8 +58,8 @@ bool TextureCube::CreateFromFile(const std::string& filename)
 		return false;
 	}
 
-	// Construct the Texture from the image
-	CreateFromImage(loadedImage);
+	// Construct the Texture from the image, never generate mip maps
+	CreateFromImage(loadedImage, false);
 
 	return true;
 }
@@ -65,8 +68,10 @@ bool TextureCube::CreateFromFile(const std::string& filename)
 //-----------------------------------------------------------------------------------------------
 // Initializes the TextureCube from a tiled image
 //
-void TextureCube::CreateFromImage(const Image* image)
+void TextureCube::CreateFromImage(const Image* image, bool useMipMaps /*= false*/)
 {
+	UNUSED(useMipMaps);
+
 	if (m_textureHandle == NULL)
 	{
 		glGenTextures(1, &m_textureHandle);
@@ -83,7 +88,7 @@ void TextureCube::CreateFromImage(const Image* image)
 	GLenum internalFormat = ToGLInternalFormat(m_textureFormat);
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP, m_textureHandle);
-	glTexStorage2D(GL_TEXTURE_CUBE_MAP, 1, internalFormat, tileSize, tileSize ); 
+	glTexStorage2D(GL_TEXTURE_CUBE_MAP, 1, internalFormat, tileSize, tileSize); 
 	GL_CHECK_ERROR();
 
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, totalWidth);

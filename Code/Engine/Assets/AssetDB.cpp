@@ -287,14 +287,14 @@ Texture* AssetDB::GetTexture(const std::string& filename)
 //-----------------------------------------------------------------------------------------------
 // Returns the Texture given by filepath, attempting to construct it if it doesn't exist
 //
-Texture* AssetDB::CreateOrGetTexture(const std::string& filepath)
+Texture* AssetDB::CreateOrGetTexture(const std::string& filepath, bool generateMipMaps /*= false*/)
 {
 	Texture* texture = AssetCollection<Texture>::GetAsset(filepath);
 
 	if (texture == nullptr)
 	{
 		texture = new Texture();
-		bool successful = texture->CreateFromFile(filepath);
+		bool successful = texture->CreateFromFile(filepath, generateMipMaps);
 		
 		if (!successful)
 		{

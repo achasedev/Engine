@@ -10,9 +10,11 @@
 #include <Windows.h>
 #include "Engine/Core/Image.hpp"
 #include "Engine/Assets/AssetDB.hpp"
-#include "Engine/Rendering/Resources/Texture.hpp"
+#include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Rendering/Resources/Texture.hpp"
 #include "Engine/Rendering/OpenGL/glFunctions.hpp"
+
 #include "ThirdParty/stb/stb_image.h"
 
 // Texture Data
@@ -33,9 +35,8 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-//-----For converting primitive types to GL types-----
-
-// Internal Formats
+// C Functions
+unsigned int CalculateMipLevelCount(const IntVector2& dimensions);
 
 
 //-----------------------------------------------------------------------------------------------
@@ -53,7 +54,7 @@ Texture::Texture()
 //-----------------------------------------------------------------------------------------------
 // Loads the image from file
 //
-bool Texture::CreateFromFile(const std::string& filename)
+bool Texture::CreateFromFile(const std::string& filename, bool useMipMaps /*= false*/)
 {
 	Image* loadedImage = AssetDB::CreateOrGetImage(filename);
 
@@ -69,7 +70,7 @@ bool Texture::CreateFromFile(const std::string& filename)
 	}
 
 	// Construct the Texture from the image
-	CreateFromImage(loadedImage);
+	CreateFromImage(loadedImage, useMipMaps);
 
 	return true;
 }
@@ -78,7 +79,7 @@ bool Texture::CreateFromFile(const std::string& filename)
 //-----------------------------------------------------------------------------------------------
 // Loads this texture from the image provided onto the graphics card
 //
-void Texture::CreateFromImage(const Image* image)
+void Texture::CreateFromImage(const Image* image, bool useMipMaps /*= false*/)
 {
 	if (m_textureHandle == NULL)
 	{
@@ -93,24 +94,40 @@ void Texture::CreateFromImage(const Image* image)
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_textureHandle);  
 
+	unsigned int numMipLevels = 1;
+	if (useMipMaps)
+	{
+		numMipLevels = CalculateMipLevelCount(m_dimensions);
+	}
+
 	// Create the GPU-side buffer
 	glTexStorage2D(GL_TEXTURE_2D,
-		1,										  // Number of mipmap levels
+		numMipLevels,						 // Number of mipmap levels
 		ToGLInternalFormat(m_textureFormat), // How is the memory stored on the GPU
-		m_dimensions.x, m_dimensions.y);		  // Dimensions
+		m_dimensions.x, m_dimensions.y);	 // Dimensions
 
 	GL_CHECK_ERROR();
 
 	// Copy the image data to the GPU buffer that we just created
 	glTexSubImage2D(GL_TEXTURE_2D,
-		0,										// Mip layer we're copying to
-		0, 0,									// Pixel offset
-		m_dimensions.x, m_dimensions.y,			// Dimensions
-		ToGLChannel(m_textureFormat),      // Which channels exist in the CPU buffer
-		ToGLPixelLayout(m_textureFormat),  // How are those channels stored
-		image->GetImageData());					// Cpu buffer to copy
+		0,									// Mip layer we're copying to
+		0, 0,								// Pixel offset
+		m_dimensions.x, m_dimensions.y,		// Dimensions
+		ToGLChannel(m_textureFormat),       // Which channels exist in the CPU buffer
+		ToGLPixelLayout(m_textureFormat),   // How are those channels stored
+		image->GetImageData());				// Cpu buffer to copy
+	
+	GL_CHECK_ERROR();
+
+	// Generate the mip maps
+	if (useMipMaps)
+	{
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
 
 	GL_CHECK_ERROR();
+
+	glBindTexture(GL_TEXTURE_2D, NULL);
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -214,4 +231,19 @@ bool Texture::CopyTexture(Texture* source, Texture* destination)
 	GL_CHECK_ERROR();
 
 	return GLSucceeded();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Determines the max number of mip levels that can be used by this function
+//
+unsigned int CalculateMipLevelCount(const IntVector2& dimensions)
+{
+	unsigned int maxDimension = (dimensions.x > dimensions.y) ? dimensions.x : dimensions.y;
+
+	float log = Log2((float) maxDimension);
+
+	int levelCount = GetCeiling(log);
+
+	return (unsigned int) levelCount;
 }

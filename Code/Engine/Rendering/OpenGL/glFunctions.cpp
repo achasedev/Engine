@@ -111,6 +111,7 @@ PFNGLCOPYIMAGESUBDATAPROC	glCopyImageSubData = nullptr;
 PFNGLTEXSTORAGE2DPROC		glTexStorage2D = nullptr;
 PFNGLTEXSUBIMAGE2DPROC		glTexSubImage2D = nullptr;
 PFNGLDELETETEXTURESPROC		glDeleteTextures = nullptr;	
+PFNGLGENERATEMIPMAPPROC		glGenerateMipmap = nullptr;
 
 
 //-----Samplers-----
@@ -357,7 +358,7 @@ void BindGLFunctions()
 	GL_BIND_FUNCTION(glTexStorage2D);
 	GL_BIND_FUNCTION(glTexSubImage2D);
 	GL_BIND_FUNCTION(glDeleteTextures);	
-
+	GL_BIND_FUNCTION(glGenerateMipmap);
 
 	// Sampler generation
 	GL_BIND_FUNCTION(glGenSamplers);

@@ -11,6 +11,25 @@
 #include <math.h>
 #include <cstdlib>
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the log base 2 of the given value
+//
+float Log2(float value)
+{
+	return (float) log2(value);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the log base 10 of the given value
+//
+float Log10(float value)
+{
+	return (float) log10(value);
+}
+
+
 //-----------------------------------------------------------------------------------------------
 // Converts the radius and radian angle to cartesian coordinates
 //
@@ -394,6 +413,15 @@ float GetFractionInRange(float inValue, float rangeStart, float rangeEnd)
 	float offsetIntoRange = (inValue - rangeStart);
 	float rangeSize = (rangeEnd - rangeStart);
 	return (offsetIntoRange / rangeSize);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the smallest integer larger or equal than inValue (ceiling)
+//
+int GetCeiling(float inValue)
+{
+	return (int) ceil(inValue);
 }
 
 

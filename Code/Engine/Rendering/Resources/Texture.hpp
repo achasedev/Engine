@@ -23,8 +23,8 @@ public:
 	Texture(); // Texture constructor is now public, initializes everything to 0, needed for render targets
 
 	// Only the AssetDatabase can create textures for use other than render targets
-	virtual bool CreateFromFile(const std::string& filename);
-	virtual void CreateFromImage(const Image* image);
+	virtual bool CreateFromFile(const std::string& filename, bool useMipMaps = false);
+	virtual void CreateFromImage(const Image* image, bool useMipMaps = false);
 
 	IntVector2		GetDimensions() const;
 	unsigned int	GetHandle() const;
@@ -44,5 +44,7 @@ protected:
 	IntVector2			m_dimensions;
 	TextureFormat		m_textureFormat;
 	TextureType			m_textureType;
+
+	bool				m_isUsingMipMaps;
 
 };

@@ -19,6 +19,10 @@ class Quaternion;
 // Constants
 const float PI = 3.1415926535897932384626433832795f;
 
+// Math operations
+float Log2(float value);
+float Log10(float value);
+
 // Coordinate system
 Vector2 PolarToCartesian(float radius, float angleRadians);
 void	CartesianToPolar(float x, float y, float& out_radius, float& out_angleRadians);
@@ -55,6 +59,7 @@ float	ClampFloat(float inValue, float minInclusive, float maxInclusive);		// Cla
 float	ClampFloatZeroToOne(float inValue);										// Clamps inValue to be between 0 and 1, inclusive
 float	ClampFloatNegativeOneToOne(float inValue);								// Clamps inValue to be between -1 and 1, inclusive
 float	GetFractionInRange(float inValue, float rangeStart, float rangeEnd);	// Finds the % (as fraction) of inValue in [rangeStart, rangeEnd]																
+int		GetCeiling(float inValue);												// Returns the smallest integer larger than inValue (ceiling)
 
 float	RangeMapFloat(float inValue, float inStart, float inEnd, float outStart, float outEnd);		// Maps inValue from an inRange to an outRange
 Vector2 RangeMap(Vector2 inValue, Vector2 inStart, Vector2 inEnd, Vector2 outStart, Vector2 outEnd);

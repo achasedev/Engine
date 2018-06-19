@@ -111,7 +111,9 @@ bool Material::LoadFromFile(const std::string& filepath)
 		while (currElement != nullptr)
 		{
 			std::string textureName = ParseXmlAttribute(*currElement, "name", "Invalid");
-			const Texture* texture = AssetDB::CreateOrGetTexture(textureName);
+			bool generateMipMaps = ParseXmlAttribute(*currElement, "generateMipMaps", false);
+
+			const Texture* texture = AssetDB::CreateOrGetTexture(textureName, generateMipMaps);
 			int bindPoint = ParseXmlAttribute(*currElement, "bind", 0);
 
 			m_textures[bindPoint] = texture;

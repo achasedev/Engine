@@ -119,7 +119,7 @@ extern PFNGLCOPYIMAGESUBDATAPROC	glCopyImageSubData;
 extern PFNGLTEXSTORAGE2DPROC		glTexStorage2D;
 extern PFNGLTEXSUBIMAGE2DPROC		glTexSubImage2D;
 extern PFNGLDELETETEXTURESPROC		glDeleteTextures;	
-
+extern PFNGLGENERATEMIPMAPPROC		glGenerateMipmap;
 
 // Generating samplers
 extern PFNGLGENSAMPLERSPROC			glGenSamplers;

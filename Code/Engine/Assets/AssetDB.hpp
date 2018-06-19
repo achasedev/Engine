@@ -41,7 +41,7 @@ public:
 
 	// Textures
 	static Texture* GetTexture(const std::string& filename);
-	static Texture* CreateOrGetTexture(const std::string& filename);
+	static Texture* CreateOrGetTexture(const std::string& filename, bool generateMipMaps = false);
 	
 	// Texture Cubes
 	static TextureCube* GetTextureCube(const std::string& filename);
