@@ -70,6 +70,24 @@ Matrix44 SkeletonBase::GetGlobalInverseTransform() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the list of bone names for this skeleton
+//
+std::vector<std::string> SkeletonBase::GetAllBoneNames() const
+{
+	std::vector<std::string> names;
+
+	std::map<std::string, unsigned int>::const_iterator itr = m_boneNameMappings.begin();
+
+	for (itr; itr != m_boneNameMappings.end(); ++itr)
+	{
+		names.push_back(itr->first);
+	}
+
+	return names;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the number of bones in the skeleton
 //
 unsigned int SkeletonBase::GetBoneCount() const

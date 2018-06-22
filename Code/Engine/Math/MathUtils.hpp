@@ -19,6 +19,9 @@ class Quaternion;
 // Constants
 const float PI = 3.1415926535897932384626433832795f;
 
+// Math functions
+int		Ceiling(float value);
+
 // Coordinate system
 Vector2 PolarToCartesian(float radius, float angleRadians);
 void	CartesianToPolar(float x, float y, float& out_radius, float& out_angleRadians);
@@ -104,6 +107,8 @@ bool Quadratic(Vector2& out_solutions, float a, float b, float c);
 
 // General functions
 int		MinInt(int a, int b);
+unsigned int MinInt(unsigned int a, unsigned int b);
+unsigned int MaxInt(unsigned int a, unsigned int b);
 float	MaxFloat(float a, float b, float c, float d);
 float	MinFloat(float a, float b, float c, float d);
 float	MinFloat(float a, float b);

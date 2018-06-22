@@ -11,6 +11,16 @@
 #include <math.h>
 #include <cstdlib>
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the largest integer less than or equal to the passed value
+//
+int Ceiling(float value)
+{
+	return (int) ceil(value);
+}
+
+
 //-----------------------------------------------------------------------------------------------
 // Converts the radius and radian angle to cartesian coordinates
 //
@@ -776,6 +786,24 @@ bool Quadratic(Vector2& out_solutions, float a, float b, float c)
 int MinInt(int a, int b)
 {
 	return (a < b ? a : b);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the min of 2 unsigned ints
+//
+unsigned int MinInt(unsigned int a, unsigned int b)
+{
+	return (a < b ? a : b);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the max of 2 unsigned ints
+//
+unsigned int MaxInt(unsigned int a, unsigned int b)
+{
+	return (a > b ? a : b);
 }
 
 

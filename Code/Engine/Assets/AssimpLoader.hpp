@@ -9,9 +9,11 @@
 #include <vector>
 #include "Engine/Math/Matrix44.hpp"
 
+class Texture;
 class Renderable;
 class SkeletonBase;
-class Texture;
+class AnimationClip;
+class Pose;
 
 struct aiNode;
 struct aiMesh;
@@ -20,6 +22,7 @@ struct aiMaterial;
 struct aiNodeAnim;
 struct aiAnimation;
 struct aiString;
+struct aiAnimation;
 
 class AssimpLoader
 {
@@ -30,6 +33,7 @@ public:
 
 	// Accessors
 	Renderable*		GetRenderable();
+	AnimationClip*	GetAnimationClip(unsigned int index);
 
 
 private:
@@ -45,6 +49,14 @@ private:
 		void ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTransfrom, int parentBoneIndex);
 
 	// Build Animations
+	void BuildAnimations();
+		void BuildAnimation(unsigned int animationIndex);
+			void FillPoseForTime(Pose* out_pose, aiAnimation* aianimation, float time);
+				aiNodeAnim* GetChannelForBone(const std::string& boneName, aiAnimation* animation) const;
+				Matrix44	GetLocalTransfromAtTime(aiNodeAnim* channel, float time);
+					Vector3		GetWorldTranslationAtTime(aiNodeAnim* channel, float time);
+					Quaternion	GetWorldRotationAtTime(aiNodeAnim* channel, float time);
+					Vector3		GetWorldScaleAtTime(aiNodeAnim* channel, float time);
 
 
 private:
@@ -53,6 +65,6 @@ private:
 	Renderable*		m_renderable = nullptr;
 	const aiScene* m_scene = nullptr;
 
-	//std::vector<AnimationClip*> m_animationClips;
+	std::vector<AnimationClip*> m_animationClips;
 
 };

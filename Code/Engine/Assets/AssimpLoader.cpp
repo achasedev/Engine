@@ -6,14 +6,17 @@
 /************************************************************************/
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Assets/AssetDB.hpp"
+#include "Engine/Math/Quaternion.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Assets/AssimpLoader.hpp"
+#include "Engine/Rendering/Animation/Pose.hpp"
 #include "Engine/Core/Time/ScopedProfiler.hpp"
 #include "Engine/Rendering/Core/Renderable.hpp"
 #include "Engine/Rendering/Meshes/MeshBuilder.hpp"
 #include "Engine/Rendering/Materials/Material.hpp"
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 #include "Engine/Rendering/Animation/SkeletonBase.hpp"
+#include "Engine/Rendering/Animation/AnimationClip.hpp"
 
 #include "Engine/Rendering/DebugRendering/DebugRenderSystem.hpp"
 
@@ -100,6 +103,7 @@ bool AssimpLoader::LoadFile(const std::string& filepath)
 	BuildBoneHierarchy();
 
 	// Load animations
+	BuildAnimations();
 
 	importer.FreeScene();
 
@@ -115,6 +119,11 @@ Renderable* AssimpLoader::GetRenderable()
 	return m_renderable;
 }
 
+
+AnimationClip* AssimpLoader::GetAnimationClip(unsigned int index)
+{
+	return m_animationClips[index];
+}
 
 //-----------------------------------------------------------------------------------------------
 // Returns the renderable created from the loaded file
@@ -365,6 +374,255 @@ void AssimpLoader::ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTr
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Builds all animations from the assimp tree and stores them on the loader
+//
+void AssimpLoader::BuildAnimations()
+{
+	unsigned int animationCount = m_scene->mNumAnimations;
+
+	for (unsigned int animationIndex = 0; animationIndex < animationCount; ++animationIndex)
+	{
+		BuildAnimation(animationIndex);
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Builds a single animation at the given animation index
+//
+void AssimpLoader::BuildAnimation(unsigned int animationIndex)
+{
+	aiAnimation* aianimation = m_scene->mAnimations[animationIndex];
+	
+	// Get general animation data
+	float numTicks = (float) aianimation->mDuration;
+	float durationSeconds = (float) numTicks / (float) aianimation->mTicksPerSecond;
+
+	float framesPerSecond = 30.f;	// Hard coding for now
+	float secondsPerFrame = 1.f / framesPerSecond;
+
+	int numFrames = Ceiling(durationSeconds * framesPerSecond);
+
+	// Create the animation clip
+	AnimationClip* animation = new AnimationClip();
+	animation->Initialize(numFrames, m_renderable->GetSkeletonBase());
+	animation->SetName(aianimation->mName.C_Str());
+	animation->SetFramesPerSecond(framesPerSecond);
+	animation->SetDurationSeconds(durationSeconds);
+
+	// Iterate across the frames, and build a pose for each
+	for (int frameIndex = 0; frameIndex < numFrames; ++frameIndex)
+	{
+		Pose* pose = animation->GetPoseAtIndex(frameIndex);
+
+		float time = frameIndex * secondsPerFrame;
+		FillPoseForTime(pose, aianimation, time);
+	}
+
+	m_animationClips.push_back(animation);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Fills in the pose given for the animation at time time
+//
+void AssimpLoader::FillPoseForTime(Pose* out_pose, aiAnimation* aianimation, float time)
+{
+	// Iterate across all the bones in the pose
+		// Find the channel corresponding to the bone
+		// If the channel exists, make the transform and store it in the pose
+		// Else store identity
+
+	SkeletonBase* skeleton = m_renderable->GetSkeletonBase();
+	std::vector<std::string> boneNames = skeleton->GetAllBoneNames();
+	out_pose->Initialize(skeleton);
+	
+	
+	int numBones = (int) boneNames.size();
+
+	for (int boneNameIndex = 0; boneNameIndex < numBones; ++boneNameIndex)
+	{
+		std::string currBoneName = boneNames[boneNameIndex];
+		int boneDataIndex = skeleton->GetBoneMapping(currBoneName);
+
+		aiNodeAnim* channel = GetChannelForBone(currBoneName, aianimation);
+
+		if (channel != nullptr)
+		{
+			Matrix44 boneTransform = GetLocalTransfromAtTime(channel, time);
+			out_pose->SetBoneTransform(boneDataIndex, boneTransform);
+		}
+		else
+		{
+			out_pose->SetBoneTransform(boneDataIndex, Matrix44::IDENTITY);
+		}
+	}
+
+	// All the pose matrices are in their local space, so need to concatenate parents in order to finish it, as well as apply offsets matrices and the global inverse
+	out_pose->ConstructGlobalMatrices();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Find the channel corresponding to the given bone name, returning nullptr if it doesn't exist
+//
+aiNodeAnim* AssimpLoader::GetChannelForBone(const std::string& boneName, aiAnimation* animation) const
+{
+	int numChannels = animation->mNumChannels;
+
+	for (int channelIndex = 0; channelIndex < numChannels; ++channelIndex)
+	{
+		aiNodeAnim* currChannel = animation->mChannels[channelIndex];
+
+		std::string nodeName = currChannel->mNodeName.C_Str();
+		if (nodeName == boneName)
+		{
+			return currChannel;
+		}
+	}
+
+	return nullptr;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Determines the transform to use from the channel at the given time
+//
+Matrix44 AssimpLoader::GetLocalTransfromAtTime(aiNodeAnim* channel, float time)
+{
+	// Assumes the start time for all nodes is mTime == 0
+
+	// Translation
+	Vector3 position = GetWorldTranslationAtTime(channel, time);
+
+	// Rotation
+	Quaternion rotation = GetWorldRotationAtTime(channel, time);
+
+	// Scale
+	Vector3 scale = GetWorldScaleAtTime(channel, time);
+
+	// Make the model
+	Matrix44 transform = Matrix44::MakeModelMatrix(position, rotation.GetAsEulerAngles(), scale);
+
+	return transform;
+}
+
+
+Vector3 AssimpLoader::GetWorldTranslationAtTime(aiNodeAnim* channel, float time)
+{
+	int positionKeyIndex = 0;
+	Vector3 finalPosition = Vector3(channel->mPositionKeys[0].mValue.x, channel->mPositionKeys[0].mValue.y, channel->mPositionKeys[0].mValue.z);
+
+	// Only bother interpolating if there's more than one key
+	if (channel->mNumPositionKeys > 1)
+	{
+		for (unsigned int translationKeyIndex = 0; translationKeyIndex < channel->mNumPositionKeys - 1; ++translationKeyIndex)
+		{
+			if (channel->mPositionKeys[translationKeyIndex + 1].mTime > time)
+			{
+				positionKeyIndex = translationKeyIndex;
+				break;
+			}
+		}
+
+		float firstTime = (float) channel->mPositionKeys[positionKeyIndex].mTime;
+		float secondTime = (float) channel->mPositionKeys[positionKeyIndex + 1].mTime;
+
+		float deltaTime = secondTime - firstTime;
+		float interpolationFactor = (time - firstTime) / deltaTime;
+
+		ASSERT_OR_DIE(interpolationFactor >= 0.f && interpolationFactor <= 1.0f, Stringf("Error: AssimpLoader::GetWorldPositionAtTime calculated interpolation factor out of range, factor was %f", interpolationFactor));
+
+		aiVector3D aifirstPosition = channel->mPositionKeys[positionKeyIndex].mValue;
+		aiVector3D aisecondPosition = channel->mPositionKeys[positionKeyIndex + 1].mValue;
+
+		Vector3 firstPosition = Vector3(aifirstPosition.x, aifirstPosition.y, aifirstPosition.z);
+		Vector3 secondPosition = Vector3(aisecondPosition.x, aisecondPosition.y, aisecondPosition.z);
+
+		finalPosition = Interpolate(firstPosition, secondPosition, interpolationFactor);
+	}
+
+	return finalPosition;
+}
+
+Quaternion AssimpLoader::GetWorldRotationAtTime(aiNodeAnim* channel, float time)
+{
+	int rotationKeyIndex = 0;
+
+	if (channel->mNumRotationKeys > 1)
+	{
+		for (unsigned int index = 0; index < channel->mNumRotationKeys - 1; ++index)
+		{
+			if (channel->mRotationKeys[index + 1].mTime > time)
+			{
+				rotationKeyIndex = index;
+				break;
+			}
+		}
+	}
+
+
+	float firstTime = (float) channel->mRotationKeys[rotationKeyIndex].mTime;
+	float secondTime = (float) channel->mRotationKeys[rotationKeyIndex + 1].mTime;
+
+	float deltaTime = secondTime - firstTime;
+	float interpolationFactor = (time - firstTime) / deltaTime;
+
+	ASSERT_OR_DIE(interpolationFactor >= 0.f && interpolationFactor <= 1.0f, Stringf("Error: AssimpLoader::GetWorldRotationAtTime calculated interpolation factor out of range, factor was %f", interpolationFactor));
+
+	aiQuaternion aiFirstRotation = channel->mRotationKeys[rotationKeyIndex].mValue;
+	aiQuaternion aiSecondRotation = channel->mRotationKeys[rotationKeyIndex + 1].mValue;
+	aiQuaternion aifinalRotation;
+	aiQuaternion::Interpolate(aifinalRotation, aiFirstRotation, aiSecondRotation, interpolationFactor);
+	aifinalRotation.Normalize();
+
+	Quaternion finalRotation;
+
+	finalRotation.s = aifinalRotation.w;
+	finalRotation.v.x = aifinalRotation.x;
+	finalRotation.v.y = aifinalRotation.y;
+	finalRotation.v.z = aifinalRotation.z;
+
+	return finalRotation;
+}
+
+Vector3 AssimpLoader::GetWorldScaleAtTime(aiNodeAnim* channel, float time)
+{
+	int scaleKeyIndex = 0;
+
+	if (channel->mNumScalingKeys > 1)
+	{
+		for (unsigned int index = 0; index < channel->mNumScalingKeys - 1; ++index)
+		{
+			if (channel->mScalingKeys[index + 1].mTime > time)
+			{
+				scaleKeyIndex = index;
+				break;
+			}
+		}
+	}
+
+
+	float firstTime = (float) channel->mScalingKeys[scaleKeyIndex].mTime;
+	float secondTime = (float) channel->mScalingKeys[scaleKeyIndex + 1].mTime;
+
+	float deltaTime = secondTime - firstTime;
+	float interpolationFactor = (time - firstTime) / deltaTime;
+
+	ASSERT_OR_DIE(interpolationFactor >= 0.f && interpolationFactor <= 1.0f, Stringf("Error: AssimpLoader::GetWorldPositionAtTime calculated interpolation factor out of range, factor was %f", interpolationFactor));
+
+	aiVector3D aiFirstScale = channel->mScalingKeys[scaleKeyIndex].mValue;
+	aiVector3D aiSecondScale = channel->mScalingKeys[scaleKeyIndex + 1].mValue;
+
+	Vector3 firstScale = Vector3(aiFirstScale.x, aiFirstScale.y, aiFirstScale.z);
+	Vector3 secondScale = Vector3(aiSecondScale.x, aiSecondScale.y, aiSecondScale.z);
+
+	Vector3 finalScale = Interpolate(firstScale, secondScale, interpolationFactor);
+
+	return finalScale;
+}
 
 //-----------------------------------------------------------------------------------------------
 // Builds the skeleton transforms by traversing the assimp node hierarchy

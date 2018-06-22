@@ -2,19 +2,34 @@
 #include <vector>
 #include "Engine/Math/Matrix44.hpp"
 
+class SkeletonBase;
+
 class Pose
 {
 public:
 	//-----Public Methods-----
 
-	int				AddTransform(const Matrix44& transform);
-	const Matrix44* GetTransformData() const;
-	Matrix44		GetTransfrom(unsigned int transformIndex) const;
+	Pose() {}
+	~Pose();
+
+	void			Initialize(const SkeletonBase* skeleton);
+
+	// Accessors
+	unsigned int	GetBoneCount() const;
+	Matrix44		GetBoneTransform(unsigned int transformIndex) const;
+	const Matrix44* GetBoneTransformData() const;
+
+	// Mutators
+	void			SetBoneTransform(unsigned int index, const Matrix44& transform);
+
+	void			ConstructGlobalMatrices();
 
 
 private:
 	//-----Private Data-----
 
-	std::vector<Matrix44> m_transforms;
+	Matrix44* m_boneTransforms = NULL;
+	unsigned int m_boneCount = 0;
 
+	const SkeletonBase* m_baseSkeleton;
 };

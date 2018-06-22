@@ -1,22 +1,63 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Rendering/Animation/Pose.hpp"
+#include "Engine/Rendering/Animation/SkeletonBase.hpp"
 
-int Pose::AddTransform(const Matrix44& transform)
+Pose::~Pose()
 {
-	m_transforms.push_back(transform);
-
-	return (int) (m_transforms.size() - 1);
+	if (m_boneTransforms != NULL)
+	{
+		free(m_boneTransforms);
+		m_boneTransforms = NULL;
+	}
 }
 
-const Matrix44* Pose::GetTransformData() const
+void Pose::Initialize(const SkeletonBase* skeleton)
 {
-	return m_transforms.data();
+	int numBones = skeleton->GetBoneCount();
+	m_boneTransforms = (Matrix44*) malloc (sizeof(Matrix44) * numBones);
+	m_boneCount = numBones;
+	m_baseSkeleton = skeleton;
 }
 
-Matrix44 Pose::GetTransfrom(unsigned int transformIndex) const
+const Matrix44* Pose::GetBoneTransformData() const
 {
-	ASSERT_OR_DIE(transformIndex < (unsigned int) m_transforms.size(), Stringf("Error: Pose::GetTransfrom received index out of range, index was %i", transformIndex));
+	return m_boneTransforms;
+}
 
-	return m_transforms[transformIndex];
+void Pose::SetBoneTransform(unsigned int index, const Matrix44& transform)
+{
+	ASSERT_OR_DIE(index < m_boneCount, Stringf("Error: Pose::GetTransfrom received index out of range, index was %i", index));
+
+	m_boneTransforms[index] = transform;
+}
+
+void Pose::ConstructGlobalMatrices()
+{
+	for (int boneIndex = 0; boneIndex < m_boneCount; ++boneIndex)
+	{	
+		BoneData_t boneData = m_baseSkeleton->GetBoneData(boneIndex);
+
+		int parentIndex = boneData.parentIndex;
+
+		if (parentIndex >= 0)
+		{
+			Matrix44 localMatrix = m_boneTransforms[boneIndex];
+			Matrix44 parentMatrix = m_boneTransforms[parentIndex];
+
+			m_boneTransforms[boneIndex] = m_baseSkeleton->GetGlobalInverseTransform() * parentMatrix * localMatrix * boneData.offsetMatrix;
+		}
+	}
+}
+
+Matrix44 Pose::GetBoneTransform(unsigned int transformIndex) const
+{
+	ASSERT_OR_DIE(transformIndex < m_boneCount, Stringf("Error: Pose::GetTransfrom received index out of range, index was %i", transformIndex));
+
+	return m_boneTransforms[transformIndex];
+}
+
+unsigned int Pose::GetBoneCount() const
+{
+	return m_boneCount;
 }
 

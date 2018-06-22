@@ -33,6 +33,8 @@ public:
 	unsigned int	GetBoneCount() const;
 	Matrix44		GetGlobalInverseTransform() const;
 
+	std::vector<std::string> GetAllBoneNames() const;
+
 	// Mutators
 	void SetOffsetMatrix(unsigned int boneIndex, const Matrix44& offsetMatrix);
 	void SetWorldTransform(unsigned int boneIndex, const Matrix44& worldTransform);
