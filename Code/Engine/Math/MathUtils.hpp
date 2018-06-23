@@ -120,3 +120,6 @@ float	AbsoluteValue(float inValue);
 bool AreMostlyEqual(float a, float b, float epsilon = 0.0001f);
 bool AreMostlyEqual(const Vector3& a, const Vector3& b, float epsilon = 0.0001f);
 bool AreMostlyEqual(const Quaternion& a, const Quaternion& b, float epsilon = 0.0001f);
+
+// Misc
+bool DoSpheresOverlap(const Vector3& posA, float radiusA, const Vector3& posB, float radiusB);

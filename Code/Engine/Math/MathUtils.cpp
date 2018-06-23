@@ -911,3 +911,15 @@ bool AreMostlyEqual(const Quaternion& a, const Quaternion& b, float epsilon /*= 
 
 	return (angleBetween <= epsilon);
 }
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns true if the two spheres defined by the parameters overlap, false otherwise
+//
+bool DoSpheresOverlap(const Vector3& posA, float radiusA, const Vector3& posB, float radiusB)
+{
+	float distanceSquared = (posA - posB).GetLengthSquared();
+	float radiiSquared = (radiusA + radiusB) * (radiusA + radiusB);
+
+	return (distanceSquared <= radiiSquared);
+}

@@ -34,11 +34,54 @@ void GameObject::Update(float deltaTime)
 
 
 //-----------------------------------------------------------------------------------------------
+// Sets the physics radius of the gameobject to the one provided
+//
+void GameObject::SetPhysicsRadius(float radius)
+{
+	m_physicsRadius = radius;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Marks this GameObject for deletion at the end of the frame
 //
 void GameObject::SetMarkedForDelete(bool markedForDelete)
 {
 	m_markedForDelete = markedForDelete;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Adds the given tag to this object's list of tags, checking for duplicates
+//
+void GameObject::AddTagUnique(const std::string& tag)
+{
+	RemoveTag(tag);
+	m_tags.push_back(tag);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Removes the tag from this object's list of tags
+// Returns true if it was found and removed, false otherwise
+//
+bool GameObject::RemoveTag(const std::string& tag)
+{
+	for (int tagIndex = 0; tagIndex < (int) m_tags.size(); ++tagIndex)
+	{
+		if (m_tags[tagIndex] == tag)
+		{
+			// Quick delete, since order doesn't matter
+			int lastIndex = (int) m_tags.size() - 1;
+
+			m_tags[tagIndex] = m_tags[lastIndex];
+			m_tags.erase(m_tags.begin() + lastIndex);
+
+			return true;
+		}
+	}
+
+	return false;
 }
 
 
@@ -57,4 +100,24 @@ Renderable* GameObject::GetRenderable()
 bool GameObject::IsMarkedForDelete() const
 {
 	return m_markedForDelete;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns true if the tag if the tag exists on this object, false otherwise
+//
+bool GameObject::HasTag(const std::string& tag)
+{
+	bool tagExists = std::find(m_tags.begin(), m_tags.end(), tag) != m_tags.end();
+
+	return tagExists;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the physics radius of the gameobject
+//
+float GameObject::GetPhysicsRadius() const
+{
+	return m_physicsRadius;
 }
