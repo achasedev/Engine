@@ -583,7 +583,7 @@ Matrix44 AssimpLoader::GetLocalTransfromAtTime(aiNodeAnim* channel, float time)
 
 Vector3 AssimpLoader::GetWorldTranslationAtTime(aiNodeAnim* channel, float time)
 {
-	int firstKeyIndex = 0;
+	int positionKeyIndex = 0;
 	Vector3 finalPosition = Vector3(channel->mPositionKeys[0].mValue.x, channel->mPositionKeys[0].mValue.y, channel->mPositionKeys[0].mValue.z);
 
 	// Only bother interpolating if there's more than one key
@@ -594,10 +594,16 @@ Vector3 AssimpLoader::GetWorldTranslationAtTime(aiNodeAnim* channel, float time)
 		{
 			if (channel->mPositionKeys[translationKeyIndex + 1].mTime > time)
 			{
-				firstKeyIndex = translationKeyIndex;
+				positionKeyIndex = translationKeyIndex;
 				found = true;
 				break;
 			}
+		}
+
+		// Clamp to front
+		if (channel->mPositionKeys[positionKeyIndex].mTime > time)
+		{
+			return finalPosition;
 		}
 
 		// Clamp to the end of the channel if our current time is pass the end
@@ -606,16 +612,16 @@ Vector3 AssimpLoader::GetWorldTranslationAtTime(aiNodeAnim* channel, float time)
 			return Vector3(channel->mPositionKeys[channel->mNumPositionKeys - 1].mValue.x, channel->mPositionKeys[channel->mNumPositionKeys - 1].mValue.y, channel->mPositionKeys[channel->mNumPositionKeys - 1].mValue.z);
 		}
 
-		float firstTime = (float) channel->mPositionKeys[firstKeyIndex].mTime;
-		float secondTime = (float) channel->mPositionKeys[firstKeyIndex + 1].mTime;
+		float firstTime = (float) channel->mPositionKeys[positionKeyIndex].mTime;
+		float secondTime = (float) channel->mPositionKeys[positionKeyIndex + 1].mTime;
 
 		float deltaTime = secondTime - firstTime;
 		float interpolationFactor = (time - firstTime) / deltaTime;
 
 		ASSERT_OR_DIE(interpolationFactor >= 0.f && interpolationFactor <= 1.0f, Stringf("Error: AssimpLoader::GetWorldTranslationAtTime calculated interpolation factor out of range, factor was %f", interpolationFactor));
 
-		aiVector3D aifirstPosition = channel->mPositionKeys[firstKeyIndex].mValue;
-		aiVector3D aisecondPosition = channel->mPositionKeys[firstKeyIndex + 1].mValue;
+		aiVector3D aifirstPosition = channel->mPositionKeys[positionKeyIndex].mValue;
+		aiVector3D aisecondPosition = channel->mPositionKeys[positionKeyIndex + 1].mValue;
 
 		Vector3 firstPosition = Vector3(aifirstPosition.x, aifirstPosition.y, aifirstPosition.z);
 		Vector3 secondPosition = Vector3(aisecondPosition.x, aisecondPosition.y, aisecondPosition.z);
@@ -642,6 +648,20 @@ Quaternion AssimpLoader::GetWorldRotationAtTime(aiNodeAnim* channel, float time)
 			}
 		}
 
+		// Clamp to front
+		if (channel->mRotationKeys[rotationKeyIndex].mTime > time)
+		{
+			aiQuaternion firstRot = channel->mRotationKeys[0].mValue;
+			Quaternion firstRotation;
+
+			firstRotation.s = firstRot.w;
+			firstRotation.v.x = firstRot.x;
+			firstRotation.v.y = firstRot.y;
+			firstRotation.v.z = firstRot.z;
+
+			return firstRotation;
+		}
+
 		// Clamp to end
 		if (!found)
 		{
@@ -654,7 +674,6 @@ Quaternion AssimpLoader::GetWorldRotationAtTime(aiNodeAnim* channel, float time)
 			finalRotation.v.z = lastRot.z;
 
 			return finalRotation;
-
 		}
 	}
 
@@ -700,6 +719,12 @@ Vector3 AssimpLoader::GetWorldScaleAtTime(aiNodeAnim* channel, float time)
 				found = true;
 				break;
 			}
+		}
+
+		// Clamp to front
+		if (channel->mScalingKeys[firstKeyIndex].mTime > time)
+		{
+			return finalScale;
 		}
 
 		// Clamp to the end of the channel if our current time is pass the end

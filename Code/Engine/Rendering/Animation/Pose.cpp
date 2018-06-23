@@ -53,6 +53,10 @@ void Pose::ConstructGlobalMatrices()
 
 			m_boneTransforms[boneIndex] = m_baseSkeleton->GetGlobalInverseTransform() * parentMatrix * localMatrix;
 		}
+		else
+		{
+			m_boneTransforms[boneIndex] = m_baseSkeleton->GetGlobalInverseTransform() * m_boneTransforms[boneIndex];
+		}
 	}
 }
 
