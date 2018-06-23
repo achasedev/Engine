@@ -34,10 +34,16 @@ public:
 	// Accessors
 	Renderable*		GetRenderable();
 	AnimationClip*	GetAnimationClip(unsigned int index);
+	const SkeletonBase*	GetSkeletonBase() const;
 
 
 private:
 	//-----Private Methods-----
+
+	// Skeletal Bone order
+	void InitializeSkeleton();
+		void GetBoneNamesFromNode(aiNode* node, std::vector<std::string>& out_names);
+		void CreateBoneMappingsFromNode(aiNode* node, const std::vector<std::string>& boneNames);
 
 	// Meshes (including bone vertex data) and materials
 	void BuildMeshesAndMaterials_FromScene();
@@ -63,7 +69,8 @@ private:
 	//-----Private Data-----
 
 	Renderable*		m_renderable = nullptr;
-	const aiScene* m_scene = nullptr;
+	SkeletonBase*	m_skeleton = nullptr;
+	const aiScene*	m_scene = nullptr;
 
 	std::vector<AnimationClip*> m_animationClips;
 

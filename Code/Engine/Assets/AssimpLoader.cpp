@@ -28,6 +28,8 @@
 
 // C functions
 Matrix44 ConvertAiMatrixToMyMatrix(aiMatrix4x4 aimatrix);
+void DebugPrintAnimation(aiAnimation* anim);
+void DebugPrintAITree(aiNode* node, const std::string& indent);
 
 
 //-----------------------------------------------------------------------------------------------
@@ -87,14 +89,9 @@ bool AssimpLoader::LoadFile(const std::string& filepath)
 	}
 
 	// Debugging
+	DebugPrintAITree(m_scene->mRootNode, "");
 
-	m_renderable = new Renderable();
-	SkeletonBase* skeleton = new SkeletonBase();
-	aiMatrix4x4 inverseGlobal = m_scene->mRootNode->mTransformation;
-	inverseGlobal.Inverse();
-
-	skeleton->SetGlobalInverseTransform(ConvertAiMatrixToMyMatrix(inverseGlobal));
-	m_renderable->SetSkeleton(skeleton);
+	InitializeSkeleton();
 
 	// Create mesh and material data
 	BuildMeshesAndMaterials_FromScene();
@@ -103,6 +100,10 @@ bool AssimpLoader::LoadFile(const std::string& filepath)
 	BuildBoneHierarchy();
 
 	// Load animations
+	for (int i = 0; i < m_scene->mNumAnimations; ++i)
+	{
+		DebugPrintAnimation(m_scene->mAnimations[i]);
+	}
 	BuildAnimations();
 
 	importer.FreeScene();
@@ -125,11 +126,82 @@ AnimationClip* AssimpLoader::GetAnimationClip(unsigned int index)
 	return m_animationClips[index];
 }
 
+const SkeletonBase* AssimpLoader::GetSkeletonBase() const
+{
+	return m_skeleton;
+}
+
+void AssimpLoader::InitializeSkeleton()
+{
+	// 1. Get all the bone names in the tree
+	std::vector<std::string> boneNames;
+	GetBoneNamesFromNode(m_scene->mRootNode, boneNames);
+
+	DebuggerPrintf("\n\n-----NUMBER OF BONES: %i-----", boneNames.size());
+
+	// 2. Initialize the Skeleton
+	m_skeleton = new SkeletonBase();
+	aiMatrix4x4 inverseGlobal = m_scene->mRootNode->mTransformation;
+	inverseGlobal.Inverse();
+	m_skeleton->SetGlobalInverseTransform(ConvertAiMatrixToMyMatrix(inverseGlobal));
+
+	CreateBoneMappingsFromNode(m_scene->mRootNode, boneNames);
+}
+
+void AssimpLoader::GetBoneNamesFromNode(aiNode* node, std::vector<std::string>& out_names)
+{
+	int numMeshes = node->mNumMeshes;
+
+	for (int meshIndex = 0; meshIndex < numMeshes; ++ meshIndex)
+	{
+		aiMesh* currMesh = m_scene->mMeshes[node->mMeshes[meshIndex]];
+
+		int numBones = currMesh->mNumBones;
+
+		for (int boneIndex = 0; boneIndex < numBones; ++boneIndex)
+		{
+			aiBone* currBone = currMesh->mBones[boneIndex];
+
+			std::string boneName = std::string(currBone->mName.C_Str());
+
+			if (std::find(out_names.begin(), out_names.end(), boneName) == out_names.end())
+			{
+				out_names.push_back(boneName);
+			}
+		}
+	}
+
+	int numChildren = node->mNumChildren;
+	 
+	for (int childIndex = 0; childIndex < numChildren; ++childIndex)
+	{
+		GetBoneNamesFromNode(node->mChildren[childIndex], out_names);
+	}
+}
+
+void AssimpLoader::CreateBoneMappingsFromNode(aiNode* node, const std::vector<std::string>& boneNames)
+{
+	std::string nodeName = node->mName.C_Str();
+
+	if (std::find(boneNames.begin(), boneNames.end(), nodeName) != boneNames.end())
+	{
+		m_skeleton->CreateOrGetBoneMapping(nodeName);
+	}
+
+	int numChildren = node->mNumChildren;
+
+	for (int childIndex = 0; childIndex < numChildren; ++childIndex)
+	{
+		CreateBoneMappingsFromNode(node->mChildren[childIndex], boneNames);
+	}
+}
+
 //-----------------------------------------------------------------------------------------------
 // Returns the renderable created from the loaded file
 //
 void AssimpLoader::BuildMeshesAndMaterials_FromScene()
 {
+	m_renderable = new Renderable();
 	BuildMeshesAndMaterials_FromNode(m_scene->mRootNode, Matrix44::IDENTITY);
 }
 
@@ -204,7 +276,7 @@ void AssimpLoader::BuildMeshAndMaterial_FromAIMesh(aiMesh* aimesh, const Matrix4
 			uvs.y = aimesh->mTextureCoords[0][vertexIndex].y;
 		}
 
-		Matrix44 toModelTransform = m_renderable->GetSkeletonBase()->GetGlobalInverseTransform() * transformation;
+		Matrix44 toModelTransform = m_skeleton->GetGlobalInverseTransform() * transformation;
 
 		normal = toModelTransform.TransformVector(normal).xyz();
 		tangent = toModelTransform.TransformVector(tangent).xyz();
@@ -236,9 +308,11 @@ void AssimpLoader::BuildMeshAndMaterial_FromAIMesh(aiMesh* aimesh, const Matrix4
 		aiBone* currBone = aimesh->mBones[boneIndex];
 		std::string boneName = currBone->mName.C_Str();
 
-		SkeletonBase* skeleton = m_renderable->GetSkeletonBase();
-		unsigned int mappingIndex = skeleton->CreateOrGetBoneMapping(boneName);
-		skeleton->SetOffsetMatrix(mappingIndex, ConvertAiMatrixToMyMatrix(currBone->mOffsetMatrix));
+		unsigned int mappingIndex = m_skeleton->GetBoneMapping(boneName);
+
+		ASSERT_OR_DIE(mappingIndex >= 0, Stringf("Error: Mesh built with a bone name without a registered slot."));
+
+		m_skeleton->SetOffsetMatrix(mappingIndex, ConvertAiMatrixToMyMatrix(currBone->mOffsetMatrix));
 
 		// Iterate across the weights for this bone
 		for (unsigned int weightIndex = 0; weightIndex < currBone->mNumWeights; ++weightIndex)
@@ -348,20 +422,17 @@ void AssimpLoader::ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTr
 	Matrix44 currentTransform = parentTransform * nodeTransform;
 
 	// Check if this name is a bone by searching for it's name mapping in the hierarchy
-	SkeletonBase* skeleton = m_renderable->GetSkeletonBase();
-	int thisBoneIndex = skeleton->GetBoneMapping(nodeName);
+	int thisBoneIndex = m_skeleton->GetBoneMapping(nodeName);
 
 	// If it is a bone, update the matrix in the skeleton (might be unnecessary for bind pose, as you get the same result!)
 	if (thisBoneIndex >= 0)
 	{
-		Matrix44 offset = skeleton->GetBoneData(thisBoneIndex).offsetMatrix;
-		Matrix44 finalTransformation = skeleton->GetGlobalInverseTransform() * currentTransform * skeleton->GetBoneData(thisBoneIndex).offsetMatrix;
+		Matrix44 offset = m_skeleton->GetBoneData(thisBoneIndex).offsetMatrix;
+		Matrix44 finalTransformation = m_skeleton->GetGlobalInverseTransform() * currentTransform * m_skeleton->GetBoneData(thisBoneIndex).offsetMatrix;
 
-		skeleton->SetFinalTransformation(thisBoneIndex, finalTransformation);
-
-		// For debugging
-		skeleton->SetWorldTransform(thisBoneIndex, currentTransform);
-		skeleton->SetParentBoneIndex(thisBoneIndex, parentBoneIndex);
+		m_skeleton->SetFinalTransformation(thisBoneIndex, finalTransformation);
+		m_skeleton->SetWorldTransform(thisBoneIndex, currentTransform);
+		m_skeleton->SetParentBoneIndex(thisBoneIndex, parentBoneIndex);
 	}
 	
 	// Determine what the parent index of the children bones are (either us if we're a bone, or our last bone ancestor)
@@ -407,7 +478,7 @@ void AssimpLoader::BuildAnimation(unsigned int animationIndex)
 
 	// Create the animation clip
 	AnimationClip* animation = new AnimationClip();
-	animation->Initialize(numFrames, m_renderable->GetSkeletonBase());
+	animation->Initialize(numFrames, m_skeleton);
 	animation->SetName(aianimation->mName.C_Str());
 	animation->SetFramesPerSecond(framesPerSecond);
 	animation->SetDurationSeconds(durationSeconds);
@@ -417,7 +488,8 @@ void AssimpLoader::BuildAnimation(unsigned int animationIndex)
 	{
 		Pose* pose = animation->GetPoseAtIndex(frameIndex);
 
-		float time = frameIndex * secondsPerFrame;
+		// Pass our time in number of ticks, since channels store times as number of ticks
+		float time = frameIndex * secondsPerFrame * aianimation->mTicksPerSecond;
 		FillPoseForTime(pose, aianimation, time);
 	}
 
@@ -435,9 +507,8 @@ void AssimpLoader::FillPoseForTime(Pose* out_pose, aiAnimation* aianimation, flo
 		// If the channel exists, make the transform and store it in the pose
 		// Else store identity
 
-	SkeletonBase* skeleton = m_renderable->GetSkeletonBase();
-	std::vector<std::string> boneNames = skeleton->GetAllBoneNames();
-	out_pose->Initialize(skeleton);
+	std::vector<std::string> boneNames = m_skeleton->GetAllBoneNames();
+	out_pose->Initialize(m_skeleton);
 	
 	
 	int numBones = (int) boneNames.size();
@@ -445,7 +516,7 @@ void AssimpLoader::FillPoseForTime(Pose* out_pose, aiAnimation* aianimation, flo
 	for (int boneNameIndex = 0; boneNameIndex < numBones; ++boneNameIndex)
 	{
 		std::string currBoneName = boneNames[boneNameIndex];
-		int boneDataIndex = skeleton->GetBoneMapping(currBoneName);
+		int boneDataIndex = m_skeleton->GetBoneMapping(currBoneName);
 
 		aiNodeAnim* channel = GetChannelForBone(currBoneName, aianimation);
 
@@ -512,31 +583,39 @@ Matrix44 AssimpLoader::GetLocalTransfromAtTime(aiNodeAnim* channel, float time)
 
 Vector3 AssimpLoader::GetWorldTranslationAtTime(aiNodeAnim* channel, float time)
 {
-	int positionKeyIndex = 0;
+	int firstKeyIndex = 0;
 	Vector3 finalPosition = Vector3(channel->mPositionKeys[0].mValue.x, channel->mPositionKeys[0].mValue.y, channel->mPositionKeys[0].mValue.z);
 
 	// Only bother interpolating if there's more than one key
 	if (channel->mNumPositionKeys > 1)
 	{
+		bool found = false;
 		for (unsigned int translationKeyIndex = 0; translationKeyIndex < channel->mNumPositionKeys - 1; ++translationKeyIndex)
 		{
 			if (channel->mPositionKeys[translationKeyIndex + 1].mTime > time)
 			{
-				positionKeyIndex = translationKeyIndex;
+				firstKeyIndex = translationKeyIndex;
+				found = true;
 				break;
 			}
 		}
 
-		float firstTime = (float) channel->mPositionKeys[positionKeyIndex].mTime;
-		float secondTime = (float) channel->mPositionKeys[positionKeyIndex + 1].mTime;
+		// Clamp to the end of the channel if our current time is pass the end
+		if (!found)
+		{
+			return Vector3(channel->mPositionKeys[channel->mNumPositionKeys - 1].mValue.x, channel->mPositionKeys[channel->mNumPositionKeys - 1].mValue.y, channel->mPositionKeys[channel->mNumPositionKeys - 1].mValue.z);
+		}
+
+		float firstTime = (float) channel->mPositionKeys[firstKeyIndex].mTime;
+		float secondTime = (float) channel->mPositionKeys[firstKeyIndex + 1].mTime;
 
 		float deltaTime = secondTime - firstTime;
 		float interpolationFactor = (time - firstTime) / deltaTime;
 
-		ASSERT_OR_DIE(interpolationFactor >= 0.f && interpolationFactor <= 1.0f, Stringf("Error: AssimpLoader::GetWorldPositionAtTime calculated interpolation factor out of range, factor was %f", interpolationFactor));
+		ASSERT_OR_DIE(interpolationFactor >= 0.f && interpolationFactor <= 1.0f, Stringf("Error: AssimpLoader::GetWorldTranslationAtTime calculated interpolation factor out of range, factor was %f", interpolationFactor));
 
-		aiVector3D aifirstPosition = channel->mPositionKeys[positionKeyIndex].mValue;
-		aiVector3D aisecondPosition = channel->mPositionKeys[positionKeyIndex + 1].mValue;
+		aiVector3D aifirstPosition = channel->mPositionKeys[firstKeyIndex].mValue;
+		aiVector3D aisecondPosition = channel->mPositionKeys[firstKeyIndex + 1].mValue;
 
 		Vector3 firstPosition = Vector3(aifirstPosition.x, aifirstPosition.y, aifirstPosition.z);
 		Vector3 secondPosition = Vector3(aisecondPosition.x, aisecondPosition.y, aisecondPosition.z);
@@ -553,6 +632,7 @@ Quaternion AssimpLoader::GetWorldRotationAtTime(aiNodeAnim* channel, float time)
 
 	if (channel->mNumRotationKeys > 1)
 	{
+		bool found = false;
 		for (unsigned int index = 0; index < channel->mNumRotationKeys - 1; ++index)
 		{
 			if (channel->mRotationKeys[index + 1].mTime > time)
@@ -560,6 +640,21 @@ Quaternion AssimpLoader::GetWorldRotationAtTime(aiNodeAnim* channel, float time)
 				rotationKeyIndex = index;
 				break;
 			}
+		}
+
+		// Clamp to end
+		if (!found)
+		{
+			aiQuaternion lastRot = channel->mRotationKeys[channel->mNumRotationKeys - 1].mValue;
+			Quaternion finalRotation;
+
+			finalRotation.s = lastRot.w;
+			finalRotation.v.x = lastRot.x;
+			finalRotation.v.y = lastRot.y;
+			finalRotation.v.z = lastRot.z;
+
+			return finalRotation;
+
 		}
 	}
 
@@ -590,36 +685,45 @@ Quaternion AssimpLoader::GetWorldRotationAtTime(aiNodeAnim* channel, float time)
 
 Vector3 AssimpLoader::GetWorldScaleAtTime(aiNodeAnim* channel, float time)
 {
-	int scaleKeyIndex = 0;
+	int firstKeyIndex = 0;
+	Vector3 finalScale = Vector3(channel->mScalingKeys[0].mValue.x, channel->mScalingKeys[0].mValue.y, channel->mScalingKeys[0].mValue.z);
 
+	// Only bother interpolating if there's more than one key
 	if (channel->mNumScalingKeys > 1)
 	{
-		for (unsigned int index = 0; index < channel->mNumScalingKeys - 1; ++index)
+		bool found = false;
+		for (unsigned int scaleKeyIndex = 0; scaleKeyIndex < channel->mNumScalingKeys - 1; ++scaleKeyIndex)
 		{
-			if (channel->mScalingKeys[index + 1].mTime > time)
+			if (channel->mScalingKeys[scaleKeyIndex + 1].mTime > time)
 			{
-				scaleKeyIndex = index;
+				firstKeyIndex = scaleKeyIndex;
+				found = true;
 				break;
 			}
 		}
+
+		// Clamp to the end of the channel if our current time is pass the end
+		if (!found)
+		{
+			return Vector3(channel->mScalingKeys[channel->mNumScalingKeys - 1].mValue.x, channel->mScalingKeys[channel->mNumScalingKeys - 1].mValue.y, channel->mScalingKeys[channel->mNumScalingKeys - 1].mValue.z);
+		}
+
+		float firstTime = (float) channel->mScalingKeys[firstKeyIndex].mTime;
+		float secondTime = (float) channel->mScalingKeys[firstKeyIndex + 1].mTime;
+
+		float deltaTime = secondTime - firstTime;
+		float interpolationFactor = (time - firstTime) / deltaTime;
+
+		ASSERT_OR_DIE(interpolationFactor >= 0.f && interpolationFactor <= 1.0f, Stringf("Error: AssimpLoader::GetWorldScaleAtTime calculated interpolation factor out of range, factor was %f", interpolationFactor));
+
+		aiVector3D aiFirstScale = channel->mScalingKeys[firstKeyIndex].mValue;
+		aiVector3D aiSecondScale = channel->mScalingKeys[firstKeyIndex + 1].mValue;
+
+		Vector3 firstScale = Vector3(aiFirstScale.x, aiFirstScale.y, aiFirstScale.z);
+		Vector3 secondScale = Vector3(aiSecondScale.x, aiSecondScale.y, aiSecondScale.z);
+
+		finalScale = Interpolate(firstScale, secondScale, interpolationFactor);
 	}
-
-
-	float firstTime = (float) channel->mScalingKeys[scaleKeyIndex].mTime;
-	float secondTime = (float) channel->mScalingKeys[scaleKeyIndex + 1].mTime;
-
-	float deltaTime = secondTime - firstTime;
-	float interpolationFactor = (time - firstTime) / deltaTime;
-
-	ASSERT_OR_DIE(interpolationFactor >= 0.f && interpolationFactor <= 1.0f, Stringf("Error: AssimpLoader::GetWorldPositionAtTime calculated interpolation factor out of range, factor was %f", interpolationFactor));
-
-	aiVector3D aiFirstScale = channel->mScalingKeys[scaleKeyIndex].mValue;
-	aiVector3D aiSecondScale = channel->mScalingKeys[scaleKeyIndex + 1].mValue;
-
-	Vector3 firstScale = Vector3(aiFirstScale.x, aiFirstScale.y, aiFirstScale.z);
-	Vector3 secondScale = Vector3(aiSecondScale.x, aiSecondScale.y, aiSecondScale.z);
-
-	Vector3 finalScale = Interpolate(firstScale, secondScale, interpolationFactor);
 
 	return finalScale;
 }
@@ -629,13 +733,6 @@ Vector3 AssimpLoader::GetWorldScaleAtTime(aiNodeAnim* channel, float time)
 //
 void AssimpLoader::BuildBoneHierarchy()
 {
-	// Set up the skeleton global inverse first, to convert vertices from world to local model space
-	aiMatrix4x4 globalInverse = m_scene->mRootNode->mTransformation;
-	globalInverse.Inverse();
-
-	SkeletonBase* skeleton = m_renderable->GetSkeletonBase();
-	skeleton->SetGlobalInverseTransform(ConvertAiMatrixToMyMatrix(globalInverse));
-
 	// Recursively traverse the tree to assemble the bone transformations
 	ExtractBoneTransform(m_scene->mRootNode, Matrix44::IDENTITY, -1);
 }
@@ -669,4 +766,37 @@ Matrix44 ConvertAiMatrixToMyMatrix(aiMatrix4x4 aimatrix)
 	result.Tw = aimatrix.d4;
 
 	return result;
+}
+
+
+void DebugPrintAnimation(aiAnimation* anim)
+{
+	DebuggerPrintf("---------------------ANIMATION NAME: %s -- NUMBER OF CHANNELS: %i\n", anim->mName.C_Str(), anim->mNumChannels);
+
+	float tps = anim->mTicksPerSecond;
+
+	for (int channelIndex = 0; channelIndex < anim->mNumChannels; ++channelIndex)
+	{
+		aiNodeAnim* channel = anim->mChannels[channelIndex];
+
+		aiString channelName = channel->mNodeName;
+
+		int numPos = channel->mNumPositionKeys;
+		int numRot = channel->mNumRotationKeys;
+		int numSca = channel->mNumScalingKeys;
+
+		DebuggerPrintf("CHANNEL %i: %s\n -- POSITIONS: %i -- POSITION TIME START: %f -- POSITION TIME END: %f\n -- ROTATIONS: %i -- ROTATION TIME START: %f -- ROTATION TIME END: %f\n -- SCALES: %i -- SCALE TIME START: %f -- SCALE TIME END: %f\n", 
+			channelIndex, channel->mNodeName.C_Str(), numPos, channel->mPositionKeys[0].mTime / tps, channel->mPositionKeys[numPos - 1].mTime / tps, numRot, channel->mRotationKeys[0].mTime / tps, channel->mRotationKeys[numRot - 1].mTime / tps, numSca, channel->mScalingKeys[0].mTime / tps, channel->mScalingKeys[numSca - 1].mTime / tps);
+	}
+}
+
+void DebugPrintAITree(aiNode* node, const std::string& indent)
+{
+	std::string text = "\n" + indent + "NODE: %s\n";
+	DebuggerPrintf(text.c_str(), node->mName.C_Str());
+
+	for (int childIndex = 0; childIndex < node->mNumChildren; ++childIndex)
+	{
+		DebugPrintAITree(node->mChildren[childIndex], indent + "-");
+	}
 }

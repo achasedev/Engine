@@ -15,7 +15,7 @@ class DebugRenderTask_Skeleton : public DebugRenderTask
 public:
 	//-----Public Methods-----
 
-	DebugRenderTask_Skeleton(SkeletonBase* skeleton, const Matrix44& transform, const DebugRenderOptions& options);
+	DebugRenderTask_Skeleton(const SkeletonBase* skeleton, const Matrix44& transform, const DebugRenderOptions& options);
 
 	virtual void Render() const override;
 
@@ -23,6 +23,6 @@ public:
 private:
 	//-----Private Methods-----
 
-	void AssembleMesh(SkeletonBase* skeleton);
+	void AssembleMesh(const SkeletonBase* skeleton);
 
 };

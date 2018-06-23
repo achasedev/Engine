@@ -15,7 +15,7 @@
 //-----------------------------------------------------------------------------------------------
 // Constructor
 //
-DebugRenderTask_Skeleton::DebugRenderTask_Skeleton(SkeletonBase* skeleton, const Matrix44& transform, const DebugRenderOptions& options)
+DebugRenderTask_Skeleton::DebugRenderTask_Skeleton(const SkeletonBase* skeleton, const Matrix44& transform, const DebugRenderOptions& options)
 	: DebugRenderTask(options, DEBUG_CAMERA_WORLD)
 {
 	AssembleMesh(skeleton);
@@ -45,7 +45,7 @@ void DebugRenderTask_Skeleton::Render() const
 //-----------------------------------------------------------------------------------------------
 // Builds the mesh for the skeleton
 //
-void DebugRenderTask_Skeleton::AssembleMesh(SkeletonBase* skeleton)
+void DebugRenderTask_Skeleton::AssembleMesh(const SkeletonBase* skeleton)
 {
  	Matrix44 globalInverseTransform = skeleton->GetGlobalInverseTransform();
 	MeshBuilder mb;

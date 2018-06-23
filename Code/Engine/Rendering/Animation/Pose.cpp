@@ -24,6 +24,11 @@ const Matrix44* Pose::GetBoneTransformData() const
 	return m_boneTransforms;
 }
 
+const SkeletonBase* Pose::GetBaseSkeleton() const
+{
+	return m_baseSkeleton;
+}
+
 void Pose::SetBoneTransform(unsigned int index, const Matrix44& transform)
 {
 	ASSERT_OR_DIE(index < m_boneCount, Stringf("Error: Pose::GetTransfrom received index out of range, index was %i", index));
@@ -39,12 +44,14 @@ void Pose::ConstructGlobalMatrices()
 
 		int parentIndex = boneData.parentIndex;
 
+		ASSERT_OR_DIE(parentIndex < boneIndex, Stringf("Child was before parent in the pose transform array."));
+
 		if (parentIndex >= 0)
 		{
 			Matrix44 localMatrix = m_boneTransforms[boneIndex];
 			Matrix44 parentMatrix = m_boneTransforms[parentIndex];
 
-			m_boneTransforms[boneIndex] = m_baseSkeleton->GetGlobalInverseTransform() * parentMatrix * localMatrix * boneData.offsetMatrix;
+			m_boneTransforms[boneIndex] = m_baseSkeleton->GetGlobalInverseTransform() * parentMatrix * localMatrix;
 		}
 	}
 }

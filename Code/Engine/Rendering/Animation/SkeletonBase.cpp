@@ -139,6 +139,11 @@ void SkeletonBase::SetParentBoneIndex(unsigned int boneIndex, int parentBoneInde
 {
 	ASSERT_OR_DIE(boneIndex < m_boneData.size(), Stringf("Error: SkeletonBase::SetToWorldMatrix received index out of bounds - size is %i, index is %i.", m_boneData.size(), boneIndex));
 
+	if (boneIndex == 0 && parentBoneIndex != -1)
+	{
+		ERROR_AND_DIE("Root got a parent");
+	}
+
 	m_boneData[boneIndex].parentIndex = parentBoneIndex;
 }
 

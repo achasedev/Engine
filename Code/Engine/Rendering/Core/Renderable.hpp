@@ -41,15 +41,12 @@ public:
 	void AddInstanceMatrix(const Matrix44& model);
 	void RemoveInstanceMatrix(unsigned int instanceIndex);
 
-	void SetSkeleton(SkeletonBase* skeleton);
-
 	// Accessors
 	RenderableDraw_t	GetDraw(unsigned int drawIndex) const;
 	Mesh*				GetMesh(unsigned int drawIndex) const;
 	Material*			GetSharedMaterial(unsigned int drawIndex) const;
 	Material*			GetMaterialInstance(unsigned int drawIndex);
 	Matrix44			GetInstanceMatrix(unsigned int instanceIndex) const;
-	SkeletonBase*		GetSkeletonBase() const;
 
 	Material*			GetMaterialForRender(unsigned int drawIndex) const;
 
@@ -77,6 +74,4 @@ private:
 
 	std::vector<Matrix44>			m_instanceModels;
 	std::vector<RenderableDraw_t>	m_draws;
-
-	SkeletonBase*				m_skeleton;	
 };
