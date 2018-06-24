@@ -34,15 +34,6 @@ void GameObject::Update(float deltaTime)
 
 
 //-----------------------------------------------------------------------------------------------
-// Sets the physics radius of the gameobject to the one provided
-//
-void GameObject::SetPhysicsRadius(float radius)
-{
-	m_physicsRadius = radius;
-}
-
-
-//-----------------------------------------------------------------------------------------------
 // Marks this GameObject for deletion at the end of the frame
 //
 void GameObject::SetMarkedForDelete(bool markedForDelete)
@@ -111,13 +102,4 @@ bool GameObject::HasTag(const std::string& tag)
 	bool tagExists = std::find(m_tags.begin(), m_tags.end(), tag) != m_tags.end();
 
 	return tagExists;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Returns the physics radius of the gameobject
-//
-float GameObject::GetPhysicsRadius() const
-{
-	return m_physicsRadius;
 }
