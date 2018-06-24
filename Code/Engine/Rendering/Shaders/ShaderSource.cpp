@@ -489,7 +489,8 @@ const char* ShaderSource::PHONG_OPAQUE_FS = R"(
 																										
 	layout(binding = 0) uniform sampler2D gTexDiffuse;			
 	layout(binding = 1) uniform sampler2D gTexNormal;
-	
+	layout(binding = 8) uniform sampler2D gShadowDepth;
+
 	struct Light
 	{
 		vec3 m_position;
@@ -499,6 +500,9 @@ const char* ShaderSource::PHONG_OPAQUE_FS = R"(
 		vec3 m_attenuationFactors;
 		float m_directionFactor;
 		vec4 m_color;
+		mat4 m_shadowVP;
+		vec3 m_padding;
+		float m_castsShadows;
 	};
 	
 	layout(binding=3, std140) uniform lightUBO
@@ -506,7 +510,7 @@ const char* ShaderSource::PHONG_OPAQUE_FS = R"(
 		vec4 AMBIENT;							// xyz color, w intensity
 		Light LIGHTS[MAX_LIGHTS];
 	};	
-	
+
 	layout(binding=8, std140) uniform specularUBO
 	{
 		float SPECULAR_AMOUNT;
@@ -572,6 +576,23 @@ const char* ShaderSource::PHONG_OPAQUE_FS = R"(
 		return specular;
 	}
 	
+	float CalculateShadowFactor(vec3 fragPosition, vec3 normal, Light light)
+	{
+		if (light.m_castsShadows == 0.f)
+		{
+			return 1.0f;
+		}
+
+		vec4 clipPos = light.m_shadowVP * vec4(fragPosition, 1.0f);
+		vec3 ndcPos = clipPos.xyz / clipPos.w;
+
+		ndcPos = (ndcPos + vec3(1)) * 0.5f;
+
+		float shadowDepth = texture(gShadowDepth, ndcPos.xy).r;
+
+		float bias = max(0.005 * (1.0 - abs(dot(normal, light.m_direction))), 0.001f);
+		return ndcPos.z - bias > shadowDepth ? 0.f : 1.f;
+	}
 	
 	// Entry point															
 	void main( void )											
@@ -605,10 +626,12 @@ const char* ShaderSource::PHONG_OPAQUE_FS = R"(
 	
 	
 			//-------------STEP 2: Add in the diffuse light from all lights------------	
-			surfaceLight += CalculateDot3(directionToLight, worldNormal, LIGHTS[lightIndex].m_color, attenuation, coneFactor);
+			float shadowFactor = CalculateShadowFactor(passWorldPosition, worldNormal, LIGHTS[lightIndex]);
+
+			surfaceLight += shadowFactor * CalculateDot3(directionToLight, worldNormal, LIGHTS[lightIndex].m_color, attenuation, coneFactor);
 			
 			//-----STEP 3: Calculate and add in specular lighting from all lights----------
-			reflectedLight += CalculateSpecular(directionToLight, worldNormal, directionToEye, LIGHTS[lightIndex].m_color, attenuation, coneFactor);
+			reflectedLight += shadowFactor * CalculateSpecular(directionToLight, worldNormal, directionToEye, LIGHTS[lightIndex].m_color, attenuation, coneFactor);
 		}
 	
 	

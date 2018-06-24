@@ -24,6 +24,8 @@ public:
 private:
 	//-----Private Methods-----
 
+	static void CreateShadowTexturesForCamera(RenderScene* scene, Camera* camera);
+
 	static void ConstructDrawCallsForRenderable(Renderable* renderable, RenderScene* scene, std::vector<DrawCall>& drawCalls);
 
 	static void SortDrawCalls(std::vector<DrawCall>& drawCalls);

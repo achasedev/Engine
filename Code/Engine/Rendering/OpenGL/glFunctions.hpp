@@ -107,6 +107,7 @@ extern PFNGLBLITFRAMEBUFFERPROC			glBlitFramebuffer;
 extern PFNGLDEPTHFUNCPROC				glDepthFunc;
 extern PFNGLDEPTHMASKPROC				glDepthMask;
 extern PFNGLCLEARDEPTHFPROC				glClearDepthf;
+extern PFNGLVIEWPORTPROC				glViewport;
 
 // Loading Textures
 extern PFNGLPIXELSTOREIPROC			glPixelStorei;
@@ -126,6 +127,7 @@ extern PFNGLGENSAMPLERSPROC			glGenSamplers;
 extern PFNGLSAMPLERPARAMETERIPROC	glSamplerParameteri;
 extern PFNGLDELETESAMPLERSPROC		glDeleteSamplers;
 extern PFNGLBINDSAMPLERPROC			glBindSampler;
+extern PFNGLSAMPLERPARAMETERFVPROC	glSamplerParameterfv;
 
 // Misc
 extern PFNGLGETERRORPROC			glGetError;

@@ -4,8 +4,11 @@
 /* Date: February 2nd, 2018
 /* Description: Implementation of the Sampler Class
 /************************************************************************/
+#include "Engine/Core/Rgba.hpp"
+#include "Engine/Math/Vector4.hpp"
 #include "Engine/Rendering/Resources/Sampler.hpp"
 #include "Engine/Rendering/OpenGL/glFunctions.hpp"
+
 
 //-----------------------------------------------------------------------------------------------
 // Default Constructor
@@ -70,6 +73,11 @@ bool Sampler::Initialize(SamplerFilter samplerFilter, EdgeSampling edgeSampling)
 	glSamplerParameteri( m_samplerHandle, GL_TEXTURE_MAG_FILTER, ToGLType(magFilter));
 
 	GL_CHECK_ERROR();
+
+	Vector4 colorAsFloats;
+	Rgba::WHITE.GetAsFloats(colorAsFloats.x, colorAsFloats.y, colorAsFloats.z, colorAsFloats.w);
+
+	glSamplerParameterfv(m_samplerHandle, GL_TEXTURE_BORDER_COLOR, (const GLfloat*) &colorAsFloats);
 
 	return true; 
 }

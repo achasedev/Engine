@@ -21,6 +21,7 @@ public:
 	//-----Public Methods-----
 
 	Texture(); // Texture constructor is now public, initializes everything to 0, needed for render targets
+	~Texture();
 
 	// Only the AssetDatabase can create textures for use other than render targets
 	virtual bool CreateFromFile(const std::string& filename, bool useMipMaps = false);

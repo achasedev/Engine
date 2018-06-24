@@ -773,6 +773,12 @@ void Renderer::EnableLightsForDrawCall(const DrawCall* drawCall)
 		else
 		{
 			currLight = drawCall->GetLight(lightIndex)->GetLightData();
+
+			// Also check for shadowMaps
+			if (drawCall->GetLight(lightIndex)->IsShadowCasting())
+			{
+				BindTexture(SHADOW_TEXTURE_BINDING, drawCall->GetLight(lightIndex)->GetShadowTexture(), m_shadowSampler);
+			}
 		}
 	}
 }
@@ -1380,6 +1386,9 @@ void Renderer::PostGLStartup()
 	m_defaultSampler = new Sampler();
 	bool successful = m_defaultSampler->Initialize(SAMPLER_FILTER_NEAREST, EDGE_SAMPLING_REPEAT);
 	GUARANTEE_OR_DIE(successful, Stringf("Error: Default Sampler could not be constructed successfully."));
+
+	m_shadowSampler = new Sampler();
+	m_shadowSampler->Initialize(SAMPLER_FILTER_LINEAR, EDGE_SAMPLING_CLAMP_TO_BORDER);
 
 	// the default color and depth should match our output window
 	// so get width/height however you need to.

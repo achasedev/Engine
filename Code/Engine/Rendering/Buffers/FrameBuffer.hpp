@@ -19,9 +19,10 @@ public:
 	void SetColorTarget(Texture* color_target); 
 	void SetDepthTarget(Texture* depth_target); 
 
-	unsigned int GetWidth() const;
-	unsigned int GetHeight() const;
-	unsigned int GetHandle() const;
+	unsigned int	GetWidth() const;
+	unsigned int	GetHeight() const;
+	float			GetAspect() const;
+	unsigned int	GetHandle() const;
 
 	bool Finalize(); 
 

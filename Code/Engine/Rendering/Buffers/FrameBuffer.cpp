@@ -68,6 +68,15 @@ unsigned int FrameBuffer::GetHeight() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the aspect ratio for the frame buffer
+//
+float FrameBuffer::GetAspect() const
+{
+	return (float) m_width / (float) m_height;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the GPU handle for this buffer
 //
 unsigned int FrameBuffer::GetHandle() const
@@ -83,6 +92,21 @@ bool FrameBuffer::Finalize()
 {
 	GL_CHECK_ERROR();
 
+	// Set the viewport, based on the dimensions of the targets
+	// One target should be present (at least) and they should match
+	if (m_colorTarget != nullptr)
+	{
+		IntVector2 dimensions = m_colorTarget->GetDimensions();
+		glViewport(0, 0, dimensions.x, dimensions.y);
+	}
+	else
+	{
+		IntVector2 dimensions = m_depthTarget->GetDimensions();
+		glViewport(0, 0, dimensions.x, dimensions.y);
+	}
+
+	GL_CHECK_ERROR();
+
 	glBindFramebuffer( GL_FRAMEBUFFER, m_handle ); 
 
 	GL_CHECK_ERROR();
@@ -92,9 +116,10 @@ bool FrameBuffer::Finalize()
 
 	// Bind a color target to an attachment point
 	// and keep track of which locations to to which attachments. 
+	unsigned int colorHandle = (m_colorTarget == nullptr ? NULL : m_colorTarget->GetHandle());
 	glFramebufferTexture( GL_FRAMEBUFFER, 
 		GL_COLOR_ATTACHMENT0 + 0, 
-		m_colorTarget->GetHandle(), 0); 
+		colorHandle, 0); 
 	// 0 to to attachment 0
 	targets[0] = GL_COLOR_ATTACHMENT0 + 0; 
 
@@ -102,7 +127,7 @@ bool FrameBuffer::Finalize()
 
 	// Update target bindings
 	glDrawBuffers( 1, targets ); 
-
+	
 	GL_CHECK_ERROR();
 
 	// Bind depth if available;
@@ -126,8 +151,16 @@ bool FrameBuffer::Finalize()
 #endif
 
 	// Success (so target sizes match)
-	m_width		= m_colorTarget->GetDimensions().x;
-	m_height	= m_colorTarget->GetDimensions().y;
+	if (m_colorTarget != nullptr)
+	{
+		m_width		= m_colorTarget->GetDimensions().x;
+		m_height	= m_colorTarget->GetDimensions().y;
+	}
+	else
+	{
+		m_width		= m_depthTarget->GetDimensions().x;
+		m_height	= m_depthTarget->GetDimensions().y;
+	}
 
 	return true;
 }

@@ -51,6 +51,14 @@ Texture::Texture()
 }
 
 
+Texture::~Texture()
+{
+	if (m_textureHandle != NULL)
+	{
+		glDeleteTextures(1, &m_textureHandle);
+	}
+}
+
 //-----------------------------------------------------------------------------------------------
 // Loads the image from file
 //

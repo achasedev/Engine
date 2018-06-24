@@ -96,6 +96,7 @@ PFNGLBLITFRAMEBUFFERPROC			glBlitFramebuffer = nullptr;
 PFNGLDEPTHFUNCPROC					glDepthFunc = nullptr;
 PFNGLDEPTHMASKPROC					glDepthMask = nullptr;
 PFNGLCLEARDEPTHFPROC				glClearDepthf = nullptr;
+PFNGLVIEWPORTPROC					glViewport = nullptr;
 
 
 //----------Textures----------
@@ -119,6 +120,8 @@ PFNGLGENSAMPLERSPROC		glGenSamplers = nullptr;
 PFNGLSAMPLERPARAMETERIPROC	glSamplerParameteri = nullptr;
 PFNGLDELETESAMPLERSPROC		glDeleteSamplers = nullptr;
 PFNGLBINDSAMPLERPROC		glBindSampler = nullptr;
+PFNGLSAMPLERPARAMETERFVPROC	glSamplerParameterfv = nullptr;
+
 
 //-----Misc-----
 PFNGLGETERRORPROC			glGetError = nullptr;
@@ -345,6 +348,7 @@ void BindGLFunctions()
 	GL_BIND_FUNCTION(glDepthFunc);
 	GL_BIND_FUNCTION(glDepthMask);
 	GL_BIND_FUNCTION(glClearDepthf);
+	GL_BIND_FUNCTION(glViewport);
 
 
 	// Textures
@@ -365,6 +369,7 @@ void BindGLFunctions()
 	GL_BIND_FUNCTION(glSamplerParameteri);
 	GL_BIND_FUNCTION(glDeleteSamplers);
 	GL_BIND_FUNCTION(glBindSampler);
+	GL_BIND_FUNCTION(glSamplerParameterfv);
 
 	// Misc
 	GL_BIND_FUNCTION(glGetError);
