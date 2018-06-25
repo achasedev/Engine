@@ -70,6 +70,15 @@ Matrix44 SkeletonBase::GetGlobalInverseTransform() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the root bone offset transform for this skeleton
+//
+Matrix44 SkeletonBase::GetRootBoneOffset() const
+{
+	return m_rootBoneOffset;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the list of bone names for this skeleton
 //
 std::vector<std::string> SkeletonBase::GetAllBoneNames() const
@@ -107,6 +116,13 @@ void SkeletonBase::SetOffsetMatrix(unsigned int boneIndex, const Matrix44& offse
 	m_boneData[boneIndex].offsetMatrix = offsetMatrix;
 }
 
+
+void SkeletonBase::SetLocalTransform(unsigned int boneIndex, const Matrix44& localTransform)
+{
+	ASSERT_OR_DIE(boneIndex < m_boneData.size(), Stringf("Error: SkeletonBase::SetLocalTransform received index out of bounds - size is %i, index is %i.", m_boneData.size(), boneIndex));
+
+	m_boneData[boneIndex].localTransform = localTransform;
+}
 
 //-----------------------------------------------------------------------------------------------
 // Sets the world matrix of the bone given by boneIndex
@@ -154,4 +170,13 @@ void SkeletonBase::SetParentBoneIndex(unsigned int boneIndex, int parentBoneInde
 void SkeletonBase::SetGlobalInverseTransform(const Matrix44& inverseTransform)
 {
 	m_globalInverseTransform = inverseTransform;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the transform that is the parent of the root bone
+//
+void SkeletonBase::SetRootBoneOffset(const Matrix44& transform)
+{
+	m_rootBoneOffset = transform;
 }

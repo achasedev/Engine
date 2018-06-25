@@ -14,6 +14,7 @@
 // Structure to represent a single bone in the skeleton
 struct BoneData_t
 {
+	Matrix44	localTransform;				// Transform of the bone local to it's parent bone
 	Matrix44	worldTransform;				// Transform of the bone in world space
 	Matrix44	finalTransformation;		// Full transformation: From Node local -> bone space -> World -> Model Local
 	Matrix44	offsetMatrix;				// Matrix that converts vertices from the local space into the bone space
@@ -32,15 +33,18 @@ public:
 	
 	unsigned int	GetBoneCount() const;
 	Matrix44		GetGlobalInverseTransform() const;
+	Matrix44		GetRootBoneOffset() const;
 
 	std::vector<std::string> GetAllBoneNames() const;
 
 	// Mutators
 	void SetOffsetMatrix(unsigned int boneIndex, const Matrix44& offsetMatrix);
+	void SetLocalTransform(unsigned int boneIndex, const Matrix44& localTransform);
 	void SetWorldTransform(unsigned int boneIndex, const Matrix44& worldTransform);
 	void SetParentBoneIndex(unsigned int boneIndex, int parentBoneIndex);
 	void SetFinalTransformation(unsigned int boneIndex, const Matrix44& toWorldMatrix);
 	void SetGlobalInverseTransform(const Matrix44& inverseTransform);
+	void SetRootBoneOffset(const Matrix44& transform);
 
 
 private:
@@ -51,4 +55,6 @@ private:
 
 	Matrix44 m_globalInverseTransform;	// Inverse transform of the Root node for the entire Assimp tree
 										// Used to transform a vertex back into "model" space after the bone transformation
+
+	Matrix44 m_rootBoneOffset;
 };

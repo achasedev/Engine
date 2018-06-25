@@ -100,10 +100,10 @@ bool AssimpLoader::LoadFile(const std::string& filepath)
 	BuildBoneHierarchy();
 
 	// Load animations
-	for (int i = 0; i < m_scene->mNumAnimations; ++i)
-	{
-		DebugPrintAnimation(m_scene->mAnimations[i]);
-	}
+// 	for (unsigned int i = 0; i < m_scene->mNumAnimations; ++i)
+// 	{
+// 		DebugPrintAnimation(m_scene->mAnimations[i]);
+// 	}
 	BuildAnimations();
 
 	importer.FreeScene();
@@ -137,7 +137,12 @@ void AssimpLoader::InitializeSkeleton()
 	std::vector<std::string> boneNames;
 	GetBoneNamesFromNode(m_scene->mRootNode, boneNames);
 
-	DebuggerPrintf("\n\n-----NUMBER OF BONES: %i-----", boneNames.size());
+	DebuggerPrintf("\n\n-----NUMBER OF BONES: %i-----\n", boneNames.size());
+
+	for (int i = 0; i < (int) boneNames.size(); ++i)
+	{
+		DebuggerPrintf("     - %s\n", boneNames[i].c_str());
+	}
 
 	// 2. Initialize the Skeleton
 	m_skeleton = new SkeletonBase();
@@ -278,9 +283,9 @@ void AssimpLoader::BuildMeshAndMaterial_FromAIMesh(aiMesh* aimesh, const Matrix4
 
 		Matrix44 toModelTransform = m_skeleton->GetGlobalInverseTransform() * transformation;
 
-		//normal = toModelTransform.TransformVector(normal).xyz();
-		//tangent = toModelTransform.TransformVector(tangent).xyz();
-		//position = toModelTransform.TransformPoint(position).xyz();
+		normal = toModelTransform.TransformVector(normal).xyz();
+		tangent = toModelTransform.TransformVector(tangent).xyz();
+		position = toModelTransform.TransformPoint(position).xyz();
 
 		mb.SetNormal(normal);
 		mb.SetTangent(Vector4(tangent, 1.0f));
@@ -433,6 +438,13 @@ void AssimpLoader::ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTr
 		m_skeleton->SetFinalTransformation(thisBoneIndex, finalTransformation);
 		m_skeleton->SetWorldTransform(thisBoneIndex, currentTransform);
 		m_skeleton->SetParentBoneIndex(thisBoneIndex, parentBoneIndex);
+		m_skeleton->SetLocalTransform(thisBoneIndex, nodeTransform);
+
+		// If the bone is the root bone, store the root offset matrix, for when animation poses are constructed
+		if (thisBoneIndex == 0)
+		{
+			m_skeleton->SetRootBoneOffset(parentTransform);
+		}
 	}
 	
 	// Determine what the parent index of the children bones are (either us if we're a bone, or our last bone ancestor)
@@ -489,7 +501,7 @@ void AssimpLoader::BuildAnimation(unsigned int animationIndex)
 		Pose* pose = animation->GetPoseAtIndex(frameIndex);
 
 		// Pass our time in number of ticks, since channels store times as number of ticks
-		float time = frameIndex * secondsPerFrame * aianimation->mTicksPerSecond;
+		float time = frameIndex * secondsPerFrame * (float) aianimation->mTicksPerSecond;
 		FillPoseForTime(pose, aianimation, time);
 	}
 
@@ -600,16 +612,16 @@ Vector3 AssimpLoader::GetWorldTranslationAtTime(aiNodeAnim* channel, float time)
 			}
 		}
 
-		// Clamp to front
-		if (channel->mPositionKeys[positionKeyIndex].mTime > time)
-		{
-			return finalPosition;
-		}
-
 		// Clamp to the end of the channel if our current time is pass the end
 		if (!found)
 		{
 			return Vector3(channel->mPositionKeys[channel->mNumPositionKeys - 1].mValue.x, channel->mPositionKeys[channel->mNumPositionKeys - 1].mValue.y, channel->mPositionKeys[channel->mNumPositionKeys - 1].mValue.z);
+		}
+
+		// Clamp to front
+		if (channel->mPositionKeys[positionKeyIndex].mTime > time)
+		{
+			return finalPosition;
 		}
 
 		float firstTime = (float) channel->mPositionKeys[positionKeyIndex].mTime;
@@ -722,16 +734,16 @@ Vector3 AssimpLoader::GetWorldScaleAtTime(aiNodeAnim* channel, float time)
 			}
 		}
 
-		// Clamp to front
-		if (channel->mScalingKeys[firstKeyIndex].mTime > time)
-		{
-			return finalScale;
-		}
-
 		// Clamp to the end of the channel if our current time is pass the end
 		if (!found)
 		{
 			return Vector3(channel->mScalingKeys[channel->mNumScalingKeys - 1].mValue.x, channel->mScalingKeys[channel->mNumScalingKeys - 1].mValue.y, channel->mScalingKeys[channel->mNumScalingKeys - 1].mValue.z);
+		}
+
+		// Clamp to front
+		if (channel->mScalingKeys[firstKeyIndex].mTime > time)
+		{
+			return finalScale;
 		}
 
 		float firstTime = (float) channel->mScalingKeys[firstKeyIndex].mTime;
@@ -751,7 +763,6 @@ Vector3 AssimpLoader::GetWorldScaleAtTime(aiNodeAnim* channel, float time)
 		finalScale = Interpolate(firstScale, secondScale, interpolationFactor);
 	}
 
-	DebuggerPrintf("\nSCALE for CHANNEL %s: (%f,%f,%f)", channel->mNodeName.C_Str(), finalScale.x, finalScale.y, finalScale.z);
 	return finalScale;
 }
 
@@ -800,9 +811,9 @@ void DebugPrintAnimation(aiAnimation* anim)
 {
 	DebuggerPrintf("---------------------ANIMATION NAME: %s -- NUMBER OF CHANNELS: %i\n", anim->mName.C_Str(), anim->mNumChannels);
 
-	float tps = anim->mTicksPerSecond;
+	float tps = (float) anim->mTicksPerSecond;
 
-	for (int channelIndex = 0; channelIndex < anim->mNumChannels; ++channelIndex)
+	for (unsigned int channelIndex = 0; channelIndex < anim->mNumChannels; ++channelIndex)
 	{
 		aiNodeAnim* channel = anim->mChannels[channelIndex];
 
@@ -822,7 +833,7 @@ void DebugPrintAITree(aiNode* node, const std::string& indent)
 	std::string text = "\n" + indent + "NODE: %s\n";
 	DebuggerPrintf(text.c_str(), node->mName.C_Str());
 
-	for (int childIndex = 0; childIndex < node->mNumChildren; ++childIndex)
+	for (unsigned int childIndex = 0; childIndex < node->mNumChildren; ++childIndex)
 	{
 		DebugPrintAITree(node->mChildren[childIndex], indent + "-");
 	}

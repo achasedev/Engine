@@ -55,7 +55,9 @@ void Pose::ConstructGlobalMatrices()
 		}
 		else
 		{
-			m_boneTransforms[boneIndex] = m_baseSkeleton->GetGlobalInverseTransform() * m_boneTransforms[boneIndex];
+			// Is the root, apply the offset too
+			Matrix44 rootOffset = m_baseSkeleton->GetRootBoneOffset();
+			m_boneTransforms[boneIndex] = m_baseSkeleton->GetGlobalInverseTransform() * rootOffset * m_boneTransforms[boneIndex];
 		}
 	}
 }

@@ -14,6 +14,7 @@ public:
 	// Constructors
 	Quaternion();
 	Quaternion(float scalar, const Vector3& vector);
+	Quaternion(float scalar, float x, float y, float z);
 	Quaternion(const Quaternion& copy);
 	~Quaternion() {}
 

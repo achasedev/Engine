@@ -41,6 +41,15 @@ Quaternion::Quaternion(const Quaternion& copy)
 
 
 //-----------------------------------------------------------------------------------------------
+// Constructor
+//
+Quaternion::Quaternion(float scalar, float x, float y, float z)
+	: v(Vector3(x, y, z)), s(scalar)
+{
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // + operator, component-wise
 //
 const Quaternion Quaternion::operator+(const Quaternion& other) const
