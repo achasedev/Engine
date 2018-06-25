@@ -278,9 +278,9 @@ void AssimpLoader::BuildMeshAndMaterial_FromAIMesh(aiMesh* aimesh, const Matrix4
 
 		Matrix44 toModelTransform = m_skeleton->GetGlobalInverseTransform() * transformation;
 
-		normal = toModelTransform.TransformVector(normal).xyz();
-		tangent = toModelTransform.TransformVector(tangent).xyz();
-		position = toModelTransform.TransformPoint(position).xyz();
+		//normal = toModelTransform.TransformVector(normal).xyz();
+		//tangent = toModelTransform.TransformVector(tangent).xyz();
+		//position = toModelTransform.TransformPoint(position).xyz();
 
 		mb.SetNormal(normal);
 		mb.SetTangent(Vector4(tangent, 1.0f));
@@ -644,6 +644,7 @@ Quaternion AssimpLoader::GetWorldRotationAtTime(aiNodeAnim* channel, float time)
 			if (channel->mRotationKeys[index + 1].mTime > time)
 			{
 				rotationKeyIndex = index;
+				found = true;
 				break;
 			}
 		}
@@ -750,6 +751,7 @@ Vector3 AssimpLoader::GetWorldScaleAtTime(aiNodeAnim* channel, float time)
 		finalScale = Interpolate(firstScale, secondScale, interpolationFactor);
 	}
 
+	DebuggerPrintf("\nSCALE for CHANNEL %s: (%f,%f,%f)", channel->mNodeName.C_Str(), finalScale.x, finalScale.y, finalScale.z);
 	return finalScale;
 }
 
