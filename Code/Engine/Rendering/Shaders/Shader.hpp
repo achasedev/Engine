@@ -102,6 +102,7 @@ private:
 	void ParseWindOrder(const XMLElement& shaderElement);
 	void ParseDepthMode(const XMLElement& shaderElement);
 	void ParseBlendMode(const XMLElement& shaderElement);
+	void ParseLayerAndQueue(const XMLElement& shaderElement);
 
 
 private:

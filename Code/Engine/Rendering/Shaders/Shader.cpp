@@ -43,6 +43,7 @@ Shader::Shader(const std::string& xmlfilepath)
 	ParseWindOrder(*shaderElement);
 	ParseDepthMode(*shaderElement);
 	ParseBlendMode(*shaderElement);
+	ParseLayerAndQueue(*shaderElement);
 }
 
 
@@ -290,6 +291,28 @@ void Shader::ParseBlendMode(const XMLElement& shaderElement)
 			{
 				m_renderState.m_alphaDstFactor = BLEND_FACTOR_ONE_MINUS_SOURCE_ALPHA;	// Default to one minus source alpha
 			}
+		}
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Parses the element for the layer and queue sort order
+//
+void Shader::ParseLayerAndQueue(const XMLElement& shaderElement)
+{
+	const XMLElement* orderElement = shaderElement.FirstChildElement("order");
+
+	if (orderElement != nullptr)
+	{
+		m_layer = ParseXmlAttribute(*orderElement, "layer", 0);
+
+		std::string queueText = ParseXmlAttribute(*orderElement, "queue", "opaque");
+
+		if (queueText == "alpha") { m_queue = SORTING_QUEUE_ALPHA; }
+		else
+		{
+			m_queue = SORTING_QUEUE_OPAQUE; // Default to opaque
 		}
 	}
 }
