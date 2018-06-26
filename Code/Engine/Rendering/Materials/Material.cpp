@@ -9,6 +9,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Rendering/Core/Renderer.hpp"
 #include "Engine/Rendering/Shaders/Shader.hpp"
+#include "Engine/Rendering/Resources/Sampler.hpp"
 #include "Engine/Rendering/Materials/Material.hpp"
 #include "Engine/Rendering/Shaders/ShaderProgram.hpp"
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
@@ -132,10 +133,40 @@ bool Material::LoadFromFile(const std::string& filepath)
 
 		while (currElement != nullptr)
 		{
-			TODO("Add samplers to AssetDB");
-			std::string samplerName = ParseXmlAttribute(*currElement, "name", "Default");
+			// Filter
+			SamplerFilter filter;
+			std::string filterText = ParseXmlAttribute(*currElement, "filter", "nearest");
+			
+			if		(filterText == "nearest")					{ filter = SAMPLER_FILTER_NEAREST; }
+			else if (filterText == "linear")					{ filter = SAMPLER_FILTER_LINEAR; }
+			else if (filterText == "nearest_mipmap_nearest")	{ filter = SAMPLER_FILTER_NEAREST_MIPMAP_NEAREST; }
+			else if (filterText == "linear_mipmap_nearest")		{ filter = SAMPLER_FILTER_LINEAR_MIPMAP_NEAREST; }
+			else if (filterText == "nearest_mipmap_linear")		{ filter = SAMPLER_FILTER_NEAREST_MIPMAP_LINEAR; }
+			else if (filterText == "linear_mipmap_linear")		{ filter = SAMPLER_FILTER_LINEAR_MIPMAP_LINEAR; }
+			else
+			{
+				filter = SAMPLER_FILTER_NEAREST;
+			}
+
+			// Edge sampling
+			EdgeSampling sampling;
+			std::string edgeText = ParseXmlAttribute(*currElement, "sampling", "repeat");
+
+			if		(edgeText == "repeat")					{ sampling = EDGE_SAMPLING_REPEAT; }
+			else if (edgeText == "mirrored_repeat")			{ sampling = EDGE_SAMPLING_MIRRORED_REPEAT; }
+			else if (edgeText == "clamp_to_edge")			{ sampling = EDGE_SAMPLING_CLAMP_TO_EDGE; }
+			else if (edgeText == "clamp_to_border")			{ sampling = EDGE_SAMPLING_CLAMP_TO_BORDER; }
+			else if (edgeText == "mirror_clamp_to_edge")	{ sampling = EDGE_SAMPLING_MIRROR_CLAMP_TO_EDGE; }
+			else
+			{
+				sampling = EDGE_SAMPLING_REPEAT;
+			}
+
+			// Bind point
 			int bindPoint = ParseXmlAttribute(*currElement, "bind", 0);
-			Sampler* sampler = nullptr;
+
+			Sampler* sampler = new Sampler();
+			sampler->Initialize(filter, sampling);
 
 			m_samplers[bindPoint] = sampler;
 
@@ -434,7 +465,7 @@ MaterialPropertyBlock* Material::CreatePropertyBlock(const PropertyBlockDescript
 	{
 		MaterialPropertyBlock* currBlock = m_propertyBlocks[blockIndex];
 		unsigned int currBlockBinding = currBlock->GetDescription()->GetBlockBinding();
-		std::string currBlockName = blockDescription->GetName();
+		std::string currBlockName = currBlock->GetName();
 
 		if (currBlockBinding == newBlockBinding || currBlockName == newBlockName)
 		{
