@@ -22,6 +22,7 @@ const float PI = 3.1415926535897932384626433832795f;
 // Math operations
 float Log2(float value);
 float Log10(float value);
+float ModFloat(float x, float y);
 
 // Coordinate system
 Vector2 PolarToCartesian(float radius, float angleRadians);

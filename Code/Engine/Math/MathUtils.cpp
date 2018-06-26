@@ -31,6 +31,15 @@ float Log10(float value)
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the value x modded by y, equivalent to x - n*y where n is x/y with the fraction truncated
+//
+float ModFloat(float x, float y)
+{
+	return fmodf(x, y);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Converts the radius and radian angle to cartesian coordinates
 //
 Vector2 PolarToCartesian(float radius, float angleRadians)

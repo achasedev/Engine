@@ -53,7 +53,7 @@ void Light::SetShadowCasting(bool castsShadows)
 		if (m_shadowTexture == nullptr)
 		{
 			m_shadowTexture = new Texture();
-			m_shadowTexture->CreateRenderTarget(2048, 2048, TEXTURE_FORMAT_D24S8);
+			m_shadowTexture->CreateRenderTarget(4096, 4096, TEXTURE_FORMAT_D24S8);
 		}
 
 		m_lightData.m_castsShadows = 1.0f;	// To indicate in the shader that we do shadows

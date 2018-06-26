@@ -49,8 +49,10 @@ void ForwardRenderingPath::CreateShadowTexturesForCamera(RenderScene* scene, Cam
 			//Texture* color = new Texture();
 			//color->CreateRenderTarget(2048, 2048, TEXTURE_FORMAT_RGBA8);
 
-			shadowCamera->SetCameraMatrix(Matrix44::MakeLookAt(-1.0f * light->GetLightData().m_lightDirection, Vector3::ZERO));
-			shadowCamera->SetProjectionOrtho(1000.f, 1000.f, -500.f, 500.f);
+			Vector3 cameraPos = camera->GetPosition();
+
+			shadowCamera->SetCameraMatrix(Matrix44::MakeLookAt(cameraPos - 100.f * light->GetLightData().m_lightDirection, cameraPos));
+			shadowCamera->SetProjectionOrtho(200.f, 200.f, -100.f, 1000.f);
 
 			// Set the view projection to be used for the shadow test
 			LightData data = light->GetLightData();

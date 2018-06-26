@@ -292,7 +292,7 @@ Matrix44 Camera::GetProjectionMatrix() const
 //
 Vector3 Camera::GetPosition() const
 {
-	return m_transform.position;
+	return m_transform.GetWorldPosition();
 }
 
 

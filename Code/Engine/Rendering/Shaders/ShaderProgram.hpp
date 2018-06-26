@@ -21,14 +21,14 @@ public:
 	ShaderProgram(const std::string& name);
 	~ShaderProgram(); // Destructor - free the program memory on the gpu
 
-	const ShaderProgram* Clone() const;
+	ShaderProgram* Clone() const;
 
 	// Loads the shaders given by rootName, compiles them, and links them to this program
 	bool LoadProgramFromFiles(const char *rootName);
 	bool LoadProgramFromFiles(const char* vsFilepath, const char* fsFilepath);
 
 	// Loads the shaders from the string literal source code provided, and links them to this program
-	bool LoadProgramFromSources(const char *vertexShaderSource, const char* fragmentShaderSource);
+	bool LoadProgramFromSources(const char *vertexShaderSource, const char* fragmentShaderSource, bool flagAsSourceShader);
 
 	// Accessors
 	const std::string&	GetName() const;

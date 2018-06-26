@@ -15,6 +15,7 @@
 #include "Engine/Core/Utility/ErrorWarningAssert.hpp"
 #include "Engine/Rendering/Shaders/PropertyBlockDescription.hpp"
 #include "Engine/Rendering/Shaders/ShaderDescription.hpp"
+#include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 
 //-----C functions declared here to ignore order-----
 
@@ -49,7 +50,7 @@ ShaderProgram::~ShaderProgram()
 //-----------------------------------------------------------------------------------------------
 // Duplicates this shader program by using the source information to recompile a copy
 //
-const ShaderProgram* ShaderProgram::Clone() const
+ShaderProgram* ShaderProgram::Clone() const
 {
 	ShaderProgram* program = new ShaderProgram(m_name);
 
@@ -59,7 +60,7 @@ const ShaderProgram* ShaderProgram::Clone() const
 	}
 	else
 	{
-		program->LoadProgramFromSources(m_vsFilePathOrSource.c_str(), m_fsFilePathOrSource.c_str());
+		program->LoadProgramFromSources(m_vsFilePathOrSource.c_str(), m_fsFilePathOrSource.c_str(), true);
 	}
 
 	return program;
@@ -269,7 +270,13 @@ bool ShaderProgram::LoadProgramFromFiles(const char* vsFilePath, const char* fsF
 	// If the program could not be compiled or linked correctly, then assign it the invalid shader
 	if (m_programHandle == NULL)
 	{
-		LoadProgramFromSources(ShaderSource::INVALID_VS, ShaderSource::INVALID_FS);
+		if (DevConsole::GetInstance() != nullptr)
+		{
+			ConsoleErrorf("Error: ShaderProgram %s failed to compile");
+		}
+
+		DebuggerPrintf("Error: ShaderProgram %s failed to compile", m_name.c_str());
+		LoadProgramFromSources(ShaderSource::INVALID_VS, ShaderSource::INVALID_FS, false);
 	}
 
 	// Get Uniform Block information from the created shader
@@ -280,6 +287,8 @@ bool ShaderProgram::LoadProgramFromFiles(const char* vsFilePath, const char* fsF
 		SetupPropertyBlockInfos();
 	}
 
+	m_areFilepaths = true;
+
 	return succeeded; 
 }
 
@@ -287,7 +296,7 @@ bool ShaderProgram::LoadProgramFromFiles(const char* vsFilePath, const char* fsF
 //-----------------------------------------------------------------------------------------------
 // Loads the shaders given by the string source code, and compiles and links them into a shader program
 //
-bool ShaderProgram::LoadProgramFromSources(const char *vertexShaderSource, const char* fragmentShaderSource)
+bool ShaderProgram::LoadProgramFromSources(const char *vertexShaderSource, const char* fragmentShaderSource, bool overrideFlags)
 {
 	// Compile the two stages we're using (all shaders will implement the vertex and fragment stages)
 	// later on, we can add in more stages;
@@ -305,15 +314,24 @@ bool ShaderProgram::LoadProgramFromSources(const char *vertexShaderSource, const
 	glDeleteShader( vert_shader ); 
 	glDeleteShader( frag_shader ); 
 
-	m_vsFilePathOrSource = vertexShaderSource;
-	m_fsFilePathOrSource = fragmentShaderSource;
+	if (overrideFlags)
+	{
+		m_vsFilePathOrSource = vertexShaderSource;
+		m_fsFilePathOrSource = fragmentShaderSource;
 
-	m_areFilepaths = false;
-
+		m_areFilepaths = false;
+	}
+	
 	// If the program could not be compiled or linked correctly, then assign it the invalid shader
 	if (m_programHandle == NULL)
 	{
-		LoadProgramFromSources(ShaderSource::INVALID_VS, ShaderSource::INVALID_FS);
+		if (DevConsole::GetInstance() != nullptr)
+		{
+			ConsoleErrorf("Error: ShaderProgram %s failed to compile");
+		}
+
+		DebuggerPrintf("Error: ShaderProgram %s failed to compile", m_name.c_str());
+		LoadProgramFromSources(ShaderSource::INVALID_VS, ShaderSource::INVALID_FS, false);
 	}
 
 	// Get Uniform Block information from the created shader

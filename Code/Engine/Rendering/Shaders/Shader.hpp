@@ -59,8 +59,8 @@ class Shader
 public:
 	//-----Public Methods-----
 
-	Shader(const ShaderProgram* program);
-	Shader(const RenderState& renderState, const ShaderProgram* program);
+	Shader(ShaderProgram* program);
+	Shader(const RenderState& renderState, ShaderProgram* program);
 	Shader(const std::string& xmlFileName);
 	~Shader();
 
@@ -86,7 +86,7 @@ public:
 	void DisableAlphaBlending();
 
 	// Accessors
-	const ShaderProgram*	GetProgram() const;
+	ShaderProgram*			GetProgram() const;
 	const RenderState&		GetRenderState() const;
 
 	unsigned int	GetLayer() const;
@@ -107,8 +107,8 @@ private:
 private:
 	//-----Private Data-----
 
-	const ShaderProgram*	m_shaderProgram;
-	RenderState				m_renderState;
+	ShaderProgram*	m_shaderProgram;
+	RenderState		m_renderState;
 
 	// For the forward rendering path, is ignored elsewhere
 	unsigned int m_layer = 0;
