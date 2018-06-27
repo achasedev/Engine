@@ -79,6 +79,27 @@ Matrix44 SkeletonBase::GetRootBoneOffset() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the name of the root bone for this skeleton
+//
+std::string SkeletonBase::GetRootBoneName() const
+{
+	std::vector<std::string> names = GetAllBoneNames();
+
+	for (int i = 0; i < (int) m_boneNameMappings.size(); ++i)
+	{
+		std::string name = names[i];
+		
+		if (m_boneNameMappings.at(name) == 0)
+		{
+			return name;
+		}
+	}
+
+	return "";
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the list of bone names for this skeleton
 //
 std::vector<std::string> SkeletonBase::GetAllBoneNames() const
@@ -179,4 +200,11 @@ void SkeletonBase::SetGlobalInverseTransform(const Matrix44& inverseTransform)
 void SkeletonBase::SetRootBoneOffset(const Matrix44& transform)
 {
 	m_rootBoneOffset = transform;
+}
+
+void SkeletonBase::SetBindPose(unsigned int boneIndex, const Matrix44& bindPoseTransform)
+{
+	ASSERT_OR_DIE(boneIndex < m_boneData.size(), Stringf("Error: SkeletonBase::SetBindPose received index out of bounds - size is %i, index is %i.", m_boneData.size(), boneIndex));
+
+	m_boneData[boneIndex].bindPose = bindPoseTransform;
 }

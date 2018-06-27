@@ -50,14 +50,15 @@ void Pose::ConstructGlobalMatrices()
 		{
 			Matrix44 localMatrix = m_boneTransforms[boneIndex];
 			Matrix44 parentMatrix = m_boneTransforms[parentIndex];
+			//Matrix44 parentMatrix = m_baseSkeleton->GetBoneData(parentIndex).worldTransform;
 
-			m_boneTransforms[boneIndex] = m_baseSkeleton->GetGlobalInverseTransform() * parentMatrix * localMatrix;
+			m_boneTransforms[boneIndex] = parentMatrix * localMatrix;
 		}
 		else
 		{
-			// Is the root, apply the offset too
-			Matrix44 rootOffset = m_baseSkeleton->GetRootBoneOffset();
-			m_boneTransforms[boneIndex] = m_baseSkeleton->GetGlobalInverseTransform() * rootOffset * m_boneTransforms[boneIndex];
+			//Matrix44 test = Matrix44::MakeModelMatrix(Vector3::ZERO, Vector3(90.f, 0.f, 0.f), Vector3::ONES);
+			Matrix44 offset = m_baseSkeleton->GetRootBoneOffset();
+			m_boneTransforms[boneIndex] = m_baseSkeleton->GetGlobalInverseTransform() * offset * m_boneTransforms[boneIndex];
 		}
 	}
 }

@@ -9,6 +9,11 @@
 #include <vector>
 #include "Engine/Math/Matrix44.hpp"
 
+#include "ThirdParty/assimp/include/assimp/scene.h"
+#include "ThirdParty/assimp/include/assimp/cimport.h"
+#include "ThirdParty/assimp/include/assimp/Importer.hpp"
+#include "ThirdParty/assimp/include/assimp/postprocess.h"
+
 class Texture;
 class Renderable;
 class SkeletonBase;
@@ -52,7 +57,7 @@ private:
 
 	// Build skeletal structure
 	void BuildBoneHierarchy();
-		void ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTransfrom, int parentBoneIndex);
+		void ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTransfrom, int parentBoneIndex, const std::string& concatenations);
 
 	// Build Animations
 	void BuildAnimations();
@@ -60,9 +65,10 @@ private:
 			void FillPoseForTime(Pose* out_pose, aiAnimation* aianimation, float time);
 				aiNodeAnim* GetChannelForBone(const std::string& boneName, aiAnimation* animation) const;
 				Matrix44	GetLocalTransfromAtTime(aiNodeAnim* channel, float time);
-					Vector3		GetWorldTranslationAtTime(aiNodeAnim* channel, float time);
-					Quaternion	GetWorldRotationAtTime(aiNodeAnim* channel, float time);
-					Vector3		GetWorldScaleAtTime(aiNodeAnim* channel, float time);
+					aiVector3D		GetWorldTranslationAtTime(aiNodeAnim* channel, float time) const;
+					aiQuaternion	GetWorldRotationAtTime(aiNodeAnim* channel, float time) const;
+					aiVector3D		GetWorldScaleAtTime(aiNodeAnim* channel, float time) const;
+				Matrix44	ConstructMatrixFromSeparatedChannels(const std::string& boneName, aiAnimation* animation, float time) const;
 
 
 private:

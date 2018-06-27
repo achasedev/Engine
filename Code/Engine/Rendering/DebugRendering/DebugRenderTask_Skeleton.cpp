@@ -57,8 +57,8 @@ void DebugRenderTask_Skeleton::AssembleMesh(const SkeletonBase* skeleton)
 		int parentIndex = skeleton->GetBoneData(boneIndex).parentIndex;
 		if (parentIndex != -1)
 		{
-			Vector3 start = Matrix44::ExtractTranslation(globalInverseTransform * skeleton->GetBoneData(parentIndex).worldTransform);
-			Vector3 end = Matrix44::ExtractTranslation(globalInverseTransform * skeleton->GetBoneData(boneIndex).worldTransform);
+			Vector3 start = Matrix44::ExtractTranslation(globalInverseTransform * skeleton->GetBoneData(parentIndex).bindPose);
+			Vector3 end = Matrix44::ExtractTranslation(globalInverseTransform * skeleton->GetBoneData(boneIndex).bindPose);
 
 			mb.PushLine(start, end);
 		}
@@ -67,7 +67,7 @@ void DebugRenderTask_Skeleton::AssembleMesh(const SkeletonBase* skeleton)
 		
 		cubedraw.sharedMaterial = cubedraw.sharedMaterial = AssetDB::GetSharedMaterial("Debug_Render");
 		cubedraw.mesh = cube;
-		cubedraw.drawMatrix = skeleton->GetBoneData(boneIndex).worldTransform;
+		cubedraw.drawMatrix = skeleton->GetBoneData(boneIndex).bindPose;
 
 		if (boneIndex == 0)
 		{

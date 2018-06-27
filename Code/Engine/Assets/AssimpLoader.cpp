@@ -21,10 +21,7 @@
 #include "Engine/Rendering/DebugRendering/DebugRenderSystem.hpp"
 
 // Assimp
-#include "ThirdParty/assimp/include/assimp/scene.h"
-#include "ThirdParty/assimp/include/assimp/cimport.h"
-#include "ThirdParty/assimp/include/assimp/Importer.hpp"
-#include "ThirdParty/assimp/include/assimp/postprocess.h"
+
 
 // C functions
 Matrix44 ConvertAiMatrixToMyMatrix(aiMatrix4x4 aimatrix);
@@ -100,10 +97,6 @@ bool AssimpLoader::LoadFile(const std::string& filepath)
 	BuildBoneHierarchy();
 
 	// Load animations
-// 	for (unsigned int i = 0; i < m_scene->mNumAnimations; ++i)
-// 	{
-// 		DebugPrintAnimation(m_scene->mAnimations[i]);
-// 	}
 	BuildAnimations();
 
 	importer.FreeScene();
@@ -137,13 +130,6 @@ void AssimpLoader::InitializeSkeleton()
 	std::vector<std::string> boneNames;
 	GetBoneNamesFromNode(m_scene->mRootNode, boneNames);
 
-	DebuggerPrintf("\n\n-----NUMBER OF BONES: %i-----\n", boneNames.size());
-
-	for (int i = 0; i < (int) boneNames.size(); ++i)
-	{
-		DebuggerPrintf("     - %s\n", boneNames[i].c_str());
-	}
-
 	// 2. Initialize the Skeleton
 	m_skeleton = new SkeletonBase();
 	aiMatrix4x4 inverseGlobal = m_scene->mRootNode->mTransformation;
@@ -151,6 +137,18 @@ void AssimpLoader::InitializeSkeleton()
 	m_skeleton->SetGlobalInverseTransform(ConvertAiMatrixToMyMatrix(inverseGlobal));
 
 	CreateBoneMappingsFromNode(m_scene->mRootNode, boneNames);
+
+	std::vector<std::string> names = m_skeleton->GetAllBoneNames();
+	for (int i = 0; i < (int) names.size(); ++i)
+	{
+		unsigned int index = m_skeleton->GetBoneMapping(names[i]);
+
+		if (index == 0)
+		{
+			ConsolePrintf("Root bone is %s", names[i].c_str());
+			break;
+		}
+	}
 }
 
 void AssimpLoader::GetBoneNamesFromNode(aiNode* node, std::vector<std::string>& out_names)
@@ -287,6 +285,9 @@ void AssimpLoader::BuildMeshAndMaterial_FromAIMesh(aiMesh* aimesh, const Matrix4
 		tangent = toModelTransform.TransformVector(tangent).xyz();
 		position = toModelTransform.TransformPoint(position).xyz();
 
+		normal.NormalizeAndGetLength();
+		tangent.NormalizeAndGetLength();
+
 		mb.SetNormal(normal);
 		mb.SetTangent(Vector4(tangent, 1.0f));
 		mb.SetUVs(uvs);
@@ -401,7 +402,7 @@ void AssimpLoader::BuildMeshAndMaterial_FromAIMesh(aiMesh* aimesh, const Matrix4
 			material->SetEmissive(AssetDB::GetTexture("Black"));
 		}
 
-		material->SetShader(AssetDB::GetShader("Phong_Opaque"));
+		material->SetShader(AssetDB::GetShader("Vertex_Normal"));
 		material->SetProperty("SPECULAR_AMOUNT", 0.3f);
 		material->SetProperty("SPECULAR_POWER", 10.f);
 	}
@@ -418,9 +419,11 @@ void AssimpLoader::BuildMeshAndMaterial_FromAIMesh(aiMesh* aimesh, const Matrix4
 //-----------------------------------------------------------------------------------------------
 // Constructs all Mesh and Material data from the given node
 //
-void AssimpLoader::ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTransform, int parentBoneIndex)
+void AssimpLoader::ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTransform, int parentBoneIndex, const std::string& concatenations)
 {
 	std::string nodeName = ainode->mName.data;
+	std::string nextConcatenations = concatenations + " | " + nodeName;
+	//DebuggerPrintf("%s\n", nextConcatenations.c_str());
 
 	Matrix44 nodeTransform = ConvertAiMatrixToMyMatrix(ainode->mTransformation);
 
@@ -440,20 +443,25 @@ void AssimpLoader::ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTr
 		m_skeleton->SetParentBoneIndex(thisBoneIndex, parentBoneIndex);
 		m_skeleton->SetLocalTransform(thisBoneIndex, nodeTransform);
 
-		// If the bone is the root bone, store the root offset matrix, for when animation poses are constructed
-		if (thisBoneIndex == 0)
-		{
-			m_skeleton->SetRootBoneOffset(parentTransform);
-		}
+		offset.Invert();
+		m_skeleton->SetBindPose(thisBoneIndex, m_skeleton->GetRootBoneOffset() * offset);
 	}
 	
+	// Catch the bone root offset when we find it
+	DebuggerPrintf("NODE NAME: %s\n", nodeName.c_str());
+
+	if (nodeName == "BoneRoot" || nodeName == m_skeleton->GetRootBoneName() + "_$AssimpFbx$_PreRotation")
+	{
+		m_skeleton->SetRootBoneOffset(currentTransform);
+	}
+
 	// Determine what the parent index of the children bones are (either us if we're a bone, or our last bone ancestor)
 	int childParentIndex = (thisBoneIndex >= 0 ? thisBoneIndex : parentBoneIndex);
 
 	// Recursively process the child nodes for bone information (even if this one wasn't a bone)
 	for (unsigned int nodeIndex = 0; nodeIndex < ainode->mNumChildren; ++nodeIndex)
 	{
-		ExtractBoneTransform(ainode->mChildren[nodeIndex], currentTransform, childParentIndex);
+		ExtractBoneTransform(ainode->mChildren[nodeIndex], currentTransform, childParentIndex, nextConcatenations);
 	}
 }
 
@@ -467,6 +475,11 @@ void AssimpLoader::BuildAnimations()
 
 	for (unsigned int animationIndex = 0; animationIndex < animationCount; ++animationIndex)
 	{
+		for (int i = 0; i < m_scene->mAnimations[0]->mNumChannels; ++i)
+		{
+			DebuggerPrintf("Channel: %s\n", m_scene->mAnimations[0]->mChannels[i]->mNodeName.C_Str());
+		}
+
 		BuildAnimation(animationIndex);
 	}
 }
@@ -535,11 +548,14 @@ void AssimpLoader::FillPoseForTime(Pose* out_pose, aiAnimation* aianimation, flo
 		if (channel != nullptr)
 		{
 			Matrix44 boneTransform = GetLocalTransfromAtTime(channel, time);
+
 			out_pose->SetBoneTransform(boneDataIndex, boneTransform);
 		}
 		else
 		{
-			out_pose->SetBoneTransform(boneDataIndex, Matrix44::IDENTITY);
+			Matrix44 boneTransform = ConstructMatrixFromSeparatedChannels(currBoneName, aianimation, time);
+
+			out_pose->SetBoneTransform(boneDataIndex, boneTransform);
 		}
 	}
 
@@ -578,25 +594,27 @@ Matrix44 AssimpLoader::GetLocalTransfromAtTime(aiNodeAnim* channel, float time)
 	// Assumes the start time for all nodes is mTime == 0
 
 	// Translation
-	Vector3 position = GetWorldTranslationAtTime(channel, time);
+	aiVector3D position = GetWorldTranslationAtTime(channel, time);
 
 	// Rotation
-	Quaternion rotation = GetWorldRotationAtTime(channel, time);
+	aiQuaternion rotation = GetWorldRotationAtTime(channel, time);
 
 	// Scale
-	Vector3 scale = GetWorldScaleAtTime(channel, time);
+	aiVector3D scale = GetWorldScaleAtTime(channel, time);
 
 	// Make the model
-	Matrix44 transform = Matrix44::MakeModelMatrix(position, rotation.GetAsEulerAngles(), scale);
+	aiMatrix4x4 aiTransform = aiMatrix4x4(scale, rotation, position);
+
+	Matrix44 transform = ConvertAiMatrixToMyMatrix(aiTransform);
 
 	return transform;
 }
 
 
-Vector3 AssimpLoader::GetWorldTranslationAtTime(aiNodeAnim* channel, float time)
+aiVector3D AssimpLoader::GetWorldTranslationAtTime(aiNodeAnim* channel, float time) const
 {
 	int positionKeyIndex = 0;
-	Vector3 finalPosition = Vector3(channel->mPositionKeys[0].mValue.x, channel->mPositionKeys[0].mValue.y, channel->mPositionKeys[0].mValue.z);
+	aiVector3D finalPosition = channel->mPositionKeys[0].mValue;
 
 	// Only bother interpolating if there's more than one key
 	if (channel->mNumPositionKeys > 1)
@@ -615,7 +633,7 @@ Vector3 AssimpLoader::GetWorldTranslationAtTime(aiNodeAnim* channel, float time)
 		// Clamp to the end of the channel if our current time is pass the end
 		if (!found)
 		{
-			return Vector3(channel->mPositionKeys[channel->mNumPositionKeys - 1].mValue.x, channel->mPositionKeys[channel->mNumPositionKeys - 1].mValue.y, channel->mPositionKeys[channel->mNumPositionKeys - 1].mValue.z);
+			return channel->mPositionKeys[channel->mNumPositionKeys - 1].mValue;
 		}
 
 		// Clamp to front
@@ -637,16 +655,18 @@ Vector3 AssimpLoader::GetWorldTranslationAtTime(aiNodeAnim* channel, float time)
 
 		Vector3 firstPosition = Vector3(aifirstPosition.x, aifirstPosition.y, aifirstPosition.z);
 		Vector3 secondPosition = Vector3(aisecondPosition.x, aisecondPosition.y, aisecondPosition.z);
-
-		finalPosition = Interpolate(firstPosition, secondPosition, interpolationFactor);
+		
+		Vector3 interpolation = Interpolate(firstPosition, secondPosition, interpolationFactor);
+		finalPosition = aiVector3D(interpolation.x, interpolation.y, interpolation.z);
 	}
 
 	return finalPosition;
 }
 
-Quaternion AssimpLoader::GetWorldRotationAtTime(aiNodeAnim* channel, float time)
+aiQuaternion AssimpLoader::GetWorldRotationAtTime(aiNodeAnim* channel, float time) const
 {
 	int rotationKeyIndex = 0;
+	aiQuaternion aiFinalRotation = channel->mRotationKeys[0].mValue;
 
 	if (channel->mNumRotationKeys > 1)
 	{
@@ -664,61 +684,39 @@ Quaternion AssimpLoader::GetWorldRotationAtTime(aiNodeAnim* channel, float time)
 		// Clamp to front
 		if (channel->mRotationKeys[rotationKeyIndex].mTime > time)
 		{
-			aiQuaternion firstRot = channel->mRotationKeys[0].mValue;
-			Quaternion firstRotation;
-
-			firstRotation.s = firstRot.w;
-			firstRotation.v.x = firstRot.x;
-			firstRotation.v.y = firstRot.y;
-			firstRotation.v.z = firstRot.z;
-
-			return firstRotation;
+			return channel->mRotationKeys[0].mValue;
 		}
 
 		// Clamp to end
 		if (!found)
 		{
-			aiQuaternion lastRot = channel->mRotationKeys[channel->mNumRotationKeys - 1].mValue;
-			Quaternion finalRotation;
-
-			finalRotation.s = lastRot.w;
-			finalRotation.v.x = lastRot.x;
-			finalRotation.v.y = lastRot.y;
-			finalRotation.v.z = lastRot.z;
-
-			return finalRotation;
+			return channel->mRotationKeys[channel->mNumRotationKeys - 1].mValue;
 		}
+	
+
+
+		float firstTime = (float) channel->mRotationKeys[rotationKeyIndex].mTime;
+		float secondTime = (float) channel->mRotationKeys[rotationKeyIndex + 1].mTime;
+
+		float deltaTime = secondTime - firstTime;
+		float interpolationFactor = (time - firstTime) / deltaTime;
+
+		ASSERT_OR_DIE(interpolationFactor >= 0.f && interpolationFactor <= 1.0f, Stringf("Error: AssimpLoader::GetWorldRotationAtTime calculated interpolation factor out of range, factor was %f", interpolationFactor));
+
+		aiQuaternion aiFirstRotation = channel->mRotationKeys[rotationKeyIndex].mValue;
+		aiQuaternion aiSecondRotation = channel->mRotationKeys[rotationKeyIndex + 1].mValue;
+
+		aiQuaternion::Interpolate(aiFinalRotation, aiFirstRotation, aiSecondRotation, interpolationFactor);
 	}
 
-
-	float firstTime = (float) channel->mRotationKeys[rotationKeyIndex].mTime;
-	float secondTime = (float) channel->mRotationKeys[rotationKeyIndex + 1].mTime;
-
-	float deltaTime = secondTime - firstTime;
-	float interpolationFactor = (time - firstTime) / deltaTime;
-
-	ASSERT_OR_DIE(interpolationFactor >= 0.f && interpolationFactor <= 1.0f, Stringf("Error: AssimpLoader::GetWorldRotationAtTime calculated interpolation factor out of range, factor was %f", interpolationFactor));
-
-	aiQuaternion aiFirstRotation = channel->mRotationKeys[rotationKeyIndex].mValue;
-	aiQuaternion aiSecondRotation = channel->mRotationKeys[rotationKeyIndex + 1].mValue;
-	aiQuaternion aifinalRotation;
-	aiQuaternion::Interpolate(aifinalRotation, aiFirstRotation, aiSecondRotation, interpolationFactor);
-	aifinalRotation.Normalize();
-
-	Quaternion finalRotation;
-
-	finalRotation.s = aifinalRotation.w;
-	finalRotation.v.x = aifinalRotation.x;
-	finalRotation.v.y = aifinalRotation.y;
-	finalRotation.v.z = aifinalRotation.z;
-
-	return finalRotation;
+	aiFinalRotation.Normalize();
+	return aiFinalRotation;
 }
 
-Vector3 AssimpLoader::GetWorldScaleAtTime(aiNodeAnim* channel, float time)
+aiVector3D AssimpLoader::GetWorldScaleAtTime(aiNodeAnim* channel, float time) const
 {
 	int firstKeyIndex = 0;
-	Vector3 finalScale = Vector3(channel->mScalingKeys[0].mValue.x, channel->mScalingKeys[0].mValue.y, channel->mScalingKeys[0].mValue.z);
+	aiVector3D finalScale = channel->mScalingKeys[0].mValue;
 
 	// Only bother interpolating if there's more than one key
 	if (channel->mNumScalingKeys > 1)
@@ -737,7 +735,7 @@ Vector3 AssimpLoader::GetWorldScaleAtTime(aiNodeAnim* channel, float time)
 		// Clamp to the end of the channel if our current time is pass the end
 		if (!found)
 		{
-			return Vector3(channel->mScalingKeys[channel->mNumScalingKeys - 1].mValue.x, channel->mScalingKeys[channel->mNumScalingKeys - 1].mValue.y, channel->mScalingKeys[channel->mNumScalingKeys - 1].mValue.z);
+			return channel->mScalingKeys[channel->mNumScalingKeys - 1].mValue;
 		}
 
 		// Clamp to front
@@ -760,11 +758,54 @@ Vector3 AssimpLoader::GetWorldScaleAtTime(aiNodeAnim* channel, float time)
 		Vector3 firstScale = Vector3(aiFirstScale.x, aiFirstScale.y, aiFirstScale.z);
 		Vector3 secondScale = Vector3(aiSecondScale.x, aiSecondScale.y, aiSecondScale.z);
 
-		finalScale = Interpolate(firstScale, secondScale, interpolationFactor);
+		Vector3 interpolation = Interpolate(firstScale, secondScale, interpolationFactor);
+		finalScale = aiVector3D(interpolation.x, interpolation.y, interpolation.z);
 	}
 
 	return finalScale;
 }
+
+Matrix44 AssimpLoader::ConstructMatrixFromSeparatedChannels(const std::string& boneName, aiAnimation* animation, float time) const
+{
+	// Translation
+	std::string translationChannelName = boneName + "_$AssimpFbx$_Translation";
+	aiVector3D translation = aiVector3D(0.f, 0.f, 0.f);
+
+	aiNodeAnim* translationChannel = GetChannelForBone(translationChannelName, animation);
+	
+	if (translationChannel != nullptr)
+	{
+		translation = GetWorldTranslationAtTime(translationChannel, time);
+	}
+
+	// Rotation
+	std::string rotationChannelName = boneName + "_$AssimpFbx$_Rotation";
+	aiQuaternion rotation;
+
+	aiNodeAnim* rotationChannel = GetChannelForBone(rotationChannelName, animation);
+
+	if (rotationChannel != nullptr)
+	{
+		rotation = GetWorldRotationAtTime(rotationChannel, time);
+	}
+
+	// Scale
+	std::string scaleChannelName = boneName + "_$AssimpFbx$_Scale";
+	aiVector3D scale = aiVector3D(1.f, 1.f, 1.f);
+
+	aiNodeAnim* scaleChannel = GetChannelForBone(scaleChannelName, animation);
+
+	if (scaleChannel != nullptr)
+	{
+		scale = GetWorldScaleAtTime(scaleChannel, time);
+	}
+
+	aiMatrix4x4 aiTransform = aiMatrix4x4(scale, rotation, translation);
+	Matrix44 transform = ConvertAiMatrixToMyMatrix(aiTransform);
+
+	return transform;
+}
+
 
 //-----------------------------------------------------------------------------------------------
 // Builds the skeleton transforms by traversing the assimp node hierarchy
@@ -772,7 +813,7 @@ Vector3 AssimpLoader::GetWorldScaleAtTime(aiNodeAnim* channel, float time)
 void AssimpLoader::BuildBoneHierarchy()
 {
 	// Recursively traverse the tree to assemble the bone transformations
-	ExtractBoneTransform(m_scene->mRootNode, Matrix44::IDENTITY, -1);
+	ExtractBoneTransform(m_scene->mRootNode, Matrix44::IDENTITY, -1, "");
 }
 
 
@@ -830,11 +871,24 @@ void DebugPrintAnimation(aiAnimation* anim)
 
 void DebugPrintAITree(aiNode* node, const std::string& indent)
 {
+	aiMatrix4x4 aiTransform = node->mTransformation;
+	Matrix44 t = ConvertAiMatrixToMyMatrix(aiTransform);
+
 	std::string text = "\n" + indent + "NODE: %s\n";
 	DebuggerPrintf(text.c_str(), node->mName.C_Str());
+
+	text = indent + "-----------------------------------------\n";
+	DebuggerPrintf(text.c_str());
+	text = "|%f %f %f %f|\n|%f %f %f %f|\n|%f %f %f %f|\n|%f %f %f %f|\n";
+
+	DebuggerPrintf(text.c_str(), t.Ix, t.Jx, t.Kx, t.Tx, t.Iy, t.Jy, t.Ky, t.Ty, t.Iz, t.Jz, t.Kz, t.Tz, t.Iw, t.Jw, t.Kw, t.Tw);
+
+	text = indent + "-----------------------------------------\n";
+	DebuggerPrintf(text.c_str());
 
 	for (unsigned int childIndex = 0; childIndex < node->mNumChildren; ++childIndex)
 	{
 		DebugPrintAITree(node->mChildren[childIndex], indent + "-");
+		//DebuggerPrintf("-%s\n", node->mChildren[childIndex]->mName.C_Str());
 	}
 }
