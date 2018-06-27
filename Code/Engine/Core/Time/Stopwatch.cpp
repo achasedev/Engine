@@ -30,7 +30,7 @@ Stopwatch::Stopwatch(Clock* referenceClock)
 void Stopwatch::Reset()
 {
 	m_startHPC = m_referenceClock->GetTotalHPC();
-	m_intervalHPC = m_startHPC;
+	m_endHPC = m_startHPC;
 }
 
 
@@ -55,7 +55,7 @@ void Stopwatch::SetInterval(float seconds)
 {
 	uint64_t interval = TimeSystem::SecondsToPerformanceCount(seconds);
 	m_startHPC = m_referenceClock->GetTotalHPC();
-	m_intervalHPC = m_startHPC + interval;
+	m_endHPC = m_startHPC + interval;
 }
 
 
@@ -65,13 +65,13 @@ void Stopwatch::SetInterval(float seconds)
 void Stopwatch::SetElapsedTime(float secondsElapsed)
 {
 	// Save off the interval length to preserve it
-	uint64_t intervalLength = m_intervalHPC - m_startHPC;
+	uint64_t intervalLength = m_endHPC - m_startHPC;
 
 	uint64_t elapsedHPC = TimeSystem::SecondsToPerformanceCount(secondsElapsed);
 	uint64_t currentHPC = m_referenceClock->GetTotalHPC();
 
 	m_startHPC = currentHPC - elapsedHPC;
-	m_intervalHPC = m_startHPC + intervalLength;
+	m_endHPC = m_startHPC + intervalLength;
 }
 
 
@@ -99,10 +99,10 @@ bool Stopwatch::DecrementByIntervalOnce()
 {
 	if (HasIntervalElapsed())
 	{
-		uint64_t interval = m_intervalHPC - m_startHPC;
+		uint64_t interval = m_endHPC - m_startHPC;
 
 		m_startHPC += interval;
-		m_intervalHPC += interval;
+		m_endHPC += interval;
 		return true;
 	}
 
@@ -117,13 +117,13 @@ bool Stopwatch::DecrementByIntervalOnce()
 int Stopwatch::DecrementByIntervalAll()
 {
 	uint64_t currentHPC = m_referenceClock->GetTotalHPC();
-	uint64_t interval = m_intervalHPC - m_startHPC;
+	uint64_t interval = m_endHPC - m_startHPC;
 
 	int numElapses = 0;
-	while (m_intervalHPC < currentHPC)
+	while (m_endHPC < currentHPC)
 	{
 		m_startHPC += interval;
-		m_intervalHPC += interval;
+		m_endHPC += interval;
 		numElapses++;
 	}
 
@@ -150,9 +150,24 @@ float Stopwatch::GetElapsedTime() const
 float Stopwatch::GetElapsedTimeNormalized() const
 {
 	float elapsedSeconds = GetElapsedTime();
-	float intervalSeconds = (float) TimeSystem::PerformanceCountToSeconds(m_intervalHPC - m_startHPC);
+	float intervalSeconds = (float) TimeSystem::PerformanceCountToSeconds(m_endHPC - m_startHPC);
 
 	return (elapsedSeconds / intervalSeconds);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the time in seconds until the stopwatch's interval will elapse (returns negative
+// if the interval has elapsed)
+//
+float Stopwatch::GetTimeUntilIntervalEnd() const
+{
+	uint64_t currentHPC = m_referenceClock->GetTotalHPC();
+
+	float endSeconds = TimeSystem::PerformanceCountToSeconds(m_endHPC);
+	float currentSeconds = TimeSystem::PerformanceCountToSeconds(currentHPC);
+
+	return endSeconds - currentSeconds;
 }
 
 
@@ -164,7 +179,7 @@ bool Stopwatch::HasIntervalElapsed() const
 {
 	uint64_t currentHPC = m_referenceClock->GetTotalHPC();
 	
-	return (currentHPC >= m_intervalHPC);
+	return (currentHPC >= m_endHPC);
 }
 
 
