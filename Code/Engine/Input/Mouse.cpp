@@ -71,24 +71,27 @@ bool Mouse::IsButtonPressed(MouseButton button)
 //-----------------------------------------------------------------------------------------------
 // Callback for when a mouse button is pressed or released - updates all mouse button states
 //
-void Mouse::OnMouseButton(short wParam)
+void Mouse::OnMouseButton(size_t wParam)
 {
 	// Update all buttons
 	UpdateButtonState(MOUSEBUTTON_LEFT,		wParam, MK_LBUTTON);
 	UpdateButtonState(MOUSEBUTTON_RIGHT,	wParam, MK_RBUTTON);
 	UpdateButtonState(MOUSEBUTTON_MIDDLE,	wParam, MK_MBUTTON);
 }
+#include "Engine/Core/EngineCommon.hpp"
 
 
 //-----------------------------------------------------------------------------------------------
 // Callback for when the mouse wheel is turned - accumulates total delta_wheel over multiple messages
 //
-void Mouse::OnMouseWheel(short wParam)
+void Mouse::OnMouseWheel(size_t wParam)
 {
 	short wheel = GET_WHEEL_DELTA_WPARAM(wParam);
-	float wheelDelta = (float) wheel * (1.f / WHEEL_DELTA);
+	float wheelDelta = (float) wheel * (1.f / (float) WHEEL_DELTA);
 
 	m_currFrameWheel += wheelDelta;
+
+	DebuggerPrintf("Mouse Wheel: %f\n", m_currFrameWheel);
 }
 
 

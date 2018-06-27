@@ -39,8 +39,8 @@ public:
 	bool IsButtonPressed(MouseButton button);
 
 	// Callbacks
-	void OnMouseButton(short wParam);
-	void OnMouseWheel(short wParam);
+	void OnMouseButton(size_t wParam);
+	void OnMouseWheel(size_t wParam);
 
 	// Mutators
 	void SetCursorPosition(const IntVector2& newPosition);

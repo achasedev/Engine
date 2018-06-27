@@ -69,11 +69,12 @@ bool InputMessageHandler(unsigned int msg, size_t wparam, size_t lparam)
 	case WM_LBUTTONUP:
 	case WM_RBUTTONDOWN:
 	case WM_RBUTTONUP:
-		InputSystem::GetMouse().OnMouseButton((unsigned short) wparam);
+	case WM_MBUTTONDOWN:
+	case WM_MBUTTONUP:
+		InputSystem::GetMouse().OnMouseButton(wparam);
 		break;
-	case WM_MOUSEHWHEEL:
-		TODO("Figure out why mouse wheel messages aren't being received.")
-		InputSystem::GetMouse().OnMouseWheel((unsigned short) wparam);
+	case WM_MOUSEWHEEL:
+		InputSystem::GetMouse().OnMouseWheel(wparam);
 		break;
 	} 
 
