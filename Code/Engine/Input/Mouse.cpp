@@ -74,9 +74,9 @@ bool Mouse::IsButtonPressed(MouseButton button)
 void Mouse::OnMouseButton(size_t wParam)
 {
 	// Update all buttons
-	UpdateButtonState(MOUSEBUTTON_LEFT,		wParam, MK_LBUTTON);
-	UpdateButtonState(MOUSEBUTTON_RIGHT,	wParam, MK_RBUTTON);
-	UpdateButtonState(MOUSEBUTTON_MIDDLE,	wParam, MK_MBUTTON);
+	UpdateButtonState(MOUSEBUTTON_LEFT,		(unsigned short) wParam, MK_LBUTTON);
+	UpdateButtonState(MOUSEBUTTON_RIGHT,	(unsigned short) wParam, MK_RBUTTON);
+	UpdateButtonState(MOUSEBUTTON_MIDDLE,	(unsigned short) wParam, MK_MBUTTON);
 }
 #include "Engine/Core/EngineCommon.hpp"
 

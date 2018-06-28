@@ -32,6 +32,7 @@ public:
 	void RemoveRenderable(Renderable* toRemove);
 	void RemoveLight(Light* toRemove);
 	void RemoveCamera(Camera* toRemove);
+	void RemoveAll();
 
 	void SetSkybox(Skybox* skybox);
 	void SetAmbience(const Rgba& ambience);
@@ -67,8 +68,5 @@ private:
 	Rgba m_ambience;
 
 	Skybox* m_skybox = nullptr;
-
-	static RenderScene* s_currentScene;
-	static std::map<std::string, RenderScene*> s_scenes;
 
 };

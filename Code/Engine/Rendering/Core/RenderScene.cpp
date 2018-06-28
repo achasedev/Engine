@@ -9,9 +9,6 @@
 #include "Engine/Rendering/Core/RenderScene.hpp"
 
 
-RenderScene* RenderScene::s_currentScene = nullptr;
-std::map<std::string, RenderScene*> RenderScene::s_scenes;
-
 //-----------------------------------------------------------------------------------------------
 // Constructor
 //
@@ -99,6 +96,18 @@ void RenderScene::RemoveCamera(Camera* toRemove)
 			return;
 		}
 	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Clears the scene of all renderables, cameras, and lights
+// Does not delete anything!
+//
+void RenderScene::RemoveAll()
+{
+	m_cameras.clear();
+	m_lights.clear();
+	m_renderables.clear();
 }
 
 

@@ -160,7 +160,7 @@ float Stopwatch::GetElapsedTimeNormalized() const
 // Returns the time in seconds until the stopwatch's interval will elapse (returns negative
 // if the interval has elapsed)
 //
-float Stopwatch::GetTimeUntilIntervalEnd() const
+float Stopwatch::GetTimeUntilIntervalEnds() const
 {
 	uint64_t currentHPC = m_referenceClock->GetTotalHPC();
 

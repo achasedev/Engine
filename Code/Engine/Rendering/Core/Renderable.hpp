@@ -49,7 +49,6 @@ public:
 	Material*			GetSharedMaterial(unsigned int drawIndex) const;
 	Material*			GetMaterialInstance(unsigned int drawIndex);
 	Matrix44			GetInstanceMatrix(unsigned int instanceIndex) const;
-	SkeletonBase*		GetSkeletonBase() const;
 
 	Material*			GetMaterialForRender(unsigned int drawIndex) const;
 
@@ -77,6 +76,4 @@ private:
 
 	std::vector<Matrix44>			m_instanceModels;
 	std::vector<RenderableDraw_t>	m_draws;
-
-	SkeletonBase*				m_skeleton;	
 };

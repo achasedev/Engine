@@ -195,11 +195,11 @@ void AssimpLoader::BuildMeshAndMaterial_FromAIMesh(aiMesh* aimesh, const Matrix4
 			uvs.y = aimesh->mTextureCoords[0][vertexIndex].y;
 		}
 
-		Matrix44 toModelTransform = m_renderable->GetSkeletonBase()->GetGlobalInverseTransform() * transformation;
-
-		normal = toModelTransform.TransformVector(normal).xyz();
-		tangent = toModelTransform.TransformVector(tangent).xyz();
-		position = toModelTransform.TransformPoint(position).xyz();
+		//Matrix44 toModelTransform = m_renderable->GetSkeletonBase()->GetGlobalInverseTransform() * transformation;
+		//
+		//normal = toModelTransform.TransformVector(normal).xyz();
+		//tangent = toModelTransform.TransformVector(tangent).xyz();
+		//position = toModelTransform.TransformPoint(position).xyz();
 
 		mb.SetNormal(normal);
 		mb.SetTangent(Vector4(tangent, 1.0f));
@@ -224,22 +224,22 @@ void AssimpLoader::BuildMeshAndMaterial_FromAIMesh(aiMesh* aimesh, const Matrix4
 	unsigned int numBones = aimesh->mNumBones;
 	for (unsigned int boneIndex = 0; boneIndex < numBones; ++boneIndex)
 	{
-		aiBone* currBone = aimesh->mBones[boneIndex];
-		std::string boneName = currBone->mName.C_Str();
-
-		SkeletonBase* skeleton = m_renderable->GetSkeletonBase();
-		unsigned int mappingIndex = skeleton->CreateOrGetBoneMapping(boneName);
-		skeleton->SetOffsetMatrix(mappingIndex, ConvertAiMatrixToMyMatrix(currBone->mOffsetMatrix));
-
-		// Iterate across the weights for this bone
-		for (unsigned int weightIndex = 0; weightIndex < currBone->mNumWeights; ++weightIndex)
-		{
-			unsigned int vertexIndex = currBone->mWeights[weightIndex].mVertexId;
-			float weightValue = currBone->mWeights[weightIndex].mWeight;
-
-			// Set the index and weight data in the vertex buffer
-			mb.AddBoneData(vertexIndex, mappingIndex, weightValue);
-		}
+// 		aiBone* currBone = aimesh->mBones[boneIndex];
+// 		std::string boneName = currBone->mName.C_Str();
+// 
+// 		SkeletonBase* skeleton = m_renderable->GetSkeletonBase();
+// 		unsigned int mappingIndex = skeleton->CreateOrGetBoneMapping(boneName);
+// 		skeleton->SetOffsetMatrix(mappingIndex, ConvertAiMatrixToMyMatrix(currBone->mOffsetMatrix));
+// 
+// 		// Iterate across the weights for this bone
+// 		for (unsigned int weightIndex = 0; weightIndex < currBone->mNumWeights; ++weightIndex)
+// 		{
+// 			unsigned int vertexIndex = currBone->mWeights[weightIndex].mVertexId;
+// 			float weightValue = currBone->mWeights[weightIndex].mWeight;
+// 
+// 			// Set the index and weight data in the vertex buffer
+// 			mb.AddBoneData(vertexIndex, mappingIndex, weightValue);
+// 		}
 	}
 
 	mb.FinishBuilding();
@@ -332,37 +332,37 @@ void AssimpLoader::BuildMeshAndMaterial_FromAIMesh(aiMesh* aimesh, const Matrix4
 //
 void AssimpLoader::ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTransform, int parentBoneIndex)
 {
-	std::string nodeName = ainode->mName.data;
-
-	Matrix44 nodeTransform = ConvertAiMatrixToMyMatrix(ainode->mTransformation);
-
-	Matrix44 currentTransform = parentTransform * nodeTransform;
-
-	// Check if this name is a bone by searching for it's name mapping in the hierarchy
-	SkeletonBase* skeleton = m_renderable->GetSkeletonBase();
-	int thisBoneIndex = skeleton->GetBoneMapping(nodeName);
-
-	// If it is a bone, update the matrix in the skeleton (might be unnecessary for bind pose, as you get the same result!)
-	if (thisBoneIndex >= 0)
-	{
-		Matrix44 offset = skeleton->GetBoneData(thisBoneIndex).offsetMatrix;
-		Matrix44 finalTransformation = skeleton->GetGlobalInverseTransform() * currentTransform * skeleton->GetBoneData(thisBoneIndex).offsetMatrix;
-
-		skeleton->SetFinalTransformation(thisBoneIndex, finalTransformation);
-
-		// For debugging
-		skeleton->SetWorldTransform(thisBoneIndex, currentTransform);
-		skeleton->SetParentBoneIndex(thisBoneIndex, parentBoneIndex);
-	}
-	
-	// Determine what the parent index of the children bones are (either us if we're a bone, or our last bone ancestor)
-	int childParentIndex = (thisBoneIndex >= 0 ? thisBoneIndex : parentBoneIndex);
-
-	// Recursively process the child nodes for bone information (even if this one wasn't a bone)
-	for (unsigned int nodeIndex = 0; nodeIndex < ainode->mNumChildren; ++nodeIndex)
-	{
-		ExtractBoneTransform(ainode->mChildren[nodeIndex], currentTransform, childParentIndex);
-	}
+// 	std::string nodeName = ainode->mName.data;
+// 
+// 	Matrix44 nodeTransform = ConvertAiMatrixToMyMatrix(ainode->mTransformation);
+// 
+// 	Matrix44 currentTransform = parentTransform * nodeTransform;
+// 
+// 	// Check if this name is a bone by searching for it's name mapping in the hierarchy
+// 	SkeletonBase* skeleton = m_renderable->GetSkeletonBase();
+// 	int thisBoneIndex = skeleton->GetBoneMapping(nodeName);
+// 
+// 	// If it is a bone, update the matrix in the skeleton (might be unnecessary for bind pose, as you get the same result!)
+// 	if (thisBoneIndex >= 0)
+// 	{
+// 		Matrix44 offset = skeleton->GetBoneData(thisBoneIndex).offsetMatrix;
+// 		Matrix44 finalTransformation = skeleton->GetGlobalInverseTransform() * currentTransform * skeleton->GetBoneData(thisBoneIndex).offsetMatrix;
+// 
+// 		skeleton->SetFinalTransformation(thisBoneIndex, finalTransformation);
+// 
+// 		// For debugging
+// 		skeleton->SetWorldTransform(thisBoneIndex, currentTransform);
+// 		skeleton->SetParentBoneIndex(thisBoneIndex, parentBoneIndex);
+// 	}
+// 	
+// 	// Determine what the parent index of the children bones are (either us if we're a bone, or our last bone ancestor)
+// 	int childParentIndex = (thisBoneIndex >= 0 ? thisBoneIndex : parentBoneIndex);
+// 
+// 	// Recursively process the child nodes for bone information (even if this one wasn't a bone)
+// 	for (unsigned int nodeIndex = 0; nodeIndex < ainode->mNumChildren; ++nodeIndex)
+// 	{
+// 		ExtractBoneTransform(ainode->mChildren[nodeIndex], currentTransform, childParentIndex);
+// 	}
 }
 
 
@@ -371,15 +371,15 @@ void AssimpLoader::ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTr
 //
 void AssimpLoader::BuildBoneHierarchy()
 {
-	// Set up the skeleton global inverse first, to convert vertices from world to local model space
-	aiMatrix4x4 globalInverse = m_scene->mRootNode->mTransformation;
-	globalInverse.Inverse();
-
-	SkeletonBase* skeleton = m_renderable->GetSkeletonBase();
-	skeleton->SetGlobalInverseTransform(ConvertAiMatrixToMyMatrix(globalInverse));
-
-	// Recursively traverse the tree to assemble the bone transformations
-	ExtractBoneTransform(m_scene->mRootNode, Matrix44::IDENTITY, -1);
+// 	// Set up the skeleton global inverse first, to convert vertices from world to local model space
+// 	aiMatrix4x4 globalInverse = m_scene->mRootNode->mTransformation;
+// 	globalInverse.Inverse();
+// 
+// 	SkeletonBase* skeleton = m_renderable->GetSkeletonBase();
+// 	skeleton->SetGlobalInverseTransform(ConvertAiMatrixToMyMatrix(globalInverse));
+// 
+// 	// Recursively traverse the tree to assemble the bone transformations
+// 	ExtractBoneTransform(m_scene->mRootNode, Matrix44::IDENTITY, -1);
 }
 
 

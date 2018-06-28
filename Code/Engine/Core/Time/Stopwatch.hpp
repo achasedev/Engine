@@ -28,7 +28,7 @@ public:
 	// Accessors/Producers
 	float	GetElapsedTime() const;
 	float	GetElapsedTimeNormalized() const;
-	float	GetTimeUntilIntervalEnd() const;
+	float	GetTimeUntilIntervalEnds() const;
 	bool	HasIntervalElapsed() const;
 	
 	float	GetTotalSeconds() const;

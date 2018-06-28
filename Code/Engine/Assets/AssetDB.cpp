@@ -201,7 +201,7 @@ void AssetDB::CreateMeshes()
 	// Sphere
 	mb.Clear();
 	mb.BeginBuilding(PRIMITIVE_TRIANGLES, true);
-	mb.PushUVSphere(Vector3::ZERO, 1.f, 100, 50);
+	mb.PushUVSphere(Vector3::ZERO, 1.f, 8, 4);
 	mb.FinishBuilding();
 	Mesh* sphere = mb.CreateMesh();
 
