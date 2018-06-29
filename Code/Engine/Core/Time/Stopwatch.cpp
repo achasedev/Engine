@@ -164,8 +164,8 @@ float Stopwatch::GetTimeUntilIntervalEnds() const
 {
 	uint64_t currentHPC = m_referenceClock->GetTotalHPC();
 
-	float endSeconds = TimeSystem::PerformanceCountToSeconds(m_endHPC);
-	float currentSeconds = TimeSystem::PerformanceCountToSeconds(currentHPC);
+	float endSeconds = (float) TimeSystem::PerformanceCountToSeconds(m_endHPC);
+	float currentSeconds = (float) TimeSystem::PerformanceCountToSeconds(currentHPC);
 
 	return endSeconds - currentSeconds;
 }

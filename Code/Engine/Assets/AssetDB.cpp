@@ -550,7 +550,14 @@ void AssetDB::ReloadShaderPrograms()
 //
 Material* AssetDB::GetSharedMaterial(const std::string& name)
 {
-	return AssetCollection<Material>::GetAsset(name);
+	Material* material = AssetCollection<Material>::GetAsset(name);
+	if (material == nullptr)
+	{
+		int x = 0; 
+		x = x;
+	}
+	
+	return material;
 }
 
 

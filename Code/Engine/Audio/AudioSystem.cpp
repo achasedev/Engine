@@ -1,7 +1,8 @@
+#include "Engine/Math/MathUtils.hpp"
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/Utility/ErrorWarningAssert.hpp"
 #include "Engine/Core/Utility/StringUtils.hpp"
+#include "Engine/Core/Utility/ErrorWarningAssert.hpp"
 
 //-----------------------------------------------------------------------------------------------
 // To disable audio entirely (and remove requirement for fmod.dll / fmod64.dll) for any game,
@@ -147,6 +148,23 @@ SoundPlaybackID AudioSystem::PlaySound( SoundID soundID, bool isLooped, float vo
 
 
 //-----------------------------------------------------------------------------------------------
+SoundPlaybackID AudioSystem::PlaySoundFromAudioGroup(const std::string& groupName, bool isLooped/*=false*/, float volume/*=1.f*/, float balance/*=0.0f*/, float speed/*=1.0f*/, bool isPaused/*=false */)
+{
+	bool groupExists = m_audioGroups.find(groupName) != m_audioGroups.end();
+
+	if (!groupExists)
+	{
+		ERROR_AND_DIE(Stringf("Error: AudioSystem::PlaySoundFromAudioGroup received non-existant group name, name was \"%s\"", groupName.c_str()));
+	}
+
+	AudioGroup* group = m_audioGroups[groupName];
+	SoundID soundToPlay = group->GetRandomSound();
+
+	return PlaySound(soundToPlay, isLooped, volume, balance, speed, isPaused);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 void AudioSystem::StopSound( SoundPlaybackID soundPlaybackID )
 {
 	if( soundPlaybackID == MISSING_SOUND_ID )
@@ -228,4 +246,103 @@ void AudioSystem::ValidateResult( FMOD_RESULT result )
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Loads the given file defining a set of audio groups and attempts to construct them
+//
+void AudioSystem::LoadAudioGroupFile(const std::string& filepath)
+{
+	// Load the document
+	XMLDocument document;
+	XMLError error = document.LoadFile(filepath.c_str());
+
+	if (error != tinyxml2::XML_SUCCESS)
+	{
+		ERROR_AND_DIE(Stringf("Error: Couldn't load AudioGroup file \"%s\"", filepath.c_str()));
+	}
+
+	// I keep a root around just because I like having a single root element
+	const XMLElement* rootElement = document.RootElement();
+	
+	const XMLElement* groupElement = rootElement->FirstChildElement();
+
+	while (groupElement != nullptr)
+	{
+		AudioGroup* group = new AudioGroup(*groupElement);
+		s_instance->m_audioGroups[group->GetName()] = group;
+
+		groupElement = groupElement->NextSiblingElement();
+	}
+}
+
+
 #endif // !defined( ENGINE_DISABLE_AUDIO )
+
+
+// AudioGroup class
+
+
+//-----------------------------------------------------------------------------------------------
+// Constructor from XML
+//
+AudioGroup::AudioGroup(const XMLElement& groupElement)
+{
+	m_name = ParseXmlAttribute(groupElement, "name", "");
+
+	const XMLElement* clipElement = groupElement.FirstChildElement();
+
+	AudioSystem* audio = AudioSystem::GetInstance();
+	while (clipElement != nullptr)
+	{
+		std::string clipSourcePath = ParseXmlAttribute(*clipElement, "source", "");
+
+		if (IsStringNullOrEmpty(clipSourcePath))
+		{
+			ERROR_RECOVERABLE(Stringf("Error: AudioGroup has clip with no source path specified, clip name was \"%s\"", m_name.c_str()));
+			clipElement = clipElement->NextSiblingElement();
+			continue;
+		}
+
+		SoundID clipID = audio->CreateOrGetSound(clipSourcePath);
+		m_sounds.push_back(clipID);
+
+		clipElement = clipElement->NextSiblingElement();
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the name of the group
+//
+std::string AudioGroup::GetName() const
+{
+	return m_name;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns a sound ID from the list of sounds, ensuring the same sound isn't played twice in a row
+//
+SoundID AudioGroup::GetRandomSound()
+{
+	// Ensure we have sounds to return!
+	ASSERT_OR_DIE(m_sounds.size() > 0, Stringf("Error: AudioGroup::GetRandomSound called on group with no sounds, group name was \"%s\"", m_name.c_str()));
+
+	// Iterate until we find a sound we haven't just played, or if we only have 1 sound
+	bool done = false;
+	SoundID soundToReturn = 0;
+
+	while (!done)
+	{
+		unsigned int index = GetRandomIntLessThan((int) m_sounds.size());
+
+		soundToReturn = m_sounds[index];
+
+		if (soundToReturn != m_lastSoundPlayed || (int) m_sounds.size() < 2)
+		{
+			done = true;
+		}
+	}
+
+	m_lastSoundPlayed = soundToReturn;
+	return soundToReturn;
+}
