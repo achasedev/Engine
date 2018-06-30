@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 
-#define PROFILE_LOG_SCOPE(tag) ProfileLogScoped __timer_ ##__LINE__ ## (tag)
 #define PROFILER_MAX_REPORT_COUNT (128)
 
 enum eReportType
@@ -22,14 +21,18 @@ public:
 	static void Initialize();
 	static void Shutdown();
 
+	void ProcessInput();
+	void Render();
+
 	static void BeginFrame();
 	static void EndFrame();
 
-	void PushMeasurement(const char* name);
-	void PopMeasurement();
+	static void PushMeasurement(const char* name);
+	static void PopMeasurement();
 
-	void DestroyStack(ProfileMeasurement* stack);
-	  
+	static bool			IsProfilerOpen();
+	static Profiler* GetInstance();
+
 
 private:
 	//-----Private Methods-----
@@ -38,10 +41,12 @@ private:
 	~Profiler();
 	Profiler(const Profiler& copy) = delete;
 
-	void BuildReportForFrame(ProfileMeasurement* stack);
+	void								BuildReportForFrame(ProfileMeasurement* stack);
 
-	unsigned int IncrementIndexWithWrapAround(unsigned int currentIndex) const;
-	unsigned int DecrementIndexWithWrapAround(unsigned int currentIndex) const;
+	static unsigned int					IncrementIndexWithWrapAround(unsigned int currentIndex);
+	static unsigned int					DecrementIndexWithWrapAround(unsigned int currentIndex);
+
+	static void							DestroyStack(ProfileMeasurement* stack);
 
 
 private:
@@ -54,6 +59,7 @@ private:
 	eReportType m_reportType;
 	ProfileReport* m_reports[PROFILER_MAX_REPORT_COUNT];
 
+	bool m_isOpen;
 	static Profiler* s_instance;	// Singleton instance
 
 };

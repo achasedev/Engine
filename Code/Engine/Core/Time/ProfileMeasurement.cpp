@@ -1,12 +1,11 @@
 #include "Engine/Core/Time/Time.hpp"
-#include "Engine/Core/Time/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Time/ProfileMeasurement.hpp"
 
 ProfileMeasurement::ProfileMeasurement(const char* name)
 	: m_name(name)
 {
-	m_startHPC = Clock::GetMasterTotalTime();
+	m_startHPC = GetPerformanceCounter();
 	m_parent = nullptr;
 }
 
@@ -22,7 +21,7 @@ ProfileMeasurement::~ProfileMeasurement()
 
 void ProfileMeasurement::Finish()
 {
-	m_endHPC = Clock::GetMasterTotalTime();
+	m_endHPC = GetPerformanceCounter();
 }
 
 uint64_t ProfileMeasurement::GetTotalTime_Inclusive() const

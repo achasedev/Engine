@@ -18,11 +18,9 @@ public:
 	void Finalize();
 
 
-private:
-	//-----Private Data-----
+public:
+	//-----Public Data-----
 
-	// Whole frame data
-
-	// Individual report entries
 	ProfileReportEntry* m_rootEntry;
+
 };

@@ -36,4 +36,6 @@ void ProfileReport::Finalize()
 {
 	// Calculate all percent times
 	m_rootEntry->RecursivelyCalculatePercentTimes();
+
+	TODO("Sort entries by total time");
 }

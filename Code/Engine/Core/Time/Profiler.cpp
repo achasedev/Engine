@@ -2,15 +2,22 @@
 #include "Engine/Core/Time/Profiler.hpp"
 #include "Engine/Core/Time/ProfileReport.hpp"
 #include "Engine/Core/Time/ProfileMeasurement.hpp"
+#include "Engine/Core/Time/ProfileReportEntry.hpp"
 
 Profiler* Profiler::s_instance = nullptr;	// Singleton instance
 
 Profiler::Profiler()
 	: m_currentStack(nullptr)
 	, m_previousStack(nullptr)
-	, m_currentReportIndex(-1)
+	, m_currentReportIndex(0)
 	, m_reportType(REPORT_TYPE_TREE)
+	, m_isOpen(true)
 {
+	// Initialize all reports to nullptr
+	for (int i = 0; i < PROFILER_MAX_REPORT_COUNT; ++i)
+	{
+		m_reports[i] = nullptr;
+	}
 }
 
 
@@ -39,6 +46,32 @@ void Profiler::Shutdown()
 	s_instance = nullptr;
 }
 
+#include "Engine/Core/Time/Time.hpp"
+void PrintRecursive(const std::string& indent, ProfileReportEntry* stack)
+{
+	float totalTime		= 1000.f * TimeSystem::PerformanceCountToSeconds(stack->m_totalTime);
+	float selfTime		= 1000.f * TimeSystem::PerformanceCountToSeconds(stack->m_selfTime);
+	std::string text = indent + Stringf(" Name: %s - CallCount: %i - Total time: %f - Exclusive Time: %f\n", stack->m_name.c_str(), stack->m_callCount, totalTime, selfTime);
+	DebuggerPrintf(text.c_str());
+
+	std::map<std::string, ProfileReportEntry*>::iterator itr;
+	for (itr = stack->m_children.begin(); itr != stack->m_children.end(); itr++)
+	{
+		PrintRecursive(indent + "-", itr->second);
+	}
+}
+
+void Profiler::Render()
+{
+	if (m_reports[m_currentReportIndex] != nullptr)
+	{
+		PrintRecursive("", m_reports[m_currentReportIndex]->m_rootEntry);
+	}
+	else
+	{
+		DebuggerPrintf("THE REPORT AT THE CURRENT WAS NULL\n");
+	}
+}
 
 void Profiler::BeginFrame()
 {
@@ -71,25 +104,35 @@ void Profiler::PushMeasurement(const char* name)
 {
 	ProfileMeasurement* measurement = new ProfileMeasurement(name);
 
-	if (m_currentStack == nullptr)
+	if (s_instance->m_currentStack == nullptr)
 	{
-		m_currentStack = measurement;
+		s_instance->m_currentStack = measurement;
 	}
 	else
 	{
-		measurement->m_parent = m_currentStack;
-		m_currentStack->m_children.push_back(measurement);
-		m_currentStack = measurement;
+		measurement->m_parent = s_instance->m_currentStack;
+		s_instance->m_currentStack->m_children.push_back(measurement);
+		s_instance->m_currentStack = measurement;
 	}
 
 }
 
 void Profiler::PopMeasurement()
 {
-	ASSERT_OR_DIE(m_currentStack != nullptr, Stringf("Error::Profiler::PopStack called when the current stack was empty"));
+	ASSERT_OR_DIE(s_instance->m_currentStack != nullptr, Stringf("Error::Profiler::PopStack called when the current stack was empty"));
 
-	m_currentStack->Finish();
-	m_currentStack = m_currentStack->m_parent;
+	s_instance->m_currentStack->Finish();
+	s_instance->m_currentStack = s_instance->m_currentStack->m_parent;
+}
+
+bool Profiler::IsProfilerOpen()
+{
+	return s_instance->m_isOpen;
+}
+
+Profiler* Profiler::GetInstance()
+{
+	return s_instance;
 }
 
 void Profiler::DestroyStack(ProfileMeasurement* stack)
@@ -99,7 +142,7 @@ void Profiler::DestroyStack(ProfileMeasurement* stack)
 }
 
 
-unsigned int Profiler::IncrementIndexWithWrapAround(unsigned int currentIndex) const
+unsigned int Profiler::IncrementIndexWithWrapAround(unsigned int currentIndex)
 {
 	unsigned int nextIndex = currentIndex + 1;
 
@@ -111,7 +154,7 @@ unsigned int Profiler::IncrementIndexWithWrapAround(unsigned int currentIndex) c
 	return nextIndex;
 }
 
-unsigned int Profiler::DecrementIndexWithWrapAround(unsigned int currentIndex) const
+unsigned int Profiler::DecrementIndexWithWrapAround(unsigned int currentIndex)
 {
 	unsigned int nextIndex = currentIndex - 1;
 

@@ -3,6 +3,8 @@
 
 class Stopwatch;
 
+#define PROFILE_LOG_SCOPE(tag) ProfileLogScoped __timer_ ##__LINE__ ## (tag)
+
 class ProfileScoped
 {
 public:
@@ -15,8 +17,7 @@ public:
 private:
 	//-----Private Data-----
 
-	std::string m_name;
-	
-	uint64_t m_startHPC;
+	std::string		m_name;
+	uint64_t		m_startHPC;
 
 };
