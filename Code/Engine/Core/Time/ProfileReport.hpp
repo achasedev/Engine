@@ -1,3 +1,9 @@
+/************************************************************************/
+/* File: ProfileReport.hpp
+/* Author: Andrew Chase
+/* Date: June 30th, 2018
+/* Description: Class to represent a profile result for a single frame
+/************************************************************************/
 #pragma once
 #include <vector>
 

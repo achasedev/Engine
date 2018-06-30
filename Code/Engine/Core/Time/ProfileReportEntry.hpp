@@ -1,3 +1,10 @@
+/************************************************************************/
+/* File: ProfileReportEntry.hpp
+/* Author: Andrew Chase
+/* Date: June 30th, 2018
+/* Description: Class to represent a single entry in a profile report
+				Represents a set of measurements for a single scope profile
+/************************************************************************/
 #pragma once
 #include <map>
 #include <string>
@@ -9,8 +16,10 @@ class ProfileReportEntry
 public:
 	//-----Public Methods-----
 
-	// Initializers
 	ProfileReportEntry(const std::string& name);
+	~ProfileReportEntry();
+
+	// Initializers
 	void												PopulateTree(ProfileMeasurement* measurement);
 	void												PopulateFlat(ProfileMeasurement* measurement);
 

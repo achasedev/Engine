@@ -1,3 +1,9 @@
+/************************************************************************/
+/* File: ProfileReport.hpp
+/* Author: Andrew Chase
+/* Date: June 30th, 2018
+/* Description: Class to represent a profile result for a single frame
+/************************************************************************/
 #pragma once
 #include <vector>
 
@@ -18,48 +24,52 @@ class Profiler
 public:
 	//-----Public Methods-----
 
-	static void Initialize();
-	static void Shutdown();
+	// Initialization
+	static void									Initialize();
+	static void									Shutdown();
+	
+	// Per frame
+	static void									BeginFrame();
+	void										ProcessInput();
+	void										Render();
+	static void									EndFrame();
+												
+	// Mutators											
+	static void									PushMeasurement(const char* name);
+	static void									PopMeasurement();
 
-	void ProcessInput();
-	void Render();
-
-	static void BeginFrame();
-	static void EndFrame();
-
-	static void PushMeasurement(const char* name);
-	static void PopMeasurement();
-
-	static bool			IsProfilerOpen();
-	static Profiler* GetInstance();
+	// Accessors
+	static bool									IsProfilerOpen();
+	static Profiler*							GetInstance();
 
 
 private:
 	//-----Private Methods-----
 
+	// Singleton class, so no constructor/destructing publicly
 	Profiler();
 	~Profiler();
 	Profiler(const Profiler& copy) = delete;
 
-	void								BuildReportForFrame(ProfileMeasurement* stack);
-
-	static unsigned int					IncrementIndexWithWrapAround(unsigned int currentIndex);
-	static unsigned int					DecrementIndexWithWrapAround(unsigned int currentIndex);
-
-	static void							DestroyStack(ProfileMeasurement* stack);
+	void										BuildReportForFrame(ProfileMeasurement* stack);
 
 
 private:
 	//-----Private Data-----
 
+	// Stacks, used for measuring
 	ProfileMeasurement* m_currentStack;
 	ProfileMeasurement* m_previousStack;
 
+	// Reports
 	int m_currentReportIndex;
 	eReportType m_reportType;
 	ProfileReport* m_reports[PROFILER_MAX_REPORT_COUNT];
 
+	// State
 	bool m_isOpen;
-	static Profiler* s_instance;	// Singleton instance
+
+	// Singleton instance
+	static Profiler* s_instance;
 
 };

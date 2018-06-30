@@ -1,7 +1,17 @@
+/************************************************************************/
+/* File: ProfileReportEntry.cpp
+/* Author: Andrew Chase
+/* Date: June 30th, 2018
+/* Description:  Implementation of the ProfileReportEntry class
+/************************************************************************/
 #include "Engine/Core/Time/Time.hpp"
 #include "Engine/Core/Time/ProfileReportEntry.hpp"
 #include "Engine/Core/Time/ProfileMeasurement.hpp"
 
+
+//-----------------------------------------------------------------------------------------------
+// Constructor
+//
 ProfileReportEntry::ProfileReportEntry(const std::string& name)
 	: m_name(name)
 	, m_callCount(0)
@@ -12,6 +22,26 @@ ProfileReportEntry::ProfileReportEntry(const std::string& name)
 {
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Recursively deletes all children
+//
+ProfileReportEntry::~ProfileReportEntry()
+{
+	std::map<std::string, ProfileReportEntry*>::iterator itr = m_children.begin();
+
+	for (itr; itr != m_children.end(); itr++)
+	{
+		delete itr->second;
+	}
+
+	m_children.clear();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Fills this report in a tree style, maintain hierarchy
+//
 void ProfileReportEntry::PopulateTree(ProfileMeasurement* measurement)
 {
 	AccumulateData(measurement);
@@ -23,6 +53,10 @@ void ProfileReportEntry::PopulateTree(ProfileMeasurement* measurement)
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Fills this report in a flat style, discarding hierarchy
+//
 void ProfileReportEntry::PopulateFlat(ProfileMeasurement* measurement)
 {
 	for (int childIndex = 0; childIndex < (int) measurement->m_children.size(); ++childIndex)
@@ -35,15 +69,21 @@ void ProfileReportEntry::PopulateFlat(ProfileMeasurement* measurement)
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Accumulates the data from the given measurement on this entry
+//
 void ProfileReportEntry::AccumulateData(ProfileMeasurement* measurement)
 {
 	m_callCount++;
 	m_totalTime += measurement->GetTotalTime_Inclusive();
 	m_selfTime	+= measurement->GetTotalTime_Exclusive();
-
-	//m_percentTime = ?; // Figure it out later
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the child entry on this entry given by childName, creating one if one doesn't exist
+//
 ProfileReportEntry* ProfileReportEntry::GetOrCreateReportEntryForChild(const std::string childName)
 {
 	bool entryExists = m_children.find(childName) != m_children.end();
@@ -61,6 +101,10 @@ ProfileReportEntry* ProfileReportEntry::GetOrCreateReportEntryForChild(const std
 	return newChild;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Calculates the percentage times for all entries in this report, called on the root
+//
 void ProfileReportEntry::RecursivelyCalculatePercentTimes()
 {
 	if (m_parent == nullptr)

@@ -1,7 +1,14 @@
+/************************************************************************/
+/* File: ProfileMeasurement.hpp
+/* Author: Andrew Chase
+/* Date: June 30th, 2018
+/* Description: Class to represent a single scoped measure of a Profile stack
+/************************************************************************/
 #pragma once
 #include <string>
 #include <vector>
 #include <stdint.h>
+
 
 class ProfileMeasurement
 {
@@ -30,4 +37,5 @@ public:
 
 	ProfileMeasurement* m_parent;
 	std::vector<ProfileMeasurement*> m_children;
+
 };
