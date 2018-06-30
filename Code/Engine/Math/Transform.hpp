@@ -40,6 +40,9 @@ public:
 	Vector3 GetWorldUp();
 	Vector3 GetWorldForward();
 
+	Vector3 GetWorldPosition();
+	Vector3 GetWorldRotation();
+
 
 private:
 	//-----Private Methods-----

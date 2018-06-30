@@ -45,7 +45,7 @@ public:
 
 	// Projection settings
 	void SetProjection(const Matrix44& projection); 
-	void SetProjectionOrtho(float height, float nearZ, float farZ); 
+	void SetProjectionOrtho(float width, float height, float nearZ, float farZ); 
 	void SetProjectionPerspective(float fovDegrees, float nearZ, float farZ);
 
 	// Other setters

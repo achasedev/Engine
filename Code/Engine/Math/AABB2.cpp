@@ -311,6 +311,20 @@ void AABB2::operator-=(const Vector2& antiTranslation)
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns a copy of this box with all corners scaled by the given scalar
+//
+AABB2 AABB2::operator*(float scalar) const
+{
+	AABB2 scaledBox;
+
+	scaledBox.mins = mins * scalar;
+	scaledBox.maxs = maxs * scalar;
+
+	return scaledBox;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns a copy of this box after being translated in the direction of translation
 //
 AABB2 AABB2::operator+(const Vector2& translation) const

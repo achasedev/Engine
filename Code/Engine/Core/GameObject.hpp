@@ -19,9 +19,12 @@ public:
 	virtual void Update(float deltaTime);
 
 	void SetMarkedForDelete(bool markedForDelete);
+	void AddTagUnique(const std::string& tag);
+	bool RemoveTag(const std::string& tag);
 
 	Renderable* GetRenderable();
 	bool		IsMarkedForDelete() const;
+	bool		HasTag(const std::string& tag);
 
 
 public:
@@ -36,4 +39,5 @@ protected:
 	Renderable*		m_renderable;		// For rendering
 	bool			m_markedForDelete;	// For end-of-frame deletion
 
+	std::vector<std::string> m_tags;
 };

@@ -23,7 +23,8 @@ public:
 	Vector2( const Vector2& copyFrom );						// copy constructor (from another vec2)
 	explicit Vector2( float initialX, float initialY );		// explicit constructor (from x, y)
 	explicit Vector2( int initialX, int initialY );			// explicit int constructor
-	Vector2(const IntVector2& intVector);					// Creates a Vector2 from an IntVector2
+	explicit Vector2(const IntVector2& intVector);			// Creates a Vector2 from an IntVector2
+	explicit Vector2(float initialValue);					// Creates a Vector2 from the single float
 
 																		// Operators
 	const	Vector2 operator+( const Vector2& vecToAdd ) const;			// vec2 + vec2

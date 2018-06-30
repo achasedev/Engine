@@ -7,6 +7,20 @@
 #include "Engine/Core/Rgba.hpp"
 #include "Engine/Rendering/Core/Light.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Rendering/Resources/Texture.hpp"
+
+
+//-----------------------------------------------------------------------------------------------
+// Checks to delete the shadow texture if it was using one
+//
+Light::~Light()
+{
+	if (m_shadowTexture != nullptr)
+	{
+		delete m_shadowTexture;
+		m_shadowTexture = nullptr;
+	}
+}
 
 
 //-----------------------------------------------------------------------------------------------
@@ -28,11 +42,59 @@ void Light::SetLightData(const LightData& data)
 
 
 //-----------------------------------------------------------------------------------------------
+// Sets the flag indicating whether this light casts shadows
+//
+void Light::SetShadowCasting(bool castsShadows)
+{
+	m_isShadowCasting = castsShadows;
+
+	if (m_isShadowCasting)
+	{
+		if (m_shadowTexture == nullptr)
+		{
+			m_shadowTexture = new Texture();
+			m_shadowTexture->CreateRenderTarget(4096, 4096, TEXTURE_FORMAT_D24S8);
+		}
+
+		m_lightData.m_castsShadows = 1.0f;	// To indicate in the shader that we do shadows
+	}
+	else
+	{
+		if (m_shadowTexture != nullptr)
+		{
+			delete m_shadowTexture;
+			m_shadowTexture = nullptr;
+		}
+
+		m_lightData.m_castsShadows = 0.f;
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the light data struct for this light
 //
 LightData Light::GetLightData() const
 {
 	return m_lightData;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the flag indicating if this light casts shadows
+//
+bool Light::IsShadowCasting() const
+{
+	return m_isShadowCasting;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the shadow texture used by this light, nullptr if it doesn't have one
+//
+Texture* Light::GetShadowTexture() const
+{
+	return m_shadowTexture;
 }
 
 

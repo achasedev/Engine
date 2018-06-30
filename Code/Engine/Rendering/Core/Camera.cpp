@@ -168,12 +168,11 @@ void Camera::SetProjection(const Matrix44& projection)
 //-----------------------------------------------------------------------------------------------
 // Sets the camera matrix to an orthographic projection given the ortho parameters
 //
-void Camera::SetProjectionOrtho(float height, float nearZ, float farZ)
+void Camera::SetProjectionOrtho(float width, float height, float nearZ, float farZ)
 {
 	m_orthoSize = height;
 	m_nearClipZ = nearZ;
 	m_farClipZ = farZ;
-	float width = Window::GetInstance()->GetAspect() * height;
 	m_projectionMatrix = Matrix44::MakeOrtho(-width / 2.f, width / 2.f, -height / 2.f, height / 2.f, nearZ, farZ);
 }
 
@@ -196,7 +195,8 @@ void Camera::SetProjectionPerspective(float fovDegrees, float nearZ, float farZ)
 //
 void Camera::SetOrthoSize(float newSize)
 {
-	SetProjectionOrtho(newSize, m_nearClipZ, m_farClipZ);
+	float width = m_frameBuffer.GetAspect() * newSize;
+	SetProjectionOrtho(width, newSize, m_nearClipZ, m_farClipZ);
 }
 
 
@@ -207,7 +207,8 @@ void Camera::SetOrthoSize(float newSize)
 void Camera::AdjustOrthoSize(float additiveModifier)
 {
 	m_orthoSize = ClampFloat(m_orthoSize + additiveModifier, m_orthoSizeLimits.min, m_orthoSizeLimits.max);
-	SetProjectionOrtho(m_orthoSize, m_nearClipZ, m_farClipZ);
+	float width = m_frameBuffer.GetAspect() * m_orthoSize;
+	SetProjectionOrtho(width, m_orthoSize, m_nearClipZ, m_farClipZ);
 }
 
 
@@ -291,7 +292,7 @@ Matrix44 Camera::GetProjectionMatrix() const
 //
 Vector3 Camera::GetPosition() const
 {
-	return m_transform.position;
+	return m_transform.GetWorldPosition();
 }
 
 

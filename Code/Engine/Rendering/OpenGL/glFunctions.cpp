@@ -96,6 +96,7 @@ PFNGLBLITFRAMEBUFFERPROC			glBlitFramebuffer = nullptr;
 PFNGLDEPTHFUNCPROC					glDepthFunc = nullptr;
 PFNGLDEPTHMASKPROC					glDepthMask = nullptr;
 PFNGLCLEARDEPTHFPROC				glClearDepthf = nullptr;
+PFNGLVIEWPORTPROC					glViewport = nullptr;
 
 
 //----------Textures----------
@@ -111,6 +112,7 @@ PFNGLCOPYIMAGESUBDATAPROC	glCopyImageSubData = nullptr;
 PFNGLTEXSTORAGE2DPROC		glTexStorage2D = nullptr;
 PFNGLTEXSUBIMAGE2DPROC		glTexSubImage2D = nullptr;
 PFNGLDELETETEXTURESPROC		glDeleteTextures = nullptr;	
+PFNGLGENERATEMIPMAPPROC		glGenerateMipmap = nullptr;
 
 
 //-----Samplers-----
@@ -118,6 +120,8 @@ PFNGLGENSAMPLERSPROC		glGenSamplers = nullptr;
 PFNGLSAMPLERPARAMETERIPROC	glSamplerParameteri = nullptr;
 PFNGLDELETESAMPLERSPROC		glDeleteSamplers = nullptr;
 PFNGLBINDSAMPLERPROC		glBindSampler = nullptr;
+PFNGLSAMPLERPARAMETERFVPROC	glSamplerParameterfv = nullptr;
+
 
 //-----Misc-----
 PFNGLGETERRORPROC			glGetError = nullptr;
@@ -344,6 +348,7 @@ void BindGLFunctions()
 	GL_BIND_FUNCTION(glDepthFunc);
 	GL_BIND_FUNCTION(glDepthMask);
 	GL_BIND_FUNCTION(glClearDepthf);
+	GL_BIND_FUNCTION(glViewport);
 
 
 	// Textures
@@ -357,13 +362,14 @@ void BindGLFunctions()
 	GL_BIND_FUNCTION(glTexStorage2D);
 	GL_BIND_FUNCTION(glTexSubImage2D);
 	GL_BIND_FUNCTION(glDeleteTextures);	
-
+	GL_BIND_FUNCTION(glGenerateMipmap);
 
 	// Sampler generation
 	GL_BIND_FUNCTION(glGenSamplers);
 	GL_BIND_FUNCTION(glSamplerParameteri);
 	GL_BIND_FUNCTION(glDeleteSamplers);
 	GL_BIND_FUNCTION(glBindSampler);
+	GL_BIND_FUNCTION(glSamplerParameterfv);
 
 	// Misc
 	GL_BIND_FUNCTION(glGetError);

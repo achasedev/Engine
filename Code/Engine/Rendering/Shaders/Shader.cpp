@@ -13,7 +13,7 @@
 //-----------------------------------------------------------------------------------------------
 // Constructor - from literal data, render state defaults to values in .hpp
 //
-Shader::Shader(const ShaderProgram* program)
+Shader::Shader(ShaderProgram* program)
 	: m_shaderProgram(program)
 {
 }
@@ -43,13 +43,14 @@ Shader::Shader(const std::string& xmlfilepath)
 	ParseWindOrder(*shaderElement);
 	ParseDepthMode(*shaderElement);
 	ParseBlendMode(*shaderElement);
+	ParseLayerAndQueue(*shaderElement);
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Constructor with custom render state
 //
-Shader::Shader(const RenderState& renderState, const ShaderProgram* program)
+Shader::Shader(const RenderState& renderState, ShaderProgram* program)
 	: m_renderState(renderState)
 	, m_shaderProgram(program)
 {
@@ -74,7 +75,7 @@ Shader::~Shader()
 //
 Shader* Shader::Clone()
 {
-	const ShaderProgram* program = m_shaderProgram->Clone();
+	ShaderProgram* program = m_shaderProgram->Clone();
 	RenderState renderState = m_renderState;
 
 	Shader* cloneShader = new Shader(renderState, program);
@@ -296,6 +297,28 @@ void Shader::ParseBlendMode(const XMLElement& shaderElement)
 
 
 //-----------------------------------------------------------------------------------------------
+// Parses the element for the layer and queue sort order
+//
+void Shader::ParseLayerAndQueue(const XMLElement& shaderElement)
+{
+	const XMLElement* orderElement = shaderElement.FirstChildElement("order");
+
+	if (orderElement != nullptr)
+	{
+		m_layer = ParseXmlAttribute(*orderElement, "layer", 0);
+
+		std::string queueText = ParseXmlAttribute(*orderElement, "queue", "opaque");
+
+		if (queueText == "alpha") { m_queue = SORTING_QUEUE_ALPHA; }
+		else
+		{
+			m_queue = SORTING_QUEUE_OPAQUE; // Default to opaque
+		}
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Sets the shader program of this shader to the one specified
 //
 void Shader::SetProgram(ShaderProgram* program)
@@ -398,7 +421,7 @@ void Shader::DisableAlphaBlending()
 //-----------------------------------------------------------------------------------------------
 // Returns the program currently being used by the shader
 //
-const ShaderProgram* Shader::GetProgram() const
+ShaderProgram* Shader::GetProgram() const
 {
 	return m_shaderProgram;
 }
@@ -438,13 +461,7 @@ Shader* Shader::BuildShader(const std::string& name, const char* vsSource, const
 	const RenderState& state, unsigned int sortingLayer, SortingQueue sortingQueue)
 {
 	ShaderProgram* program = new ShaderProgram(name);
-	bool loadSuccessful = program->LoadProgramFromSources(vsSource, fsSource);
-
-	// If default failed then assign it the invalid shader in the map
-	if (!loadSuccessful)
-	{
-		program->LoadProgramFromSources(ShaderSource::INVALID_VS, ShaderSource::INVALID_FS);
-	}
+	program->LoadProgramFromSources(vsSource, fsSource, true);
 
 	Shader* shader = new Shader(state, program);
 	shader->m_layer = sortingLayer;

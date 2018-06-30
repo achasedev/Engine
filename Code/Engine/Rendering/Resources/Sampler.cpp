@@ -4,8 +4,11 @@
 /* Date: February 2nd, 2018
 /* Description: Implementation of the Sampler Class
 /************************************************************************/
+#include "Engine/Core/Rgba.hpp"
+#include "Engine/Math/Vector4.hpp"
 #include "Engine/Rendering/Resources/Sampler.hpp"
 #include "Engine/Rendering/OpenGL/glFunctions.hpp"
+
 
 //-----------------------------------------------------------------------------------------------
 // Default Constructor
@@ -45,11 +48,37 @@ bool Sampler::Initialize(SamplerFilter samplerFilter, EdgeSampling edgeSampling)
 	glSamplerParameteri( m_samplerHandle, GL_TEXTURE_WRAP_T, glEdgeSampling );  
 	glSamplerParameteri( m_samplerHandle, GL_TEXTURE_WRAP_R, glEdgeSampling );  
 
-	// Filtering
-	unsigned int glFilter = ToGLType(samplerFilter);
+	GL_CHECK_ERROR();
 
-	glSamplerParameteri( m_samplerHandle, GL_TEXTURE_MIN_FILTER, glFilter );
-	glSamplerParameteri( m_samplerHandle, GL_TEXTURE_MAG_FILTER, glFilter );
+	// Filtering
+
+	// Min filter
+	glSamplerParameteri( m_samplerHandle, GL_TEXTURE_MIN_FILTER, ToGLType(samplerFilter));
+
+	// Mag filter - doesn't use MipMap filters
+	SamplerFilter magFilter = samplerFilter;
+
+	// Use linear
+	if (samplerFilter == SAMPLER_FILTER_LINEAR_MIPMAP_NEAREST || samplerFilter == SAMPLER_FILTER_LINEAR_MIPMAP_LINEAR)
+	{
+		magFilter = SAMPLER_FILTER_LINEAR;
+	}
+
+	// Use nearest
+	if (samplerFilter == SAMPLER_FILTER_NEAREST_MIPMAP_LINEAR || samplerFilter == SAMPLER_FILTER_NEAREST_MIPMAP_NEAREST)
+	{
+		magFilter = SAMPLER_FILTER_NEAREST;
+	}
+
+	glSamplerParameteri( m_samplerHandle, GL_TEXTURE_MAG_FILTER, ToGLType(magFilter));
+
+	GL_CHECK_ERROR();
+
+	Vector4 colorAsFloats;
+	Rgba::WHITE.GetAsFloats(colorAsFloats.x, colorAsFloats.y, colorAsFloats.z, colorAsFloats.w);
+
+	glSamplerParameterfv(m_samplerHandle, GL_TEXTURE_BORDER_COLOR, (const GLfloat*) &colorAsFloats);
+
 	return true; 
 }
 

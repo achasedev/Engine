@@ -21,6 +21,9 @@ const float PI = 3.1415926535897932384626433832795f;
 
 // Math functions
 int		Ceiling(float value);
+float 	Log2(float value);
+float 	Log10(float value);
+float 	ModFloat(float x, float y);
 
 // Coordinate system
 Vector2 PolarToCartesian(float radius, float angleRadians);
@@ -120,3 +123,6 @@ float	AbsoluteValue(float inValue);
 bool AreMostlyEqual(float a, float b, float epsilon = 0.0001f);
 bool AreMostlyEqual(const Vector3& a, const Vector3& b, float epsilon = 0.0001f);
 bool AreMostlyEqual(const Quaternion& a, const Quaternion& b, float epsilon = 0.0001f);
+
+// Misc
+bool DoSpheresOverlap(const Vector3& posA, float radiusA, const Vector3& posB, float radiusB);

@@ -25,6 +25,7 @@
 #define CAMERA_BUFFER_BINDING (1)	// Updated ~once per frame
 #define MODEL_BUFFER_BINDING (2)	// Updated per draw
 #define LIGHT_BUFFER_BINDING (3)	// Updated one per frame
+#define SHADOW_TEXTURE_BINDING (8)	// Slot for the shadow texture
 
 // Class Predeclarations
 class Camera;
@@ -238,6 +239,7 @@ private:
 	Renderable				m_immediateRenderable;
 
 	Sampler*				m_defaultSampler = nullptr;
+	Sampler*				m_shadowSampler = nullptr;
 
 	Camera*					m_defaultCamera = nullptr;
 	Camera*					m_currentCamera = nullptr;

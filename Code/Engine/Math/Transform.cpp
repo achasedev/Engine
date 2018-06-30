@@ -212,6 +212,30 @@ Vector3 Transform::GetWorldForward()
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the world position of the transform
+//
+Vector3 Transform::GetWorldPosition()
+{
+	CheckAndUpdateLocalMatrix();
+
+	Matrix44 toWorldMatrix = GetWorldMatrix();
+	return Matrix44::ExtractTranslation(toWorldMatrix);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the world rotation of the transform, as Euler angles in degrees
+//
+Vector3 Transform::GetWorldRotation()
+{
+	CheckAndUpdateLocalMatrix();
+
+	Matrix44 toWorldMatrix = GetWorldMatrix();
+	return Matrix44::ExtractRotationDegrees(toWorldMatrix);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Recalculates the model matrix of this transform given its current position, rotation, and scale
 //
 void Transform::CheckAndUpdateLocalMatrix()

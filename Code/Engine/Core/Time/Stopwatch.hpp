@@ -28,6 +28,7 @@ public:
 	// Accessors/Producers
 	float	GetElapsedTime() const;
 	float	GetElapsedTimeNormalized() const;
+	float	GetTimeUntilIntervalEnds() const;
 	bool	HasIntervalElapsed() const;
 	
 	float	GetTotalSeconds() const;
@@ -40,6 +41,6 @@ private:
 	Clock* m_referenceClock;
 
 	uint64_t m_startHPC;
-	uint64_t m_intervalHPC;
+	uint64_t m_endHPC;
 
 };

@@ -208,6 +208,12 @@ float Vector3::NormalizeAndGetLength()
 Vector3 Vector3::GetNormalized() const
 {
 	float magnitude = GetLength();
+
+	if (AreMostlyEqual(magnitude, 0.f))
+	{
+		return Vector3::ZERO;
+	}
+
 	float oneOverMagnitude = (1.f / magnitude);
 
 	Vector3 normalizedForm;

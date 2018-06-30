@@ -21,8 +21,8 @@ public:
 	~TextureCube();
 
 	// Constructs differently
-	virtual bool CreateFromFile(const std::string& filename) override;
-	virtual void CreateFromImage(const Image* image) override;
+	virtual bool CreateFromFile(const std::string& filename, bool useMipMaps = false) override;
+	virtual void CreateFromImage(const Image* image, bool useMipMaps = false) override;
 
 
 private:

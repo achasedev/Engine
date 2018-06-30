@@ -5,13 +5,14 @@
 /* Description: Implementation of the ForwardRenderingPath static class
 /************************************************************************/
 #include "Engine/Math/MathUtils.hpp"
-#include "Engine/Rendering/Materials/Material.hpp"
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Rendering/Core/Camera.hpp"
 #include "Engine/Rendering/Core/DrawCall.hpp"
 #include "Engine/Rendering/Core/Renderer.hpp"
-#include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Rendering/Resources/Skybox.hpp"
 #include "Engine/Rendering/Core/Renderable.hpp"
 #include "Engine/Rendering/Core/RenderScene.hpp"
+#include "Engine/Rendering/Resources/Skybox.hpp"
+#include "Engine/Rendering/Materials/Material.hpp"
 #include "Engine/Rendering/Core/ForwardRenderingPath.hpp"
 
 //-----------------------------------------------------------------------------------------------
@@ -24,7 +25,48 @@ void ForwardRenderingPath::Render(RenderScene* scene)
 	int numCameras = (int) scene->m_cameras.size();
 	for (int index = 0; index < numCameras; ++index)
 	{
+		// Render shadow textures
+		CreateShadowTexturesForCamera(scene, scene->m_cameras[index]);
+
 		RenderSceneForCamera(scene->m_cameras[index], scene);
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Constructs the shadow textures to be used for shadow casting
+//
+void ForwardRenderingPath::CreateShadowTexturesForCamera(RenderScene* scene, Camera* camera)
+{
+	int numLights = (int) scene->m_lights.size();
+
+	for (int lightIndex = 0; lightIndex < numLights; ++lightIndex)
+	{
+		Light* light = scene->m_lights[lightIndex];
+		if (light->IsShadowCasting())
+		{
+			Camera* shadowCamera = new Camera();
+			//Texture* color = new Texture();
+			//color->CreateRenderTarget(2048, 2048, TEXTURE_FORMAT_RGBA8);
+
+			Vector3 cameraPos = camera->GetPosition();
+
+			shadowCamera->SetCameraMatrix(Matrix44::MakeLookAt(cameraPos - 100.f * light->GetLightData().m_lightDirection, cameraPos));
+			shadowCamera->SetProjectionOrtho(200.f, 200.f, -100.f, 1000.f);
+
+			// Set the view projection to be used for the shadow test
+			LightData data = light->GetLightData();
+			data.m_shadowVP = shadowCamera->GetProjectionMatrix() * shadowCamera->GetViewMatrix();
+			light->SetLightData(data);
+
+			//shadowCamera->SetColorTarget(color);
+			shadowCamera->SetDepthTarget(light->GetShadowTexture());
+
+			RenderSceneForCamera(shadowCamera, scene);
+
+			//delete color;
+			delete shadowCamera;
+		}
 	}
 }
 
@@ -95,6 +137,7 @@ void ForwardRenderingPath::RenderSceneForCamera(Camera* camera, RenderScene* sce
 {
 	Renderer* renderer = Renderer::GetInstance();
 	renderer->SetCurrentCamera(camera);
+	renderer->ClearDepth(1.0f);
 
 	Skybox* skybox = scene->GetSkybox();
 

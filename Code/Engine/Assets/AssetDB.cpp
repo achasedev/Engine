@@ -74,7 +74,7 @@ void AssetDB::CreateTextures()
 void AssetDB::CreateShaders()
 {
 	ShaderProgram* invalidProgram = new ShaderProgram(ShaderSource::INVALID_SHADER_NAME);
-	bool loadSuccessful = invalidProgram->LoadProgramFromSources(ShaderSource::INVALID_VS, ShaderSource::INVALID_FS);
+	bool loadSuccessful = invalidProgram->LoadProgramFromSources(ShaderSource::INVALID_VS, ShaderSource::INVALID_FS, true);
 	ASSERT_OR_DIE(loadSuccessful, "Error: Renderer::CreateBuildInShaders() could not build the Invalid Shader.");
 
 	// Get the invalid shader in first
@@ -287,14 +287,14 @@ Texture* AssetDB::GetTexture(const std::string& filename)
 //-----------------------------------------------------------------------------------------------
 // Returns the Texture given by filepath, attempting to construct it if it doesn't exist
 //
-Texture* AssetDB::CreateOrGetTexture(const std::string& filepath)
+Texture* AssetDB::CreateOrGetTexture(const std::string& filepath, bool generateMipMaps /*= false*/)
 {
 	Texture* texture = AssetCollection<Texture>::GetAsset(filepath);
 
 	if (texture == nullptr)
 	{
 		texture = new Texture();
-		bool successful = texture->CreateFromFile(filepath);
+		bool successful = texture->CreateFromFile(filepath, generateMipMaps);
 		
 		if (!successful)
 		{
@@ -525,13 +525,13 @@ Shader* AssetDB::CreateOrGetShader(const std::string& shaderPath)
 void AssetDB::ReloadShaderPrograms()
 {
 	// Get an iterator over the shader collection
-	std::map<std::string, ShaderProgram*> programs = AssetCollection<ShaderProgram>::s_collection;
-	std::map<std::string, ShaderProgram*>::iterator progItr = programs.begin();
+	std::map<std::string, Shader*> shaders = AssetCollection<Shader>::s_collection;
+	std::map<std::string, Shader*>::iterator shaderItr = shaders.begin();
 
-	for(progItr; progItr != programs.end(); progItr++)
+	for(shaderItr; shaderItr != shaders.end(); shaderItr++)
 	{
 		// Check to ensure that we don't attempt to load a built-in shader
-		ShaderProgram* currProgram = progItr->second;
+		ShaderProgram* currProgram = shaderItr->second->GetProgram();
 		if (currProgram->WasBuiltFromSource())
 		{
 			continue;
@@ -540,6 +540,8 @@ void AssetDB::ReloadShaderPrograms()
 		// Attempt the reload, will assign invalid shader if broken
 		currProgram->LoadProgramFromFiles(currProgram->GetVSFilePathOrSource().c_str(), currProgram->GetFSFilePathOrSource().c_str());
 	}
+
+	ConsolePrintf(Rgba::GREEN, "ShaderPrograms reloaded successfully");
 }
 
 
@@ -548,7 +550,14 @@ void AssetDB::ReloadShaderPrograms()
 //
 Material* AssetDB::GetSharedMaterial(const std::string& name)
 {
-	return AssetCollection<Material>::GetAsset(name);
+	Material* material = AssetCollection<Material>::GetAsset(name);
+	if (material == nullptr)
+	{
+		int x = 0; 
+		x = x;
+	}
+	
+	return material;
 }
 
 
