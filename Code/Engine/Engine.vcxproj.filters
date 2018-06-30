@@ -327,9 +327,6 @@
     <ClCompile Include="Core\Time\Stopwatch.cpp">
       <Filter>Core\Time</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Time\ScopedProfiler.cpp">
-      <Filter>Core\Time</Filter>
-    </ClCompile>
     <ClCompile Include="Core\DeveloperConsole\DevConsole.cpp">
       <Filter>Core\DeveloperConsole</Filter>
     </ClCompile>
@@ -361,6 +358,12 @@
     <ClCompile Include="Rendering\Animation\Pose.cpp" />
     <ClCompile Include="Rendering\Animation\AnimationClip.cpp" />
     <ClCompile Include="Rendering\Animation\SkeletonInstance.cpp" />
+    <ClCompile Include="Core\Time\ProfileLogScoped.cpp" />
+    <ClCompile Include="Core\Time\ProfileMeasurement.cpp" />
+    <ClCompile Include="Core\Time\Profiler.cpp" />
+    <ClCompile Include="Core\Time\ProfileReport.cpp" />
+    <ClCompile Include="Core\Time\ProfileReportEntry.cpp" />
+    <ClCompile Include="Core\Time\ProfileScoped.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -657,9 +660,6 @@
     <ClInclude Include="Core\Time\Stopwatch.hpp">
       <Filter>Core\Time</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Time\ScopedProfiler.hpp">
-      <Filter>Core\Time</Filter>
-    </ClInclude>
     <ClInclude Include="Core\DeveloperConsole\DevConsole.hpp">
       <Filter>Core\DeveloperConsole</Filter>
     </ClInclude>
@@ -691,5 +691,11 @@
     <ClInclude Include="Rendering\Animation\Pose.hpp" />
     <ClInclude Include="Rendering\Animation\AnimationClip.hpp" />
     <ClInclude Include="Rendering\Animation\SkeletonInstance.hpp" />
+    <ClInclude Include="Core\Time\ProfileLogScoped.hpp" />
+    <ClInclude Include="Core\Time\ProfileMeasurement.hpp" />
+    <ClInclude Include="Core\Time\Profiler.hpp" />
+    <ClInclude Include="Core\Time\ProfileReport.hpp" />
+    <ClInclude Include="Core\Time\ProfileReportEntry.hpp" />
+    <ClInclude Include="Core\Time\ProfileScoped.hpp" />
   </ItemGroup>
 </Project>

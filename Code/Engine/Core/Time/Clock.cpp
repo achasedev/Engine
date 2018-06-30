@@ -83,6 +83,15 @@ Clock* Clock::GetMasterClock()
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the total time of the engine (total time of the master clock)
+//
+uint64_t Clock::GetMasterTotalTime()
+{
+	return s_masterClock.m_totalData.m_hpc;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the frame time of the master clock
 //
 float Clock::GetMasterDeltaTime()

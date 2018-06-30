@@ -3,13 +3,13 @@
 
 class Stopwatch;
 
-class ScopedProfiler
+class ProfileScoped
 {
 public:
 	//-----Public Methods-----
 
-	ScopedProfiler(const std::string& name);
-	~ScopedProfiler();
+	ProfileScoped(const std::string& name);
+	~ProfileScoped();
 
 
 private:

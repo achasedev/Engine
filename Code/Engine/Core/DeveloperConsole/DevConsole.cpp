@@ -15,7 +15,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Rendering/Core/Renderer.hpp"
 #include "Engine/Rendering/Animation/SpriteAnim.hpp"
-#include "Engine/Core/Time/ScopedProfiler.hpp"
+#include "Engine/Core/Time/ProfileScoped.hpp"
 #include "Engine/Rendering/Animation/SpriteAnimDef.hpp"
 #include "Engine/Rendering/Animation/SpriteAnimSet.hpp"
 

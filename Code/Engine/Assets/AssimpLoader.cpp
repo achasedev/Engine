@@ -10,7 +10,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Assets/AssimpLoader.hpp"
 #include "Engine/Rendering/Animation/Pose.hpp"
-#include "Engine/Core/Time/ScopedProfiler.hpp"
+#include "Engine/Core/Time/ProfileScoped.hpp"
 #include "Engine/Rendering/Core/Renderable.hpp"
 #include "Engine/Rendering/Meshes/MeshBuilder.hpp"
 #include "Engine/Rendering/Materials/Material.hpp"
@@ -73,7 +73,7 @@ std::vector<Texture*> LoadAssimpMaterialTextures(aiMaterial* aimaterial, aiTextu
 //
 bool AssimpLoader::LoadFile(const std::string& filepath)
 {
-	ScopedProfiler sp = ScopedProfiler(Stringf("LoadFile: \"%s\"", filepath.c_str()));
+	ProfileScoped sp = ProfileScoped(Stringf("LoadFile: \"%s\"", filepath.c_str()));
 	UNUSED(sp);
 
 	Assimp::Importer importer;

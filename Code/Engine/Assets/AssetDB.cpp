@@ -9,7 +9,7 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Assets/AssetCollection.hpp"
-#include "Engine/Core/Time/ScopedProfiler.hpp"
+#include "Engine/Core/Time/ProfileScoped.hpp"
 #include "Engine/Rendering/Shaders/Shader.hpp"
 #include "Engine/Rendering/Resources/Skybox.hpp"
 #include "Engine/Rendering/Resources/Texture.hpp"

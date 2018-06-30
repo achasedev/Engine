@@ -1,12 +1,12 @@
 #include "Engine/Core/Time/Time.hpp"
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
-#include "Engine/Core/Time/ScopedProfiler.hpp"
+#include "Engine/Core/Time/ProfileScoped.hpp"
 #include "Engine/Core/Utility/ErrorWarningAssert.hpp"
 
 //-----------------------------------------------------------------------------------------------
 // Constructor - starts the stopwatch
 //
-ScopedProfiler::ScopedProfiler(const std::string& name)
+ProfileScoped::ProfileScoped(const std::string& name)
 	: m_name(name)
 {
 	m_startHPC = GetPerformanceCounter();
@@ -16,7 +16,7 @@ ScopedProfiler::ScopedProfiler(const std::string& name)
 //-----------------------------------------------------------------------------------------------
 // Destructor - prints the resulting time and cleans up
 //
-ScopedProfiler::~ScopedProfiler()
+ProfileScoped::~ProfileScoped()
 {
 	uint64_t deltaHPC = GetPerformanceCounter() - m_startHPC;
 	float milliseconds = (float) TimeSystem::PerformanceCountToSeconds(deltaHPC) * 1000.f;

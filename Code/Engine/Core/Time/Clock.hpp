@@ -52,6 +52,7 @@ public:
 	uint64_t	GetTotalHPC() const;
 
 	static Clock*	GetMasterClock();
+	static uint64_t GetMasterTotalTime();
 	static float	GetMasterDeltaTime();
 	
 

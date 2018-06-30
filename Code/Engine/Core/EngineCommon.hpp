@@ -8,7 +8,7 @@
 /************************************************************************/
 #pragma once
 #include "Engine/Core/Utility/StringUtils.hpp"
-#include "Engine/Core/Time/ScopedProfiler.hpp"
+#include "Engine/Core/Time/ProfileScoped.hpp"
 #include "Engine/Core/Utility/ErrorWarningAssert.hpp"
 
 class Blackboard;

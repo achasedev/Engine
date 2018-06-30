@@ -262,6 +262,12 @@
     <ClCompile Include="..\ThirdParty\tinyxml2\tinyxml2.cpp" />
     <ClCompile Include="Assets\AssimpLoader.cpp" />
     <ClCompile Include="Audio\AudioSystem.cpp" />
+    <ClCompile Include="Core\Time\ProfileLogScoped.cpp" />
+    <ClCompile Include="Core\Time\ProfileMeasurement.cpp" />
+    <ClCompile Include="Core\Time\Profiler.cpp" />
+    <ClCompile Include="Core\Time\ProfileReport.cpp" />
+    <ClCompile Include="Core\Time\ProfileReportEntry.cpp" />
+    <ClCompile Include="Core\Time\ProfileScoped.cpp" />
     <ClCompile Include="Core\Utility\Blackboard.cpp" />
     <ClCompile Include="Core\Time\Clock.cpp" />
     <ClCompile Include="Core\DeveloperConsole\Command.cpp" />
@@ -275,7 +281,6 @@
     <ClCompile Include="Assets\AssetDB.cpp" />
     <ClCompile Include="Assets\AssetCollection.cpp" />
     <ClCompile Include="Core\Rgba.cpp" />
-    <ClCompile Include="Core\Time\ScopedProfiler.cpp" />
     <ClCompile Include="Core\Time\Stopwatch.cpp" />
     <ClCompile Include="Core\Utility\StringUtils.cpp" />
     <ClCompile Include="Core\Time\Time.cpp" />
@@ -378,6 +383,12 @@
     <ClInclude Include="..\ThirdParty\tinyxml2\tinyxml2.h" />
     <ClInclude Include="Assets\AssimpLoader.hpp" />
     <ClInclude Include="Audio\AudioSystem.hpp" />
+    <ClInclude Include="Core\Time\ProfileLogScoped.hpp" />
+    <ClInclude Include="Core\Time\ProfileMeasurement.hpp" />
+    <ClInclude Include="Core\Time\Profiler.hpp" />
+    <ClInclude Include="Core\Time\ProfileReport.hpp" />
+    <ClInclude Include="Core\Time\ProfileReportEntry.hpp" />
+    <ClInclude Include="Core\Time\ProfileScoped.hpp" />
     <ClInclude Include="Core\Utility\Blackboard.hpp" />
     <ClInclude Include="Core\Time\Clock.hpp" />
     <ClInclude Include="Core\DeveloperConsole\Command.hpp" />
@@ -391,7 +402,6 @@
     <ClInclude Include="Assets\AssetDB.hpp" />
     <ClInclude Include="Assets\AssetCollection.hpp" />
     <ClInclude Include="Core\Rgba.hpp" />
-    <ClInclude Include="Core\Time\ScopedProfiler.hpp" />
     <ClInclude Include="Core\Time\Stopwatch.hpp" />
     <ClInclude Include="Core\Utility\StringUtils.hpp" />
     <ClInclude Include="Core\Time\Time.hpp" />
