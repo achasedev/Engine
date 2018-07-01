@@ -41,7 +41,8 @@ std::vector<Texture*> LoadAssimpMaterialTextures(aiMaterial* aimaterial, aiTextu
 		aiString texturePath;
 		aimaterial->GetTexture(type, textureIndex, &texturePath);
 
-		Texture* texture = AssetDB::CreateOrGetTexture(texturePath.C_Str());
+		std::string fullPath	= "Data/Models/" + std::string(texturePath.C_Str());
+		Texture* texture		= AssetDB::CreateOrGetTexture(fullPath.c_str());
 
 		if (texture == nullptr)
 		{
@@ -77,7 +78,7 @@ bool AssimpLoader::LoadFile(const std::string& filepath)
 	UNUSED(sp);
 
 	Assimp::Importer importer;
-	m_scene = importer.ReadFile(filepath.c_str(), aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_MakeLeftHanded);
+	m_scene = importer.ReadFile(filepath.c_str(), aiProcessPreset_TargetRealtime_Quality | aiProcess_MakeLeftHanded);
 
 	// Ensure the file loads
 	if (m_scene == nullptr || m_scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || m_scene->mRootNode == nullptr)
@@ -402,7 +403,7 @@ void AssimpLoader::BuildMeshAndMaterial_FromAIMesh(aiMesh* aimesh, const Matrix4
 			material->SetEmissive(AssetDB::GetTexture("Black"));
 		}
 
-		material->SetShader(AssetDB::GetShader("Vertex_Normal"));
+		material->SetShader(AssetDB::CreateOrGetShader("Data/Shaders/Skinning.shader"));
 		material->SetProperty("SPECULAR_AMOUNT", 0.3f);
 		material->SetProperty("SPECULAR_POWER", 10.f);
 	}
@@ -412,7 +413,7 @@ void AssimpLoader::BuildMeshAndMaterial_FromAIMesh(aiMesh* aimesh, const Matrix4
 	draw.sharedMaterial = material;
 	draw.mesh = mesh;
 
-	m_renderable->AddDraw(draw);
+    m_renderable->AddDraw(draw);
 }
 
 
@@ -435,16 +436,17 @@ void AssimpLoader::ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTr
 	// If it is a bone, update the matrix in the skeleton (might be unnecessary for bind pose, as you get the same result!)
 	if (thisBoneIndex >= 0)
 	{
-		Matrix44 offset = m_skeleton->GetBoneData(thisBoneIndex).offsetMatrix;
-		Matrix44 finalTransformation = m_skeleton->GetGlobalInverseTransform() * currentTransform * m_skeleton->GetBoneData(thisBoneIndex).offsetMatrix;
+		Matrix44 offsetMatrix = m_skeleton->GetBoneData(thisBoneIndex).offsetMatrix;
+		Matrix44 finalTransformation = m_skeleton->GetGlobalInverseTransform() * currentTransform * m_skeleton->GetBoneData(thisBoneIndex).boneToMeshMatrix;
 
 		m_skeleton->SetFinalTransformation(thisBoneIndex, finalTransformation);
 		m_skeleton->SetWorldTransform(thisBoneIndex, currentTransform);
 		m_skeleton->SetParentBoneIndex(thisBoneIndex, parentBoneIndex);
 		m_skeleton->SetLocalTransform(thisBoneIndex, nodeTransform);
 
-		offset.Invert();
-		m_skeleton->SetBindPose(thisBoneIndex, m_skeleton->GetRootBoneOffset() * offset);
+		Matrix44 inverseRootOffset = Matrix44::GetInverse(m_skeleton->GetRootBoneOffset());
+		m_skeleton->SetMeshToBoneMatrix(thisBoneIndex, offsetMatrix * inverseRootOffset);
+		m_skeleton->SetBoneToMeshMatrix(thisBoneIndex, Matrix44::GetInverse(offsetMatrix * inverseRootOffset));
 	}
 	
 	// Catch the bone root offset when we find it

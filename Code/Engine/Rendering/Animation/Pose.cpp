@@ -14,6 +14,8 @@ Pose::~Pose()
 void Pose::Initialize(const SkeletonBase* skeleton)
 {
 	int numBones = skeleton->GetBoneCount();
+	ASSERT_OR_DIE(numBones <= 100, Stringf("Error: Pose::Initialize called for skeleton with more than 100 bones, unsupported. Count was %i", numBones));
+
 	m_boneTransforms = (Matrix44*) malloc (sizeof(Matrix44) * numBones);
 	m_boneCount = numBones;
 	m_baseSkeleton = skeleton;
@@ -50,7 +52,6 @@ void Pose::ConstructGlobalMatrices()
 		{
 			Matrix44 localMatrix = m_boneTransforms[boneIndex];
 			Matrix44 parentMatrix = m_boneTransforms[parentIndex];
-			//Matrix44 parentMatrix = m_baseSkeleton->GetBoneData(parentIndex).worldTransform;
 
 			m_boneTransforms[boneIndex] = parentMatrix * localMatrix;
 		}

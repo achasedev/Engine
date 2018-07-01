@@ -16,10 +16,11 @@ struct BoneData_t
 {
 	Matrix44	localTransform;				// Transform of the bone local to it's parent bone
 	Matrix44	worldTransform;				// Transform of the bone in world space
-	Matrix44	finalTransformation;		// Full transformation: From Node local -> bone space -> World -> Model Local
-	Matrix44	offsetMatrix;				// Matrix that converts vertices from the local space into the bone space
+	Matrix44	finalTransformation;		
+	Matrix44	boneToMeshMatrix;				// Matrix that converts vertices from bone to mesh space
 	int			parentIndex = -1;			// Index of the parent of this bone, -1 indicates no parent (root)
-	Matrix44	bindPose;
+	Matrix44	meshToBoneMatrix;
+	Matrix44	offsetMatrix;
 };
 
 class SkeletonBase
@@ -40,14 +41,15 @@ public:
 	std::vector<std::string> GetAllBoneNames() const;
 
 	// Mutators
-	void SetOffsetMatrix(unsigned int boneIndex, const Matrix44& offsetMatrix);
+	void SetBoneToMeshMatrix(unsigned int boneIndex, const Matrix44& offsetMatrix);
 	void SetLocalTransform(unsigned int boneIndex, const Matrix44& localTransform);
 	void SetWorldTransform(unsigned int boneIndex, const Matrix44& worldTransform);
 	void SetParentBoneIndex(unsigned int boneIndex, int parentBoneIndex);
 	void SetFinalTransformation(unsigned int boneIndex, const Matrix44& toWorldMatrix);
 	void SetGlobalInverseTransform(const Matrix44& inverseTransform);
 	void SetRootBoneOffset(const Matrix44& transform);
-	void SetBindPose(unsigned int boneIndex, const Matrix44& bindPoseTransform);
+	void SetMeshToBoneMatrix(unsigned int boneIndex, const Matrix44& bindPoseTransform);
+	void SetOffsetMatrix(unsigned int boneIndex, const Matrix44& offsetTransform);
 
 
 private:

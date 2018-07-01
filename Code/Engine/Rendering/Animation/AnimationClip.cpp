@@ -1,6 +1,7 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Rendering/Animation/Pose.hpp"
 #include "Engine/Rendering/Animation/AnimationClip.hpp"
+#include "Engine/Rendering/Animation/SkeletonBase.hpp"
 
 
 void AnimationClip::Initialize(unsigned int numPoses, const SkeletonBase* skeleton)
@@ -76,10 +77,11 @@ Pose* AnimationClip::CalcuateInterpolatedPose(unsigned int firstPoseIndex, unsig
 
 	for (unsigned int transformIndex = 0; transformIndex < transformCount; ++transformIndex)
 	{
-		const Matrix44& firstTransfrom = firstPose->GetBoneTransform(transformIndex);
-		const Matrix44& secondTransfrom = secondPose->GetBoneTransform(transformIndex);
+		Matrix44 firstTransfrom = firstPose->GetBoneTransform(transformIndex);
+		Matrix44 secondTransfrom = secondPose->GetBoneTransform(transformIndex);
 
-		result->SetBoneTransform(transformIndex, Interpolate(firstTransfrom, secondTransfrom, t));
+		Matrix44 finalTransform = Interpolate(firstTransfrom, secondTransfrom, t);
+		result->SetBoneTransform(transformIndex, finalTransform);
 	}
 
 	return result;

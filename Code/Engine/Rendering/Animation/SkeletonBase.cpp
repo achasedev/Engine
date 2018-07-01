@@ -130,11 +130,11 @@ unsigned int SkeletonBase::GetBoneCount() const
 // Sets the offset matrix of the bone given by boneIndex
 // The offset matrix is the matrix that converts the vertex from model space into bone space
 //
-void SkeletonBase::SetOffsetMatrix(unsigned int boneIndex, const Matrix44& offsetMatrix)
+void SkeletonBase::SetBoneToMeshMatrix(unsigned int boneIndex, const Matrix44& offsetMatrix)
 {
 	ASSERT_OR_DIE(boneIndex < m_boneData.size(), Stringf("Error: SkeletonBase::SetOffsetMatrix received index out of bounds - size is %i, index is %i.", m_boneData.size(), boneIndex));
 
-	m_boneData[boneIndex].offsetMatrix = offsetMatrix;
+	m_boneData[boneIndex].boneToMeshMatrix = offsetMatrix;
 }
 
 
@@ -202,9 +202,16 @@ void SkeletonBase::SetRootBoneOffset(const Matrix44& transform)
 	m_rootBoneOffset = transform;
 }
 
-void SkeletonBase::SetBindPose(unsigned int boneIndex, const Matrix44& bindPoseTransform)
+void SkeletonBase::SetMeshToBoneMatrix(unsigned int boneIndex, const Matrix44& meshToBoneTransform)
 {
 	ASSERT_OR_DIE(boneIndex < m_boneData.size(), Stringf("Error: SkeletonBase::SetBindPose received index out of bounds - size is %i, index is %i.", m_boneData.size(), boneIndex));
 
-	m_boneData[boneIndex].bindPose = bindPoseTransform;
+	m_boneData[boneIndex].meshToBoneMatrix = meshToBoneTransform;
+}
+
+void SkeletonBase::SetOffsetMatrix(unsigned int boneIndex, const Matrix44& offsetTransform)
+{
+	ASSERT_OR_DIE(boneIndex < m_boneData.size(), Stringf("Error: SkeletonBase::SetBindPose received index out of bounds - size is %i, index is %i.", m_boneData.size(), boneIndex));
+
+	m_boneData[boneIndex].offsetMatrix = offsetTransform;
 }
