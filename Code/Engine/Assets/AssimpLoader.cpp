@@ -12,12 +12,12 @@
 #include "Engine/Rendering/Animation/Pose.hpp"
 #include "Engine/Core/Time/ScopedProfiler.hpp"
 #include "Engine/Rendering/Core/Renderable.hpp"
+#include "Engine/Rendering/Resources/Sampler.hpp"
 #include "Engine/Rendering/Meshes/MeshBuilder.hpp"
 #include "Engine/Rendering/Materials/Material.hpp"
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 #include "Engine/Rendering/Animation/SkeletonBase.hpp"
 #include "Engine/Rendering/Animation/AnimationClip.hpp"
-
 #include "Engine/Rendering/DebugRendering/DebugRenderSystem.hpp"
 
 // Assimp
@@ -42,7 +42,7 @@ std::vector<Texture*> LoadAssimpMaterialTextures(aiMaterial* aimaterial, aiTextu
 		aimaterial->GetTexture(type, textureIndex, &texturePath);
 
 		std::string fullPath	= "Data/Models/" + std::string(texturePath.C_Str());
-		Texture* texture		= AssetDB::CreateOrGetTexture(fullPath.c_str());
+		Texture* texture		= AssetDB::CreateOrGetTexture(fullPath.c_str(), true);
 
 		if (texture == nullptr)
 		{
@@ -302,6 +302,8 @@ void AssimpLoader::BuildMeshAndMaterial_FromAIMesh(aiMesh* aimesh, const Matrix4
 	{
 		aiFace face = aimesh->mFaces[i];
 
+		if (face.mNumIndices != 3) { continue; }
+
 		for (unsigned int j = 0; j < face.mNumIndices; ++j)
 		{
 			mb.PushIndex(face.mIndices[j]);
@@ -404,6 +406,9 @@ void AssimpLoader::BuildMeshAndMaterial_FromAIMesh(aiMesh* aimesh, const Matrix4
 		}
 
 		material->SetShader(AssetDB::CreateOrGetShader("Data/Shaders/Skinning.shader"));
+		Sampler* sampler = new Sampler();
+		sampler->Initialize(SAMPLER_FILTER_LINEAR_MIPMAP_LINEAR, EDGE_SAMPLING_REPEAT);
+		material->SetSampler(0, sampler);
 		material->SetProperty("SPECULAR_AMOUNT", 0.3f);
 		material->SetProperty("SPECULAR_POWER", 10.f);
 	}
@@ -498,7 +503,7 @@ void AssimpLoader::BuildAnimation(unsigned int animationIndex)
 	float numTicks = (float) aianimation->mDuration;
 	float durationSeconds = (float) numTicks / (float) aianimation->mTicksPerSecond;
 
-	float framesPerSecond = 30.f;	// Hard coding for now
+	float framesPerSecond = 60.f;	// Hard coding for now
 	float secondsPerFrame = 1.f / framesPerSecond;
 
 	int numFrames = Ceiling(durationSeconds * framesPerSecond);

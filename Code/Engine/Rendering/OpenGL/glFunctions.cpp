@@ -37,6 +37,7 @@ PFNGLCULLFACEPROC				glCullFace = nullptr;
 PFNGLGETATTRIBLOCATIONPROC			glGetAttribLocation = nullptr;
 PFNGLENABLEVERTEXATTRIBARRAYPROC	glEnableVertexAttribArray = nullptr;
 PFNGLVERTEXATTRIBPOINTERPROC		glVertexAttribPointer = nullptr;
+PFNGLVERTEXATTRIBIPOINTERPROC		glVertexAttribIPointer = nullptr;
 PFNGLVERTEXATTRIBDIVISORPROC		glVertexAttribDivisor = nullptr;
 PFNGLGETUNIFORMLOCATIONPROC			glGetUniformLocation = nullptr;
 PFNGLUNIFORMMATRIX4FVPROC			glUniformMatrix4fv = nullptr;
@@ -288,6 +289,7 @@ void BindGLFunctions()
 	GL_BIND_FUNCTION(glEnableVertexAttribArray);
 	GL_BIND_FUNCTION(glVertexAttribDivisor);
 	GL_BIND_FUNCTION(glVertexAttribPointer);
+	GL_BIND_FUNCTION(glVertexAttribIPointer);
 	GL_BIND_FUNCTION(glGetUniformLocation);
 	GL_BIND_FUNCTION(glUniformMatrix4fv);
 	GL_BIND_FUNCTION(glUniform1i);

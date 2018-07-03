@@ -146,12 +146,12 @@ struct VertexSkinned
 
 	Vector3 m_position;	// Position of the Vertex
 	Rgba	m_color;	// Color of the Vertex
-	Vector2 m_texUVs;	// Texture UV coordinates for this vertex
+	Vector2 m_texUVs;	// Texture UVs coordinates for this vertex
 
 	Vector3 m_normal;	// Normal to the surface at this vertex
 	Vector4 m_tangent;	// Tangent to the surface at this vertex, w = 1 signals the cross direction for the bitangent
 
-	unsigned int	m_bones[MAX_BONES_PER_VERTEX];			// Max number of bones this vertex can be weighted to
+	unsigned int 	m_bones[MAX_BONES_PER_VERTEX];			// Max number of bones this vertex can be weighted to
 	float			m_boneWeights[MAX_BONES_PER_VERTEX];	// Weights corresponding to the bones this vertex is weighted to
 
 	static const VertexAttribute	ATTRIBUTES[];
