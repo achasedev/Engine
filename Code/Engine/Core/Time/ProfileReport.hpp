@@ -37,5 +37,4 @@ public:
 	unsigned int			m_frameNumber;
 	eReportType				m_type;
 	ProfileReportEntry*		m_rootEntry;
-
 };

@@ -24,9 +24,10 @@ void			DestroyStack(ProfileMeasurement* stack);
 // Constructor
 //
 Profiler::Profiler()
-	: m_generatingReportType(REPORT_TYPE_TREE)
+	: m_generatingReportType(REPORT_TYPE_FLAT)
 	, m_isOpen(true)
 	, m_isGeneratingReports(true)
+	, m_currentFrameNumber(0)
 {
 	// Initialize all reports to nullptr
 	for (int i = 0; i < PROFILER_MAX_REPORT_COUNT; ++i)
@@ -104,13 +105,17 @@ void PrintRecursive(const std::string& indent, ProfileReportEntry* stack)
 //
 void Profiler::Render()
 {
-	if (m_reports[0] != nullptr)
+	// Only render if the profiler is open
+	if (m_isOpen)
 	{
-		PrintRecursive("", m_reports[0]->m_rootEntry);
-	}
-	else
-	{
-		DebuggerPrintf("THE REPORT AT 0 WAS NULL\n");
+		if (m_reports[0] != nullptr)
+		{
+			PrintRecursive("", m_reports[0]->m_rootEntry);
+		}
+		else
+		{
+			DebuggerPrintf("THE REPORT AT 0 WAS NULL\n");
+		}
 	}
 }
 
@@ -141,7 +146,7 @@ void Profiler::BeginFrame()
 	}
 
 	// Making a report for the last frame before starting the report generation of the previous frame
-	if (s_instance->m_measurements[1] != nullptr)
+	if (s_instance->m_measurements[1] != nullptr && s_instance->m_isGeneratingReports)
 	{
 		ProfileReport* report = BuildReportForFrame(s_instance->m_measurements[1]);
 		s_instance->PushReport(report);
