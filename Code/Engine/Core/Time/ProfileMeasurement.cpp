@@ -48,7 +48,7 @@ void ProfileMeasurement::Finish()
 //
 uint64_t ProfileMeasurement::GetTotalTime_Inclusive() const
 {
-	ASSERT_OR_DIE(m_endHPC > m_startHPC, "Error: ProfileMeasurment::GetTotalElapsedTime() called on measurement with zero elapsed time");
+	//ASSERT_OR_DIE(m_endHPC > m_startHPC, "Error: ProfileMeasurment::GetTotalElapsedTime() called on measurement with zero elapsed time");
 
 	uint64_t elapsedHPC = m_endHPC - m_startHPC;
 

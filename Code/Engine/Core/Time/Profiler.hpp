@@ -6,17 +6,10 @@
 /************************************************************************/
 #pragma once
 #include <vector>
+#include "Engine/Core/Time/ProfileReport.hpp"
 
-#define PROFILER_MAX_REPORT_COUNT (128)
+#define PROFILER_MAX_REPORT_COUNT (512)
 
-enum eReportType
-{
-	REPORT_TYPE_TREE,
-	REPORT_TYPE_FLAT,
-	NUM_REPORT_TYPES
-};
-
-class ProfileReport;
 class ProfileMeasurement;
 
 class Profiler
@@ -37,7 +30,8 @@ public:
 	// Mutators											
 	static void									PushMeasurement(const char* name);
 	static void									PopMeasurement();
-
+	static void									SetReportGeneration(bool shouldGenerate, eReportType reportType);
+	
 	// Accessors
 	static bool									IsProfilerOpen();
 	static Profiler*							GetInstance();
@@ -51,25 +45,28 @@ private:
 	~Profiler();
 	Profiler(const Profiler& copy) = delete;
 
-	void										BuildReportForFrame(ProfileMeasurement* stack);
+	static ProfileReport*						BuildReportForFrame(ProfileMeasurement* stack);
+	void										PushReport(ProfileReport* report);
+
+	void										UpdateReports(); // Used when we need to regenerate all the reports at once, for starting generation or switching types
 
 
 private:
 	//-----Private Data-----
 
-	// Stacks, used for measuring
-	ProfileMeasurement* m_currentStack;
-	ProfileMeasurement* m_previousStack;
+	// Stacks, used for measuring, 0 is always the latest one
+	ProfileMeasurement*		m_measurements[PROFILER_MAX_REPORT_COUNT];
 
-	// Reports
-	int m_currentReportIndex;
-	eReportType m_reportType;
-	ProfileReport* m_reports[PROFILER_MAX_REPORT_COUNT];
+	// Reports, 0 is always the latest
+	eReportType				m_generatingReportType;
+	ProfileReport*			m_reports[PROFILER_MAX_REPORT_COUNT]; // Parallel array to measurement, but LAGS BEHIND ONE FRAME (report at 0 is measurement 1)
 
 	// State
-	bool m_isOpen;
+	bool					m_isOpen;
+	bool					m_isGeneratingReports;
+	int						m_currentFrameNumber;
 
 	// Singleton instance
-	static Profiler* s_instance;
+	static Profiler*		s_instance;
 
 };

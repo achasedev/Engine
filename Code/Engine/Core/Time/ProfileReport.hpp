@@ -10,12 +10,19 @@
 class ProfileMeasurement;
 class ProfileReportEntry;
 
+enum eReportType
+{
+	REPORT_TYPE_TREE,
+	REPORT_TYPE_FLAT,
+	NUM_REPORT_TYPES
+};
+
 class ProfileReport
 {
 public:
 	//-----Public Methods-----
 
-	ProfileReport();
+	ProfileReport(int frameNumber);
 	~ProfileReport();
 
 	void InitializeAsTreeReport(ProfileMeasurement* stack);
@@ -26,7 +33,9 @@ public:
 
 public:
 	//-----Public Data-----
-
-	ProfileReportEntry* m_rootEntry;
+	
+	unsigned int			m_frameNumber;
+	eReportType				m_type;
+	ProfileReportEntry*		m_rootEntry;
 
 };

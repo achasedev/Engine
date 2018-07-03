@@ -24,15 +24,14 @@ void			DestroyStack(ProfileMeasurement* stack);
 // Constructor
 //
 Profiler::Profiler()
-	: m_currentStack(nullptr)
-	, m_previousStack(nullptr)
-	, m_currentReportIndex(0)
-	, m_reportType(REPORT_TYPE_TREE)
+	: m_generatingReportType(REPORT_TYPE_TREE)
 	, m_isOpen(true)
+	, m_isGeneratingReports(true)
 {
 	// Initialize all reports to nullptr
 	for (int i = 0; i < PROFILER_MAX_REPORT_COUNT; ++i)
 	{
+		m_measurements[i] = nullptr;
 		m_reports[i] = nullptr;
 	}
 }
@@ -44,15 +43,13 @@ Profiler::Profiler()
 Profiler::~Profiler()
 {
 	// Profile stacks
-
-	if (m_currentStack != nullptr)
+	for (int i = 0; i < PROFILER_MAX_REPORT_COUNT; ++i)
 	{
-		delete m_currentStack;
-	}
-
-	if (m_previousStack != nullptr)
-	{
-		delete m_previousStack;
+		if (m_measurements[i] != nullptr)
+		{
+			delete m_measurements[i];
+			m_measurements[i] = nullptr;
+		}
 	}
 
 
@@ -62,6 +59,7 @@ Profiler::~Profiler()
 		if (m_reports[i] != nullptr)
 		{
 			delete m_reports[i];
+			m_reports[i] = nullptr;
 		}
 	}
 }
@@ -106,13 +104,13 @@ void PrintRecursive(const std::string& indent, ProfileReportEntry* stack)
 //
 void Profiler::Render()
 {
-	if (m_reports[m_currentReportIndex] != nullptr)
+	if (m_reports[0] != nullptr)
 	{
-		PrintRecursive("", m_reports[m_currentReportIndex]->m_rootEntry);
+		PrintRecursive("", m_reports[0]->m_rootEntry);
 	}
 	else
 	{
-		DebuggerPrintf("THE REPORT AT THE CURRENT WAS NULL\n");
+		DebuggerPrintf("THE REPORT AT 0 WAS NULL\n");
 	}
 }
 
@@ -122,21 +120,34 @@ void Profiler::Render()
 //
 void Profiler::BeginFrame()
 {
+	s_instance->m_currentFrameNumber++;
+
 	// Set up the stack frame
-	if (s_instance->m_currentStack != nullptr)
+	if (s_instance->m_measurements[0] != nullptr) // Check if we already have a measurement
 	{
-		if (s_instance->m_previousStack != nullptr)
+		if (s_instance->m_measurements[PROFILER_MAX_REPORT_COUNT - 1] != nullptr)
 		{
-			DestroyStack(s_instance->m_previousStack);
+			DestroyStack(s_instance->m_measurements[PROFILER_MAX_REPORT_COUNT - 1]);
 		}
 
-		s_instance->m_previousStack = s_instance->m_currentStack;
-		s_instance->PopMeasurement();
+		for (int i = PROFILER_MAX_REPORT_COUNT - 1; i > 0; --i)
+		{
+			s_instance->m_measurements[i] = s_instance->m_measurements[i - 1];
+		}
 
-		ASSERT_OR_DIE(s_instance->m_currentStack == nullptr, "Error: Profiler::MarkFrame called before the previous frame could finish"); // if not null, someone forgot to pop after a push somewhere
+		s_instance->PopMeasurement(); // Pop the stack at 0, which finalizes the last frame, and should make [0] null
+
+		ASSERT_OR_DIE(s_instance->m_measurements[0] == nullptr, "Error: Profiler::MarkFrame called before the previous frame could finish"); // if not null, someone forgot to pop after a push somewhere
 	}
 
-	s_instance->PushMeasurement("Frame");
+	// Making a report for the last frame before starting the report generation of the previous frame
+	if (s_instance->m_measurements[1] != nullptr)
+	{
+		ProfileReport* report = BuildReportForFrame(s_instance->m_measurements[1]);
+		s_instance->PushReport(report);
+	}
+
+	s_instance->PushMeasurement("Frame"); // Push a new frame into [0]
 }
 
 
@@ -153,10 +164,6 @@ void Profiler::ProcessInput()
 //
 void Profiler::EndFrame()
 {
-	if (s_instance->m_previousStack != nullptr)
-	{
-		s_instance->BuildReportForFrame(s_instance->m_previousStack);
-	}
 }
 
 
@@ -167,15 +174,18 @@ void Profiler::PushMeasurement(const char* name)
 {
 	ProfileMeasurement* measurement = new ProfileMeasurement(name);
 
-	if (s_instance->m_currentStack == nullptr)
+	// Set the parent relationship, and the appropriate frame number (though current stack frame number should equal current frame number on profiler)
+	if (s_instance->m_measurements[0] == nullptr)
 	{
-		s_instance->m_currentStack = measurement;
+		measurement->m_frameNumber = s_instance->m_currentFrameNumber;
+		s_instance->m_measurements[0] = measurement;
 	}
 	else
 	{
-		measurement->m_parent = s_instance->m_currentStack;
-		s_instance->m_currentStack->m_children.push_back(measurement);
-		s_instance->m_currentStack = measurement;
+		measurement->m_frameNumber = s_instance->m_measurements[0]->m_frameNumber;
+		measurement->m_parent = s_instance->m_measurements[0];
+		s_instance->m_measurements[0]->m_children.push_back(measurement);
+		s_instance->m_measurements[0] = measurement;
 	}
 
 }
@@ -186,10 +196,32 @@ void Profiler::PushMeasurement(const char* name)
 //
 void Profiler::PopMeasurement()
 {
-	ASSERT_OR_DIE(s_instance->m_currentStack != nullptr, Stringf("Error::Profiler::PopStack called when the current stack was empty"));
+	ASSERT_OR_DIE(s_instance->m_measurements[0] != nullptr, Stringf("Error::Profiler::PopStack called when the current stack was empty"));
 
-	s_instance->m_currentStack->Finish();
-	s_instance->m_currentStack = s_instance->m_currentStack->m_parent;
+	s_instance->m_measurements[0]->Finish();
+	s_instance->m_measurements[0] = s_instance->m_measurements[0]->m_parent;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets whether we should be generating new reports or not
+// If starting generation, it will regenerate all reports
+//
+void Profiler::SetReportGeneration(bool shouldGenerate, eReportType reportType)
+{
+	// Get switched state
+	bool justStartedGenerating = (shouldGenerate && !s_instance->m_isGeneratingReports);
+	bool justSwitchedType = (shouldGenerate && s_instance->m_isGeneratingReports && s_instance->m_generatingReportType != reportType);
+
+	// Update state
+	s_instance->m_generatingReportType = reportType;
+	s_instance->m_isGeneratingReports = shouldGenerate;
+
+	// Check to generate the report list
+	if (justStartedGenerating || justSwitchedType)
+	{
+		s_instance->UpdateReports();
+	}
 }
 
 
@@ -214,11 +246,11 @@ Profiler* Profiler::GetInstance()
 //-----------------------------------------------------------------------------------------------
 // Builds the report to represent the given performance frame
 //
-void Profiler::BuildReportForFrame(ProfileMeasurement* stack)
+ProfileReport* Profiler::BuildReportForFrame(ProfileMeasurement* stack)
 {
-	ProfileReport* report = new ProfileReport();
+	ProfileReport* report = new ProfileReport(stack->m_frameNumber);
 
-	switch (m_reportType)
+	switch (s_instance->m_generatingReportType)
 	{
 	case REPORT_TYPE_TREE:
 		report->InitializeAsTreeReport(stack);
@@ -230,14 +262,51 @@ void Profiler::BuildReportForFrame(ProfileMeasurement* stack)
 		break;
 	}
 
-	m_currentReportIndex = IncrementIndexWithWrapAround(m_currentReportIndex);
+	return report;
+}
 
-	if (m_reports[m_currentReportIndex] != nullptr)
+
+//-----------------------------------------------------------------------------------------------
+// Adds the given report to the list in the front, removing and deleting the last if it is full
+//
+void Profiler::PushReport(ProfileReport* report)
+{
+	// Check the end
+	if (m_reports[PROFILER_MAX_REPORT_COUNT - 1] != nullptr)
 	{
-		delete m_reports[m_currentReportIndex];
+		delete m_reports[PROFILER_MAX_REPORT_COUNT - 1];
 	}
 
-	m_reports[m_currentReportIndex] = report;
+	// Shift all report pointers over one
+	for (int i = PROFILER_MAX_REPORT_COUNT - 1; i > 0; --i)
+	{
+		s_instance->m_reports[i] = s_instance->m_reports[i - 1];
+	}
+
+	// Put the new report at the front
+	s_instance->m_reports[0] = report;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Constructs all the reports in the parallel report array to reflect the current measurement array
+//
+void Profiler::UpdateReports()
+{
+	for (int index = 0; index < PROFILER_MAX_REPORT_COUNT; ++index)
+	{
+		// Cleanup first (slow but safe)
+		if (m_reports[index] != nullptr)
+		{
+			delete m_reports[index];
+			m_reports[index] = nullptr;
+		}
+
+		if (m_measurements[index] != nullptr)
+		{
+			m_reports[index] = BuildReportForFrame(m_measurements[index]);
+		}
+	}
 }
 
 

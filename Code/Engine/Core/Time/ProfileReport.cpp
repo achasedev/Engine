@@ -13,8 +13,9 @@
 //-----------------------------------------------------------------------------------------------
 // Constructor
 //
-ProfileReport::ProfileReport()
+ProfileReport::ProfileReport(int frameNumber)
 	: m_rootEntry(nullptr)
+	, m_frameNumber(frameNumber)
 {
 }
 
@@ -35,6 +36,8 @@ void ProfileReport::InitializeAsTreeReport(ProfileMeasurement* stack)
 {
 	ASSERT_OR_DIE(m_rootEntry == nullptr, "Error: ProfileReport::InitializeAsTreeReport called on an already initialized report");
 
+	m_type = REPORT_TYPE_TREE;
+
 	m_rootEntry = new ProfileReportEntry(stack->m_name);
 	m_rootEntry->PopulateTree(stack);
 
@@ -48,6 +51,8 @@ void ProfileReport::InitializeAsTreeReport(ProfileMeasurement* stack)
 void ProfileReport::InitializeAsFlatReport(ProfileMeasurement* stack)
 {
 	ASSERT_OR_DIE(m_rootEntry == nullptr, "Error: ProfileReport::InitializeAsFlatReport called on an already initialized report");
+
+	m_type = REPORT_TYPE_FLAT;
 
 	m_rootEntry = new ProfileReportEntry(stack->m_name);
 	m_rootEntry->PopulateFlat(stack);

@@ -34,6 +34,7 @@ public:
 	std::string m_name;
 	uint64_t	m_startHPC;
 	uint64_t	m_endHPC;
+	int			m_frameNumber;
 
 	ProfileMeasurement* m_parent;
 	std::vector<ProfileMeasurement*> m_children;

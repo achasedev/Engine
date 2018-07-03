@@ -475,7 +475,7 @@ void AssimpLoader::BuildAnimations()
 
 	for (unsigned int animationIndex = 0; animationIndex < animationCount; ++animationIndex)
 	{
-		for (int i = 0; i < m_scene->mAnimations[0]->mNumChannels; ++i)
+		for (unsigned int i = 0; i < m_scene->mAnimations[0]->mNumChannels; ++i)
 		{
 			DebuggerPrintf("Channel: %s\n", m_scene->mAnimations[0]->mChannels[i]->mNodeName.C_Str());
 		}
