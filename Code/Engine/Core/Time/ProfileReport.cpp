@@ -4,6 +4,7 @@
 /* Date: June 30th, 2018
 /* Description: Implementation of the ProfileReport class
 /************************************************************************/
+#include "Engine/Core/Time/Time.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Time/ProfileReport.hpp"
 #include "Engine/Core/Time/ProfileReportEntry.hpp"
@@ -67,7 +68,9 @@ void ProfileReport::InitializeAsFlatReport(ProfileMeasurement* stack)
 void ProfileReport::Finalize()
 {
 	// Calculate all percent times
-	m_rootEntry->RecursivelyCalculatePercentTimes();
+	double totalSeconds = TimeSystem::PerformanceCountToSeconds(m_rootEntry->m_totalTime);
+	m_rootEntry->RecursivelyCalculatePercentTimes(totalSeconds);
 
-	TODO("Sort entries by total time");
+	// Sort children in descending order by total time
+	m_rootEntry->RecursivelySortChildrenByTotalTime();
 }

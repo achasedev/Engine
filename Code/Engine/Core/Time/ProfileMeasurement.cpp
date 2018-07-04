@@ -48,8 +48,6 @@ void ProfileMeasurement::Finish()
 //
 uint64_t ProfileMeasurement::GetTotalTime_Inclusive() const
 {
-	//ASSERT_OR_DIE(m_endHPC > m_startHPC, "Error: ProfileMeasurment::GetTotalElapsedTime() called on measurement with zero elapsed time");
-
 	uint64_t elapsedHPC = m_endHPC - m_startHPC;
 
 	return elapsedHPC;
@@ -65,12 +63,13 @@ uint64_t ProfileMeasurement::GetTotalTime_Exclusive() const
 	uint64_t totalChildHPC = 0;
 	for (int childIndex = 0; childIndex < (int) m_children.size(); ++childIndex)
 	{
-		totalChildHPC += m_children[childIndex]->GetTotalTime_Inclusive();
+		uint64_t childHPC = m_children[childIndex]->GetTotalTime_Inclusive();
+		totalChildHPC += childHPC;
 	}
 
 	// Calculate total - child time
 	uint64_t totalElapsedHPC	= m_endHPC - m_startHPC;
-	uint64_t exclusiveTime		= totalElapsedHPC - totalChildHPC;
+	uint64_t exclusiveHPC		= totalElapsedHPC - totalChildHPC;
 
-	return exclusiveTime;
+	return exclusiveHPC;
 }

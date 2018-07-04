@@ -6,7 +6,7 @@
 				Represents a set of measurements for a single scope profile
 /************************************************************************/
 #pragma once
-#include <map>
+#include <vector>
 #include <string>
 
 
@@ -27,7 +27,10 @@ public:
 	// Mutators
 	void												AccumulateData(ProfileMeasurement* measurement);
 	ProfileReportEntry*									GetOrCreateReportEntryForChild(const std::string childName);
-	void												RecursivelyCalculatePercentTimes();
+	void												RecursivelyCalculatePercentTimes(double frameDurationSeconds);
+	void												RecursivelySortChildrenByTotalTime();
+
+	std::string											GetAsStringForUI(unsigned int indent) const;
 
 
 public:
@@ -38,12 +41,13 @@ public:
 	unsigned int										m_callCount;
 
 	// Timing
-	uint64_t											m_totalTime;	// also called inclusive time
-	uint64_t											m_selfTime;		// also called exclusive time, total time - sum of time of children, time it took by itself
-	double												m_percentTime;
+	uint64_t											m_totalTime;			// also called inclusive time
+	uint64_t											m_selfTime;				// also called exclusive time, total time - sum of time of children, time it took by itself
+	double												m_percentOfFrameTime;	// What fraction of the frame was spent in us including our children
+	double												m_percentOfSelfTime;	// What fraction of our total time was exclusively spent in us, not counting children
 
 	// Traversing
 	ProfileReportEntry* 								m_parent;
-	std::map<std::string, ProfileReportEntry*>			m_children;
+	std::vector<ProfileReportEntry*>					m_children;
 
 };

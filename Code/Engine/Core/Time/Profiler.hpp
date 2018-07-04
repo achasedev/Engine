@@ -6,6 +6,7 @@
 /************************************************************************/
 #pragma once
 #include <vector>
+#include "Engine/Core/Rgba.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Core/Time/ProfileReport.hpp"
 
@@ -56,6 +57,7 @@ private:
 	void										RenderTitleInfo() const;
 	void										RenderGraph() const;
 	void										RenderData() const;
+	void											ConstructDataString(unsigned int indent, std::string& out_string, ProfileReportEntry* entry) const;
 
 
 private:
@@ -83,6 +85,7 @@ private:
 	static AABB2 s_titleBorderBounds;
 	static AABB2 s_graphBorderBounds;
 	static AABB2 s_viewDataBorderBounds;
+	static AABB2 s_viewHeadingBorderBounds;
 
 	static AABB2 s_titleBounds;
 	static AABB2 s_fpsBounds;
@@ -100,5 +103,9 @@ private:
 	static std::string s_titleText;
 	static std::string s_fpsframeText;
 	static std::string s_viewHeadingText;
+
+	static Rgba s_backgroundColor;
+	static Rgba s_borderColor;
+	static Rgba s_fontColor;
 
 };
