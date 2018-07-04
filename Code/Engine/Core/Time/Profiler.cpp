@@ -447,18 +447,25 @@ void Profiler::RenderGraph() const
 	renderer->Draw2DQuad(s_graphBorderBounds,	AABB2::UNIT_SQUARE_OFFCENTER, s_borderColor,		material);
 	renderer->Draw2DQuad(s_graphBounds,			AABB2::UNIT_SQUARE_OFFCENTER, s_backgroundColor,	material);
 
-	// Get the worst frame time for scaling
+	// Get the worst frame time for scaling, and average frame time
 	float worstFrameTime = (1.f / 240.f);
+	float averageTime = 0.f;
+	unsigned int reportCount = 0;
 	for (int reportIndex = 0; reportIndex < PROFILER_MAX_REPORT_COUNT; ++reportIndex)
 	{
 		if (m_reports[reportIndex] == nullptr) { break; }
 
+		reportCount++;
 		float currTime = (float) TimeSystem::PerformanceCountToSeconds(m_reports[reportIndex]->m_rootEntry->m_totalTime);
 		if (worstFrameTime < currTime)
 		{
 			worstFrameTime = currTime;
 		}
+
+		averageTime += currTime;
 	}
+
+	averageTime = 1000.f * (reportCount > 0 ? (averageTime / (float) reportCount) : 0.f);
 
 	float timeUsedToScale = (1.f / 30.f);
 	timeUsedToScale = (worstFrameTime > timeUsedToScale ? worstFrameTime : timeUsedToScale);
@@ -532,6 +539,8 @@ void Profiler::RenderGraph() const
 		float drawY =  RangeMapFloat(currTime, 0.f, timeUsedToScale, s_graphBorderBounds.mins.y, s_graphBorderBounds.maxs.y);
 		renderer->DrawText2D(Stringf("%.2f ms", currTime * 1000.f), Vector2(s_graphBorderBounds.maxs.x, drawY), s_viewDataFontSize, font, s_fontHighlightColor);
 	}
+
+	renderer->DrawTextInBox2D(Stringf("Average Frame: %*.2f ms", 5, averageTime), s_graphDetailsBounds, Vector2(1.f, 0.f), s_viewDataFontSize, TEXT_DRAW_OVERRUN, font, s_fontColor);
 }
 
 
@@ -550,7 +559,7 @@ void Profiler::RenderData() const
 	renderer->Draw2DQuad(s_viewDataBounds,				AABB2::UNIT_SQUARE_OFFCENTER, s_backgroundColor, material);
 
 	//std::string headingText = Stringf("FUNCTION NAME%*sCALLS%*s%% TOTAL%*sTIME%*s%% SELF%*sTIME", 12, "", 5, "", 8, "", 6, "", 8, "");
-	std::string headingText = Stringf("%-*s%-*s%-*s%-*s%-*s%-*s", 
+	std::string headingText = Stringf("%-*s%*s%*s%*s%*s%*s", 
 		44, "FUNCTION NAME", 8, "CALLS", 10, "% TOTAL", 10, "TIME", 10, "% SELF", 10, "TIME");
 	
 	renderer->DrawTextInBox2D(headingText, s_viewHeadingBounds, Vector2::ZERO, s_viewHeadingFontSize, TEXT_DRAW_OVERRUN, font, s_fontHighlightColor);

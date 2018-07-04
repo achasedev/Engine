@@ -153,42 +153,40 @@ void ProfileReportEntry::RecursivelySortChildrenByTotalTime()
 std::string ProfileReportEntry::GetAsStringForUI(unsigned int indent) const
 {
 	// Additional formatting for the time values - using labels
-	std::string totalText;
 	double totalValue = TimeSystem::PerformanceCountToSeconds(m_totalTime);
-	if (totalValue < 0.001) // Less than a millisecond, use microseconds
-	{
-		totalValue *= (1000.0 * 1000.0);
-		totalText = Stringf("%.2f us", totalValue);
-	}
-	else if (totalValue < 1.0) // Less than a second but greater than a millisecond, use milliseconds 
+	std::string totalText = Stringf("%*.2f%*s", 4, totalValue, 3, "s");
+	if (totalValue < 0.1) // Less than 100 milliseconds, use milliseconds
 	{
 		totalValue *= 1000.0;
-		totalText = Stringf("%.2f ms", totalValue);
-	}
-	else
-	{
-		totalText = Stringf("%.2f s", totalValue);
+		totalText = Stringf("%*.2f%*s", 4, totalValue, 3, "ms");
+
+		if (totalValue < 0.1) // Less than 100 microseconds, use microseconds
+		{
+			totalValue *= 1000.0;
+			totalText = Stringf("%*.2f%*s", 4, totalValue, 3, "us");
+		}
 	}
 
-	std::string selfText;
+
 	double selfValue = TimeSystem::PerformanceCountToSeconds(m_selfTime);
-	if (selfValue < 0.001) // Less than a millisecond, use microseconds
-	{
-		selfValue *= (1000.0 * 1000.0);
-		selfText = Stringf("%.2f us", selfValue);
-	}
-	else if (selfValue < 1.0) // Less than a second but greater than a millisecond, use milliseconds 
+	std::string selfText = Stringf("%*.2f%*s", 4, selfValue, 3, "s");
+	if (selfValue < 0.1) // Less than 100 milliseconds, use milliseconds
 	{
 		selfValue *= 1000.0;
-		selfText = Stringf("%.2f ms", selfValue);
-	}
-	else
-	{
-		selfText = Stringf("%.2f s", selfValue);
+		selfText = Stringf("%*.2f%*s", 4, selfValue, 3, "ms");
+
+		if (selfValue < 0.1) // Less than 100 microseconds, use microseconds
+		{
+			selfValue *= 1000.0;
+			selfText = Stringf("%*.2f%*s", 4, selfValue, 3, "us");
+		}
 	}
 
-	std::string text = Stringf("%-*s%-*s%-*i%-*.2f%-*s%-*.2f%-*s", 
-		indent, "", 44 - indent, m_name.c_str(), 8, m_callCount, 10, m_percentOfFrameTime, 10, totalText.c_str(), 10, m_percentOfSelfTime, 10, selfText.c_str());
+	std::string percentFrameText = Stringf("%.2f %%", m_percentOfFrameTime);
+	std::string percentSelfText = Stringf("%.2f %%", m_percentOfSelfTime);
+
+	std::string text = Stringf("%-*s%-*s%*i%*s%*s%*s%*s", 
+		indent, "", 44 - indent, m_name.c_str(), 8, m_callCount, 10, percentFrameText.c_str(), 10, totalText.c_str(), 10, percentSelfText.c_str(), 10, selfText.c_str());
 
 	return text;
 }
