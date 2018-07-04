@@ -282,6 +282,7 @@ static int stbi__start_write_file(stbi__write_context *s, const char *filename)
    if (fopen_s(&f, filename, "wb"))
       f = NULL;
 #else
+	#pragma warning(suppress: 4996)
    f = fopen(filename, "wb");
 #endif
    stbi__start_write_callbacks(s, stbi__stdio_write, (void *) f);
@@ -689,6 +690,7 @@ static int stbi_write_hdr_core(stbi__write_context *s, int x, int y, int comp, f
 #ifdef STBI_MSC_SECURE_CRT
       len = sprintf_s(buffer, "EXPOSURE=          1.0000000000000\n\n-Y %d +X %d\n", y, x);
 #else
+#pragma warning(suppress: 4996)
       len = sprintf(buffer, "EXPOSURE=          1.0000000000000\n\n-Y %d +X %d\n", y, x);
 #endif
       s->func(s->context, buffer, len);
@@ -1115,6 +1117,7 @@ STBIWDEF int stbi_write_png(char const *filename, int x, int y, int comp, const 
    if (fopen_s(&f, filename, "wb"))
       f = NULL;
 #else
+#pragma warning(suppress: 4996)
    f = fopen(filename, "wb");
 #endif
    if (!f) { STBIW_FREE(png); return 0; }

@@ -17,7 +17,7 @@
 //-----------------------------------------------------------------------------------------------
 // Reads the file given by filename into a buffer and returns a reference to it 
 //
-void* FileReadToNewBuffer( char const *filename )
+void* FileReadToNewBuffer( char const *filename, size_t& out_size)
 {
 	FILE *fp = nullptr; 
 	fopen_s( &fp, filename, "r" ); 
@@ -26,16 +26,16 @@ void* FileReadToNewBuffer( char const *filename )
 		return nullptr; 
 	}
 
-	size_t size = 0U; 
+	out_size = 0U; 
 
 	fseek(fp, 0L, SEEK_END);
-	size = ftell(fp); 
+	out_size = ftell(fp); 
 
 	fseek(fp, 0L, SEEK_SET); 
 
-	unsigned char *buffer = (unsigned char*) malloc(size + 1U); // space for NULL 
+	unsigned char *buffer = (unsigned char*) malloc(out_size + 1U); // space for NULL 
 
-	size_t read = fread( buffer, 1, size, fp );
+	size_t read = fread( buffer, 1, out_size, fp );
 	fclose(fp);
 
 	buffer[read] = NULL; 

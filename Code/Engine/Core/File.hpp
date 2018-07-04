@@ -7,7 +7,7 @@
 /************************************************************************/
 #include <string>
 
-void* FileReadToNewBuffer( char const *filename );
+void* FileReadToNewBuffer( char const *filename, size_t& out_size);
 bool FileWriteFromBuffer(char const *filename, char const* buffer, int bufferSize);
 
 std::string GetWorkingDirectory();

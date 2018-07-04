@@ -371,7 +371,8 @@ static GLuint CreateShader(char const *filenameOrSource, GLenum type, bool isFil
 	// If we're passed a file name, then load it from file
 	if (isFileName)
 	{
-		char* src = (char*)FileReadToNewBuffer(filenameOrSource);
+		size_t size;
+		char* src = (char*)FileReadToNewBuffer(filenameOrSource, size);
 		GUARANTEE_OR_DIE(src != nullptr, Stringf("Error: File \"%s\" could not be found or opened.", filenameOrSource));
 
 		GLint shader_length = (GLint)strlen(src);

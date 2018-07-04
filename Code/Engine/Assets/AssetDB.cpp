@@ -167,6 +167,8 @@ void AssetDB::CreateMaterials()
 
 	AssetCollection<Material>::AddAsset("FLChan", flChanMat);
 
+
+
 	Material* skyboxMat = new Material("Skybox");
 	skyboxMat->SetDiffuse(AssetDB::GetTexture("White"));
 	skyboxMat->SetShader(AssetDB::GetShader(ShaderSource::SKYBOX_SHADER_NAME));

@@ -75,7 +75,8 @@ void MeshBuilder::LoadFromObjFile(const std::string& filePath)
 	AssertBuildState(false, PRIMITIVE_TRIANGLES, false);
 	BeginBuilding(PRIMITIVE_TRIANGLES, false);
 
-	const char* buffer = (const char*)FileReadToNewBuffer(filePath.c_str());
+	size_t size;
+	const char* buffer = (const char*)FileReadToNewBuffer(filePath.c_str(), size);
 	if (buffer == nullptr) { return; }
 
 	std::string fileContents = std::string(buffer);

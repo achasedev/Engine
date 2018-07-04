@@ -36,7 +36,8 @@ void MeshGroupBuilder::LoadFromObjFile(const std::string& filePath)
 	MeshBuilder* mb = new MeshBuilder();
 	mb->BeginBuilding(PRIMITIVE_TRIANGLES, false);
 
-	const char* buffer = (const char*)FileReadToNewBuffer(filePath.c_str());
+	size_t size;
+	const char* buffer = (const char*)FileReadToNewBuffer(filePath.c_str(), size);
 	if (buffer == nullptr) { return; }
 
 	std::string fileContents = std::string(buffer);

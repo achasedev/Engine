@@ -19,9 +19,11 @@ public:
 	Image();
 	Image(const IntVector2& dimensions, const Rgba& color = Rgba::WHITE);
 	Image(const IntVector2& dimensions, const IntVector2& patternLayout, const Rgba& color1, const Rgba& color2);
+	Image(const IntVector2& dimensions, int numComponentsPerTexel, unsigned char* imageData);
+
 	~Image();
 
-	bool					LoadFromFile(const std::string& filepath);
+	virtual bool			LoadFromFile(const std::string& filepath);
 	Rgba					GetTexelColor(int x, int y) const;
 	float					GetTexelGrayScale(int texelIndex) const;
 	float					GetTexelGrayScale(int x, int y) const;
@@ -44,8 +46,8 @@ public:
 	const static Image IMAGE_DEFAULT_TEXTURE;
 
 
-private:
-	//-----Private Data-----
+protected:
+	//-----Protected Data-----
 
 	IntVector2 m_dimensions;		// Width and height of the image in texels
 	int m_numComponentsPerTexel;	// The number of values for each texel (3 for RGB, 4 for RGBA, etc)

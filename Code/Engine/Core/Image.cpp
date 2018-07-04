@@ -96,6 +96,17 @@ Image::Image(const IntVector2& dimensions, const IntVector2& patternLayout, cons
 
 
 //-----------------------------------------------------------------------------------------------
+// Creates an image using the data given
+//
+Image::Image(const IntVector2& dimensions, int numComponentsPerTexel, unsigned char* imageData)
+	: m_dimensions(dimensions)
+	, m_numComponentsPerTexel(numComponentsPerTexel)
+	, m_imageData(imageData)
+{
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Frees the image data used by this instance
 //
 Image::~Image()

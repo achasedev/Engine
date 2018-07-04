@@ -4,6 +4,7 @@
 /* Date: June 30th, 2018
 /* Description: Implementation of the Profiler class
 /************************************************************************/
+#include "Engine/Core/Gif.hpp"
 #include "Engine/Assets/AssetDB.hpp"
 #include "Engine/Core/Time/Time.hpp"
 #include "Engine/Math/MathUtils.hpp"
@@ -12,53 +13,58 @@
 #include "Engine/Rendering/Meshes/Mesh.hpp"
 #include "Engine/Rendering/Core/Renderer.hpp"
 #include "Engine/Core/Time/ProfileReport.hpp"
+#include "Engine/Rendering/Resources/Sampler.hpp"
 #include "Engine/Core/Time/ProfileMeasurement.hpp"
 #include "Engine/Core/Time/ProfileReportEntry.hpp"
-#include "Engine/Rendering/Materials/Material.hpp"
+#include "Engine/Rendering/Materials/MaterialInstance.hpp"
 
 // Singleton instance
-Profiler*		Profiler::s_instance = nullptr;	
+Profiler*			Profiler::s_instance = nullptr;	
 
 // UI constants
-AABB2			Profiler::s_fpsBorderBounds;
-AABB2			Profiler::s_frameBorderBounds;
-AABB2			Profiler::s_titleBorderBounds;
-AABB2			Profiler::s_graphBorderBounds;
-AABB2			Profiler::s_viewDataBorderBounds;
-AABB2			Profiler::s_graphDetailsBorderBounds;
+AABB2				Profiler::s_fpsBorderBounds;
+AABB2				Profiler::s_frameBorderBounds;
+AABB2				Profiler::s_titleBorderBounds;
+AABB2				Profiler::s_graphBorderBounds;
+AABB2				Profiler::s_viewDataBorderBounds;
+AABB2				Profiler::s_graphDetailsBorderBounds;
+AABB2				Profiler::s_rottyTopsBorderBounds;
 
 
-AABB2			Profiler::s_titleBounds;
-AABB2			Profiler::s_fpsBounds;
-AABB2			Profiler::s_frameBounds;
-AABB2			Profiler::s_graphBounds;
-AABB2			Profiler::s_viewDataBounds;
-AABB2			Profiler::s_viewHeadingBorderBounds;
-AABB2			Profiler::s_viewHeadingBounds;
-AABB2			Profiler::s_graphDetailsBounds;
+AABB2				Profiler::s_titleBounds;
+AABB2				Profiler::s_fpsBounds;
+AABB2				Profiler::s_frameBounds;
+AABB2				Profiler::s_graphBounds;
+AABB2				Profiler::s_viewDataBounds;
+AABB2				Profiler::s_viewHeadingBorderBounds;
+AABB2				Profiler::s_viewHeadingBounds;
+AABB2				Profiler::s_graphDetailsBounds;
+AABB2				Profiler::s_rottyTopsBackgroundBounds;
+AABB2				Profiler::s_rottyTopsTextureBounds;
 
 
-float			Profiler::s_titleFontSize;
-float			Profiler::s_fpsFrameFontSize;
-float			Profiler::s_viewHeadingFontSize;
-float			Profiler::s_viewDataFontSize;
-float			Profiler::s_borderThickness;
+float				Profiler::s_titleFontSize;
+float				Profiler::s_fpsFrameFontSize;
+float				Profiler::s_viewHeadingFontSize;
+float				Profiler::s_viewDataFontSize;
+float				Profiler::s_borderThickness;
 
-std::string		Profiler::s_titleText;
-std::string		Profiler::s_fpsframeText;
-std::string		Profiler::s_viewHeadingText;
+std::string			Profiler::s_titleText;
+std::string			Profiler::s_fpsframeText;
+std::string			Profiler::s_viewHeadingText;
 
 
-Rgba			Profiler::s_backgroundColor	= Rgba(0,0,0,180);
-Rgba			Profiler::s_borderColor		= Rgba(15, 60, 120, 200);
-Rgba			Profiler::s_fontColor		= Rgba(100, 100, 100, 255);
-Rgba			Profiler::s_fontHighlightColor = Rgba(200, 200, 200, 255);
-Rgba			Profiler::s_graphRedColor = Rgba(255, 0, 0, 150);
-Rgba			Profiler::s_graphYellowColor = Rgba(255, 255, 0, 150);
-Rgba			Profiler::s_graphGreenColor = Rgba(0, 255, 0, 150);
+Rgba				Profiler::s_backgroundColor	= Rgba(0,0,0,180);
+Rgba				Profiler::s_borderColor		= Rgba(15, 60, 120, 200);
+Rgba				Profiler::s_fontColor		= Rgba(100, 100, 100, 255);
+Rgba				Profiler::s_fontHighlightColor = Rgba(200, 200, 200, 255);
+Rgba				Profiler::s_graphRedColor = Rgba(255, 0, 0, 150);
+Rgba				Profiler::s_graphYellowColor = Rgba(255, 255, 0, 150);
+Rgba				Profiler::s_graphGreenColor = Rgba(0, 255, 0, 150);
 
-Mesh*			Profiler::s_graphMesh = nullptr;
-
+Mesh*				Profiler::s_graphMesh = nullptr;
+Gif*				Profiler::s_rottyTopsGif = nullptr;
+MaterialInstance*	Profiler::s_rottyTopsMaterial = nullptr;
 
 // C functions
 unsigned int	IncrementIndexWithWrapAround(unsigned int currentIndex);
@@ -119,10 +125,11 @@ void Profiler::Initialize()
 {
 	s_instance = new Profiler();
 
-	// Set static constants
+	//-----SET UP STATIC UI MEMBERS-----
 	AABB2 bounds = Renderer::GetUIBounds();
 	Vector2 dimensions = bounds.GetDimensions();
 
+	// Font sizes
 	s_titleFontSize			= 48.f;
 	s_fpsFrameFontSize		= 48.f;
 	s_viewHeadingFontSize	= 20.f;
@@ -143,7 +150,7 @@ void Profiler::Initialize()
 	s_frameBounds = s_frameBorderBounds;
 	s_frameBounds.AddPaddingToSides(-s_borderThickness, -s_borderThickness);
 
-	s_graphBorderBounds = AABB2(Vector2(0.1f * dimensions.x, 0.8f * dimensions.y), Vector2(s_fpsBorderBounds.maxs.x, s_fpsBorderBounds.mins.y));
+	s_graphBorderBounds = AABB2(Vector2(0.05f * dimensions.x, 0.8f * dimensions.y), Vector2(s_fpsBorderBounds.maxs.x, s_fpsBorderBounds.mins.y));
 
 	s_graphDetailsBorderBounds = AABB2(s_graphBorderBounds.GetBottomRight(), s_frameBorderBounds.GetBottomRight());
 
@@ -165,7 +172,28 @@ void Profiler::Initialize()
 	s_titleBounds = s_titleBorderBounds;
 	s_titleBounds.AddPaddingToSides(-s_borderThickness, -s_borderThickness);
 
+	s_rottyTopsBorderBounds = AABB2(s_viewHeadingBorderBounds.GetTopLeft(), s_graphBorderBounds.GetTopLeft());
+	s_rottyTopsBackgroundBounds = s_rottyTopsBorderBounds;
+	s_rottyTopsBackgroundBounds.AddPaddingToSides(-s_borderThickness, -s_borderThickness);
+
 	s_graphMesh = new Mesh();
+
+	s_rottyTopsGif = new Gif();
+	s_rottyTopsGif->LoadFromFile("Data/Images/RottyTops.gif");
+
+	IntVector2 gifDimensions = s_rottyTopsGif->GetDimensions();
+	float gifAspect = (float) gifDimensions.x / (float) gifDimensions.y;
+
+	float gifHeight = s_rottyTopsBackgroundBounds.GetDimensions().y;
+	float gifWidth = gifHeight * gifAspect;
+
+	float startX = 0.5f * (s_rottyTopsBackgroundBounds.GetDimensions().x - gifWidth) + s_rottyTopsBackgroundBounds.mins.x;
+	s_rottyTopsTextureBounds = AABB2(Vector2(startX, s_rottyTopsBackgroundBounds.mins.y), Vector2(startX + gifWidth, s_rottyTopsBackgroundBounds.maxs.y));
+
+	s_rottyTopsMaterial = new MaterialInstance(AssetDB::GetSharedMaterial("UI"));
+	Sampler* sampler = new Sampler();
+	sampler->Initialize(SAMPLER_FILTER_LINEAR, EDGE_SAMPLING_REPEAT);
+	s_rottyTopsMaterial->SetSampler(0, sampler);
 }
 
 
@@ -281,7 +309,6 @@ void Profiler::PushMeasurement(const char* name)
 		s_instance->m_measurements[0]->m_children.push_back(measurement);
 		s_instance->m_measurements[0] = measurement;
 	}
-
 }
 
 
@@ -432,6 +459,13 @@ void Profiler::RenderTitleInfo() const
 	renderer->DrawTextInBox2D("PROFILER",	s_titleBounds,		Vector2::ZERO, s_titleFontSize,		TEXT_DRAW_OVERRUN, font, s_fontHighlightColor);
 	renderer->DrawTextInBox2D(frameText,	s_frameBounds,		Vector2::ZERO, s_fpsFrameFontSize,	TEXT_DRAW_OVERRUN, font, s_fontHighlightColor);
 	renderer->DrawTextInBox2D(fpsText,		s_fpsBounds,		Vector2::ZERO, s_fpsFrameFontSize,	TEXT_DRAW_OVERRUN, font, s_fontHighlightColor);
+
+	// RottyTops!
+	s_rottyTopsMaterial->SetDiffuse(s_rottyTopsGif->GetNextFrame());
+
+	renderer->Draw2DQuad(s_rottyTopsBorderBounds,		AABB2::UNIT_SQUARE_OFFCENTER, s_borderColor,		material);
+	renderer->Draw2DQuad(s_rottyTopsBackgroundBounds,	AABB2::UNIT_SQUARE_OFFCENTER, s_backgroundColor,	material);
+	renderer->Draw2DQuad(s_rottyTopsTextureBounds,		AABB2::UNIT_SQUARE_OFFCENTER, Rgba::WHITE,			s_rottyTopsMaterial);
 }
 
 

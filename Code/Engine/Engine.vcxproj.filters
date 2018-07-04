@@ -120,9 +120,6 @@
     <ClCompile Include="Math\CubicSpline.cpp">
       <Filter>Math</Filter>
     </ClCompile>
-    <ClCompile Include="..\ThirdParty\stb\stb_image.c">
-      <Filter>ThirdParty\stb</Filter>
-    </ClCompile>
     <ClCompile Include="..\ThirdParty\tinyxml2\tinyxml2.cpp">
       <Filter>ThirdParty\tinyxml2</Filter>
     </ClCompile>
@@ -364,6 +361,7 @@
     <ClCompile Include="Core\Time\ProfileReport.cpp" />
     <ClCompile Include="Core\Time\ProfileReportEntry.cpp" />
     <ClCompile Include="Core\Time\ProfileScoped.cpp" />
+    <ClCompile Include="Core\Gif.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -697,5 +695,6 @@
     <ClInclude Include="Core\Time\ProfileReport.hpp" />
     <ClInclude Include="Core\Time\ProfileReportEntry.hpp" />
     <ClInclude Include="Core\Time\ProfileScoped.hpp" />
+    <ClInclude Include="Core\Gif.hpp" />
   </ItemGroup>
 </Project>

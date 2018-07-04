@@ -89,14 +89,23 @@ bool Texture::CreateFromFile(const std::string& filename, bool useMipMaps /*= fa
 //
 void Texture::CreateFromImage(const Image* image, bool useMipMaps /*= false*/)
 {
+	CreateFromRawData(image->GetTexelDimensions(), image->GetNumComponentsPerTexel(), image->GetImageData(), useMipMaps);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Initializes the texture using the raw image data given
+//
+void Texture::CreateFromRawData(const IntVector2& dimensions, unsigned int numComponents, const unsigned char* imageData, bool useMipMaps)
+{
 	if (m_textureHandle == NULL)
 	{
 		glGenTextures(1, &m_textureHandle);
 		GL_CHECK_ERROR();
 	}
-	
-	m_dimensions = image->GetTexelDimensions();
-	m_textureFormat = static_cast<TextureFormat>(image->GetNumComponentsPerTexel() - 1);
+
+	m_dimensions = dimensions;
+	m_textureFormat = static_cast<TextureFormat>(numComponents - 1);
 
 	// Use texture slot 0 for the operation
 	glActiveTexture(GL_TEXTURE0);
@@ -123,8 +132,8 @@ void Texture::CreateFromImage(const Image* image, bool useMipMaps /*= false*/)
 		m_dimensions.x, m_dimensions.y,		// Dimensions
 		ToGLChannel(m_textureFormat),       // Which channels exist in the CPU buffer
 		ToGLPixelLayout(m_textureFormat),   // How are those channels stored
-		image->GetImageData());				// Cpu buffer to copy
-	
+		imageData);				// Cpu buffer to copy
+
 	GL_CHECK_ERROR();
 
 	// Generate the mip maps
@@ -137,6 +146,7 @@ void Texture::CreateFromImage(const Image* image, bool useMipMaps /*= false*/)
 
 	glBindTexture(GL_TEXTURE_2D, NULL);
 }
+
 
 //-----------------------------------------------------------------------------------------------
 // Returns the dimensions of the texture

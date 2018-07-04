@@ -226,6 +226,7 @@ void Renderer::ClearScreen(const Rgba& clearColor)
 //
 void Renderer::ApplyImageEffect(ShaderProgram* program)
 {
+	UNUSED(program)
 	UNIMPLEMENTED();
 // 	DisableDepth();
 // 
@@ -456,6 +457,12 @@ void Renderer::DrawSphere(const Vector3& position, float radius, unsigned int nu
 //
 void Renderer::DrawSprite(const Sprite* sprite, const Vector3& position, const Rgba& tint /*= Rgba::WHITE*/, const Vector3& right /*= Vector3::DIRECTION_RIGHT*/, const Vector3& up /*= Vector3::DIRECTION_UP*/)
 {
+	UNUSED(sprite)
+	UNUSED(position)
+	UNUSED(tint)
+	UNUSED(right)
+	UNUSED(up)
+
 	UNIMPLEMENTED();
 // 	BindTexture(0, sprite->GetTexture().GetHandle());
 // 	Vector2 spriteDimensions	= sprite->GetDimensions();

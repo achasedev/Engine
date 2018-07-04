@@ -26,7 +26,8 @@ public:
 	// Only the AssetDatabase can create textures for use other than render targets
 	virtual bool CreateFromFile(const std::string& filename, bool useMipMaps = false);
 	virtual void CreateFromImage(const Image* image, bool useMipMaps = false);
-
+	virtual void CreateFromRawData(const IntVector2& dimensions, unsigned int numComponents, const unsigned char* imageData, bool useMipMaps);
+	
 	IntVector2		GetDimensions() const;
 	unsigned int	GetHandle() const;
 	TextureType		GetTextureType() const;

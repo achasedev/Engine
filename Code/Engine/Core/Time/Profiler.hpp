@@ -12,7 +12,9 @@
 
 #define PROFILER_MAX_REPORT_COUNT (128)
 
+class Gif;
 class Mesh;
+class MaterialInstance;
 class ProfileMeasurement;
 
 class Profiler
@@ -88,6 +90,7 @@ private:
 	static AABB2 s_viewDataBorderBounds;
 	static AABB2 s_viewHeadingBorderBounds;
 	static AABB2 s_graphDetailsBorderBounds;
+	static AABB2 s_rottyTopsBorderBounds;
 
 	static AABB2 s_titleBounds;
 	static AABB2 s_fpsBounds;
@@ -96,6 +99,8 @@ private:
 	static AABB2 s_viewDataBounds;
 	static AABB2 s_viewHeadingBounds;
 	static AABB2 s_graphDetailsBounds;
+	static AABB2 s_rottyTopsBackgroundBounds;
+	static AABB2 s_rottyTopsTextureBounds;
 
 	static float s_titleFontSize;
 	static float s_fpsFrameFontSize;
@@ -116,4 +121,9 @@ private:
 	static Rgba s_graphGreenColor;
 
 	static Mesh* s_graphMesh;
+
+	// RottyTops
+	static Gif*					s_rottyTopsGif;
+	static MaterialInstance*	s_rottyTopsMaterial;
+
 };
