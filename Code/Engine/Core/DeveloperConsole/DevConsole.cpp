@@ -427,6 +427,7 @@ void DevConsole::RenderFPS() const
 	Renderer* renderer = Renderer::GetInstance();
 	float deltaTime = Clock::GetMasterDeltaTime();
 
+	// Update the FPS only twice per second
 	if (timeSinceLastCalculation > 0.5f)
 	{
 		fps = 1.f / deltaTime;

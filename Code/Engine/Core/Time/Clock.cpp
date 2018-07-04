@@ -101,6 +101,15 @@ float Clock::GetMasterDeltaTime()
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the fps of the master clock
+//
+float Clock::GetMasterFPS()
+{
+	return (1.f / (float) s_masterClock.m_frameData.m_seconds);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Updates the time data of this clock and all children of this clock
 //
 void Clock::FrameStep(uint64_t elapsedHPC)

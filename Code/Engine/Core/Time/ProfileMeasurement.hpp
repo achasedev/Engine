@@ -38,5 +38,4 @@ public:
 
 	ProfileMeasurement* m_parent;
 	std::vector<ProfileMeasurement*> m_children;
-
 };

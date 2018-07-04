@@ -54,7 +54,8 @@ public:
 	static Clock*	GetMasterClock();
 	static uint64_t GetMasterTotalTime();
 	static float	GetMasterDeltaTime();
-	
+	static float	GetMasterFPS();
+
 
 private:
 	//-----Private Methods

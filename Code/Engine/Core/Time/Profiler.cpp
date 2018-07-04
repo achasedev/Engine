@@ -4,15 +4,44 @@
 /* Date: June 30th, 2018
 /* Description: Implementation of the Profiler class
 /************************************************************************/
+#include "Engine/Assets/AssetDB.hpp"
 #include "Engine/Core/Time/Time.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Time/Profiler.hpp"
+#include "Engine/Rendering/Core/Renderer.hpp"
 #include "Engine/Core/Time/ProfileReport.hpp"
 #include "Engine/Core/Time/ProfileMeasurement.hpp"
 #include "Engine/Core/Time/ProfileReportEntry.hpp"
+#include "Engine/Rendering/Materials/Material.hpp"
 
 // Singleton instance
 Profiler* Profiler::s_instance = nullptr;	
+
+// UI constants
+AABB2 Profiler::s_fpsBorderBounds;
+AABB2 Profiler::s_frameBorderBounds;
+AABB2 Profiler::s_titleBorderBounds;
+AABB2 Profiler::s_graphBorderBounds;
+AABB2 Profiler::s_viewDataBorderBounds;
+
+
+AABB2 Profiler::s_titleBounds;
+AABB2 Profiler::s_fpsBounds;
+AABB2 Profiler::s_frameBounds;
+AABB2 Profiler::s_graphBounds;
+AABB2 Profiler::s_viewDataBounds;
+AABB2 Profiler::s_viewHeadingBounds;
+
+
+float		Profiler::s_titleFontSize;
+float		Profiler::s_fpsFrameFontSize;
+float		Profiler::s_viewHeadingFontSize;
+float		Profiler::s_viewDataFontSize;
+float		Profiler::s_borderThickness;
+
+std::string Profiler::s_titleText;
+std::string Profiler::s_fpsframeText;
+std::string Profiler::s_viewHeadingText;
 
 // C functions
 unsigned int	IncrementIndexWithWrapAround(unsigned int currentIndex);
@@ -72,6 +101,45 @@ Profiler::~Profiler()
 void Profiler::Initialize()
 {
 	s_instance = new Profiler();
+
+	// Set static constants
+	AABB2 bounds = Renderer::GetUIBounds();
+	Vector2 dimensions = bounds.GetDimensions();
+
+	s_titleFontSize			= 48.f;
+	s_fpsFrameFontSize		= 48.f;
+	s_viewHeadingFontSize	= 36.f;
+	s_viewDataFontSize		= 36.f;
+	s_borderThickness		= 5.f;
+
+	s_titleBorderBounds = AABB2(Vector2(0.f, dimensions.y - s_titleFontSize - (2.f * s_borderThickness)), 
+		Vector2(0.333f * dimensions.x, dimensions.y));
+
+	s_fpsBorderBounds = AABB2(s_titleBorderBounds.GetBottomRight(), 
+		Vector2(s_titleBorderBounds.maxs.x + ((dimensions.x - s_titleBorderBounds.GetDimensions().x) * 0.5f), bounds.maxs.y));
+
+	s_fpsBounds = s_fpsBorderBounds;
+	s_fpsBounds.AddPaddingToSides(-s_borderThickness, -s_borderThickness);
+
+	s_frameBorderBounds = AABB2(s_fpsBorderBounds.GetBottomRight(), bounds.maxs);
+
+	s_frameBounds = s_frameBorderBounds;
+	s_frameBounds.AddPaddingToSides(-s_borderThickness, -s_borderThickness);
+
+	s_graphBorderBounds = AABB2(Vector2(0.f, 0.666f * dimensions.y), Vector2(bounds.maxs.x, s_fpsBorderBounds.mins.y));
+
+	s_viewHeadingBounds = AABB2(Vector2(0.f, s_graphBorderBounds.mins.y - s_viewHeadingFontSize), s_graphBorderBounds.GetBottomRight());
+
+	s_viewDataBorderBounds = AABB2(bounds.mins, s_viewHeadingBounds.GetBottomRight());
+	
+	s_viewDataBounds = s_viewDataBorderBounds;
+	s_viewDataBounds.AddPaddingToSides(-s_borderThickness, -s_borderThickness);
+
+	s_graphBounds = s_graphBorderBounds;
+	s_graphBounds.AddPaddingToSides(-s_borderThickness, -s_borderThickness);
+
+	s_titleBounds = s_titleBorderBounds;
+	s_titleBounds.AddPaddingToSides(-s_borderThickness, -s_borderThickness);
 }
 
 
@@ -84,21 +152,6 @@ void Profiler::Shutdown()
 	s_instance = nullptr;
 }
 
-// Temporary for debugging
-void PrintRecursive(const std::string& indent, ProfileReportEntry* stack)
-{
-	double totalTime	= 1000.f * TimeSystem::PerformanceCountToSeconds(stack->m_totalTime);
-	double selfTime		= 1000.f * TimeSystem::PerformanceCountToSeconds(stack->m_selfTime);
-	std::string text	= indent + Stringf(" Name: %s - CallCount: %i - Total time: %f - Exclusive Time: %f\n", stack->m_name.c_str(), stack->m_callCount, totalTime, selfTime);
-	DebuggerPrintf(text.c_str());
-
-	std::map<std::string, ProfileReportEntry*>::iterator itr;
-	for (itr = stack->m_children.begin(); itr != stack->m_children.end(); itr++)
-	{
-		PrintRecursive(indent + "-", itr->second);
-	}
-}
-
 
 //-----------------------------------------------------------------------------------------------
 // Draws the profiler results to screen
@@ -108,14 +161,17 @@ void Profiler::Render()
 	// Only render if the profiler is open
 	if (m_isOpen)
 	{
-		if (m_reports[0] != nullptr)
-		{
-			PrintRecursive("", m_reports[0]->m_rootEntry);
-		}
-		else
-		{
-			DebuggerPrintf("THE REPORT AT 0 WAS NULL\n");
-		}
+		Renderer* renderer = Renderer::GetInstance();
+		renderer->SetCurrentCamera(renderer->GetUICamera());
+
+		// TITLE, FPS, FRAME COUNT
+		RenderTitleInfo();
+
+		// GRAPH
+		RenderGraph();
+
+		// DATA
+		RenderData();
 	}
 }
 
@@ -153,6 +209,13 @@ void Profiler::BeginFrame()
 	}
 
 	s_instance->PushMeasurement("Frame"); // Push a new frame into [0]
+
+	// Update the fps if we can
+	if (s_instance->m_measurements[1] != nullptr)
+	{
+		float frameTime = (float) TimeSystem::PerformanceCountToSeconds(s_instance->m_measurements[1]->GetTotalTime_Inclusive());
+		s_instance->m_framesPerSecond = (1.0f / frameTime);
+	}
 }
 
 
@@ -312,6 +375,66 @@ void Profiler::UpdateReports()
 			m_reports[index] = BuildReportForFrame(m_measurements[index]);
 		}
 	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Renders the title information (title, fps, frame count) to screen
+//
+void Profiler::RenderTitleInfo() const
+{
+	Renderer* renderer	= Renderer::GetInstance();
+	Material* material	= AssetDB::GetSharedMaterial("UI");
+	BitmapFont* font	= AssetDB::GetBitmapFont("Data/Images/Fonts/ConsoleFont.png");
+
+	// Title bounds
+	renderer->Draw2DQuad(s_titleBorderBounds,	AABB2::UNIT_SQUARE_OFFCENTER, Rgba::WHITE,		material);
+	renderer->Draw2DQuad(s_titleBounds,			AABB2::UNIT_SQUARE_OFFCENTER, Rgba::GREEN,		material);
+												
+	// Fps bounds								
+	renderer->Draw2DQuad(s_fpsBorderBounds,		AABB2::UNIT_SQUARE_OFFCENTER, Rgba::WHITE,		material);
+	renderer->Draw2DQuad(s_fpsBounds,			AABB2::UNIT_SQUARE_OFFCENTER, Rgba::RED,		material);
+												
+	// Frame count bounds						
+	renderer->Draw2DQuad(s_frameBorderBounds,	AABB2::UNIT_SQUARE_OFFCENTER, Rgba::WHITE,		material);
+	renderer->Draw2DQuad(s_frameBounds,			AABB2::UNIT_SQUARE_OFFCENTER, Rgba::LIGHT_BLUE, material);
+
+	// Text
+	std::string frameText	= Stringf("FRAME: %*i",		6,	m_currentFrameNumber);
+	std::string fpsText		= Stringf("FPS: %*.2f",		8,	m_framesPerSecond);
+
+	renderer->DrawTextInBox2D("PROFILER",	s_titleBounds,		Vector2::ZERO, s_titleFontSize,		TEXT_DRAW_OVERRUN, font);
+	renderer->DrawTextInBox2D(frameText,	s_frameBounds,		Vector2::ZERO, s_fpsFrameFontSize,	TEXT_DRAW_OVERRUN, font);
+	renderer->DrawTextInBox2D(fpsText,		s_fpsBounds,		Vector2::ZERO, s_fpsFrameFontSize,	TEXT_DRAW_OVERRUN, font);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Renders the performance graph to screen
+//
+void Profiler::RenderGraph() const
+{
+	Renderer* renderer	= Renderer::GetInstance();
+	Material* material	= AssetDB::GetSharedMaterial("UI");
+	BitmapFont* font	= AssetDB::GetBitmapFont("Data/Images/Fonts/ConsoleFont.png");
+
+	renderer->Draw2DQuad(s_graphBorderBounds,	AABB2::UNIT_SQUARE_OFFCENTER, Rgba::BLACK,	material);
+	renderer->Draw2DQuad(s_graphBounds,			AABB2::UNIT_SQUARE_OFFCENTER, Rgba::PURPLE,	material);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Renders the latest frame data to screen
+//
+void Profiler::RenderData() const
+{
+	Renderer* renderer	= Renderer::GetInstance();
+	Material* material	= AssetDB::GetSharedMaterial("UI");
+	BitmapFont* font	= AssetDB::GetBitmapFont("Data/Images/Fonts/ConsoleFont.png");
+
+	renderer->Draw2DQuad(s_viewHeadingBounds,		AABB2::UNIT_SQUARE_OFFCENTER, Rgba::YELLOW, material);
+	renderer->Draw2DQuad(s_viewDataBorderBounds,	AABB2::UNIT_SQUARE_OFFCENTER, Rgba::CYAN,	material);
+	renderer->Draw2DQuad(s_viewDataBounds,			AABB2::UNIT_SQUARE_OFFCENTER, Rgba::ORANGE, material);
 }
 
 

@@ -6,6 +6,7 @@
 /************************************************************************/
 #pragma once
 #include <vector>
+#include "Engine/Math/AABB2.hpp"
 #include "Engine/Core/Time/ProfileReport.hpp"
 
 #define PROFILER_MAX_REPORT_COUNT (512)
@@ -51,6 +52,12 @@ private:
 	void										UpdateReports(); // Used when we need to regenerate all the reports at once, for starting generation or switching types
 
 
+	// UI Rendering
+	void										RenderTitleInfo() const;
+	void										RenderGraph() const;
+	void										RenderData() const;
+
+
 private:
 	//-----Private Data-----
 
@@ -65,8 +72,33 @@ private:
 	bool					m_isOpen;
 	bool					m_isGeneratingReports;
 	int						m_currentFrameNumber;
+	float					m_framesPerSecond;
 
 	// Singleton instance
 	static Profiler*		s_instance;
+
+	// UI constants
+	static AABB2 s_fpsBorderBounds;
+	static AABB2 s_frameBorderBounds;
+	static AABB2 s_titleBorderBounds;
+	static AABB2 s_graphBorderBounds;
+	static AABB2 s_viewDataBorderBounds;
+
+	static AABB2 s_titleBounds;
+	static AABB2 s_fpsBounds;
+	static AABB2 s_frameBounds;
+	static AABB2 s_graphBounds;
+	static AABB2 s_viewDataBounds;
+	static AABB2 s_viewHeadingBounds;
+
+	static float s_titleFontSize;
+	static float s_fpsFrameFontSize;
+	static float s_viewHeadingFontSize;
+	static float s_viewDataFontSize;
+	static float s_borderThickness;
+
+	static std::string s_titleText;
+	static std::string s_fpsframeText;
+	static std::string s_viewHeadingText;
 
 };
