@@ -10,8 +10,9 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Core/Time/ProfileReport.hpp"
 
-#define PROFILER_MAX_REPORT_COUNT (512)
+#define PROFILER_MAX_REPORT_COUNT (128)
 
+class Mesh;
 class ProfileMeasurement;
 
 class Profiler
@@ -79,13 +80,14 @@ private:
 	// Singleton instance
 	static Profiler*		s_instance;
 
-	// UI constants
+	// UI
 	static AABB2 s_fpsBorderBounds;
 	static AABB2 s_frameBorderBounds;
 	static AABB2 s_titleBorderBounds;
 	static AABB2 s_graphBorderBounds;
 	static AABB2 s_viewDataBorderBounds;
 	static AABB2 s_viewHeadingBorderBounds;
+	static AABB2 s_graphDetailsBorderBounds;
 
 	static AABB2 s_titleBounds;
 	static AABB2 s_fpsBounds;
@@ -93,6 +95,7 @@ private:
 	static AABB2 s_graphBounds;
 	static AABB2 s_viewDataBounds;
 	static AABB2 s_viewHeadingBounds;
+	static AABB2 s_graphDetailsBounds;
 
 	static float s_titleFontSize;
 	static float s_fpsFrameFontSize;
@@ -107,5 +110,10 @@ private:
 	static Rgba s_backgroundColor;
 	static Rgba s_borderColor;
 	static Rgba s_fontColor;
+	static Rgba s_fontHighlightColor;
+	static Rgba s_graphRedColor;
+	static Rgba s_graphYellowColor;
+	static Rgba s_graphGreenColor;
 
+	static Mesh* s_graphMesh;
 };

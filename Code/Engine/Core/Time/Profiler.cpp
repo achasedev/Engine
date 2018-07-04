@@ -6,8 +6,10 @@
 /************************************************************************/
 #include "Engine/Assets/AssetDB.hpp"
 #include "Engine/Core/Time/Time.hpp"
+#include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Time/Profiler.hpp"
+#include "Engine/Rendering/Meshes/Mesh.hpp"
 #include "Engine/Rendering/Core/Renderer.hpp"
 #include "Engine/Core/Time/ProfileReport.hpp"
 #include "Engine/Core/Time/ProfileMeasurement.hpp"
@@ -23,6 +25,7 @@ AABB2			Profiler::s_frameBorderBounds;
 AABB2			Profiler::s_titleBorderBounds;
 AABB2			Profiler::s_graphBorderBounds;
 AABB2			Profiler::s_viewDataBorderBounds;
+AABB2			Profiler::s_graphDetailsBorderBounds;
 
 
 AABB2			Profiler::s_titleBounds;
@@ -32,6 +35,7 @@ AABB2			Profiler::s_graphBounds;
 AABB2			Profiler::s_viewDataBounds;
 AABB2			Profiler::s_viewHeadingBorderBounds;
 AABB2			Profiler::s_viewHeadingBounds;
+AABB2			Profiler::s_graphDetailsBounds;
 
 
 float			Profiler::s_titleFontSize;
@@ -47,7 +51,13 @@ std::string		Profiler::s_viewHeadingText;
 
 Rgba			Profiler::s_backgroundColor	= Rgba(0,0,0,180);
 Rgba			Profiler::s_borderColor		= Rgba(15, 60, 120, 200);
-Rgba			Profiler::s_fontColor			= Rgba(100, 100, 100, 255);
+Rgba			Profiler::s_fontColor		= Rgba(100, 100, 100, 255);
+Rgba			Profiler::s_fontHighlightColor = Rgba(200, 200, 200, 255);
+Rgba			Profiler::s_graphRedColor = Rgba(255, 0, 0, 150);
+Rgba			Profiler::s_graphYellowColor = Rgba(255, 255, 0, 150);
+Rgba			Profiler::s_graphGreenColor = Rgba(0, 255, 0, 150);
+
+Mesh*			Profiler::s_graphMesh = nullptr;
 
 
 // C functions
@@ -133,12 +143,16 @@ void Profiler::Initialize()
 	s_frameBounds = s_frameBorderBounds;
 	s_frameBounds.AddPaddingToSides(-s_borderThickness, -s_borderThickness);
 
-	s_graphBorderBounds = AABB2(Vector2(0.f, 0.8f * dimensions.y), Vector2(bounds.maxs.x, s_fpsBorderBounds.mins.y));
+	s_graphBorderBounds = AABB2(Vector2(0.1f * dimensions.x, 0.8f * dimensions.y), Vector2(s_fpsBorderBounds.maxs.x, s_fpsBorderBounds.mins.y));
 
-	s_viewHeadingBorderBounds = AABB2(Vector2(0.f, s_graphBorderBounds.mins.y - s_viewHeadingFontSize - (2.f * s_borderThickness)), s_graphBorderBounds.GetBottomRight());
+	s_graphDetailsBorderBounds = AABB2(s_graphBorderBounds.GetBottomRight(), s_frameBorderBounds.GetBottomRight());
+
+	s_graphDetailsBounds = s_graphDetailsBorderBounds;
+	s_graphDetailsBounds.AddPaddingToSides(-s_borderThickness, -s_borderThickness);
+
+	s_viewHeadingBorderBounds = AABB2(Vector2(0.f, s_graphBorderBounds.mins.y - s_viewHeadingFontSize - (2.f * s_borderThickness)), Vector2(dimensions.x, s_graphBorderBounds.mins.y));
 	s_viewHeadingBounds = s_viewHeadingBorderBounds;
 	s_viewHeadingBounds.AddPaddingToSides(-s_borderThickness, -s_borderThickness);
-
 
 	s_viewDataBorderBounds = AABB2(bounds.mins, s_viewHeadingBorderBounds.GetBottomRight());
 	
@@ -150,6 +164,8 @@ void Profiler::Initialize()
 
 	s_titleBounds = s_titleBorderBounds;
 	s_titleBounds.AddPaddingToSides(-s_borderThickness, -s_borderThickness);
+
+	s_graphMesh = new Mesh();
 }
 
 
@@ -413,9 +429,9 @@ void Profiler::RenderTitleInfo() const
 	std::string frameText	= Stringf("FRAME: %*i",		6,	m_currentFrameNumber);
 	std::string fpsText		= Stringf("FPS: %*.2f",		8,	m_framesPerSecond);
 
-	renderer->DrawTextInBox2D("PROFILER",	s_titleBounds,		Vector2::ZERO, s_titleFontSize,		TEXT_DRAW_OVERRUN, font, s_fontColor);
-	renderer->DrawTextInBox2D(frameText,	s_frameBounds,		Vector2::ZERO, s_fpsFrameFontSize,	TEXT_DRAW_OVERRUN, font, s_fontColor);
-	renderer->DrawTextInBox2D(fpsText,		s_fpsBounds,		Vector2::ZERO, s_fpsFrameFontSize,	TEXT_DRAW_OVERRUN, font, s_fontColor);
+	renderer->DrawTextInBox2D("PROFILER",	s_titleBounds,		Vector2::ZERO, s_titleFontSize,		TEXT_DRAW_OVERRUN, font, s_fontHighlightColor);
+	renderer->DrawTextInBox2D(frameText,	s_frameBounds,		Vector2::ZERO, s_fpsFrameFontSize,	TEXT_DRAW_OVERRUN, font, s_fontHighlightColor);
+	renderer->DrawTextInBox2D(fpsText,		s_fpsBounds,		Vector2::ZERO, s_fpsFrameFontSize,	TEXT_DRAW_OVERRUN, font, s_fontHighlightColor);
 }
 
 
@@ -430,6 +446,92 @@ void Profiler::RenderGraph() const
 
 	renderer->Draw2DQuad(s_graphBorderBounds,	AABB2::UNIT_SQUARE_OFFCENTER, s_borderColor,		material);
 	renderer->Draw2DQuad(s_graphBounds,			AABB2::UNIT_SQUARE_OFFCENTER, s_backgroundColor,	material);
+
+	// Get the worst frame time for scaling
+	float worstFrameTime = (1.f / 240.f);
+	for (int reportIndex = 0; reportIndex < PROFILER_MAX_REPORT_COUNT; ++reportIndex)
+	{
+		if (m_reports[reportIndex] == nullptr) { break; }
+
+		float currTime = (float) TimeSystem::PerformanceCountToSeconds(m_reports[reportIndex]->m_rootEntry->m_totalTime);
+		if (worstFrameTime < currTime)
+		{
+			worstFrameTime = currTime;
+		}
+	}
+
+	float timeUsedToScale = (1.f / 30.f);
+	timeUsedToScale = (worstFrameTime > timeUsedToScale ? worstFrameTime : timeUsedToScale);
+
+	// Build the mesh
+	MeshBuilder mb;
+	mb.BeginBuilding(PRIMITIVE_TRIANGLES, false);
+
+	Vector2 graphDimensions = s_graphBounds.GetDimensions();
+	Vector2 graphOffset = s_graphBounds.GetBottomRight();
+
+	for (int reportIndex = 0; reportIndex < PROFILER_MAX_REPORT_COUNT - 1; ++reportIndex)
+	{
+		if (m_reports[reportIndex] == nullptr || m_reports[reportIndex + 1] == nullptr) { break; }
+
+		float currX = graphOffset.x - (graphDimensions.x * reportIndex * (1.f / (PROFILER_MAX_REPORT_COUNT - 1)));
+		float nextX = graphOffset.x - (graphDimensions.x * (reportIndex + 1) * (1.f / (PROFILER_MAX_REPORT_COUNT - 1)));
+
+		float currTime = (float) TimeSystem::PerformanceCountToSeconds( m_reports[reportIndex]->m_rootEntry->m_totalTime);
+		float currY = RangeMapFloat(currTime, 0.f, timeUsedToScale, s_graphBounds.mins.y, s_graphBounds.maxs.y);
+
+		float nextTime = (float) TimeSystem::PerformanceCountToSeconds( m_reports[reportIndex + 1]->m_rootEntry->m_totalTime);
+		float nextY = RangeMapFloat(nextTime, 0.f, timeUsedToScale, s_graphBounds.mins.y, s_graphBounds.maxs.y);
+
+		Rgba currColor = s_graphGreenColor;
+		if (currTime > (1.f / 55.f)) // Less than 55 fps
+		{
+			currColor = s_graphYellowColor;
+		}
+		else if (currTime > (1.f / 30.f)) // Less than 30 fps
+		{
+			currColor = s_graphRedColor;
+		}
+
+		Rgba nextColor = s_graphGreenColor;
+		if (nextTime > (1.f / 55.f)) // Less than 55 fps
+		{
+			nextColor = s_graphYellowColor;
+		}
+		else if (nextTime > (1.f / 30.f)) // Less than 30 fps
+		{
+			nextColor = s_graphRedColor;
+		}
+
+		mb.SetColor(nextColor);
+		mb.PushVertex(Vector3(nextX, graphOffset.y, 0.f));
+		mb.SetColor(currColor);
+		mb.PushVertex(Vector3(currX, graphOffset.y, 0.f));
+		mb.PushVertex(Vector3(currX, currY, 0.f));
+
+		mb.SetColor(nextColor);
+		mb.PushVertex(Vector3(nextX, graphOffset.y, 0.f));
+		mb.SetColor(currColor);
+		mb.PushVertex(Vector3(currX, currY, 0.f));
+		mb.SetColor(nextColor);
+		mb.PushVertex(Vector3(nextX, nextY, 0.f));
+	}
+
+	mb.FinishBuilding();
+	mb.UpdateMesh(*s_graphMesh);
+
+	renderer->DrawMeshWithMaterial(s_graphMesh, material);
+
+	renderer->Draw2DQuad(s_graphDetailsBorderBounds,	AABB2::UNIT_SQUARE_OFFCENTER, s_borderColor,		material);
+	renderer->Draw2DQuad(s_graphDetailsBounds,			AABB2::UNIT_SQUARE_OFFCENTER, s_backgroundColor,	material);
+
+	// Graph details
+	if (m_reports[0] != nullptr)
+	{
+		float currTime = (float) TimeSystem::PerformanceCountToSeconds(m_reports[0]->m_rootEntry->m_totalTime);
+		float drawY =  RangeMapFloat(currTime, 0.f, timeUsedToScale, s_graphBorderBounds.mins.y, s_graphBorderBounds.maxs.y);
+		renderer->DrawText2D(Stringf("%.2f ms", currTime * 1000.f), Vector2(s_graphBorderBounds.maxs.x, drawY), s_viewDataFontSize, font, s_fontHighlightColor);
+	}
 }
 
 
@@ -451,7 +553,7 @@ void Profiler::RenderData() const
 	std::string headingText = Stringf("%-*s%-*s%-*s%-*s%-*s%-*s", 
 		44, "FUNCTION NAME", 8, "CALLS", 10, "% TOTAL", 10, "TIME", 10, "% SELF", 10, "TIME");
 	
-	renderer->DrawTextInBox2D(headingText, s_viewHeadingBounds, Vector2::ZERO, s_viewHeadingFontSize, TEXT_DRAW_OVERRUN, font, s_fontColor);
+	renderer->DrawTextInBox2D(headingText, s_viewHeadingBounds, Vector2::ZERO, s_viewHeadingFontSize, TEXT_DRAW_OVERRUN, font, s_fontHighlightColor);
 
 
 	// Render all the report entries
