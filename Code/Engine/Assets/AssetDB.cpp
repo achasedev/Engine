@@ -141,7 +141,7 @@ void AssetDB::CreateMaterials()
 	AssetCollection<Material>::AddAsset("Debug_Render", debugMaterial);
 
 	Material* defaultMaterial = new Material("Default_Opaque");
-	defaultMaterial->SetDiffuse(AssetDB::GetTexture("Default"));
+	defaultMaterial->SetDiffuse(AssetDB::GetTexture("White"));
 	defaultMaterial->SetShader(AssetDB::GetShader(ShaderSource::DEFAULT_OPAQUE_NAME));
 
 	AssetCollection<Material>::AddAsset("Default_Opaque", defaultMaterial);

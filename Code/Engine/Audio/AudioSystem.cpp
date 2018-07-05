@@ -275,8 +275,6 @@ void AudioSystem::LoadAudioGroupFile(const std::string& filepath)
 }
 
 
-#endif // !defined( ENGINE_DISABLE_AUDIO )
-
 
 // AudioGroup class
 
@@ -346,3 +344,5 @@ SoundID AudioGroup::GetRandomSound()
 	m_lastSoundPlayed = soundToReturn;
 	return soundToReturn;
 }
+
+#endif // !defined( ENGINE_DISABLE_AUDIO )

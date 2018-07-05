@@ -17,6 +17,13 @@ enum eReportType
 	NUM_REPORT_TYPES
 };
 
+enum eSortOrder
+{
+	REPORT_SORT_TOTAL_TIME,
+	REPORT_SORT_SELF_TIME,
+	NUM_REPORT_SORT_ORDERS
+};
+
 class ProfileReport
 {
 public:
@@ -25,8 +32,8 @@ public:
 	ProfileReport(int frameNumber);
 	~ProfileReport();
 
-	void InitializeAsTreeReport(ProfileMeasurement* stack);
-	void InitializeAsFlatReport(ProfileMeasurement* stack);
+	void InitializeAsFlatReport(ProfileMeasurement* stack, eSortOrder sortOrder);
+	void InitializeAsTreeReport(ProfileMeasurement* stack, eSortOrder sortOrder);
 
 	void Finalize();
 
@@ -37,4 +44,5 @@ public:
 	unsigned int			m_frameNumber;
 	eReportType				m_type;
 	ProfileReportEntry*		m_rootEntry;
+	eSortOrder				m_sortOrder;
 };

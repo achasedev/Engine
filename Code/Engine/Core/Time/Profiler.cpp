@@ -4,6 +4,8 @@
 /* Date: June 30th, 2018
 /* Description: Implementation of the Profiler class
 /************************************************************************/
+#include "Game/Framework/EngineBuildPreferences.hpp" // Only game code in engine
+
 #include "Engine/Core/Gif.hpp"
 #include "Engine/Assets/AssetDB.hpp"
 #include "Engine/Core/Time/Time.hpp"
@@ -18,6 +20,8 @@
 #include "Engine/Core/Time/ProfileReportEntry.hpp"
 #include "Engine/Core/DeveloperConsole/Command.hpp"
 #include "Engine/Rendering/Materials/MaterialInstance.hpp"
+
+#ifdef PROFILING_ENABLED
 
 // Singleton instance
 Profiler*			Profiler::s_instance = nullptr;	
@@ -63,6 +67,7 @@ Rgba				Profiler::s_graphRedColor = Rgba(255, 0, 0, 150);
 Rgba				Profiler::s_graphYellowColor = Rgba(255, 255, 0, 150);
 Rgba				Profiler::s_graphGreenColor = Rgba(0, 255, 0, 150);
 Rgba				Profiler::s_graphSelectionColor = Rgba(15, 60, 200, 220);
+Rgba				Profiler::s_fpsTextColor;
 
 Mesh*				Profiler::s_graphMesh = nullptr;
 Gif*				Profiler::s_rottyTopsGif = nullptr;
@@ -78,18 +83,22 @@ void Command_ProfilerShow(Command& cmd);
 void Command_ProfilerHide(Command& cmd);
 void Command_ProfilerPause(Command& cmd);
 void Command_ProfilerResume(Command& cmd);
+void Command_ProfilerReportType(Command& cmd);
+void Command_ProfilerSortOrder(Command& cmd);
 
 //-----------------------------------------------------------------------------------------------
 // Constructor
 //
 Profiler::Profiler()
 	: m_generatingReportType(REPORT_TYPE_TREE)
+	, m_reportSortOrder(REPORT_SORT_TOTAL_TIME)
 	, m_isOpen(false)
 	, m_isPaused(false)
 	, m_currentFrameNumber(0)
 	, m_firstSelectionIndex(-1)
 	, m_secondSelectionIndex(-1)
 	, m_isSelectingFrames(false)
+	, m_framesPerSecond(0.f)
 {
 	// Initialize all reports to nullptr
 	for (int i = 0; i < PROFILER_MAX_REPORT_COUNT; ++i)
@@ -221,10 +230,13 @@ void Profiler::InitializeUILayout()
 //
 void Profiler::InitializeConsoleCommands()
 {
-	Command::Register("profiler_show",		"Enables Profiler rendering.",				Command_ProfilerShow);
-	Command::Register("profiler_hide",		"Disables Profiler rendering.",				Command_ProfilerHide);
-	Command::Register("profiler_pause",		"Pauses the profiler report generation.",	Command_ProfilerPause);
-	Command::Register("profiler_resume",	"Resumes the profiler report generation.",	Command_ProfilerResume);
+	Command::Register("profiler_show",			"Enables Profiler rendering.",								Command_ProfilerShow);
+	Command::Register("profiler_hide",			"Disables Profiler rendering.",								Command_ProfilerHide);
+	Command::Register("profiler_pause",			"Pauses the profiler report generation.",					Command_ProfilerPause);
+	Command::Register("profiler_resume",		"Resumes the profiler report generation.",					Command_ProfilerResume);
+	Command::Register("profiler_report_type",	"Sets the profiler report type to the one specified",		Command_ProfilerReportType);
+	Command::Register("profiler_sort_order",	"Sets the profiler child sort order to the one provided.",	Command_ProfilerSortOrder);
+
 }
 
 
@@ -300,6 +312,17 @@ void Profiler::BeginFrame()
 	{
 		float frameTime = (float) TimeSystem::PerformanceCountToSeconds(s_instance->m_measurements[1]->GetTotalTime_Inclusive());
 		s_instance->m_framesPerSecond = (1.0f / frameTime);
+
+		// Color the FPS text
+		s_fpsTextColor = s_graphRedColor;
+		if (s_instance->m_framesPerSecond > 55.f)
+		{
+			s_fpsTextColor = s_graphGreenColor;
+		}
+		else if (s_instance->m_framesPerSecond > 30.f)
+		{
+			s_fpsTextColor = s_graphYellowColor;
+		}
 	}
 }
 
@@ -334,7 +357,6 @@ void Profiler::ProcessMouseInput()
 	}
 
 	// Mouse overs
-
 }
 
 
@@ -363,7 +385,7 @@ void Profiler::ProcessLeftClick()
 	}
 	else if (mouse.IsButtonPressed(MOUSEBUTTON_LEFT))
 	{
-		if (m_isSelectingFrames)
+		if (m_isSelectingFrames && s_graphBounds.IsPointInside(mousePos))
 		{
 			int index = RoundToNearestInt(RangeMapFloat(mousePos.x, s_graphBounds.maxs.x, s_graphBounds.mins.x, 0.f, PROFILER_MAX_REPORT_COUNT - 1.f));
 			index = ClampInt(index, 0, PROFILER_MAX_REPORT_COUNT - 1);
@@ -395,6 +417,7 @@ void Profiler::ProcessKeyboardInput()
 {
 	InputSystem* input = InputSystem::GetInstance();
 
+	// Mouse visibility
 	if (input->WasKeyJustPressed('M'))
 	{
 		Mouse& mouse = InputSystem::GetMouse();
@@ -403,6 +426,32 @@ void Profiler::ProcessKeyboardInput()
 		mouse.ShowMouseCursor(!wasShown);
 		mouse.LockCursorToClient(!wasShown);
 		mouse.SetCursorMode(wasShown ? CURSORMODE_RELATIVE : CURSORMODE_ABSOLUTE);
+	}
+
+	// Entry order
+	if (input->WasKeyJustPressed('L'))
+	{
+		if (m_reportSortOrder == REPORT_SORT_TOTAL_TIME)
+		{
+			SetReportSortingOrder(REPORT_SORT_SELF_TIME);
+		}
+		else
+		{
+			SetReportSortingOrder(REPORT_SORT_TOTAL_TIME);
+		}
+	}
+
+	// Report type
+	if (input->WasKeyJustPressed('V'))
+	{
+		if (m_generatingReportType == REPORT_TYPE_TREE)
+		{
+			SetGeneratingReportType(REPORT_TYPE_FLAT);
+		}
+		else
+		{
+			SetGeneratingReportType(REPORT_TYPE_TREE);
+		}
 	}
 }
 
@@ -460,6 +509,22 @@ void Profiler::SetGeneratingReportType(eReportType reportType)
 	s_instance->m_generatingReportType = reportType;
 
 	if (typeChanged)
+	{
+		s_instance->FlushReports();
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the sorting order of all reports to the one specified
+//
+void Profiler::SetReportSortingOrder(eSortOrder order)
+{
+	bool orderChanged = s_instance->m_reportSortOrder != order;
+	s_instance->m_reportSortOrder = order;
+
+	// Update all the reports to be the new order
+	if (orderChanged)
 	{
 		s_instance->FlushReports();
 	}
@@ -593,6 +658,61 @@ float Profiler::GetAverageTotalTime(int index1, int index2) const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns a report that show the accumulated time and percentages of all reports within the indices
+//
+ProfileReport* Profiler::GetAccumulatedReport(int firstIndex, int secondIndex) const
+{
+	int startIndex;
+	int endIndex;
+
+	if (firstIndex > secondIndex)
+	{
+		startIndex = secondIndex;
+		endIndex = firstIndex;
+	}
+	else
+	{
+		startIndex = firstIndex;
+		endIndex = secondIndex;
+	}
+
+	ProfileReport* report = new ProfileReport(-1);
+	report->m_rootEntry = new ProfileReportEntry("Frame");
+
+	for (int reportIndex = startIndex; reportIndex <= endIndex; ++reportIndex)
+	{
+		ProfileReport* currReport = m_reports[reportIndex];
+		if (currReport == nullptr) { break; }
+
+		AddEntryInfoRecursive(currReport->m_rootEntry, report->m_rootEntry);
+	}
+
+
+	report->Finalize();
+	return report;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Recursively accumulates all entry data from the source to the destination
+//
+void Profiler::AddEntryInfoRecursive(ProfileReportEntry* srcEntry, ProfileReportEntry* dstEntry) const
+{
+	dstEntry->AccumulateData(srcEntry);
+
+	for (int srcChildIndex = 0; srcChildIndex < (int) srcEntry->m_children.size(); ++srcChildIndex)
+	{
+		ProfileReportEntry* currSrcChild = srcEntry->m_children[srcChildIndex];
+		std::string srcChildName = currSrcChild->m_name;
+
+		ProfileReportEntry* currDstChild = dstEntry->GetOrCreateReportEntryForChild(srcChildName);
+
+		AddEntryInfoRecursive(currSrcChild, currDstChild);
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Builds the report to represent the given performance frame
 //
 ProfileReport* Profiler::BuildReportForFrame(ProfileMeasurement* stack)
@@ -602,10 +722,10 @@ ProfileReport* Profiler::BuildReportForFrame(ProfileMeasurement* stack)
 	switch (s_instance->m_generatingReportType)
 	{
 	case REPORT_TYPE_TREE:
-		report->InitializeAsTreeReport(stack);
+		report->InitializeAsTreeReport(stack, s_instance->m_reportSortOrder);
 		break;
 	case REPORT_TYPE_FLAT:
-		report->InitializeAsFlatReport(stack);
+		report->InitializeAsFlatReport(stack, s_instance->m_reportSortOrder);
 		break;
 	default:
 		break;
@@ -671,14 +791,14 @@ void Profiler::RenderTitleInfo() const
 
 	// Title bounds
 	renderer->Draw2DQuad(s_titleBorderBounds,	AABB2::UNIT_SQUARE_OFFCENTER, s_borderColor,		material);
-	renderer->Draw2DQuad(s_titleBounds,			AABB2::UNIT_SQUARE_OFFCENTER, s_backgroundColor,		material);
+	renderer->Draw2DQuad(s_titleBounds,			AABB2::UNIT_SQUARE_OFFCENTER, s_backgroundColor,	material);
 												
 	// Fps bounds								
 	renderer->Draw2DQuad(s_fpsBorderBounds,		AABB2::UNIT_SQUARE_OFFCENTER, s_borderColor,		material);
-	renderer->Draw2DQuad(s_fpsBounds,			AABB2::UNIT_SQUARE_OFFCENTER, s_backgroundColor,		material);
+	renderer->Draw2DQuad(s_fpsBounds,			AABB2::UNIT_SQUARE_OFFCENTER, s_backgroundColor,	material);
 												
 	// Frame count bounds						
-	renderer->Draw2DQuad(s_frameBorderBounds,	AABB2::UNIT_SQUARE_OFFCENTER, s_borderColor,		material);
+	renderer->Draw2DQuad(s_frameBorderBounds,	AABB2::UNIT_SQUARE_OFFCENTER, s_borderColor,	material);
 	renderer->Draw2DQuad(s_frameBounds,			AABB2::UNIT_SQUARE_OFFCENTER, s_backgroundColor, material);
 
 	// Text
@@ -686,8 +806,8 @@ void Profiler::RenderTitleInfo() const
 	std::string fpsText		= Stringf("FPS: %*.2f",		8,	m_framesPerSecond);
 
 	renderer->DrawTextInBox2D("PROFILER",	s_titleBounds,		Vector2::ZERO, s_titleFontSize,		TEXT_DRAW_OVERRUN, font, s_fontHighlightColor);
-	renderer->DrawTextInBox2D(frameText,	s_frameBounds,		Vector2::ZERO, s_fpsFrameFontSize,	TEXT_DRAW_OVERRUN, font, s_fontHighlightColor);
-	renderer->DrawTextInBox2D(fpsText,		s_fpsBounds,		Vector2::ZERO, s_fpsFrameFontSize,	TEXT_DRAW_OVERRUN, font, s_fontHighlightColor);
+	renderer->DrawTextInBox2D(frameText,	s_frameBounds,		Vector2::ZERO, s_fpsFrameFontSize,	TEXT_DRAW_OVERRUN, font, s_fontHighlightColor);	
+	renderer->DrawTextInBox2D(fpsText,		s_fpsBounds,		Vector2::ZERO, s_fpsFrameFontSize,	TEXT_DRAW_OVERRUN, font, s_fpsTextColor);
 
 	// RottyTops!
 	s_rottyTopsMaterial->SetDiffuse(s_rottyTopsGif->GetNextFrame());
@@ -798,7 +918,7 @@ void Profiler::RenderGraph() const
 		if (m_firstSelectionIndex == m_secondSelectionIndex)
 		{
 			float x = graphOffset.x - (graphDimensions.x * m_firstSelectionIndex * (1.f / (PROFILER_MAX_REPORT_COUNT - 1)));
-			renderer->DrawLine(Vector3(x, s_graphBounds.mins.y, 0.f), s_graphRedColor, Vector3(x, s_graphBounds.maxs.y, 0.f), s_graphRedColor);
+			renderer->DrawLine(Vector3(x, s_graphBounds.mins.y, 0.f), s_graphSelectionColor, Vector3(x, s_graphBounds.maxs.y, 0.f), s_graphSelectionColor);
 		}
 		else // Otherwise draw a quad for the selection
 		{
@@ -825,9 +945,40 @@ void Profiler::RenderGraph() const
 	if (m_reports[0] != nullptr && !m_isSelectingFrames)
 	{
 		float currTime = (float) TimeSystem::PerformanceCountToSeconds(m_reports[0]->m_rootEntry->m_totalTime);
-		float drawY =  RangeMapFloat(currTime, 0.f, timeUsedToScale, s_graphBorderBounds.mins.y, s_graphBorderBounds.maxs.y);
-		renderer->DrawText2D(Stringf("%.2f ms", currTime * 1000.f), Vector2(s_graphBorderBounds.maxs.x, drawY), s_viewDataFontSize, font, s_fontHighlightColor);
+		float drawY = RangeMapFloat(currTime, 0.f, timeUsedToScale, s_graphBorderBounds.mins.y, s_graphBorderBounds.maxs.y);
+		renderer->DrawText2D(Stringf("%.2f ms", currTime * 1000.f), Vector2(s_graphDetailsBounds.mins.x, drawY), s_viewDataFontSize, font, s_fpsTextColor);
 	}
+
+	Mouse& mouse = InputSystem::GetMouse();
+	std::string detailText;
+	if (mouse.IsCursorShown())
+	{
+		detailText = "Mouse: SHOWN\n";
+	}
+	else
+	{
+		detailText = "Mouse: HIDDEN\n";
+	}
+
+	if (m_generatingReportType == REPORT_TYPE_FLAT)
+	{
+		detailText += "View: FLAT\n";
+	}
+	else
+	{
+		detailText += "View: TREE\n";
+	}
+
+	if (m_reportSortOrder == REPORT_SORT_SELF_TIME)
+	{
+		detailText += "Sort: SELF";
+	}
+	else
+	{
+		detailText += "Sort: TOTAL";
+	}
+
+	renderer->DrawTextInBox2D(detailText, s_graphDetailsBounds, Vector2::ONES, s_viewDataFontSize, TEXT_DRAW_OVERRUN, font, s_fontColor);
 
 	// Show average of selection
 	float averageTime;
@@ -867,11 +1018,20 @@ void Profiler::RenderData() const
 
 
 	// Render all the report entries
-	ProfileReport* report = m_reports[0];
-	if (report == nullptr) { return; }
-
 	AABB2 entryBounds = AABB2(Vector2(s_viewDataBounds.mins.x, s_viewDataBounds.maxs.y - s_viewDataFontSize), s_viewDataBounds.maxs);
-	RecursivelyPrintEntry(0, entryBounds, report->m_rootEntry);
+
+	if (m_isSelectingFrames) // Display the data from the selected frames
+	{
+		ProfileReport* report = GetAccumulatedReport(m_firstSelectionIndex, m_secondSelectionIndex);
+		RecursivelyPrintEntry(0, entryBounds, report->m_rootEntry);
+		delete report;
+	}
+	else // Display the data from the root of the last report
+	{
+		ProfileReport* report = m_reports[0];
+		if (report == nullptr) { return; }
+		RecursivelyPrintEntry(0, entryBounds, report->m_rootEntry);
+	}
 }
 
 
@@ -992,3 +1152,115 @@ void Command_ProfilerResume(Command& cmd)
 	Profiler::Resume();
 	ConsolePrintf(Rgba::GREEN, "Profiler resumed.");
 }
+
+
+//-----------------------------------------------------------------------------------------------
+// Switches the report view to the one specified
+//
+void Command_ProfilerReportType(Command& cmd)
+{
+	std::string typeText;
+	bool specified = cmd.GetParam("t", typeText);
+
+	if (!specified)
+	{
+		ConsoleWarningf("Defaulting profiler to tree view.");
+		Profiler::SetGeneratingReportType(REPORT_TYPE_TREE);
+	}
+	else
+	{
+		if (typeText == "flat")
+		{
+			ConsoleWarningf("Setting profiler to flat view.");
+			Profiler::SetGeneratingReportType(REPORT_TYPE_FLAT);
+		}
+		else if (typeText == "tree")
+		{
+			ConsoleWarningf("Setting profiler to tree view.");
+			Profiler::SetGeneratingReportType(REPORT_TYPE_TREE);
+		}
+		else
+		{
+			ConsoleWarningf("Unknown type given, defaulting profiler to tree view.");
+			Profiler::SetGeneratingReportType(REPORT_TYPE_TREE);
+		}
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the sorting order flag on the Profiler to the one specified
+//
+void Command_ProfilerSortOrder(Command& cmd)
+{
+	std::string orderText;
+	bool specified = cmd.GetParam("t", orderText);
+
+	if (!specified)
+	{
+		ConsoleWarningf("Defaulting profiler to total time sort order (descending).");
+		Profiler::SetReportSortingOrder(REPORT_SORT_TOTAL_TIME);
+	}
+	else
+	{
+		if (orderText == "self")
+		{
+			ConsoleWarningf("Setting profiler to self time sort order (descending)");
+			Profiler::SetReportSortingOrder(REPORT_SORT_SELF_TIME);
+		}
+		else if (orderText == "total")
+		{
+			ConsoleWarningf("Setting profiler total time sort order (descending).");
+			Profiler::SetReportSortingOrder(REPORT_SORT_TOTAL_TIME);
+		}
+		else
+		{
+			ConsoleWarningf("Unknown type given, defaulting profiler to total time sort order (descending).");
+			Profiler::SetReportSortingOrder(REPORT_SORT_TOTAL_TIME);
+		}
+	}
+}
+
+
+#else // If not defined, put empty stubs for all functions
+
+Profiler::Profiler() {}
+Profiler::~Profiler() {}
+
+#pragma warning(push)
+#pragma warning(disable: 4100) // Ignore unused variable warnings
+void				Profiler::Initialize() {}
+void				Profiler::InitializeUILayout() {}
+void				Profiler::InitializeConsoleCommands() {}
+void				Profiler::Shutdown() {}
+void				Profiler::BeginFrame() {}
+void				Profiler::ProcessInput() {}
+void				Profiler::ProcessMouseInput() {}
+void				Profiler::ProcessLeftClick() {}
+void				Profiler::ProcessRightClick() {}
+void				Profiler::ProcessKeyboardInput() {}
+void				Profiler::Render() {}
+void				Profiler::EndFrame() {}											
+void				Profiler::PushMeasurement(const char* name) {}
+void				Profiler::PopMeasurement() {}
+void				Profiler::SetGeneratingReportType(eReportType reportType) {}
+void				Profiler::Show() {}
+void				Profiler::Hide() {}
+void				Profiler::Pause() {}
+void				Profiler::Resume() {}
+void				Profiler::SetSelectionState(int firstIndex, int secondIndex, bool isSelecting) {}
+bool				Profiler::IsProfilerOpen() { return false; }
+Profiler*			Profiler::GetInstance() { return nullptr; }
+float				Profiler::GetAverageTotalTime(int startIndex, int endIndex) const { return 0.f; }
+ProfileReport*		Profiler::GetAccumulatedReport(int firstIndex, int secondIndex) const { return nullptr; }
+void				Profiler::AddEntryInfoRecursive(ProfileReportEntry* sourceEntry, ProfileReportEntry* destinationEntry) const {}
+ProfileReport*		Profiler::BuildReportForFrame(ProfileMeasurement* stack) { return nullptr; }
+void				Profiler::PushReport(ProfileReport* report) {}
+void				Profiler::FlushReports() {} 
+void				Profiler::RenderTitleInfo() const {}
+void				Profiler::RenderGraph() const {}
+void				Profiler::RenderData() const {}
+void				Profiler::RecursivelyPrintEntry(unsigned int indent, AABB2& drawBounds, ProfileReportEntry* entry) const {}
+
+#pragma warning(pop)
+#endif // PROFILING_ENABLED

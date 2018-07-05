@@ -51,7 +51,7 @@ public:
 			bool succeeded = SetFromText(m_arguments[flag], out_value);
 			if (!succeeded)
 			{
-				ConsoleErrorf("Could parse parameter value \"%s\" for flag \"-%s\"", m_arguments[flag].c_str(), flag.c_str());
+				ConsoleErrorf("Couldn't parse parameter value \"%s\" for flag \"-%s\"", m_arguments[flag].c_str(), flag.c_str());
 
 				if (defaultValue != nullptr)
 				{

@@ -38,7 +38,7 @@ void Pose::SetBoneTransform(unsigned int index, const Matrix44& transform)
 
 void Pose::ConstructGlobalMatrices()
 {
-	for (int boneIndex = 0; boneIndex < m_boneCount; ++boneIndex)
+	for (int boneIndex = 0; boneIndex < (int) m_boneCount; ++boneIndex)
 	{	
 		BoneData_t boneData = m_baseSkeleton->GetBoneData(boneIndex);
 

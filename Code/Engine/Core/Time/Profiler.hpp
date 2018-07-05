@@ -42,6 +42,7 @@ public:
 	static void									PushMeasurement(const char* name);
 	static void									PopMeasurement();
 	static void									SetGeneratingReportType(eReportType reportType);
+	static void									SetReportSortingOrder(eSortOrder order);
 
 	static void									Show();
 	static void									Hide();
@@ -57,7 +58,8 @@ public:
 
 	// Producers
 	float										GetAverageTotalTime(int startIndex, int endIndex) const;
-
+	ProfileReport*								GetAccumulatedReport(int firstIndex, int secondIndex) const;
+	void											AddEntryInfoRecursive(ProfileReportEntry* sourceEntry, ProfileReportEntry* destinationEntry) const;
 
 private:
 	//-----Private Methods-----
@@ -88,6 +90,7 @@ private:
 
 	// Reports, 0 is always the latest
 	eReportType				m_generatingReportType;
+	eSortOrder				m_reportSortOrder;
 	ProfileReport*			m_reports[PROFILER_MAX_REPORT_COUNT]; // Parallel array to measurement, but LAGS BEHIND ONE FRAME (report at 0 is measurement 1)
 
 	// State
@@ -142,6 +145,7 @@ private:
 	static Rgba s_graphYellowColor;
 	static Rgba s_graphGreenColor;
 	static Rgba s_graphSelectionColor;
+	static Rgba s_fpsTextColor;
 
 	static Mesh* s_graphMesh;
 

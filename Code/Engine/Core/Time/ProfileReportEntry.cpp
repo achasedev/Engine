@@ -58,13 +58,12 @@ void ProfileReportEntry::PopulateTree(ProfileMeasurement* measurement)
 //
 void ProfileReportEntry::PopulateFlat(ProfileMeasurement* measurement)
 {
+	ProfileReportEntry* currEntry = GetOrCreateReportEntryForChild(measurement->m_name);
+	currEntry->AccumulateData(measurement);
+
 	for (int childIndex = 0; childIndex < (int) measurement->m_children.size(); ++childIndex)
 	{
-		ProfileMeasurement* childMeasurement = measurement->m_children[childIndex];
-		ProfileReportEntry* childEntry = GetOrCreateReportEntryForChild(childMeasurement->m_name);
-
-		childEntry->AccumulateData(childMeasurement);
-		PopulateFlat(childMeasurement);
+		PopulateFlat(measurement->m_children[childIndex]);
 	}
 }
 
@@ -77,6 +76,17 @@ void ProfileReportEntry::AccumulateData(ProfileMeasurement* measurement)
 	m_callCount++;
 	m_totalTime += measurement->GetTotalTime_Inclusive();
 	m_selfTime	+= measurement->GetTotalTime_Exclusive();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Accumulates the data from the given report entry on this entry
+//
+void ProfileReportEntry::AccumulateData(ProfileReportEntry* entry)
+{
+	m_callCount += entry->m_callCount;
+	m_totalTime += entry->m_totalTime;
+	m_selfTime += entry->m_selfTime;
 }
 
 
@@ -121,19 +131,54 @@ void ProfileReportEntry::RecursivelyCalculatePercentTimes(double frameDurationSe
 
 
 //-----------------------------------------------------------------------------------------------
+// Sorts each node's children in descending order by self time, for printing
+//
+void ProfileReportEntry::RecursivelySortChildrenBySelfTIme()
+{
+	// Sort this node's children in descending order by self time
+	bool done = false;
+	while (!done)
+	{
+		done = true;
+
+		for (int startIndex = 0; startIndex < (int) m_children.size() - 1; ++startIndex)
+		{
+			if (m_children[startIndex]->m_selfTime < m_children[startIndex + 1]->m_selfTime)
+			{
+				done = false;
+				ProfileReportEntry* temp = m_children[startIndex + 1];
+				m_children[startIndex + 1] = m_children[startIndex];
+				m_children[startIndex] = temp;
+			}
+		}
+	}
+
+	// Recursively sort the children's children
+	for (int index = 0; index < (int) m_children.size(); ++index)
+	{
+		m_children[index]->RecursivelySortChildrenBySelfTIme();
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Sorts each node's children in descending order by total time, for printing
 //
 void ProfileReportEntry::RecursivelySortChildrenByTotalTime()
 {
 	// Sort this node's children in descending order by total time
-	for (int endIndex = (int) m_children.size() - 1; endIndex > 0; --endIndex)
+	bool done = false;
+	while (!done)
 	{
-		for (int startIndex = 0; startIndex < endIndex; ++startIndex)
+		done = true;
+
+		for (int startIndex = 0; startIndex < (int) m_children.size() - 1; ++startIndex)
 		{
 			if (m_children[startIndex]->m_totalTime < m_children[startIndex + 1]->m_totalTime)
 			{
-				ProfileReportEntry* temp = m_children[endIndex];
-				m_children[endIndex] = m_children[startIndex];
+				done = false;
+				ProfileReportEntry* temp = m_children[startIndex + 1];
+				m_children[startIndex + 1] = m_children[startIndex];
 				m_children[startIndex] = temp;
 			}
 		}

@@ -26,8 +26,11 @@ public:
 
 	// Mutators
 	void												AccumulateData(ProfileMeasurement* measurement);
+	void												AccumulateData(ProfileReportEntry* entry);
 	ProfileReportEntry*									GetOrCreateReportEntryForChild(const std::string childName);
 	void												RecursivelyCalculatePercentTimes(double frameDurationSeconds);
+	
+	void												RecursivelySortChildrenBySelfTIme();
 	void												RecursivelySortChildrenByTotalTime();
 
 	std::string											GetAsStringForUI(unsigned int indent) const;
