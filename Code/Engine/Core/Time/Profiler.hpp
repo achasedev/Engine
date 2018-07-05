@@ -41,13 +41,14 @@ public:
 	// Mutators											
 	static void									PushMeasurement(const char* name);
 	static void									PopMeasurement();
-	static void									SetReportGeneration(bool shouldGenerate, eReportType reportType);
+	static void									SetGeneratingReportType(eReportType reportType);
 
 	static void									Show();
 	static void									Hide();
-	static bool									Toggle();
 	static void									Pause();
 	static void									Resume();
+
+	void										SetSelectionState(int firstIndex, int secondIndex, bool isSelecting);
 
 
 	// Accessors
@@ -69,14 +70,14 @@ private:
 	static ProfileReport*						BuildReportForFrame(ProfileMeasurement* stack);
 	void										PushReport(ProfileReport* report);
 
-	void										UpdateReports(); // Used when we need to regenerate all the reports at once, for starting generation or switching types
+	void										FlushReports(); // Used when we need to regenerate all the reports at once, for starting generation or switching types
 
 
 	// UI Rendering
 	void										RenderTitleInfo() const;
 	void										RenderGraph() const;
 	void										RenderData() const;
-	void											ConstructDataString(unsigned int indent, std::string& out_string, ProfileReportEntry* entry) const;
+	void											RecursivelyPrintEntry(unsigned int indent, AABB2& drawBounds, ProfileReportEntry* entry) const;
 
 
 private:
@@ -91,7 +92,7 @@ private:
 
 	// State
 	bool					m_isOpen;
-	bool					m_isGeneratingReports;
+	bool					m_isPaused;
 	int						m_currentFrameNumber;
 	float					m_framesPerSecond;
 

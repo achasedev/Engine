@@ -85,7 +85,7 @@ void Command_ProfilerResume(Command& cmd);
 Profiler::Profiler()
 	: m_generatingReportType(REPORT_TYPE_TREE)
 	, m_isOpen(false)
-	, m_isGeneratingReports(false)
+	, m_isPaused(false)
 	, m_currentFrameNumber(0)
 	, m_firstSelectionIndex(-1)
 	, m_secondSelectionIndex(-1)
@@ -287,7 +287,7 @@ void Profiler::BeginFrame()
 	}
 
 	// Making a report for the last frame before starting the report generation of the previous frame
-	if (s_instance->m_measurements[1] != nullptr && s_instance->m_isGeneratingReports)
+	if (s_instance->m_measurements[1] != nullptr && !s_instance->m_isPaused && s_instance->m_isOpen)
 	{
 		ProfileReport* report = BuildReportForFrame(s_instance->m_measurements[1]);
 		s_instance->PushReport(report);
@@ -353,14 +353,12 @@ void Profiler::ProcessLeftClick()
 		if (s_graphBounds.IsPointInside(mousePos))
 		{
 			Pause();
-			m_isSelectingFrames = true;
 
 			// Find which report to display based on where the click happened
 			int index = RoundToNearestInt(RangeMapFloat(mousePos.x, s_graphBounds.maxs.x, s_graphBounds.mins.x, 0.f, PROFILER_MAX_REPORT_COUNT - 1.f));
 
 			// Display that report
-			m_firstSelectionIndex = index;
-			m_secondSelectionIndex = index;
+			SetSelectionState(index, index, true);
 		}
 	}
 	else if (mouse.IsButtonPressed(MOUSEBUTTON_LEFT))
@@ -386,14 +384,7 @@ void Profiler::ProcessRightClick()
 	// Find out where the mouse was located
 	Vector2 mousePos = mouse.GetCursorUIPosition();
 
-	if (s_graphBounds.IsPointInside(mousePos))
-	{
-		Resume();
-
-		m_firstSelectionIndex = -1;
-		m_secondSelectionIndex = -1;
-		m_isSelectingFrames = false;
-	}
+	Resume();
 }
 
 
@@ -463,20 +454,14 @@ void Profiler::PopMeasurement()
 // Sets whether we should be generating new reports or not
 // If starting generation, it will regenerate all reports
 //
-void Profiler::SetReportGeneration(bool shouldGenerate, eReportType reportType)
+void Profiler::SetGeneratingReportType(eReportType reportType)
 {
-	// Get switched state
-	bool justStartedGenerating = (shouldGenerate && !s_instance->m_isGeneratingReports);
-	bool justSwitchedType = (shouldGenerate && s_instance->m_isGeneratingReports && s_instance->m_generatingReportType != reportType);
-
-	// Update state
+	bool typeChanged = s_instance->m_generatingReportType != reportType;
 	s_instance->m_generatingReportType = reportType;
-	s_instance->m_isGeneratingReports = shouldGenerate;
 
-	// Check to generate the report list
-	if (justStartedGenerating || justSwitchedType)
+	if (typeChanged)
 	{
-		s_instance->UpdateReports();
+		s_instance->FlushReports();
 	}
 }
 
@@ -486,7 +471,16 @@ void Profiler::SetReportGeneration(bool shouldGenerate, eReportType reportType)
 //
 void Profiler::Show()
 {
+	bool wasShown  = s_instance->m_isOpen;
 	s_instance->m_isOpen = true;
+
+	// Update all the reports to be up to date if we weren't making reports previously
+	if (!wasShown)
+	{
+		s_instance->FlushReports();
+	}
+
+	s_instance->m_isPaused = false;
 }
 
 
@@ -496,17 +490,9 @@ void Profiler::Show()
 void Profiler::Hide()
 {
 	s_instance->m_isOpen = false;
-}
 
-
-//-----------------------------------------------------------------------------------------------
-// Toggles the open state of the Profiler, returning the new state
-//
-bool Profiler::Toggle()
-{
-	s_instance->m_isOpen = !s_instance->m_isOpen;
-
-	return s_instance->m_isOpen;
+	// Clean up state when we leave
+	s_instance->SetSelectionState(-1, -1, false);
 }
 
 
@@ -515,7 +501,7 @@ bool Profiler::Toggle()
 //
 void Profiler::Pause()
 {
-	SetReportGeneration(false, s_instance->m_generatingReportType);
+	s_instance->m_isPaused = true;
 }
 
 
@@ -524,7 +510,27 @@ void Profiler::Pause()
 //
 void Profiler::Resume()
 {
-	SetReportGeneration(true, s_instance->m_generatingReportType);
+	bool wasPaused = s_instance->m_isPaused;
+	s_instance->m_isPaused = false;
+
+	if (wasPaused)
+	{
+		s_instance->FlushReports();
+	}
+
+	// Disable selecting to clean up state
+	s_instance->SetSelectionState(-1, -1, false);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the profiler's selection state to match the given parameters
+//
+void Profiler::SetSelectionState(int firstIndex, int secondIndex, bool isSelecting)
+{
+	m_firstSelectionIndex = firstIndex;
+	m_secondSelectionIndex = secondIndex;
+	m_isSelectingFrames = isSelecting;
 }
 
 
@@ -634,7 +640,7 @@ void Profiler::PushReport(ProfileReport* report)
 //-----------------------------------------------------------------------------------------------
 // Constructs all the reports in the parallel report array to reflect the current measurement array
 //
-void Profiler::UpdateReports()
+void Profiler::FlushReports()
 {
 	for (int index = 0; index < PROFILER_MAX_REPORT_COUNT - 1; ++index)
 	{
@@ -864,31 +870,35 @@ void Profiler::RenderData() const
 	ProfileReport* report = m_reports[0];
 	if (report == nullptr) { return; }
 
-	std::string dataString;
-	ConstructDataString(0, dataString, report->m_rootEntry);
-
-	renderer->DrawTextInBox2D(dataString, s_viewDataBounds, Vector2::ZERO, s_viewDataFontSize, TEXT_DRAW_OVERRUN, font, s_fontColor);
+	AABB2 entryBounds = AABB2(Vector2(s_viewDataBounds.mins.x, s_viewDataBounds.maxs.y - s_viewDataFontSize), s_viewDataBounds.maxs);
+	RecursivelyPrintEntry(0, entryBounds, report->m_rootEntry);
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Prints the current entry on the list, and
 //
-void Profiler::ConstructDataString(unsigned int indent, std::string& out_string, ProfileReportEntry* entry) const
+void Profiler::RecursivelyPrintEntry(unsigned int indent, AABB2& drawBounds, ProfileReportEntry* entry) const
 {
 	std::string text = entry->GetAsStringForUI(indent);
+	Renderer* renderer = Renderer::GetInstance();
+	BitmapFont* font = AssetDB::GetBitmapFont("Data/Images/Fonts/ConsoleFont.png");
 
-	if (out_string.size() != 0)
+	// Light up if hovered over
+	Mouse& mouse = InputSystem::GetMouse();
+	Rgba drawColor = s_fontColor;
+	if (mouse.IsCursorShown() && drawBounds.IsPointInside(mouse.GetCursorUIPosition()))
 	{
-		out_string += "\n";
+		drawColor = s_fontHighlightColor;
 	}
 
-	out_string += text;
+	renderer->DrawTextInBox2D(text.c_str(), drawBounds, Vector2::ZERO, s_viewDataFontSize, TEXT_DRAW_OVERRUN, font, drawColor);
 
 	// Recursively call on children
+	drawBounds.Translate(Vector2(0.f, -s_viewDataFontSize));
 	for (int childIndex = 0; childIndex < (int) entry->m_children.size(); ++childIndex)
 	{
-		ConstructDataString(indent + 1, out_string, entry->m_children[childIndex]);
+		RecursivelyPrintEntry(indent + 1, drawBounds, entry->m_children[childIndex]);
 	}
 }
 
