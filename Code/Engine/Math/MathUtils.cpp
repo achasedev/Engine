@@ -424,6 +424,19 @@ float ClampFloatNegativeOneToOne(float inValue)
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the given vector clamped between the two bounds
+//
+Vector2 ClampVector2(const Vector2& inValue, const Vector2& minInclusive, const Vector2& maxInclusive)
+{
+	Vector2 result;
+	result.x = ClampFloat(inValue.x, minInclusive.x, maxInclusive.x);
+	result.y = ClampFloat(inValue.y, minInclusive.y, maxInclusive.y);
+
+	return result;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Finds the % (as fraction) of inValue in [rangeStart, rangeEnd]
 //
 float GetFractionInRange(float inValue, float rangeStart, float rangeEnd)

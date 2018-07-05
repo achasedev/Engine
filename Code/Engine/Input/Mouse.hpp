@@ -51,6 +51,7 @@ public:
 	// Accessors
 	IntVector2	GetCursorClientPosition();
 	IntVector2	GetCursorDesktopPosition();
+	Vector2		GetCursorUIPosition();
 	IntVector2	GetMouseDelta() const;
 	float		GetMouseWheelDelta() const;
 

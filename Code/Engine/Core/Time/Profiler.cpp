@@ -16,6 +16,7 @@
 #include "Engine/Rendering/Resources/Sampler.hpp"
 #include "Engine/Core/Time/ProfileMeasurement.hpp"
 #include "Engine/Core/Time/ProfileReportEntry.hpp"
+#include "Engine/Core/DeveloperConsole/Command.hpp"
 #include "Engine/Rendering/Materials/MaterialInstance.hpp"
 
 // Singleton instance
@@ -61,6 +62,7 @@ Rgba				Profiler::s_fontHighlightColor = Rgba(200, 200, 200, 255);
 Rgba				Profiler::s_graphRedColor = Rgba(255, 0, 0, 150);
 Rgba				Profiler::s_graphYellowColor = Rgba(255, 255, 0, 150);
 Rgba				Profiler::s_graphGreenColor = Rgba(0, 255, 0, 150);
+Rgba				Profiler::s_graphSelectionColor = Rgba(15, 60, 200, 220);
 
 Mesh*				Profiler::s_graphMesh = nullptr;
 Gif*				Profiler::s_rottyTopsGif = nullptr;
@@ -71,15 +73,23 @@ unsigned int	IncrementIndexWithWrapAround(unsigned int currentIndex);
 unsigned int	DecrementIndexWithWrapAround(unsigned int currentIndex);
 void			DestroyStack(ProfileMeasurement* stack);
 
+// Commands
+void Command_ProfilerShow(Command& cmd);
+void Command_ProfilerHide(Command& cmd);
+void Command_ProfilerPause(Command& cmd);
+void Command_ProfilerResume(Command& cmd);
 
 //-----------------------------------------------------------------------------------------------
 // Constructor
 //
 Profiler::Profiler()
 	: m_generatingReportType(REPORT_TYPE_TREE)
-	, m_isOpen(true)
-	, m_isGeneratingReports(true)
+	, m_isOpen(false)
+	, m_isGeneratingReports(false)
 	, m_currentFrameNumber(0)
+	, m_firstSelectionIndex(-1)
+	, m_secondSelectionIndex(-1)
+	, m_isSelectingFrames(false)
 {
 	// Initialize all reports to nullptr
 	for (int i = 0; i < PROFILER_MAX_REPORT_COUNT; ++i)
@@ -125,7 +135,16 @@ void Profiler::Initialize()
 {
 	s_instance = new Profiler();
 
-	//-----SET UP STATIC UI MEMBERS-----
+	InitializeUILayout();
+	InitializeConsoleCommands();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets all the UI layout values for rendering the profiler to screen
+//
+void Profiler::InitializeUILayout()
+{
 	AABB2 bounds = Renderer::GetUIBounds();
 	Vector2 dimensions = bounds.GetDimensions();
 
@@ -162,7 +181,7 @@ void Profiler::Initialize()
 	s_viewHeadingBounds.AddPaddingToSides(-s_borderThickness, -s_borderThickness);
 
 	s_viewDataBorderBounds = AABB2(bounds.mins, s_viewHeadingBorderBounds.GetBottomRight());
-	
+
 	s_viewDataBounds = s_viewDataBorderBounds;
 	s_viewDataBounds.AddPaddingToSides(-s_borderThickness, -s_borderThickness);
 
@@ -194,6 +213,18 @@ void Profiler::Initialize()
 	Sampler* sampler = new Sampler();
 	sampler->Initialize(SAMPLER_FILTER_LINEAR, EDGE_SAMPLING_REPEAT);
 	s_rottyTopsMaterial->SetSampler(0, sampler);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Adds the profiler's list of console commands to the command registry
+//
+void Profiler::InitializeConsoleCommands()
+{
+	Command::Register("profiler_show",		"Enables Profiler rendering.",				Command_ProfilerShow);
+	Command::Register("profiler_hide",		"Disables Profiler rendering.",				Command_ProfilerHide);
+	Command::Register("profiler_pause",		"Pauses the profiler report generation.",	Command_ProfilerPause);
+	Command::Register("profiler_resume",	"Resumes the profiler report generation.",	Command_ProfilerResume);
 }
 
 
@@ -278,6 +309,110 @@ void Profiler::BeginFrame()
 //
 void Profiler::ProcessInput()
 {
+	ProcessKeyboardInput();
+	ProcessMouseInput();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Processes mouse related input
+//
+void Profiler::ProcessMouseInput()
+{
+	Mouse& mouse = InputSystem::GetMouse();
+
+	if (!mouse.IsCursorShown()) { return; }
+
+	if (mouse.WasButtonJustPressed(MOUSEBUTTON_LEFT) || mouse.IsButtonPressed(MOUSEBUTTON_LEFT))
+	{
+		ProcessLeftClick();
+	}
+
+	if (mouse.WasButtonJustPressed(MOUSEBUTTON_RIGHT))
+	{
+		ProcessRightClick();
+	}
+
+	// Mouse overs
+
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Processes left click
+//
+void Profiler::ProcessLeftClick()
+{
+	Mouse& mouse = InputSystem::GetMouse();
+
+	// Find out where the mouse was located
+	Vector2 mousePos = mouse.GetCursorUIPosition();
+
+	if (mouse.WasButtonJustPressed(MOUSEBUTTON_LEFT))
+	{
+		if (s_graphBounds.IsPointInside(mousePos))
+		{
+			Pause();
+			m_isSelectingFrames = true;
+
+			// Find which report to display based on where the click happened
+			int index = RoundToNearestInt(RangeMapFloat(mousePos.x, s_graphBounds.maxs.x, s_graphBounds.mins.x, 0.f, PROFILER_MAX_REPORT_COUNT - 1.f));
+
+			// Display that report
+			m_firstSelectionIndex = index;
+			m_secondSelectionIndex = index;
+		}
+	}
+	else if (mouse.IsButtonPressed(MOUSEBUTTON_LEFT))
+	{
+		if (m_isSelectingFrames)
+		{
+			int index = RoundToNearestInt(RangeMapFloat(mousePos.x, s_graphBounds.maxs.x, s_graphBounds.mins.x, 0.f, PROFILER_MAX_REPORT_COUNT - 1.f));
+			index = ClampInt(index, 0, PROFILER_MAX_REPORT_COUNT - 1);
+			
+			m_secondSelectionIndex = index;
+		}
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Processes right click
+//
+void Profiler::ProcessRightClick()
+{
+	Mouse& mouse = InputSystem::GetMouse();
+
+	// Find out where the mouse was located
+	Vector2 mousePos = mouse.GetCursorUIPosition();
+
+	if (s_graphBounds.IsPointInside(mousePos))
+	{
+		Resume();
+
+		m_firstSelectionIndex = -1;
+		m_secondSelectionIndex = -1;
+		m_isSelectingFrames = false;
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Processes Keyboard input
+//
+void Profiler::ProcessKeyboardInput()
+{
+	InputSystem* input = InputSystem::GetInstance();
+
+	if (input->WasKeyJustPressed('M'))
+	{
+		Mouse& mouse = InputSystem::GetMouse();
+		bool wasShown = mouse.IsCursorShown();
+
+		mouse.ShowMouseCursor(!wasShown);
+		mouse.LockCursorToClient(!wasShown);
+		mouse.SetCursorMode(wasShown ? CURSORMODE_RELATIVE : CURSORMODE_ABSOLUTE);
+	}
 }
 
 
@@ -347,6 +482,53 @@ void Profiler::SetReportGeneration(bool shouldGenerate, eReportType reportType)
 
 
 //-----------------------------------------------------------------------------------------------
+// Enables profiler rendering
+//
+void Profiler::Show()
+{
+	s_instance->m_isOpen = true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Disables profiler rendering
+//
+void Profiler::Hide()
+{
+	s_instance->m_isOpen = false;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Toggles the open state of the Profiler, returning the new state
+//
+bool Profiler::Toggle()
+{
+	s_instance->m_isOpen = !s_instance->m_isOpen;
+
+	return s_instance->m_isOpen;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Pauses the profiler's report generation
+//
+void Profiler::Pause()
+{
+	SetReportGeneration(false, s_instance->m_generatingReportType);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Resumes the profiler's report generation
+//
+void Profiler::Resume()
+{
+	SetReportGeneration(true, s_instance->m_generatingReportType);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns whether or not the profiler is open, used for rendering
 //
 bool Profiler::IsProfilerOpen()
@@ -361,6 +543,46 @@ bool Profiler::IsProfilerOpen()
 Profiler* Profiler::GetInstance()
 {
 	return s_instance;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the average frame time for all records between startIndex and endIndex, inclusive
+//
+float Profiler::GetAverageTotalTime(int index1, int index2) const
+{
+	int startIndex;
+	int endIndex;
+
+	if (index1 > index2)
+	{
+		startIndex = index2;
+		endIndex = index1;
+	}
+	else
+	{
+		startIndex = index1;
+		endIndex = index2;
+	}
+
+	uint64_t totalHPC = 0;
+	int count = 0;
+	for (int index = startIndex; index <= endIndex; ++index)
+	{
+		if (m_reports[index] == nullptr) { break; }
+		count++;
+		totalHPC += m_reports[index]->m_rootEntry->m_totalTime;
+	}
+
+	float totalSeconds = (float) TimeSystem::PerformanceCountToSeconds(totalHPC);
+
+	float average = 0.f;
+	if (count > 0)
+	{
+		average = totalSeconds / (float) count;
+	}
+
+	return average;
 }
 
 
@@ -414,7 +636,7 @@ void Profiler::PushReport(ProfileReport* report)
 //
 void Profiler::UpdateReports()
 {
-	for (int index = 0; index < PROFILER_MAX_REPORT_COUNT; ++index)
+	for (int index = 0; index < PROFILER_MAX_REPORT_COUNT - 1; ++index)
 	{
 		// Cleanup first (slow but safe)
 		if (m_reports[index] != nullptr)
@@ -423,9 +645,10 @@ void Profiler::UpdateReports()
 			m_reports[index] = nullptr;
 		}
 
-		if (m_measurements[index] != nullptr)
+		// Reports lag one frame behind active measurements
+		if (m_measurements[index + 1] != nullptr)
 		{
-			m_reports[index] = BuildReportForFrame(m_measurements[index]);
+			m_reports[index] = BuildReportForFrame(m_measurements[index + 1]);
 		}
 	}
 }
@@ -483,7 +706,6 @@ void Profiler::RenderGraph() const
 
 	// Get the worst frame time for scaling, and average frame time
 	float worstFrameTime = (1.f / 240.f);
-	float averageTime = 0.f;
 	unsigned int reportCount = 0;
 	for (int reportIndex = 0; reportIndex < PROFILER_MAX_REPORT_COUNT; ++reportIndex)
 	{
@@ -495,11 +717,8 @@ void Profiler::RenderGraph() const
 		{
 			worstFrameTime = currTime;
 		}
-
-		averageTime += currTime;
 	}
 
-	averageTime = 1000.f * (reportCount > 0 ? (averageTime / (float) reportCount) : 0.f);
 
 	float timeUsedToScale = (1.f / 30.f);
 	timeUsedToScale = (worstFrameTime > timeUsedToScale ? worstFrameTime : timeUsedToScale);
@@ -566,14 +785,56 @@ void Profiler::RenderGraph() const
 	renderer->Draw2DQuad(s_graphDetailsBorderBounds,	AABB2::UNIT_SQUARE_OFFCENTER, s_borderColor,		material);
 	renderer->Draw2DQuad(s_graphDetailsBounds,			AABB2::UNIT_SQUARE_OFFCENTER, s_backgroundColor,	material);
 
-	// Graph details
-	if (m_reports[0] != nullptr)
+	// Graph selection
+	if (m_isSelectingFrames)
+	{
+		// Just draw a line if they equal
+		if (m_firstSelectionIndex == m_secondSelectionIndex)
+		{
+			float x = graphOffset.x - (graphDimensions.x * m_firstSelectionIndex * (1.f / (PROFILER_MAX_REPORT_COUNT - 1)));
+			renderer->DrawLine(Vector3(x, s_graphBounds.mins.y, 0.f), s_graphRedColor, Vector3(x, s_graphBounds.maxs.y, 0.f), s_graphRedColor);
+		}
+		else // Otherwise draw a quad for the selection
+		{
+			float startX = graphOffset.x - (graphDimensions.x * m_firstSelectionIndex * (1.f / (PROFILER_MAX_REPORT_COUNT - 1)));
+			float endX = graphOffset.x - (graphDimensions.x * m_secondSelectionIndex * (1.f / (PROFILER_MAX_REPORT_COUNT - 1)));
+
+			// Swap them if they're out of order
+			if (startX > endX)
+			{
+				float temp = endX;
+				endX = startX;
+				startX = temp;
+			}
+
+			startX = ClampFloat(startX, s_graphBounds.mins.x, s_graphBounds.maxs.x);
+			endX = ClampFloat(endX,		s_graphBounds.mins.x, s_graphBounds.maxs.x);
+
+			AABB2 selection = AABB2(Vector2(startX, s_graphBounds.mins.y), Vector2(endX, s_graphBounds.maxs.y));
+			renderer->Draw2DQuad(selection, AABB2::UNIT_SQUARE_OFFCENTER, s_graphSelectionColor, material);
+		}
+	}
+
+	// Details
+	if (m_reports[0] != nullptr && !m_isSelectingFrames)
 	{
 		float currTime = (float) TimeSystem::PerformanceCountToSeconds(m_reports[0]->m_rootEntry->m_totalTime);
 		float drawY =  RangeMapFloat(currTime, 0.f, timeUsedToScale, s_graphBorderBounds.mins.y, s_graphBorderBounds.maxs.y);
 		renderer->DrawText2D(Stringf("%.2f ms", currTime * 1000.f), Vector2(s_graphBorderBounds.maxs.x, drawY), s_viewDataFontSize, font, s_fontHighlightColor);
 	}
 
+	// Show average of selection
+	float averageTime;
+	if (m_isSelectingFrames)
+	{
+		averageTime = GetAverageTotalTime(m_firstSelectionIndex, m_secondSelectionIndex);
+	}
+	else
+	{
+		averageTime = GetAverageTotalTime(0, PROFILER_MAX_REPORT_COUNT - 1);
+	}
+
+	averageTime *= 1000.f;
 	renderer->DrawTextInBox2D(Stringf("Average Frame: %*.2f ms", 5, averageTime), s_graphDetailsBounds, Vector2(1.f, 0.f), s_viewDataFontSize, TEXT_DRAW_OVERRUN, font, s_fontColor);
 }
 
@@ -671,4 +932,53 @@ unsigned int DecrementIndexWithWrapAround(unsigned int currentIndex)
 	}
 
 	return nextIndex;
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+// CONSOLE COMMANDS
+//////////////////////////////////////////////////////////////////////////
+
+
+//-----------------------------------------------------------------------------------------------
+// Shows the profiler rendering
+//
+void Command_ProfilerShow(Command& cmd)
+{
+	UNUSED(cmd);
+	Profiler::Show();
+	ConsolePrintf(Rgba::GREEN, "Profiler opened.");
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Hides the profiler rendering
+//
+void Command_ProfilerHide(Command& cmd)
+{
+	UNUSED(cmd);
+	Profiler::Hide();
+	ConsolePrintf(Rgba::GREEN, "Profiler closed.");
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Pauses the Profiler's report generation
+//
+void Command_ProfilerPause(Command& cmd)
+{
+	UNUSED(cmd);
+	Profiler::Pause();
+	ConsolePrintf(Rgba::GREEN, "Profiler paused.");
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Resumes the Profiler's report generation
+//
+void Command_ProfilerResume(Command& cmd)
+{
+	UNUSED(cmd);
+	Profiler::Resume();
+	ConsolePrintf(Rgba::GREEN, "Profiler resumed.");
 }

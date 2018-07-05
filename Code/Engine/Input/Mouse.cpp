@@ -8,7 +8,10 @@
 #include <Windows.h>
 #include "Engine/Core/Window.hpp"
 #include "Engine/Input/Mouse.hpp"
-
+#include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Rendering/Core/Renderer.hpp"
+TODO("Remove renderer here");
 
 //-----------------------------------------------------------------------------------------------
 // Resets mouse state and sets initial cursor position if necessary
@@ -191,6 +194,22 @@ IntVector2 Mouse::GetCursorClientPosition()
 IntVector2 Mouse::GetCursorDesktopPosition()
 {
 	return m_currFramePosition;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the mouse's UI position in the system's default UI orthographic space
+//
+Vector2 Mouse::GetCursorUIPosition()
+{
+	AABB2 uiBounds = Renderer::GetUIBounds();
+	AABB2 pixelBounds = Window::GetInstance()->GetWindowBounds();
+	IntVector2 pixelPosition = GetCursorClientPosition();
+
+	float xPos = RangeMapFloat((float) pixelPosition.x, pixelBounds.mins.x, pixelBounds.maxs.x, uiBounds.mins.x, uiBounds.maxs.x);
+	float yPos = RangeMapFloat((float) pixelPosition.y, pixelBounds.mins.y, pixelBounds.maxs.y, uiBounds.maxs.y, uiBounds.mins.y);
+
+	return Vector2(xPos, yPos);
 }
 
 

@@ -24,11 +24,17 @@ public:
 
 	// Initialization
 	static void									Initialize();
+	static void										InitializeUILayout();
+	static void										InitializeConsoleCommands();
 	static void									Shutdown();
 	
 	// Per frame
 	static void									BeginFrame();
 	void										ProcessInput();
+	void											ProcessMouseInput();
+	void												ProcessLeftClick();
+	void												ProcessRightClick();
+	void											ProcessKeyboardInput();
 	void										Render();
 	static void									EndFrame();
 												
@@ -36,10 +42,20 @@ public:
 	static void									PushMeasurement(const char* name);
 	static void									PopMeasurement();
 	static void									SetReportGeneration(bool shouldGenerate, eReportType reportType);
-	
+
+	static void									Show();
+	static void									Hide();
+	static bool									Toggle();
+	static void									Pause();
+	static void									Resume();
+
+
 	// Accessors
 	static bool									IsProfilerOpen();
 	static Profiler*							GetInstance();
+
+	// Producers
+	float										GetAverageTotalTime(int startIndex, int endIndex) const;
 
 
 private:
@@ -78,6 +94,11 @@ private:
 	bool					m_isGeneratingReports;
 	int						m_currentFrameNumber;
 	float					m_framesPerSecond;
+
+	// Graph selection
+	int						m_firstSelectionIndex;
+	int						m_secondSelectionIndex;
+	bool					m_isSelectingFrames;
 
 	// Singleton instance
 	static Profiler*		s_instance;
@@ -119,6 +140,7 @@ private:
 	static Rgba s_graphRedColor;
 	static Rgba s_graphYellowColor;
 	static Rgba s_graphGreenColor;
+	static Rgba s_graphSelectionColor;
 
 	static Mesh* s_graphMesh;
 

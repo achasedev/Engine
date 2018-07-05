@@ -60,6 +60,7 @@ int		ClampInt(int inValue, int minInclusive, int maxInclusive);				// Clamps inV
 float	ClampFloat(float inValue, float minInclusive, float maxInclusive);		// Clamps inValue to be between min and max, inclusive
 float	ClampFloatZeroToOne(float inValue);										// Clamps inValue to be between 0 and 1, inclusive
 float	ClampFloatNegativeOneToOne(float inValue);								// Clamps inValue to be between -1 and 1, inclusive
+Vector2	ClampVector2(const Vector2& inValue, const Vector2& minInclusive, const Vector2& maxInclusive);
 float	GetFractionInRange(float inValue, float rangeStart, float rangeEnd);	// Finds the % (as fraction) of inValue in [rangeStart, rangeEnd]																
 
 float	RangeMapFloat(float inValue, float inStart, float inEnd, float outStart, float outEnd);		// Maps inValue from an inRange to an outRange
