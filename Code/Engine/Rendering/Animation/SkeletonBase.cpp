@@ -61,15 +61,6 @@ int SkeletonBase::CreateOrGetBoneMapping(const std::string& boneName)
 
 
 //-----------------------------------------------------------------------------------------------
-// Returns the inverse matrix for the assimp data tree
-//
-Matrix44 SkeletonBase::GetGlobalInverseTransform() const
-{
-	return m_globalInverseTransform;
-}
-
-
-//-----------------------------------------------------------------------------------------------
 // Returns the root bone offset transform for this skeleton
 //
 Matrix44 SkeletonBase::GetRootBoneOffset() const
@@ -182,15 +173,6 @@ void SkeletonBase::SetParentBoneIndex(unsigned int boneIndex, int parentBoneInde
 	}
 
 	m_boneData[boneIndex].parentIndex = parentBoneIndex;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Sets the global inverse transform for the skeleton to the one provided
-//
-void SkeletonBase::SetGlobalInverseTransform(const Matrix44& inverseTransform)
-{
-	m_globalInverseTransform = inverseTransform;
 }
 
 

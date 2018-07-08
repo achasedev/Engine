@@ -34,7 +34,6 @@ public:
 	int			CreateOrGetBoneMapping(const std::string& boneName);
 	
 	unsigned int	GetBoneCount() const;
-	Matrix44		GetGlobalInverseTransform() const;
 	Matrix44		GetRootBoneOffset() const;
 	std::string		GetRootBoneName() const;
 
@@ -46,7 +45,6 @@ public:
 	void SetWorldTransform(unsigned int boneIndex, const Matrix44& worldTransform);
 	void SetParentBoneIndex(unsigned int boneIndex, int parentBoneIndex);
 	void SetFinalTransformation(unsigned int boneIndex, const Matrix44& toWorldMatrix);
-	void SetGlobalInverseTransform(const Matrix44& inverseTransform);
 	void SetRootBoneOffset(const Matrix44& transform);
 	void SetMeshToBoneMatrix(unsigned int boneIndex, const Matrix44& bindPoseTransform);
 	void SetOffsetMatrix(unsigned int boneIndex, const Matrix44& offsetTransform);
@@ -57,9 +55,6 @@ private:
 
 	std::map<std::string, unsigned int> m_boneNameMappings;	// Registry that maps bone names to element positions in the m_boneData array
 	std::vector<BoneData_t>				m_boneData;			// Collection of bone information (transforms, parent indices)
-
-	Matrix44 m_globalInverseTransform;	// Inverse transform of the Root node for the entire Assimp tree
-										// Used to transform a vertex back into "model" space after the bone transformation
 
 	Matrix44 m_rootBoneOffset;
 };

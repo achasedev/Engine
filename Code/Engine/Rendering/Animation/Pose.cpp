@@ -59,7 +59,7 @@ void Pose::ConstructGlobalMatrices()
 		{
 			//Matrix44 test = Matrix44::MakeModelMatrix(Vector3::ZERO, Vector3(90.f, 0.f, 0.f), Vector3::ONES);
 			Matrix44 offset = m_baseSkeleton->GetRootBoneOffset();
-			m_boneTransforms[boneIndex] = m_baseSkeleton->GetGlobalInverseTransform() * offset * m_boneTransforms[boneIndex];
+			m_boneTransforms[boneIndex] = offset * m_boneTransforms[boneIndex];
 		}
 	}
 }

@@ -34,35 +34,35 @@ class AssimpLoader
 public:
 	//-----Public Methods-----
 
-	bool LoadFile(const std::string& filepath);
+	bool LoadFile_All(const std::string& filepath);
 
-	// Accessors
-	Renderable*		GetRenderable();
-	AnimationClip*	GetAnimationClip(unsigned int index);
-	const SkeletonBase*	GetSkeletonBase() const;
+	Renderable* LoadFile_Mesh(const std::string& filepath, SkeletonBase* skeleton = nullptr);
+	SkeletonBase* LoadFile_Skeleton(const std::string& filepath);
+	std::vector<AnimationClip*> LoadFile_Animation(const std::string& filepath, SkeletonBase* skeleton);
 
 
 private:
 	//-----Private Methods-----
 
-	// Skeletal Bone order
-	void InitializeSkeleton();
+	// Skeletal
+	void InitializeSkeleton(SkeletonBase* skeleton);
 		void GetBoneNamesFromNode(aiNode* node, std::vector<std::string>& out_names);
-		void CreateBoneMappingsFromNode(aiNode* node, const std::vector<std::string>& boneNames);
+		void CreateBoneMappingsFromNode(aiNode* node, const std::vector<std::string>& boneNames, SkeletonBase* skeleton);
+		void SetBoneOffsetData(aiNode* node, SkeletonBase* skeleton);
+		void BuildBoneHierarchy(SkeletonBase* skeleton);
+		void ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTransfrom, int parentBoneIndex, SkeletonBase* skeleton);
 
 	// Meshes (including bone vertex data) and materials
-	void BuildMeshesAndMaterials_FromScene();
-		void BuildMeshesAndMaterials_FromNode(aiNode* node, const Matrix44& parentTransform);
-			void BuildMeshAndMaterial_FromAIMesh(aiMesh* mesh, const Matrix44& transformation);
+	void BuildMeshesAndMaterials_FromScene(Renderable* renderable, SkeletonBase* skeleton);
+		void BuildMeshesAndMaterials_FromNode(aiNode* node, const Matrix44& parentTransform, Renderable* renderable, SkeletonBase* skeleton);
+			void BuildMeshAndMaterial_FromAIMesh(aiMesh* mesh, const Matrix44& transformation, Renderable* renderable, SkeletonBase* skeleton);
 
-	// Build skeletal structure
-	void BuildBoneHierarchy();
-		void ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTransfrom, int parentBoneIndex, const std::string& concatenations);
+
 
 	// Build Animations
-	void BuildAnimations();
-		void BuildAnimation(unsigned int animationIndex);
-			void FillPoseForTime(Pose* out_pose, aiAnimation* aianimation, float time);
+	void BuildAnimations(SkeletonBase* skeleton, std::vector<AnimationClip*>& animations);
+		AnimationClip* BuildAnimation(unsigned int animationIndex, SkeletonBase* skeleton);
+			void FillPoseForTime(Pose* out_pose, aiAnimation* aianimation, float time, SkeletonBase* skeleton);
 				aiNodeAnim* GetChannelForBone(const std::string& boneName, aiAnimation* animation) const;
 				Matrix44	GetLocalTransfromAtTime(aiNodeAnim* channel, float time);
 					aiVector3D		GetWorldTranslationAtTime(aiNodeAnim* channel, float time) const;
@@ -74,10 +74,7 @@ private:
 private:
 	//-----Private Data-----
 
-	Renderable*		m_renderable = nullptr;
-	SkeletonBase*	m_skeleton = nullptr;
-	const aiScene*	m_scene = nullptr;
 
-	std::vector<AnimationClip*> m_animationClips;
+	const aiScene*	m_scene = nullptr;
 
 };

@@ -47,7 +47,6 @@ void DebugRenderTask_Skeleton::Render() const
 //
 void DebugRenderTask_Skeleton::AssembleMesh(const SkeletonBase* skeleton)
 {
- 	Matrix44 globalInverseTransform = skeleton->GetGlobalInverseTransform();
 	MeshBuilder mb;
 	mb.BeginBuilding(PRIMITIVE_LINES, false);
 	Mesh* cube = AssetDB::CreateOrGetMesh("Cube");
@@ -57,8 +56,8 @@ void DebugRenderTask_Skeleton::AssembleMesh(const SkeletonBase* skeleton)
 		int parentIndex = skeleton->GetBoneData(boneIndex).parentIndex;
 		if (parentIndex != -1)
 		{
-			Vector3 start = Matrix44::ExtractTranslation(globalInverseTransform * skeleton->GetBoneData(parentIndex).boneToMeshMatrix);
-			Vector3 end = Matrix44::ExtractTranslation(globalInverseTransform * skeleton->GetBoneData(boneIndex).boneToMeshMatrix);
+			Vector3 start = Matrix44::ExtractTranslation(skeleton->GetBoneData(parentIndex).boneToMeshMatrix);
+			Vector3 end = Matrix44::ExtractTranslation(skeleton->GetBoneData(boneIndex).boneToMeshMatrix);
 
 			mb.PushLine(start, end);
 		}
