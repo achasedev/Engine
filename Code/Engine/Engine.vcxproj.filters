@@ -362,6 +362,7 @@
     <ClCompile Include="Core\Time\ProfileReportEntry.cpp" />
     <ClCompile Include="Core\Time\ProfileScoped.cpp" />
     <ClCompile Include="Core\Gif.cpp" />
+    <ClCompile Include="Core\Threading.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -696,5 +697,6 @@
     <ClInclude Include="Core\Time\ProfileReportEntry.hpp" />
     <ClInclude Include="Core\Time\ProfileScoped.hpp" />
     <ClInclude Include="Core\Gif.hpp" />
+    <ClInclude Include="Core\Threading.hpp" />
   </ItemGroup>
 </Project>

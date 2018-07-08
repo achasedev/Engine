@@ -262,6 +262,7 @@
     <ClCompile Include="Assets\AssimpLoader.cpp" />
     <ClCompile Include="Audio\AudioSystem.cpp" />
     <ClCompile Include="Core\Gif.cpp" />
+    <ClCompile Include="Core\Threading.cpp" />
     <ClCompile Include="Core\Time\ProfileLogScoped.cpp" />
     <ClCompile Include="Core\Time\ProfileMeasurement.cpp" />
     <ClCompile Include="Core\Time\Profiler.cpp" />
@@ -384,6 +385,7 @@
     <ClInclude Include="Assets\AssimpLoader.hpp" />
     <ClInclude Include="Audio\AudioSystem.hpp" />
     <ClInclude Include="Core\Gif.hpp" />
+    <ClInclude Include="Core\Threading.hpp" />
     <ClInclude Include="Core\Time\ProfileLogScoped.hpp" />
     <ClInclude Include="Core\Time\ProfileMeasurement.hpp" />
     <ClInclude Include="Core\Time\Profiler.hpp" />
