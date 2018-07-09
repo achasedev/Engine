@@ -61,18 +61,6 @@ void DebugRenderTask_Skeleton::AssembleMesh(const SkeletonBase* skeleton)
 
 			mb.PushLine(start, end);
 		}
-
-		RenderableDraw_t cubedraw;
-		
-		cubedraw.sharedMaterial = cubedraw.sharedMaterial = AssetDB::GetSharedMaterial("Debug_Render");
-		cubedraw.mesh = cube;
-		cubedraw.drawMatrix = skeleton->GetBoneData(boneIndex).boneToMeshMatrix;
-
-		if (boneIndex == 0)
-		{
-			cubedraw.drawMatrix = cubedraw.drawMatrix * Matrix44::MakeScale(Vector3(5.f, 5.f, 5.f));
-		}
-		m_renderable->AddDraw(cubedraw);
 	}
 
 	mb.FinishBuilding();
@@ -83,4 +71,19 @@ void DebugRenderTask_Skeleton::AssembleMesh(const SkeletonBase* skeleton)
 	draw.mesh = mesh;
 
 	m_renderable->AddDraw(draw);
+
+	for (unsigned int boneIndex = 0; boneIndex < skeleton->GetBoneCount(); ++boneIndex)
+	{
+		RenderableDraw_t cubedraw;
+
+		cubedraw.sharedMaterial = cubedraw.sharedMaterial = AssetDB::GetSharedMaterial("Debug_Render");
+		cubedraw.mesh = cube;
+		cubedraw.drawMatrix = skeleton->GetBoneData(boneIndex).boneToMeshMatrix;
+
+		if (boneIndex == 0)
+		{
+			cubedraw.drawMatrix = cubedraw.drawMatrix * Matrix44::MakeScale(Vector3(5.f, 5.f, 5.f));
+		}
+		m_renderable->AddDraw(cubedraw);
+	}
 }

@@ -153,6 +153,35 @@ const Matrix44 Matrix44::operator*(float scaler) const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns whether or not the two matrices are identical
+//
+bool Matrix44::operator==(const Matrix44& other) const
+{
+	if (GetIVector() != other.GetIVector())
+	{
+		return false;
+	}
+
+	if (GetJVector() != other.GetJVector())
+	{
+		return false;
+	}
+
+	if (GetKVector() != other.GetKVector())
+	{
+		return false;
+	}
+
+	if (GetTVector() != other.GetTVector())
+	{
+		return false;
+	}
+
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Transforms the given Vector3 by this matrix, treating it as a point (z = 0, w = 1)
 //
 Vector4 Matrix44::TransformPoint(const Vector2& point) const

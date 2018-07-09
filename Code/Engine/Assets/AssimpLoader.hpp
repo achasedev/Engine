@@ -34,11 +34,12 @@ class AssimpLoader
 public:
 	//-----Public Methods-----
 
-	bool LoadFile_All(const std::string& filepath);
+	void OpenFile(const std::string& filepath);
+	void CloseFile();
 
-	Renderable* LoadFile_Mesh(const std::string& filepath, SkeletonBase* skeleton = nullptr);
-	SkeletonBase* LoadFile_Skeleton(const std::string& filepath);
-	std::vector<AnimationClip*> LoadFile_Animation(const std::string& filepath, SkeletonBase* skeleton);
+	Renderable* LoadFile_Mesh(SkeletonBase* skeleton = nullptr);
+	SkeletonBase* LoadFile_Skeleton();
+	std::vector<AnimationClip*> LoadFile_Animation(SkeletonBase* skeleton);
 
 
 private:
@@ -50,7 +51,7 @@ private:
 		void CreateBoneMappingsFromNode(aiNode* node, const std::vector<std::string>& boneNames, SkeletonBase* skeleton);
 		void SetBoneOffsetData(aiNode* node, SkeletonBase* skeleton);
 		void BuildBoneHierarchy(SkeletonBase* skeleton);
-		void ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTransfrom, int parentBoneIndex, SkeletonBase* skeleton);
+		void ExtractBoneTransform(aiNode* ainode, const Matrix44& accumulatedTransform, const Matrix44& currentTransform, int parentBoneIndex, SkeletonBase* skeleton);
 
 	// Meshes (including bone vertex data) and materials
 	void BuildMeshesAndMaterials_FromScene(Renderable* renderable, SkeletonBase* skeleton);

@@ -69,17 +69,7 @@ std::vector<Texture*> LoadAssimpMaterialTextures(aiMaterial* aimaterial, aiTextu
 }
 
 
-//-----------------------------------------------------------------------------------------------
-// Loads the model file using Assimp, and attempts to construct a renderable and SkeletonBase from
-// the information
-//
-bool AssimpLoader::LoadFile_All(const std::string& filepath)
-{
-	return true;
-}
-
-
-Renderable* AssimpLoader::LoadFile_Mesh(const std::string& filepath, SkeletonBase* skeleton /*= nullptr*/)
+void AssimpLoader::OpenFile(const std::string& filepath)
 {
 	if (m_scene == nullptr)
 	{
@@ -89,8 +79,19 @@ Renderable* AssimpLoader::LoadFile_Mesh(const std::string& filepath, SkeletonBas
 	// Ensure the file loads
 	if (m_scene == nullptr || m_scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || m_scene->mRootNode == nullptr)
 	{
-		ERROR_AND_DIE(Stringf("Error: AssimpLoader::LoadFile ran into error \"%s\" while loading file \"%s\"", g_importer.GetErrorString(), filepath.c_str()));
+		ERROR_AND_DIE(Stringf("Error: AssimpLoader::OpenFile ran into error \"%s\" while loading file \"%s\"", g_importer.GetErrorString(), filepath.c_str()));
 	}
+}
+
+void AssimpLoader::CloseFile()
+{
+	g_importer.FreeScene();
+	m_scene = nullptr;
+}
+
+Renderable* AssimpLoader::LoadFile_Mesh(SkeletonBase* skeleton /*= nullptr*/)
+{
+	//DebugPrintAITree(m_scene->mRootNode, "");
 
 	Renderable* renderable = new Renderable();
 	BuildMeshesAndMaterials_FromScene(renderable, skeleton);
@@ -98,18 +99,9 @@ Renderable* AssimpLoader::LoadFile_Mesh(const std::string& filepath, SkeletonBas
 	return renderable;
 }
 
-SkeletonBase* AssimpLoader::LoadFile_Skeleton(const std::string& filepath)
+SkeletonBase* AssimpLoader::LoadFile_Skeleton()
 {
-	if (m_scene == nullptr)
-	{
-		m_scene = g_importer.ReadFile(filepath.c_str(), aiProcessPreset_TargetRealtime_Quality | aiProcess_MakeLeftHanded);
-	}
-
-	// Ensure the file loads
-	if (m_scene == nullptr || m_scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || m_scene->mRootNode == nullptr)
-	{
-		ERROR_AND_DIE(Stringf("Error: AssimpLoader::LoadFile ran into error \"%s\" while loading file \"%s\"", g_importer.GetErrorString(), filepath.c_str()));
-	}
+	DebugPrintAITree(m_scene->mRootNode, "");
 
 	SkeletonBase* skeleton = new SkeletonBase();
 	InitializeSkeleton(skeleton);
@@ -117,18 +109,9 @@ SkeletonBase* AssimpLoader::LoadFile_Skeleton(const std::string& filepath)
 	return skeleton;
 }
 
-std::vector<AnimationClip*> AssimpLoader::LoadFile_Animation(const std::string& filepath, SkeletonBase* skeleton)
+std::vector<AnimationClip*> AssimpLoader::LoadFile_Animation(SkeletonBase* skeleton)
 {
-	if (m_scene == nullptr)
-	{
-		m_scene = g_importer.ReadFile(filepath.c_str(), aiProcessPreset_TargetRealtime_Quality | aiProcess_MakeLeftHanded);
-	}
-
-	// Ensure the file loads
-	if (m_scene == nullptr || m_scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || m_scene->mRootNode == nullptr)
-	{
-		ERROR_AND_DIE(Stringf("Error: AssimpLoader::LoadFile ran into error \"%s\" while loading file \"%s\"", g_importer.GetErrorString(), filepath.c_str()));
-	}
+	DebugPrintAITree(m_scene->mRootNode, "");
 
 	std::vector<AnimationClip*> animations;
 	BuildAnimations(skeleton, animations);
@@ -454,13 +437,16 @@ void AssimpLoader::BuildMeshAndMaterial_FromAIMesh(aiMesh* aimesh, const Matrix4
 //-----------------------------------------------------------------------------------------------
 // Constructs all Mesh and Material data from the given node
 //
-void AssimpLoader::ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTransform, int parentBoneIndex, SkeletonBase* skeleton)
+void AssimpLoader::ExtractBoneTransform(aiNode* ainode, const Matrix44& accumulatedTransform, const Matrix44& localTransform, int parentBoneIndex, SkeletonBase* skeleton)
 {
 	std::string nodeName = ainode->mName.data;
 
-	Matrix44 nodeTransform = ConvertAiMatrixToMyMatrix(ainode->mTransformation);
+	Matrix44 thisNodeLocalTransform = ConvertAiMatrixToMyMatrix(ainode->mTransformation);
+	Matrix44 thisNodeWorldTransform = accumulatedTransform * thisNodeLocalTransform;
 
-	Matrix44 currentTransform = parentTransform * nodeTransform;
+	Matrix44 localAccumulatedTransform = (localTransform * thisNodeLocalTransform);
+
+
 
 	// Check if this name is a bone by searching for it's name mapping in the hierarchy
 	int thisBoneIndex = skeleton->GetBoneMapping(nodeName);
@@ -469,33 +455,41 @@ void AssimpLoader::ExtractBoneTransform(aiNode* ainode, const Matrix44& parentTr
 	if (thisBoneIndex >= 0)
 	{
 		Matrix44 offsetMatrix = skeleton->GetBoneData(thisBoneIndex).offsetMatrix;
-		Matrix44 finalTransformation = currentTransform * skeleton->GetBoneData(thisBoneIndex).boneToMeshMatrix;
+		Matrix44 finalTransformation = thisNodeWorldTransform * skeleton->GetBoneData(thisBoneIndex).boneToMeshMatrix;
 
 		skeleton->SetFinalTransformation(thisBoneIndex, finalTransformation);
-		skeleton->SetWorldTransform(thisBoneIndex, currentTransform);
+		skeleton->SetWorldTransform(thisBoneIndex, thisNodeWorldTransform);
 		skeleton->SetParentBoneIndex(thisBoneIndex, parentBoneIndex);
-		skeleton->SetLocalTransform(thisBoneIndex, nodeTransform);
+		skeleton->SetLocalTransform(thisBoneIndex, localAccumulatedTransform);
 
 		Matrix44 inverseRootOffset = Matrix44::GetInverse(skeleton->GetRootBoneOffset());
+		//Matrix44 inverseRootOffset = Matrix44::IDENTITY;
 		skeleton->SetMeshToBoneMatrix(thisBoneIndex, offsetMatrix * inverseRootOffset);
 		skeleton->SetBoneToMeshMatrix(thisBoneIndex, Matrix44::GetInverse(offsetMatrix * inverseRootOffset));
 	}
 	
 	// Catch the bone root offset when we find it
-	DebuggerPrintf("NODE NAME: %s\n", nodeName.c_str());
+	// DebuggerPrintf("NODE NAME: %s\n", nodeName.c_str());
 
 	if (nodeName == "BoneRoot")
 	{
-		skeleton->SetRootBoneOffset(currentTransform);
+		skeleton->SetRootBoneOffset(thisNodeWorldTransform);
 	}
 
 	// Determine what the parent index of the children bones are (either us if we're a bone, or our last bone ancestor)
 	int childParentIndex = (thisBoneIndex >= 0 ? thisBoneIndex : parentBoneIndex);
 
+	// Ensure we restart accumulation if necessary
+	Matrix44 nextAccumulation;
+	if (thisBoneIndex < 0)
+	{
+		nextAccumulation = localAccumulatedTransform;
+	}
+
 	// Recursively process the child nodes for bone information (even if this one wasn't a bone)
 	for (unsigned int nodeIndex = 0; nodeIndex < ainode->mNumChildren; ++nodeIndex)
 	{
-		ExtractBoneTransform(ainode->mChildren[nodeIndex], currentTransform, childParentIndex, skeleton);
+		ExtractBoneTransform(ainode->mChildren[nodeIndex], thisNodeWorldTransform, nextAccumulation, childParentIndex, skeleton);
 	}
 }
 
@@ -509,10 +503,10 @@ void AssimpLoader::BuildAnimations(SkeletonBase* skeleton, std::vector<Animation
 
 	for (unsigned int animationIndex = 0; animationIndex < animationCount; ++animationIndex)
 	{
-		for (int i = 0; i < m_scene->mAnimations[0]->mNumChannels; ++i)
-		{
-			DebuggerPrintf("Channel: %s\n", m_scene->mAnimations[0]->mChannels[i]->mNodeName.C_Str());
-		}
+// 		for (int i = 0; i < m_scene->mAnimations[0]->mNumChannels; ++i)
+// 		{
+// 			DebuggerPrintf("Channel: %s\n", m_scene->mAnimations[0]->mChannels[i]->mNodeName.C_Str());
+// 		}
 
 		AnimationClip* clip = BuildAnimation(animationIndex, skeleton);
 		animations.push_back(clip);
@@ -589,6 +583,11 @@ void AssimpLoader::FillPoseForTime(Pose* out_pose, aiAnimation* aianimation, flo
 		else
 		{
 			Matrix44 boneTransform = ConstructMatrixFromSeparatedChannels(currBoneName, aianimation, time);
+
+			if (boneTransform == Matrix44::IDENTITY)
+			{
+				boneTransform = skeleton->GetBoneData(boneDataIndex).localTransform;
+			}
 
 			out_pose->SetBoneTransform(boneDataIndex, boneTransform);
 		}
@@ -813,6 +812,17 @@ Matrix44 AssimpLoader::ConstructMatrixFromSeparatedChannels(const std::string& b
 		translation = GetWorldTranslationAtTime(translationChannel, time);
 	}
 
+	// Prerotation
+	std::string preRotationChannelName = boneName + "_$AssimpFbx$_PreRotation";
+	aiQuaternion preRotation;
+
+	aiNodeAnim* preRotationChannel = GetChannelForBone(preRotationChannelName, animation);
+
+	if (preRotationChannel != nullptr)
+	{
+		preRotation = GetWorldRotationAtTime(preRotationChannel, time);
+	}
+
 	// Rotation
 	std::string rotationChannelName = boneName + "_$AssimpFbx$_Rotation";
 	aiQuaternion rotation;
@@ -835,7 +845,9 @@ Matrix44 AssimpLoader::ConstructMatrixFromSeparatedChannels(const std::string& b
 		scale = GetWorldScaleAtTime(scaleChannel, time);
 	}
 
-	aiMatrix4x4 aiTransform = aiMatrix4x4(scale, rotation, translation);
+	aiQuaternion finalRotation = preRotation * rotation;
+
+	aiMatrix4x4 aiTransform = aiMatrix4x4(scale, finalRotation, translation);
 	Matrix44 transform = ConvertAiMatrixToMyMatrix(aiTransform);
 
 	return transform;
@@ -848,7 +860,7 @@ Matrix44 AssimpLoader::ConstructMatrixFromSeparatedChannels(const std::string& b
 void AssimpLoader::BuildBoneHierarchy(SkeletonBase* skeleton)
 {
 	// Recursively traverse the tree to assemble the bone transformations
-	ExtractBoneTransform(m_scene->mRootNode, Matrix44::IDENTITY, -1, skeleton);
+	ExtractBoneTransform(m_scene->mRootNode, Matrix44::IDENTITY, Matrix44::IDENTITY, -1, skeleton);
 }
 
 
