@@ -5,7 +5,7 @@
 /* Bugs: None
 /* Description: Implementation of the Renderer class
 /************************************************************************/
-#include <set>
+#include "Engine/Core/Time/Time.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Image.hpp"
 #include "Engine/Core/Window.hpp"
@@ -342,7 +342,8 @@ Camera* Renderer::GetDefaultCamera() const
 //
 void Renderer::SaveScreenshotAtEndOfFrame(const std::string& filename)
 {
-	m_screenshotFilename = filename;
+	TODO("Named screenshots, screenshot with console command");
+	UNUSED(filename);
 	m_saveScreenshotThisFrame = true;
 }
 
@@ -599,16 +600,19 @@ void Renderer::SaveScreenshotToFile()
 	// Check to see if the directory exists (will make it if it doesn't exist, do nothing otherwise)
 	CreateDirectoryA("Data/Screenshots", NULL);
 
-	// Format the screenshot name
-	std::string localFilepath = Stringf("Data/Screenshots/%s.png", m_screenshotFilename.c_str());
+	// Save a temp one to know what the latest screenshot was
+	std::string tempName = "Data/Screenshots/Screenshot.png";
 
 	// Write the image to file (image will be upsidedown, so flip on write)
 	stbi_flip_vertically_on_write(1);
-	stbi_write_png(localFilepath.c_str(), dimensions.x, dimensions.y, 4, buffer, 0);
+	stbi_write_png(tempName.c_str(), dimensions.x, dimensions.y, 4, buffer, 0);
 	
+	// Write with date and time to archive
+	std::string archivedName = Stringf("Data/Screenshots/Screenshot_%s.png", GetSystemDateAndTime().c_str());
+	stbi_write_png(archivedName.c_str(), dimensions.x, dimensions.y, 4, buffer, 0);
+
 	// Reset flags and clean up
 	m_saveScreenshotThisFrame = false;
-	m_screenshotFilename.clear();
 	free(buffer);
 }
 

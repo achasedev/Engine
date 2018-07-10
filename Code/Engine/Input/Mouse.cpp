@@ -148,7 +148,23 @@ void Mouse::LockCursorToClient(bool shouldLock)
 //
 void Mouse::ShowMouseCursor(bool shouldShow)
 {
-	ShowCursor(shouldShow);
+	int showHideCount = ShowCursor(shouldShow);
+
+	if (shouldShow)
+	{
+		while (showHideCount <= 0)
+		{
+			showHideCount = ShowCursor(shouldShow);
+		}
+	}
+	else
+	{
+		while (showHideCount >= 0)
+		{
+			showHideCount = ShowCursor(shouldShow);
+		}
+	}
+
 	m_isCursorShown = shouldShow;
 }
 

@@ -6,6 +6,7 @@
 /************************************************************************/
 #pragma once
 #include <stdint.h>
+#include <string>
 
 class TimeSystem
 {
@@ -54,3 +55,4 @@ private:
 //--------------------------------C FUNCTIONS-------------------------------------
 
 uint64_t GetPerformanceCounter();
+std::string GetSystemDateAndTime();

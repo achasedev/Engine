@@ -9,7 +9,6 @@
 #include "Engine/Core/Time/Time.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 
-
 // Singleton TimeSystem instance
 TimeSystem TimeSystem::s_timeSystem;
 
@@ -68,4 +67,15 @@ uint64_t GetPerformanceCounter()
 	QueryPerformanceCounter( &currentCount );
 
 	return *(uint64_t*)&currentCount;
+}
+
+std::string GetSystemDateAndTime()
+{
+	SYSTEMTIME st;
+	GetLocalTime(&st);
+
+	std::string formattedTime = Stringf("%d_%d_%d_%d_%d_%d", 
+		st.wMonth, st.wDay, st.wYear, st.wHour, st.wMinute, st.wSecond);
+
+	return formattedTime;
 }

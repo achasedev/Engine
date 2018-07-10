@@ -1,26 +1,26 @@
 #include <chrono>
-#include "Engine/Core/Threading.hpp"
+#include "Engine/Core/Threading/Threading.hpp"
 
 ThreadHandle_t Thread::Create(Thread_cb cb, void *paramData /*= nullptr */)
 {
-	ThreadHandle_t handle = std::thread(cb, paramData);
+	ThreadHandle_t handle = new std::thread(cb, paramData);
 	return handle;
 }
 
 void Thread::Join(ThreadHandle_t handle)
 {
-	handle.join();
+	handle->join();
 }
 
 void Thread::Detach(ThreadHandle_t handle)
 {
-	handle.detach();
+	handle->detach();
 }
 
 void Thread::CreateAndDetach(Thread_cb cb, void *paramData /*= nullptr*/)
 {
 	ThreadHandle_t handle = Create(cb, paramData);
-	handle.detach();
+	handle->detach();
 }
 
 void Thread::SleepThisThreadFor(unsigned int ms)

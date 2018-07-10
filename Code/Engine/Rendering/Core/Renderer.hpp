@@ -250,7 +250,6 @@ private:
 
 	// For screenshots
 	bool					m_saveScreenshotThisFrame = false;
-	std::string				m_screenshotFilename;
 
 	// For post-processed effects
 	Camera*					m_effectsCamera;

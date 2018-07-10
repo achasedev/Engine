@@ -12,15 +12,7 @@
 // I use Win32 Functions, but std::thread is fine.  
 // DO NOT USE BOOST!
 
-/************************************************************************/
-/* TYPES                                                                */
-/************************************************************************/
-
-// an example of a type-safe pointer type.  We never
-// need to define thread_handle_type_t, as it is never actually used,
-// just the pointer is; 
-//struct ThreadHandleType_t;
-typedef std::thread ThreadHandle_t; 
+typedef std::thread* ThreadHandle_t; 
 
 // Thread callback function (what the thread enters into)
 typedef void (*Thread_cb)(void *paramData); 
