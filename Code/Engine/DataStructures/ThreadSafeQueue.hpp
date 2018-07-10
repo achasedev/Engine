@@ -1,25 +1,33 @@
+/************************************************************************/
+/* File: ThreadSafeQueue.hpp
+/* Author: Andrew Chase
+/* Date: July 10th, 2018
+/* Description: Template container class for thread-safe push/pops
+/************************************************************************/
 #pragma once
 #include <queue>
 #include <mutex>
 #include "Engine/Core/EngineCommon.hpp"
-TODO("Comment");
+
 template <typename T>
 class ThreadSafeQueue
 {
 public:
 	//-----Public Methods-----
 
+	// For adding to the queue
 	void Enqueue(const T& value)
 	{
-		m_lock.lock();
+		m_lock.lock(); // Blocks
 		m_queue.push(value);
 		m_lock.unlock();
 	}
 
+
+	// For removing and returning from queue
 	bool Dequeue(T& out_value)
 	{
-		m_lock.lock();
-		
+		m_lock.lock(); // Blocks
 		bool hasItem = (m_queue.size() != 0);
 
 		if (hasItem)
@@ -29,7 +37,6 @@ public:
 		}
 
 		m_lock.unlock();
-
 		return hasItem;
 	}
 

@@ -1,9 +1,8 @@
 /************************************************************************/
-/* File: File.cpp
+/* File: File.hpp
 /* Author: Andrew Chase
-/* Date: January 29th, 2017
-/* Bugs: None
-/* Description: File for File utility functions
+/* Date: July 10th, 2018
+/* Description: Implementation of the File Class + helper functions
 /************************************************************************/
 #include "Engine/Core/File.hpp"
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
@@ -11,10 +10,11 @@
 #include <stdio.h>
 #include <cstdlib>
 
+// For Windows directory functions
 #define WIN32_LEAN_AND_MEAN		// Always #define this before #including <windows.h>
 #include <windows.h>			// #include this (massive, platform-specific) header in very few places
 
-
+TODO("Safety checks, if file is open already or not, if file is loaded into memory or not");
 //-----------------------------------------------------------------------------------------------
 // Opens the file given by filepath and returns the file pointer associated to it
 //
@@ -76,6 +76,11 @@ void* FileReadToNewBuffer( char const *filename, size_t& out_size)
 	return buffer;  
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Writes to the file given by filename, returning false if the file doesn't exist
+// Currently overwrites all file contents, does NOT append
+//
 bool FileWriteFromBuffer(char const *filename, char const* buffer, int bufferSize)
 {
 	FILE *fp = nullptr;
@@ -91,6 +96,9 @@ bool FileWriteFromBuffer(char const *filename, char const* buffer, int bufferSiz
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Returns the working directory path
+//
 std::string GetWorkingDirectory()
 {
 	char buffer[MAX_PATH + 1];
@@ -102,11 +110,18 @@ std::string GetWorkingDirectory()
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Returns the full file path of the file given by localFilePath (using the current working directory)
+//
 std::string GetFullFilePath(const std::string& localFilePath)
 {
 	return GetWorkingDirectory() + "\\" + localFilePath;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Opens the file given by filepath, using the appropriate flags
+//
 bool File::Open(const char* filepath, const char* flags)
 {
 	m_filePointer = (void*) OpenFile(filepath, flags);
@@ -114,17 +129,29 @@ bool File::Open(const char* filepath, const char* flags)
 	return (m_filePointer != nullptr);
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Closes the file currently opened by this file
+//
 bool File::Close()
 {
 	bool success = CloseFile((FILE*) m_filePointer);
 	return success;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Writes the buffer data to the file currently opened by this file
+//
 void File::Write(const char* buffer, size_t length)
 {
 	fwrite(buffer, sizeof(char), length, (FILE*) m_filePointer);
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Reads the file contents into memory
+//
 bool File::LoadFileToMemory()
 {
 	m_size = 0U; 
@@ -151,6 +178,10 @@ bool File::LoadFileToMemory()
 	return true;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the next line of the file, using the internal offset in this File object
+//
 unsigned int File::GetNextLine(std::string& out_string)
 {
 	if (m_data == nullptr || m_offset >= m_size)
@@ -175,6 +206,10 @@ unsigned int File::GetNextLine(std::string& out_string)
 	return m_lineNumber;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns true if the file offset is at or passed the end of the file contents
+//
 bool File::IsAtEndOfFile() const
 {
 	return m_isAtEndOfFile;

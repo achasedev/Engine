@@ -1,17 +1,15 @@
+/************************************************************************/
+/* File: Threading.hpp
+/* Author: Andrew Chase
+/* Date: July 10th, 2018
+/* Description: API for creating and manipulating threads
+/************************************************************************/
 #pragma once
 #include <thread>
+#include "Engine/Core/EngineCommon.hpp"
 
-// I'm looking for a file *like* this, not does not need to be
-// exact.  Should have the basic thread functions in an easy to 
-// find structure. 
-//
-// Even if you prefer class based Threads, provide the C functions,
-// as the class based ones will use them anyway;
-//
-// HOW you implement them under the hood I don't care
-// I use Win32 Functions, but std::thread is fine.  
-// DO NOT USE BOOST!
-
+TODO("Return handles as void*")
+TODO("Add name thread functionality");
 typedef std::thread* ThreadHandle_t; 
 
 // Thread callback function (what the thread enters into)
