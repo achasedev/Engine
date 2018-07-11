@@ -54,6 +54,9 @@ int SkeletonBase::CreateOrGetBoneMapping(const std::string& boneName)
 		boneIndex = (unsigned int) m_boneData.size();
 		m_boneData.push_back(BoneData_t());
 		m_boneNameMappings[boneName] = boneIndex;
+
+		// Also add the name to the name's list
+		m_boneNames.push_back(boneName);
 	}
 
 	return boneIndex;
@@ -74,19 +77,7 @@ Matrix44 SkeletonBase::GetRootBoneOffset() const
 //
 std::string SkeletonBase::GetRootBoneName() const
 {
-	std::vector<std::string> names = GetAllBoneNames();
-
-	for (int i = 0; i < (int) m_boneNameMappings.size(); ++i)
-	{
-		std::string name = names[i];
-		
-		if (m_boneNameMappings.at(name) == 0)
-		{
-			return name;
-		}
-	}
-
-	return "";
+	return m_boneNames[0];
 }
 
 
@@ -95,16 +86,7 @@ std::string SkeletonBase::GetRootBoneName() const
 //
 std::vector<std::string> SkeletonBase::GetAllBoneNames() const
 {
-	std::vector<std::string> names;
-
-	std::map<std::string, unsigned int>::const_iterator itr = m_boneNameMappings.begin();
-
-	for (itr; itr != m_boneNameMappings.end(); ++itr)
-	{
-		names.push_back(itr->first);
-	}
-
-	return names;
+	return m_boneNames;
 }
 
 

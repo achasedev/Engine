@@ -55,6 +55,6 @@ private:
 
 	std::map<std::string, unsigned int> m_boneNameMappings;	// Registry that maps bone names to element positions in the m_boneData array
 	std::vector<BoneData_t>				m_boneData;			// Collection of bone information (transforms, parent indices)
-
+	std::vector<std::string>			m_boneNames;
 	Matrix44 m_rootBoneOffset;
 };

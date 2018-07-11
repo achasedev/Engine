@@ -19,6 +19,11 @@ void Pose::Initialize(const SkeletonBase* skeleton)
 	m_boneTransforms = (Matrix44*) malloc (sizeof(Matrix44) * numBones);
 	m_boneCount = numBones;
 	m_baseSkeleton = skeleton;
+
+	for (int i = 0; i < numBones; ++i)
+	{
+		m_boneTransforms[i] = skeleton->GetBoneData(i).localTransform;
+	}
 }
 
 const Matrix44* Pose::GetBoneTransformData() const
@@ -57,8 +62,8 @@ void Pose::ConstructGlobalMatrices()
 		}
 		else
 		{
-			Matrix44 offset = m_baseSkeleton->GetRootBoneOffset();
-			m_boneTransforms[boneIndex] = offset * m_boneTransforms[boneIndex];
+			//Matrix44 offset = m_baseSkeleton->GetRootBoneOffset();
+			m_boneTransforms[boneIndex] = m_boneTransforms[boneIndex];
 		}
 	}
 }

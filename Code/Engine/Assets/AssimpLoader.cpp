@@ -184,6 +184,18 @@ void AssimpLoader::CreateBoneMappingsFromNode(aiNode* node, const std::vector<st
 	}
 }
 
+Matrix44 GetNodeWorldTransform(aiNode* node)
+{
+	if (node == nullptr)
+	{
+		return Matrix44::IDENTITY;
+	}
+
+	Matrix44 parentTransform = GetNodeWorldTransform(node->mParent);
+
+	return parentTransform * ConvertAiMatrixToMyMatrix(node->mTransformation);
+}
+
 void AssimpLoader::SetBoneOffsetData(aiNode* node, SkeletonBase* skeleton)
 {
 	int numMeshes = (int) node->mNumMeshes;
@@ -200,7 +212,10 @@ void AssimpLoader::SetBoneOffsetData(aiNode* node, SkeletonBase* skeleton)
 
 			ASSERT_OR_DIE(boneMapping >= 0, "Error: AssimpLoader::SetBoneOffsetData couldn't find mapping for bone \"%s\"", currBone->mName.C_Str());
 
-			skeleton->SetOffsetMatrix(boneMapping, ConvertAiMatrixToMyMatrix(currBone->mOffsetMatrix));
+			Matrix44 offset = ConvertAiMatrixToMyMatrix(currBone->mOffsetMatrix);
+			Matrix44 nodeTransform = GetNodeWorldTransform(node);
+
+			skeleton->SetOffsetMatrix(boneMapping, offset * Matrix44::GetInverse(nodeTransform));
 		}
 	}
 
@@ -471,10 +486,10 @@ void AssimpLoader::ExtractBoneTransform(aiNode* ainode, const Matrix44& accumula
 	// Catch the bone root offset when we find it
 	// DebuggerPrintf("NODE NAME: %s\n", nodeName.c_str());
 
-	if (nodeName == "BoneRoot")
-	{
-		skeleton->SetRootBoneOffset(thisNodeWorldTransform);
-	}
+// 	if (nodeName == "BoneRoot")
+// 	{
+// 		skeleton->SetRootBoneOffset(thisNodeWorldTransform);
+// 	}
 
 	// Determine what the parent index of the children bones are (either us if we're a bone, or our last bone ancestor)
 	int childParentIndex = (thisBoneIndex >= 0 ? thisBoneIndex : parentBoneIndex);
@@ -586,10 +601,13 @@ void AssimpLoader::FillPoseForTime(Pose* out_pose, aiAnimation* aianimation, flo
 
 			if (boneTransform == Matrix44::IDENTITY)
 			{
-				boneTransform = skeleton->GetBoneData(boneDataIndex).localTransform;
+				
+			}
+			else
+			{
+				out_pose->SetBoneTransform(boneDataIndex, boneTransform);
 			}
 
-			out_pose->SetBoneTransform(boneDataIndex, boneTransform);
 		}
 	}
 
