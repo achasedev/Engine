@@ -64,15 +64,6 @@ int SkeletonBase::CreateOrGetBoneMapping(const std::string& boneName)
 
 
 //-----------------------------------------------------------------------------------------------
-// Returns the root bone offset transform for this skeleton
-//
-Matrix44 SkeletonBase::GetRootBoneOffset() const
-{
-	return m_rootBoneOffset;
-}
-
-
-//-----------------------------------------------------------------------------------------------
 // Returns the name of the root bone for this skeleton
 //
 std::string SkeletonBase::GetRootBoneName() const
@@ -158,14 +149,6 @@ void SkeletonBase::SetParentBoneIndex(unsigned int boneIndex, int parentBoneInde
 }
 
 
-//-----------------------------------------------------------------------------------------------
-// Sets the transform that is the parent of the root bone
-//
-void SkeletonBase::SetRootBoneOffset(const Matrix44& transform)
-{
-	m_rootBoneOffset = transform;
-}
-
 void SkeletonBase::SetMeshToBoneMatrix(unsigned int boneIndex, const Matrix44& meshToBoneTransform)
 {
 	ASSERT_OR_DIE(boneIndex < m_boneData.size(), Stringf("Error: SkeletonBase::SetBindPose received index out of bounds - size is %i, index is %i.", m_boneData.size(), boneIndex));
@@ -178,4 +161,11 @@ void SkeletonBase::SetOffsetMatrix(unsigned int boneIndex, const Matrix44& offse
 	ASSERT_OR_DIE(boneIndex < m_boneData.size(), Stringf("Error: SkeletonBase::SetBindPose received index out of bounds - size is %i, index is %i.", m_boneData.size(), boneIndex));
 
 	m_boneData[boneIndex].offsetMatrix = offsetTransform;
+}
+
+void SkeletonBase::SetBonePreRotation(unsigned int boneIndex, const Matrix44& preRotation)
+{
+	ASSERT_OR_DIE(boneIndex < m_boneData.size(), Stringf("Error: SkeletonBase::SetBindPose received index out of bounds - size is %i, index is %i.", m_boneData.size(), boneIndex));
+
+	m_boneData[boneIndex].preRotation = preRotation;
 }

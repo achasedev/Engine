@@ -36,6 +36,7 @@ const SkeletonBase* Pose::GetBaseSkeleton() const
 	return m_baseSkeleton;
 }
 
+
 void Pose::SetBoneTransform(unsigned int index, const Matrix44& transform)
 {
 	ASSERT_OR_DIE(index < m_boneCount, Stringf("Error: Pose::GetTransfrom received index out of range, index was %i", index));
@@ -59,10 +60,13 @@ void Pose::ConstructGlobalMatrices()
 			Matrix44 parentMatrix = m_boneTransforms[parentIndex];
 
 			m_boneTransforms[boneIndex] = parentMatrix * localMatrix;
+			Vector3 angles = Matrix44::ExtractRotationDegrees(m_boneTransforms[boneIndex]);
+
 		}
 		else
 		{
 			//Matrix44 offset = m_baseSkeleton->GetRootBoneOffset();
+			Vector3 angles = Matrix44::ExtractRotationDegrees(m_boneTransforms[boneIndex]);
 			m_boneTransforms[boneIndex] = m_boneTransforms[boneIndex];
 		}
 	}

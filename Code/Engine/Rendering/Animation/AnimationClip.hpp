@@ -7,7 +7,7 @@ class AnimationClip
 public:
 	//-----Public Methods-----
 
-	void Initialize(unsigned int numPoses, const SkeletonBase* skeleton);
+	void Initialize(unsigned int numPoses, const SkeletonBase* skeleton, float framesPerSecond);
 
 	// Accessors
 	Pose*	GetPoseAtIndex(unsigned int poseIndex);
@@ -16,12 +16,13 @@ public:
 
 	int		GetPoseCount() const;
 	float	GetTotalDurationSeconds() const;
+	float	GetFrameDurationSeconds() const;
 
 	
 	// Mutators
 	void SetName(const std::string& name);
-	void SetFramesPerSecond(float framesPerSecond);
-	void SetDurationSeconds(float durationSeconds);
+	//void SetFramesPerSecond(float framesPerSecond);
+	//void SetDurationSeconds(float durationSeconds);
 
 
 private:
@@ -40,6 +41,7 @@ private:
 
 	float m_durationSeconds;
 	float m_framesPerSecond;
+	float m_frameDuration;
 
 	const SkeletonBase* m_baseSkeleton;
 };

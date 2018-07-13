@@ -4,16 +4,24 @@
 #include "Engine/Rendering/Animation/SkeletonBase.hpp"
 
 
-void AnimationClip::Initialize(unsigned int numPoses, const SkeletonBase* skeleton)
+void AnimationClip::Initialize(unsigned int numPoses, const SkeletonBase* skeleton, float framesPerSecond)
 {
 	m_poses = (Pose*) malloc(sizeof(Pose) * numPoses);
 	m_numPoses = numPoses;
 
 	m_baseSkeleton = skeleton;
+
+	m_frameDuration = (1.f / framesPerSecond);
+	m_durationSeconds = numPoses * m_frameDuration;
 }
 
 Pose* AnimationClip::CalculatePoseAtTime(float t) const
 {
+	while (t >= m_durationSeconds)
+	{
+		t -= m_durationSeconds;
+	}
+
 	float normalizedTime = RangeMapFloat(t, 0.f, GetTotalDurationSeconds(), 0.f, 1.f);
 
 	return CalculatePoseAtNormalizedTime(normalizedTime);
@@ -23,7 +31,7 @@ Pose* AnimationClip::GetPoseAtIndex(unsigned int poseIndex)
 {
 	return &m_poses[poseIndex];
 }
-
+#include "Engine/Core/EngineCommon.hpp"
 Pose* AnimationClip::CalculatePoseAtNormalizedTime(float t) const
 {
 	// Loop the animation for now
@@ -34,10 +42,16 @@ Pose* AnimationClip::CalculatePoseAtNormalizedTime(float t) const
 
 	int numPoses = GetPoseCount();
 
+	float timeIntoAnimation = (t * m_durationSeconds);
+
 	int firstPoseIndex = (int) (t * numPoses);
 	int secondPoseIndex = firstPoseIndex == (numPoses - 1) ? 0 : firstPoseIndex + 1;
 
-	return CalcuateInterpolatedPose(firstPoseIndex, secondPoseIndex, t);
+	float currentTime = (float) firstPoseIndex * (m_durationSeconds / m_numPoses);
+	//ASSERT_OR_DIE(currentTime <= timeIntoAnimation, "Error: current was over t");
+
+	float interpolationValue = (timeIntoAnimation - currentTime) / (m_durationSeconds / m_numPoses);
+	return CalcuateInterpolatedPose(firstPoseIndex, secondPoseIndex, interpolationValue);
 }
 
 int AnimationClip::GetPoseCount() const
@@ -51,20 +65,25 @@ float AnimationClip::GetTotalDurationSeconds() const
 }
 
 
+float AnimationClip::GetFrameDurationSeconds() const
+{
+	return m_frameDuration;
+}
+
 void AnimationClip::SetName(const std::string& name)
 {
 	m_name = name;
 }
 
-void AnimationClip::SetFramesPerSecond(float framesPerSecond)
-{
-	m_framesPerSecond = framesPerSecond;
-}
-
-void AnimationClip::SetDurationSeconds(float durationSeconds)
-{
-	m_durationSeconds = durationSeconds;
-}
+// void AnimationClip::SetFramesPerSecond(float framesPerSecond)
+// {
+// 	m_framesPerSecond = framesPerSecond;
+// }
+// 
+// void AnimationClip::SetDurationSeconds(float durationSeconds)
+// {
+// 	m_durationSeconds = durationSeconds;
+// }
 
 Pose* AnimationClip::CalcuateInterpolatedPose(unsigned int firstPoseIndex, unsigned int secondPoseIndex, float t) const
 {

@@ -20,6 +20,7 @@ public:
 	const Matrix44* GetBoneTransformData() const;
 	const SkeletonBase* GetBaseSkeleton() const;
 
+
 	// Mutators
 	void			SetBoneTransform(unsigned int index, const Matrix44& transform);
 

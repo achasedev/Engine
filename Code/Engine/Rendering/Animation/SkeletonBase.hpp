@@ -21,6 +21,7 @@ struct BoneData_t
 	int			parentIndex = -1;			// Index of the parent of this bone, -1 indicates no parent (root)
 	Matrix44	meshToBoneMatrix;
 	Matrix44	offsetMatrix;
+	Matrix44	preRotation;
 };
 
 class SkeletonBase
@@ -34,7 +35,6 @@ public:
 	int			CreateOrGetBoneMapping(const std::string& boneName);
 	
 	unsigned int	GetBoneCount() const;
-	Matrix44		GetRootBoneOffset() const;
 	std::string		GetRootBoneName() const;
 
 	std::vector<std::string> GetAllBoneNames() const;
@@ -45,9 +45,9 @@ public:
 	void SetWorldTransform(unsigned int boneIndex, const Matrix44& worldTransform);
 	void SetParentBoneIndex(unsigned int boneIndex, int parentBoneIndex);
 	void SetFinalTransformation(unsigned int boneIndex, const Matrix44& toWorldMatrix);
-	void SetRootBoneOffset(const Matrix44& transform);
 	void SetMeshToBoneMatrix(unsigned int boneIndex, const Matrix44& bindPoseTransform);
 	void SetOffsetMatrix(unsigned int boneIndex, const Matrix44& offsetTransform);
+	void SetBonePreRotation(unsigned int boneIndex, const Matrix44& prerotation);
 
 
 private:
@@ -56,5 +56,4 @@ private:
 	std::map<std::string, unsigned int> m_boneNameMappings;	// Registry that maps bone names to element positions in the m_boneData array
 	std::vector<BoneData_t>				m_boneData;			// Collection of bone information (transforms, parent indices)
 	std::vector<std::string>			m_boneNames;
-	Matrix44 m_rootBoneOffset;
 };

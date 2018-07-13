@@ -37,9 +37,9 @@ public:
 	void OpenFile(const std::string& filepath);
 	void CloseFile();
 
-	Renderable* LoadFile_Mesh(SkeletonBase* skeleton = nullptr);
-	SkeletonBase* LoadFile_Skeleton();
-	std::vector<AnimationClip*> LoadFile_Animation(SkeletonBase* skeleton);
+	Renderable*						ImportMesh(SkeletonBase* skeleton = nullptr);
+	SkeletonBase*					ImportSkeleton();
+	std::vector<AnimationClip*>		ImportAnimation(SkeletonBase* skeleton, int firstFrame = 0);
 
 
 private:
@@ -51,7 +51,7 @@ private:
 		void CreateBoneMappingsFromNode(aiNode* node, const std::vector<std::string>& boneNames, SkeletonBase* skeleton);
 		void SetBoneOffsetData(aiNode* node, SkeletonBase* skeleton);
 		void BuildBoneHierarchy(SkeletonBase* skeleton);
-		void ExtractBoneTransform(aiNode* ainode, const Matrix44& accumulatedTransform, const Matrix44& currentTransform, int parentBoneIndex, SkeletonBase* skeleton);
+		void ExtractBoneTransform(aiNode* ainode, const Matrix44& accumulatedTransform, int parentBoneIndex, SkeletonBase* skeleton);
 
 	// Meshes (including bone vertex data) and materials
 	void BuildMeshesAndMaterials_FromScene(Renderable* renderable, SkeletonBase* skeleton);
@@ -61,15 +61,15 @@ private:
 
 
 	// Build Animations
-	void BuildAnimations(SkeletonBase* skeleton, std::vector<AnimationClip*>& animations);
-		AnimationClip* BuildAnimation(unsigned int animationIndex, SkeletonBase* skeleton);
-			void FillPoseForTime(Pose* out_pose, aiAnimation* aianimation, float time, SkeletonBase* skeleton);
+	void BuildAnimations(SkeletonBase* skeleton, std::vector<AnimationClip*>& animations, int firstFrameIndex);
+		AnimationClip* BuildAnimation(unsigned int animationIndex, SkeletonBase* skeleton,  int firstFrameIndex);
+			void FillPoseForTime(Pose* out_pose, aiAnimation* aianimation, float time, SkeletonBase* skeleton,  int firstFrameIndex);
 				aiNodeAnim* GetChannelForBone(const std::string& boneName, aiAnimation* animation) const;
-				Matrix44	GetLocalTransfromAtTime(aiNodeAnim* channel, float time);
-					aiVector3D		GetWorldTranslationAtTime(aiNodeAnim* channel, float time) const;
-					aiQuaternion	GetWorldRotationAtTime(aiNodeAnim* channel, float time) const;
-					aiVector3D		GetWorldScaleAtTime(aiNodeAnim* channel, float time) const;
-				Matrix44	ConstructMatrixFromSeparatedChannels(const std::string& boneName, aiAnimation* animation, float time) const;
+				Matrix44	GetLocalTransfromAtTime(aiNodeAnim* channel, float time, const Matrix44& preRotation,  int firstFrameIndex);
+					aiVector3D		GetWorldTranslationAtTime(const aiNodeAnim* channel, float time,  int firstFrameIndex) const;
+					aiQuaternion	GetWorldRotationAtTime(aiNodeAnim* channel, float time,  int firstFrameIndex) const;
+					aiVector3D		GetWorldScaleAtTime(aiNodeAnim* channel, float time,  int firstFrameIndex) const;
+				bool	ConstructMatrixFromSeparatedChannels(const std::string& boneName, aiAnimation* animation, float time, SkeletonBase* skeleton, Matrix44& out_transform,  int firstFrameIndex) const;
 
 
 private:

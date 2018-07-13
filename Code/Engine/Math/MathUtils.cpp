@@ -941,6 +941,32 @@ bool AreMostlyEqual(const Quaternion& a, const Quaternion& b, float epsilon /*= 
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns true if the two matrices are equal within an epsilon error, false otherwise
+//
+bool AreMostlyEqual(const Matrix44& a, const Matrix44& b, float epsilon /*= 0.0001f*/)
+{
+	bool equal =   AreMostlyEqual(a.Ix, b.Ix, epsilon) 
+				&& AreMostlyEqual(a.Iy, b.Iy, epsilon)
+				&& AreMostlyEqual(a.Iz, b.Iz, epsilon)
+				&& AreMostlyEqual(a.Iw, b.Iw, epsilon)
+				&& AreMostlyEqual(a.Jx, b.Jx, epsilon)
+				&& AreMostlyEqual(a.Jy, b.Jy, epsilon)
+				&& AreMostlyEqual(a.Jz, b.Jz, epsilon)
+				&& AreMostlyEqual(a.Jw, b.Jw, epsilon)
+				&& AreMostlyEqual(a.Kx, b.Kx, epsilon)
+				&& AreMostlyEqual(a.Ky, b.Ky, epsilon)
+				&& AreMostlyEqual(a.Kz, b.Kz, epsilon)
+				&& AreMostlyEqual(a.Kw, b.Kw, epsilon)
+				&& AreMostlyEqual(a.Tx, b.Tx, epsilon)
+				&& AreMostlyEqual(a.Ty, b.Ty, epsilon)
+				&& AreMostlyEqual(a.Tz, b.Tz, epsilon)
+				&& AreMostlyEqual(a.Tw, b.Tw, epsilon);
+
+	return equal;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns true if the two spheres defined by the parameters overlap, false otherwise
 //
 bool DoSpheresOverlap(const Vector3& posA, float radiusA, const Vector3& posB, float radiusB)
