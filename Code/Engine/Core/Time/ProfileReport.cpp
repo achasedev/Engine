@@ -10,6 +10,7 @@
 #include "Engine/Core/Time/ProfileReportEntry.hpp"
 #include "Engine/Core/Time/ProfileMeasurement.hpp"
 
+TODO("Update pause to stop collecting data, then reconstruct records uses in-place measurements");
 
 //-----------------------------------------------------------------------------------------------
 // Constructor

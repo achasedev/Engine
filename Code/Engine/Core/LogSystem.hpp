@@ -6,17 +6,23 @@
 /************************************************************************/
 #pragma once
 #include "Engine/Core/Threading/Threading.hpp"
+#include "Engine/DataStructures/ThreadSafeSet.hpp"
+#include "Engine/DataStructures/ThreadSafeMap.hpp"
 #include "Engine/DataStructures/ThreadSafeQueue.hpp"
 #include <shared_mutex>
-#include "Engine/Core/EngineCommon.hpp"
 
 class File;
 
 // Struct to represent a single log
 struct LogMessage_t
 {
+	LogMessage_t() {}
+	LogMessage_t(const char* _tag, const char* _message)
+	 : tag(_tag), message(_message) {}
+
 	std::string tag;
 	std::string message;
+
 };
 
 // Log callback, for hooking into processed messages
@@ -25,13 +31,29 @@ typedef void (*Log_cb)(LogMessage_t, void *paramData);
 // Struct for representing a callback with argument data
 struct LogCallBack_t
 {
-	LogCallBack_t(Log_cb callbackP, void* argumentDataP)
-	 : callback(callbackP), argumentData(argumentDataP) {}
+	LogCallBack_t() {}
+	LogCallBack_t(const char* _name, Log_cb _callback, void* _argumentData)
+	 : name(_name), callback(_callback), argumentData(_argumentData) {}
 
-	Log_cb	callback;
-	void*	argumentData;
+	std::string		name;
+	Log_cb			callback;
+	void*			argumentData;
+
 };
 
+// Struct for a callback with a filtered list
+// This allows us to pass the LogCallback_t around by value, since
+// inside the set the std::mutex can't be copied (thus, can't copy LogFilteredCallback_t)
+struct LogFilteredCallback_t
+{
+	LogFilteredCallback_t() {}
+	LogFilteredCallback_t(LogCallBack_t logCallback)
+	 : logCallback(logCallback) {}
+
+	LogCallBack_t				logCallback;
+	ThreadSafeSet<std::string>	filters;
+	bool						isBlackList = true;
+};
 
 class LogSystem
 {
@@ -48,6 +70,11 @@ public:
 	// Mutators
 	static void AddLog(LogMessage_t message);
 	static void AddCallback(LogCallBack_t callback);
+	static void FlushLog();
+
+	static void AddCallbackFilter(const std::string& callbackName, const std::string& filter);
+	static void RemoveFilter(const std::string& callbackName, const std::string& filter);
+	static void SetCallbackToBlackList(const std::string& callbackName, bool isBlackList);
 
 
 private:
@@ -74,7 +101,7 @@ private:
 	
 	// Callbacks
 	static std::shared_mutex s_callbackLock;
-	static std::vector<LogCallBack_t> s_callbacks;
+	static std::map<std::string, LogFilteredCallback_t> s_callbacks;
 
 	// Statics
 	static LogSystem* s_instance;
@@ -88,5 +115,8 @@ private:
 //////////////////////////////////////////////////////////////////////////
 
 // For adding messages to the log
-void LogPrintf(char const* tag, char const *format, ...);
-void LogPrintv(char const* tag, char const* format, va_list args);
+void LogPrintf(char const *format, ...);
+void LogPrintv(char const* format, va_list args);
+
+void LogTaggedPrintf(char const* tag, char const *format, ...);
+void LogTaggedPrintv(char const* tag, char const* format, va_list args);

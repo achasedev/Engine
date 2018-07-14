@@ -701,5 +701,7 @@
     <ClInclude Include="Core\LogSystem.hpp" />
     <ClInclude Include="DataStructures\ThreadSafeQueue.hpp" />
     <ClInclude Include="Core\Threading\Threading.hpp" />
+    <ClInclude Include="DataStructures\ThreadSafeSet.hpp" />
+    <ClInclude Include="DataStructures\ThreadSafeMap.hpp" />
   </ItemGroup>
 </Project>

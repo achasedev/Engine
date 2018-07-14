@@ -38,8 +38,9 @@ public:
 	bool Close();
 
 	// Read/Writing
-	void Write(const char* buffer, size_t length);
 	bool LoadFileToMemory();
+	void Write(const char* buffer, size_t length);
+	void Flush();
 
 	// For manipulating files loaded into memory
 	unsigned int	GetNextLine(std::string& out_string);

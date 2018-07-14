@@ -150,6 +150,15 @@ void File::Write(const char* buffer, size_t length)
 
 
 //-----------------------------------------------------------------------------------------------
+// Flushes any outstanding writes to disk
+//
+void File::Flush()
+{
+	fflush((FILE*) m_filePointer);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Reads the file contents into memory
 //
 bool File::LoadFileToMemory()

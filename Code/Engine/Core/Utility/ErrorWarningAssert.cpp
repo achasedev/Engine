@@ -10,8 +10,9 @@
 #endif
 
 //-----------------------------------------------------------------------------------------------
-#include "Engine/Core/Utility/ErrorWarningAssert.hpp"
+#include "Engine/Core/LogSystem.hpp"
 #include "Engine/Core/Utility/StringUtils.hpp"
+#include "Engine/Core/Utility/ErrorWarningAssert.hpp"
 #include <stdarg.h>
 #include <iostream>
 
@@ -52,14 +53,8 @@ void DebuggerPrintf( const char* messageFormat, ... )
 	va_end( variableArgumentList );
 	messageLiteral[ MESSAGE_MAX_LENGTH - 1 ] = '\0'; // In case vsnprintf overran (doesn't auto-terminate)
 
-#if defined( PLATFORM_WINDOWS )
-	if( IsDebuggerAvailable() )
-	{
-		OutputDebugStringA( messageLiteral );
-	}
-#endif
-
-	std::cout << messageLiteral;
+	// Send it to the LogSystem so the logging thread does the printing
+	LogSystem::AddLog(LogMessage_t("DEBUG", messageLiteral));
 }
 
 
