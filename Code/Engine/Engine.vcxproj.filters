@@ -361,6 +361,7 @@
     <ClCompile Include="Rendering\Animation\Pose.cpp" />
     <ClCompile Include="Rendering\Animation\AnimationClip.cpp" />
     <ClCompile Include="Rendering\Animation\SkeletonInstance.cpp" />
+    <ClCompile Include="Rendering\Animation\Animator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -691,5 +692,6 @@
     <ClInclude Include="Rendering\Animation\Pose.hpp" />
     <ClInclude Include="Rendering\Animation\AnimationClip.hpp" />
     <ClInclude Include="Rendering\Animation\SkeletonInstance.hpp" />
+    <ClInclude Include="Rendering\Animation\Animator.hpp" />
   </ItemGroup>
 </Project>

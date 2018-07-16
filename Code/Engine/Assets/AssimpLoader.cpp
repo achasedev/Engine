@@ -567,7 +567,7 @@ AnimationClip* AssimpLoader::BuildAnimation(unsigned int animationIndex, Skeleto
 	float numTicks = ((float) aianimation->mDuration) - (float) tickOffset;
 	float durationSeconds = (float) numTicks / (float) aianimation->mTicksPerSecond;
 
-	float framesPerSecond = 60.f;	// Hard coding for now
+	float framesPerSecond = 5.f;	// Hard coding for now
 	float secondsPerFrame = 1.f / framesPerSecond;
 
 	int numFramesToGenerate = Ceiling(durationSeconds * framesPerSecond);
