@@ -23,7 +23,6 @@ FILE* OpenFile(const char* filepath, const char* flags)
 	FILE *fp = nullptr; 
 	fopen_s(&fp, filepath, flags); 
 	if (fp == nullptr) {
-		ERROR_RECOVERABLE(Stringf("Warning: FileReadToNewBuffer() couldn't open file \"%s\".", filepath));
 		return nullptr; 
 	}
 

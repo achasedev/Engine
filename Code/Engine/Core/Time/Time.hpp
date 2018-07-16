@@ -54,5 +54,6 @@ private:
 
 //--------------------------------C FUNCTIONS-------------------------------------
 
-uint64_t GetPerformanceCounter();
-std::string GetSystemDateAndTime();
+uint64_t	GetPerformanceCounter();
+std::string GetFormattedSystemDateAndTime();
+std::string GetFormattedSystemTime();

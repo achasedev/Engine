@@ -6,16 +6,18 @@
 /************************************************************************/
 #include <stdarg.h>
 #include "Engine/Core/File.hpp"
-#include "Engine/Core/Time/Clock.hpp"
 #include "Engine/Core/Window.hpp"
-#include "Engine/Core/DeveloperConsole/Command.hpp"
+#include "Engine/Core/Time/Time.hpp"
+#include "Engine/Core/LogSystem.hpp"
 #include "Engine/Assets/AssetDB.hpp"
 #include "Engine/Math/MathUtils.hpp"
-#include "Engine/Core/DeveloperConsole/DevConsole.hpp"
+#include "Engine/Core/Time/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Rendering/Core/Renderer.hpp"
-#include "Engine/Rendering/Animation/SpriteAnim.hpp"
 #include "Engine/Core/Time/ProfileScoped.hpp"
+#include "Engine/Core/DeveloperConsole/Command.hpp"
+#include "Engine/Rendering/Animation/SpriteAnim.hpp"
+#include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 #include "Engine/Rendering/Animation/SpriteAnimDef.hpp"
 #include "Engine/Rendering/Animation/SpriteAnimSet.hpp"
 
@@ -48,6 +50,10 @@ void Command_SaveLog(Command& cmd);
 void Command_Clear(Command& cmd);
 void Command_HideLog(Command& cmd);
 void Command_ShowLog(Command& cmd);
+void Command_HookToLogSystem(Command& cmd);
+
+// For LogSystem printing
+static void WriteToDevConsole(LogMessage_t log, void* args);
 
 
 //-----------------------------------------------------------------------------------------------
@@ -67,7 +73,7 @@ void ConsolePrintv(const Rgba& color, char const* format, va_list args)
 	DevConsole* console = DevConsole::GetInstance();
 	GUARANTEE_OR_DIE(console != nullptr, "Error: ConsolePrintf called with no DevConsole initialized.");
 
-	console->AddToLog(colorText);
+	console->AddToMessageQueue(colorText);
 }
 
 
@@ -105,7 +111,7 @@ void ConsolePrintf(const Rgba &color, char const *format, ...)
 	DevConsole* console = DevConsole::GetInstance();
 	GUARANTEE_OR_DIE(console != nullptr, "Error: ConsolePrintf called with no DevConsole initialized.");
 
-	console->AddToLog(colorText);
+	console->AddToMessageQueue(colorText);
 }
 
 
@@ -538,6 +544,13 @@ void DevConsole::Update()
 		m_FLChanAnimations->SetCurrentAnimation(Stringf("%i", randomInt));
 	}
 	m_FLChanAnimations->Update(deltaTime);
+
+	// Update the message logs with messages in the queue
+	ConsoleOutputText text;
+	while(m_messageQueue.Dequeue(text)) // returns false when empty
+	{
+		m_consoleOutputLog.push_back(text);
+	}
 }
 
 
@@ -595,9 +608,9 @@ bool DevConsole::IsOpen()
 //-----------------------------------------------------------------------------------------------
 // Adds the given color-text object to the console log window to be drawn each frame
 //
-void DevConsole::AddToLog(ConsoleOutputText text)
+void DevConsole::AddToMessageQueue(ConsoleOutputText text)
 {
-	m_consoleOutputLog.push_back(text);
+	m_messageQueue.Enqueue(text);
 }
 
 
@@ -721,11 +734,12 @@ void DevConsole::Initialize()
 	s_instance = new DevConsole();
 
 	// Register commands related to the DevConsole
-	Command::Register("echo",			"Prints the given text to screen with the given color",	Command_Echo);
-	Command::Register("save_log",		"Writes the output log to file",						Command_SaveLog);
-	Command::Register("clear",			"Clears the output log",								Command_Clear);
-	Command::Register("hide_log",		"Disables rendering of the log window and text",		Command_HideLog);
-	Command::Register("show_log",		"Enables rendering of the log window and text",			Command_ShowLog);
+	Command::Register("echo",							"Prints the given text to screen with the given color",	Command_Echo);
+	Command::Register("save_log",						"Writes the output log to file",						Command_SaveLog);
+	Command::Register("clear",							"Clears the output log",								Command_Clear);
+	Command::Register("hide_log",						"Disables rendering of the log window and text",		Command_HideLog);
+	Command::Register("show_log",						"Enables rendering of the log window and text",			Command_ShowLog);
+	Command::Register("hook_console_to_logsystem",		"Enables rendering of the log window and text",			Command_HookToLogSystem);
 
 	// Load the font here to prevent hitch on first log open
 	AssetDB::CreateOrGetBitmapFont("Data/Images/Fonts/ConsoleFont.png");
@@ -798,6 +812,21 @@ void DevConsole::HideLogWindow()
 //--------------------C Functions--------------------
 
 //-----------------------------------------------------------------------------------------------
+// LogSystem Callback for outputting the log messages to the DevConsole
+//
+static void WriteToDevConsole(LogMessage_t log, void* args)
+{
+	UNUSED(args);
+
+	// No need to check for nullptr, as the callback is registered in DevConsole::Initialize()
+	ConsoleOutputText outputText;
+	outputText.m_text = Stringf("(%s) %s: %s\n", Clock::GetFormattedFrameSystemTime().c_str(), log.tag.c_str(), log.message.c_str());
+
+	DevConsole::GetInstance()->AddToMessageQueue(outputText);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Handler that listens for Windows messages on the current window
 //
 bool ConsoleMessageHandler(unsigned int msg, size_t wparam, size_t lparam)
@@ -823,6 +852,10 @@ bool ConsoleMessageHandler(unsigned int msg, size_t wparam, size_t lparam)
 	return true;
 }
 
+
+//////////////////////////////////////////////////////////////////////////
+// Console Commands
+//////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------------------------
 // Prints a given string to the console with an optional color
@@ -930,4 +963,17 @@ void Command_ShowLog(Command& cmd)
 	UNUSED(cmd);
 	DevConsole::ShowLogWindow();
 	ConsolePrintf("Log window shown.");
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Shows the console log window
+// Usage: hook_console_to_logsystem
+//
+void Command_HookToLogSystem(Command& cmd)
+{
+	UNUSED(cmd);
+
+	LogSystem::AddCallback("DevConsole Writer", WriteToDevConsole, nullptr);
+	ConsolePrintf(Rgba::GREEN, "LogSystem now writing to DevConsole output");
 }

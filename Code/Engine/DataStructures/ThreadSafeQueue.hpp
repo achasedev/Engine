@@ -40,6 +40,17 @@ public:
 		return hasItem;
 	}
 
+	
+	// For checking if the queue is empty
+	bool IsEmpty()
+	{
+		m_lock.lock();
+		bool isEmpty = m_queue.empty();
+		m_lock.unlock();
+
+		return isEmpty;
+	}
+
 
 private:
 	//-----Private Data-----

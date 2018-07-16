@@ -9,8 +9,9 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/Matrix44.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/DataStructures/ThreadSafeQueue.hpp"
 #include <vector>
-
+TODO("Max console line length, or line wrap");
 class Renderer;
 class BitmapFont;
 class SpriteAnimSet;
@@ -35,7 +36,7 @@ public:
 	void Open(); 
 	void Close(); 
 	bool IsOpen(); 
-	void AddToLog(ConsoleOutputText text);
+	void AddToMessageQueue(ConsoleOutputText text);
 
 	static std::vector<ConsoleOutputText> GetConsoleLog();
 	static void ClearConsoleLog();
@@ -95,7 +96,8 @@ private:
 	bool m_showLog;											// Should the log window and text be drawn?
 
 	std::string	m_inputBuffer;								// What is shown as the user is typing
-	std::vector<ConsoleOutputText>	m_consoleOutputLog;		// Log that is printed to screen as a list
+	ThreadSafeQueue<ConsoleOutputText>	m_messageQueue;			// For thread safety
+	std::vector<ConsoleOutputText>		m_consoleOutputLog;		// Log that is printed to screen as a list
 
 	std::vector<std::string> m_commandHistory;				// List of previously entered strings (not the log)
 	int	m_historyIndex;										// Current location in history to render		

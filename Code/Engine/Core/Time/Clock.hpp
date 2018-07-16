@@ -81,4 +81,6 @@ private:
 	// Not a pointer - is constructed before main
 	static Clock s_masterClock;
 
+	// For string printing
+	static std::string s_frameFormattedSystemTime;
 };

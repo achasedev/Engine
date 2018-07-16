@@ -11,7 +11,8 @@
 
 
 // Master clock of the system, constructed before main()
-Clock Clock::s_masterClock;
+Clock		Clock::s_masterClock;
+std::string Clock::s_frameFormattedSystemTime;
 
 
 //-----------------------------------------------------------------------------------------------

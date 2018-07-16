@@ -608,7 +608,7 @@ void Renderer::SaveScreenshotToFile()
 	stbi_write_png(tempName.c_str(), dimensions.x, dimensions.y, 4, buffer, 0);
 	
 	// Write with date and time to archive
-	std::string archivedName = Stringf("Data/Screenshots/Screenshot_%s.png", GetSystemDateAndTime().c_str());
+	std::string archivedName = Stringf("Data/Screenshots/Screenshot_%s.png", GetFormattedSystemDateAndTime().c_str());
 	stbi_write_png(archivedName.c_str(), dimensions.x, dimensions.y, 4, buffer, 0);
 
 	// Reset flags and clean up

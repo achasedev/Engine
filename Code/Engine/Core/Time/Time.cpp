@@ -69,13 +69,32 @@ uint64_t GetPerformanceCounter()
 	return *(uint64_t*)&currentCount;
 }
 
-std::string GetSystemDateAndTime()
+
+//-----------------------------------------------------------------------------------------------
+// Returns the data in time in the format MONTH_DAY_YEAR_HOUR_MINUTE_SECOND
+//
+std::string GetFormattedSystemDateAndTime()
 {
 	SYSTEMTIME st;
 	GetLocalTime(&st);
 
 	std::string formattedTime = Stringf("%d_%d_%d_%d_%d_%d", 
 		st.wMonth, st.wDay, st.wYear, st.wHour, st.wMinute, st.wSecond);
+
+	return formattedTime;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the data in time in the format HOUR_MINUTE_SECOND
+//
+std::string GetFormattedSystemTime()
+{
+	SYSTEMTIME st;
+	GetLocalTime(&st);
+
+	std::string formattedTime = Stringf("%d_%d_%d", 
+		st.wHour, st.wMinute, st.wSecond);
 
 	return formattedTime;
 }

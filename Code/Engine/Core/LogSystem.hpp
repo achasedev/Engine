@@ -70,11 +70,15 @@ public:
 	// Mutators
 	static void AddLog(LogMessage_t message);
 	static void AddCallback(LogCallBack_t callback);
+	static void AddCallback(const char* name, Log_cb callback, void* argumentData);
 	static void FlushLog();
 
 	static void AddCallbackFilter(const std::string& callbackName, const std::string& filter);
-	static void RemoveFilter(const std::string& callbackName, const std::string& filter);
+	static void RemoveCallBackFilter(const std::string& callbackName, const std::string& filter);
 	static void SetCallbackToBlackList(const std::string& callbackName, bool isBlackList);
+
+	static void ShowAllTags();
+	static void HideAllTags();
 
 
 private:
@@ -85,16 +89,21 @@ private:
 	~LogSystem() = delete;
 	LogSystem(const LogSystem& copy) = delete;
 
+	static void InitializeConsoleCommands();
+
+
 	// Log thread functions
 	static void ProcessLog(void*);
-	static void FlushMessages();
+	static void ProcessAllLogsInQueue();
 
 
 private:
 	//-----Private Data-----
 
 	// For writing to the log file
-	static File* s_logFile;
+	static File* s_latestLogFile;
+	static File* s_timeStampedFile;
+
 	static bool s_isRunning;
 	static ThreadHandle_t s_logThread;
 	static ThreadSafeQueue<LogMessage_t> s_logQueue;
