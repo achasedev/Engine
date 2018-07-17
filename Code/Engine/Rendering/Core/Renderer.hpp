@@ -221,8 +221,6 @@ private:
 	// For updating time
 	void UpdateTimeData();
 
-	void SaveScreenshotToFile();		// Called during EndFrame()
-
 
 public:
 	//-----Public Data-----

@@ -338,7 +338,7 @@ void LogSystem::ProcessAllLogsInQueue()
 static void WriteToFile(LogMessage_t log, void* fileptr)
 {
 	File* file = (File*) fileptr;
-	std::string toPrint = Stringf("(%s) %s: %s\n", GetFormattedSystemTime().c_str(), log.tag.c_str(), log.message.c_str());
+	std::string toPrint = Stringf("[%s] %s: %s\n", GetFormattedSystemTime().c_str(), log.tag.c_str(), log.message.c_str());
 	file->Write(toPrint.c_str(), toPrint.size());
 }
 
@@ -458,6 +458,7 @@ void LogErrorf(char const *format, ...)
 void ThreadOpenBig(void* arguments)
 {
 	int i = *((int*) arguments);
+
 	File* file = new File();
 	
 	const char* filepath = &(((const char*)arguments)[sizeof(int)]);
@@ -478,8 +479,9 @@ void ThreadOpenBig(void* arguments)
 		std::string line;
 		unsigned int lineNumber = file->GetNextLine(line);
 		LogPrintf("[%u:%u] %s", i, lineNumber, line.c_str());
-		LogSystem::FlushLog();
 	}
+
+	ConsolePrintf(Rgba::GREEN, "Thread %i completed.", i);
 }
 
 
@@ -514,29 +516,18 @@ void Command_TestFlood(Command& cmd)
 		args[offset] = filepath.c_str()[i];
 	}
 
-	// For holding hands to join later, initialize to null for safety
-	ThreadHandle_t threads[8];
-	for (int i = 0; i < 8; ++i)
-	{
-		threads[i] = nullptr;
-	}
-
 	for (int i = 0; i < threadCount; ++i)
 	{
+		ProfileScoped pss(Stringf("%i thread creation.", i));
+		UNUSED(pss);
+
 		*((int*) args) = i; // Pass the thread id
-		threads[i] = Thread::Create(ThreadOpenBig, args); // Create it
-	}
-
-	// Wait for these threads to stop flooding the log system, to ensure we don't quit too early
-	for (int i = 0; i < threadCount; ++i)
-	{
-		if (threads[i] != nullptr)
-		{
-			threads[i]->join();
-		}
+		Thread::CreateAndDetach(ThreadOpenBig, args); // Create it
 	}
 
 	free(args); // Free up the argument after all threads are going, to be safe
+
+	ConsolePrintf(Rgba::GREEN, "Flood test started for %i threads.", threadCount);
 }
 
 

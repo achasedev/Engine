@@ -820,7 +820,7 @@ static void WriteToDevConsole(LogMessage_t log, void* args)
 
 	// No need to check for nullptr, as the callback is registered in DevConsole::Initialize()
 	ConsoleOutputText outputText;
-	outputText.m_text = Stringf("(%s) %s: %s\n", Clock::GetFormattedFrameSystemTime().c_str(), log.tag.c_str(), log.message.c_str());
+	outputText.m_text = Stringf("%s: %s\n", log.tag.c_str(), log.message.c_str());
 
 	DevConsole::GetInstance()->AddToMessageQueue(outputText);
 }

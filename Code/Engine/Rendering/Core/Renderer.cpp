@@ -31,6 +31,7 @@
 #include "Engine/Rendering/Materials/MaterialPropertyBlock.hpp"
 #include "Engine/Rendering/Shaders/PropertyBlockDescription.hpp"
 #include "Engine/Rendering/Core/Light.hpp"
+#include "Engine/Core/Threading/Threading.hpp"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "ThirdParty/gl/glcorearb.h"
@@ -44,6 +45,8 @@ const char*			Renderer::FONT_DIRECTORY		= "Data\\Fonts\\";
 const char*			Renderer::SHADER_DIRECTORY		= "Data\\Shaders\\";
 const float			Renderer::UI_ORTHO_HEIGHT		= 1080.f;
 AABB2				Renderer::s_UIOrthoBounds;
+
+void SaveScreenshotToFile(void* args);
 
 
 //********************Structs for Uniform Buffer Data********************
@@ -203,7 +206,28 @@ void Renderer::EndFrame()
 	// Save off the (newly swapped) back buffer to file
 	if (m_saveScreenshotThisFrame)
 	{
-		SaveScreenshotToFile();
+		// Get and setup buffer info
+		IntVector2 dimensions = m_defaultColorTarget->GetDimensions();
+		int numTexels = dimensions.x * dimensions.y;
+		char* buffer = (char*) malloc(sizeof(char) * numTexels * 4);	// 4 components, request the screenshot in RGBA format
+
+		// Read the back buffer
+		glReadPixels((GLint)0, (GLint)0, (GLint)dimensions.x, (GLint)dimensions.y, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+
+		GL_CHECK_ERROR();
+
+		// Set up thread arguments
+		char** args = (char**) malloc(sizeof(char*) + sizeof(IntVector2));
+
+		*(args) = buffer;
+		*((IntVector2*)(args + 1)) = dimensions;
+
+
+		// Write to file, thread will clean up our allocations
+		Thread::CreateAndDetach(SaveScreenshotToFile, args);
+
+		// Reset flag
+		m_saveScreenshotThisFrame = false;
 	}
 }
 
@@ -583,20 +607,15 @@ void Renderer::DrawTextInBox2D(const std::string& text, const AABB2& drawBox, co
 //-----------------------------------------------------------------------------------------------
 // Fetches the final back buffer state of the GPU and write to file
 //
-void Renderer::SaveScreenshotToFile()
+void SaveScreenshotToFile(void* args)
 {
-	// Get and setup buffer info
-	IntVector2 dimensions = m_defaultColorTarget->GetDimensions();
-	int numTexels = dimensions.x * dimensions.y;
-	char* buffer = (char*) malloc(sizeof(char) * numTexels * 4);	// 4 components, request the screenshot in RGBA format
-
-	// Read the back buffer
-	glReadPixels((GLint)0, (GLint)0, (GLint)dimensions.x, (GLint)dimensions.y, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-
-	GL_CHECK_ERROR();
-
-	//-----Now write the data to file-----
+	//-----Write the data to file-----
 	
+	char* buffer = *(char**)args;
+
+	char** secondArg = ((char**)(args)) + 1;
+	IntVector2 dimensions = *(IntVector2*)secondArg;
+
 	// Check to see if the directory exists (will make it if it doesn't exist, do nothing otherwise)
 	CreateDirectoryA("Data/Screenshots", NULL);
 
@@ -611,9 +630,11 @@ void Renderer::SaveScreenshotToFile()
 	std::string archivedName = Stringf("Data/Screenshots/Screenshot_%s.png", GetFormattedSystemDateAndTime().c_str());
 	stbi_write_png(archivedName.c_str(), dimensions.x, dimensions.y, 4, buffer, 0);
 
-	// Reset flags and clean up
-	m_saveScreenshotThisFrame = false;
+	// Clean up when we're done;
 	free(buffer);
+	free(args);
+
+	ConsolePrintf(Rgba::GREEN, "Screenshot written to %s and %s", tempName.c_str(), archivedName.c_str());
 }
 
 
