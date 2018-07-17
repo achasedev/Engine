@@ -304,7 +304,7 @@
     <ClCompile Include="Rendering\Animation\AnimationClip.cpp" />
     <ClCompile Include="Rendering\Animation\Animator.cpp" />
     <ClCompile Include="Rendering\Animation\Pose.cpp" />
-    <ClCompile Include="Rendering\Animation\SkeletonBase.cpp" />
+    <ClCompile Include="Rendering\Animation\Skeleton.cpp" />
     <ClCompile Include="Rendering\Animation\SkeletonInstance.cpp" />
     <ClCompile Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.cpp" />
     <ClCompile Include="Rendering\Resources\BitmapFont.cpp" />
@@ -421,7 +421,7 @@
     <ClInclude Include="Rendering\Animation\AnimationClip.hpp" />
     <ClInclude Include="Rendering\Animation\Animator.hpp" />
     <ClInclude Include="Rendering\Animation\Pose.hpp" />
-    <ClInclude Include="Rendering\Animation\SkeletonBase.hpp" />
+    <ClInclude Include="Rendering\Animation\Skeleton.hpp" />
     <ClInclude Include="Rendering\Animation\SkeletonInstance.hpp" />
     <ClInclude Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.hpp" />
     <ClInclude Include="Rendering\Resources\BitmapFont.hpp" />

@@ -24,7 +24,7 @@ struct BoneData_t
 	Matrix44	preRotation;
 };
 
-class SkeletonBase
+class Skeleton
 {
 public:
 	//-----Public Methods-----

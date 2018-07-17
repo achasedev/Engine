@@ -7,7 +7,7 @@ class AnimationClip
 public:
 	//-----Public Methods-----
 
-	void Initialize(unsigned int numPoses, const SkeletonBase* skeleton, float framesPerSecond);
+	void Initialize(unsigned int numPoses, const Skeleton* skeleton, float framesPerSecond);
 
 	// Accessors
 	Pose*	GetPoseAtIndex(unsigned int poseIndex);
@@ -43,5 +43,5 @@ private:
 	float m_framesPerSecond;
 	float m_frameDuration;
 
-	const SkeletonBase* m_baseSkeleton;
+	const Skeleton* m_baseSkeleton;
 };

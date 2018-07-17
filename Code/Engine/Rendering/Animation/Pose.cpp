@@ -1,6 +1,6 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Rendering/Animation/Pose.hpp"
-#include "Engine/Rendering/Animation/SkeletonBase.hpp"
+#include "Engine/Rendering/Animation/Skeleton.hpp"
 
 Pose::~Pose()
 {
@@ -11,7 +11,7 @@ Pose::~Pose()
 	}
 }
 
-void Pose::Initialize(const SkeletonBase* skeleton)
+void Pose::Initialize(const Skeleton* skeleton)
 {
 	int numBones = skeleton->GetBoneCount();
 	ASSERT_OR_DIE(numBones <= 150, Stringf("Error: Pose::Initialize called for skeleton with more than 100 bones, unsupported. Count was %i", numBones));
@@ -31,7 +31,7 @@ const Matrix44* Pose::GetBoneTransformData() const
 	return m_boneTransforms;
 }
 
-const SkeletonBase* Pose::GetBaseSkeleton() const
+const Skeleton* Pose::GetBaseSkeleton() const
 {
 	return m_baseSkeleton;
 }

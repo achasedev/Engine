@@ -2,7 +2,7 @@
 #include <vector>
 #include "Engine/Math/Matrix44.hpp"
 
-class SkeletonBase;
+class Skeleton;
 
 class Pose
 {
@@ -12,13 +12,13 @@ public:
 	Pose() {}
 	~Pose();
 
-	void			Initialize(const SkeletonBase* skeleton);
+	void			Initialize(const Skeleton* skeleton);
 
 	// Accessors
 	unsigned int	GetBoneCount() const;
 	Matrix44		GetBoneTransform(unsigned int transformIndex) const;
 	const Matrix44* GetBoneTransformData() const;
-	const SkeletonBase* GetBaseSkeleton() const;
+	const Skeleton* GetBaseSkeleton() const;
 
 
 	// Mutators
@@ -33,5 +33,5 @@ private:
 	Matrix44* m_boneTransforms = NULL;
 	unsigned int m_boneCount = 0;
 
-	const SkeletonBase* m_baseSkeleton;
+	const Skeleton* m_baseSkeleton;
 };

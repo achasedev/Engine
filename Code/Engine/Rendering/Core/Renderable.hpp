@@ -12,7 +12,7 @@ class Material;
 class Transform;
 class MeshGroup;
 class MeshBuilder;
-class SkeletonBase;
+class Skeleton;
 class MaterialInstance;
 
 struct RenderableDraw_t

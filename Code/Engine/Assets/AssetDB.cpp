@@ -21,7 +21,6 @@
 #include "Engine/Rendering/Resources/SpriteSheet.hpp"
 #include "Engine/Rendering/Shaders/ShaderProgram.hpp"
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
-#include "Engine/Rendering/Animation/SkeletonBase.hpp"
 #include "Engine/Rendering/Meshes/MeshGroupBuilder.hpp"
 #include "Engine/Rendering/Materials/MaterialInstance.hpp"
 

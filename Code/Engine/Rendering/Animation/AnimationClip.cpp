@@ -1,10 +1,10 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Rendering/Animation/Pose.hpp"
 #include "Engine/Rendering/Animation/AnimationClip.hpp"
-#include "Engine/Rendering/Animation/SkeletonBase.hpp"
+#include "Engine/Rendering/Animation/Skeleton.hpp"
 
 
-void AnimationClip::Initialize(unsigned int numPoses, const SkeletonBase* skeleton, float framesPerSecond)
+void AnimationClip::Initialize(unsigned int numPoses, const Skeleton* skeleton, float framesPerSecond)
 {
 	m_poses = (Pose*) malloc(sizeof(Pose) * numPoses);
 	m_numPoses = numPoses;

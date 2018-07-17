@@ -6,7 +6,7 @@
 /************************************************************************/
 #include "Engine/Assets/AssetDB.hpp"
 #include "Engine/Rendering/Core/Renderer.hpp"
-#include "Engine/Rendering/Animation/SkeletonBase.hpp"
+#include "Engine/Rendering/Animation/Skeleton.hpp"
 #include "Engine/Rendering/Materials/MaterialInstance.hpp"
 #include "Engine/Rendering/DebugRendering/DebugRenderSystem.hpp"
 #include "Engine/Rendering/DebugRendering/DebugRenderTask_Skeleton.hpp"
@@ -15,7 +15,7 @@
 //-----------------------------------------------------------------------------------------------
 // Constructor
 //
-DebugRenderTask_Skeleton::DebugRenderTask_Skeleton(const SkeletonBase* skeleton, const Matrix44& transform, const DebugRenderOptions& options)
+DebugRenderTask_Skeleton::DebugRenderTask_Skeleton(const Skeleton* skeleton, const Matrix44& transform, const DebugRenderOptions& options)
 	: DebugRenderTask(options, DEBUG_CAMERA_WORLD)
 {
 	AssembleMesh(skeleton);
@@ -45,7 +45,7 @@ void DebugRenderTask_Skeleton::Render() const
 //-----------------------------------------------------------------------------------------------
 // Builds the mesh for the skeleton
 //
-void DebugRenderTask_Skeleton::AssembleMesh(const SkeletonBase* skeleton)
+void DebugRenderTask_Skeleton::AssembleMesh(const Skeleton* skeleton)
 {
 	MeshBuilder mb;
 	mb.BeginBuilding(PRIMITIVE_LINES, false);

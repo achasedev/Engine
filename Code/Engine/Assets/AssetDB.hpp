@@ -20,7 +20,7 @@ class BitmapFont;
 class Renderable;
 class SpriteSheet;
 class TextureCube;
-class SkeletonBase;
+class Skeleton;
 class ShaderProgram;
 class MaterialInstance;
 
