@@ -109,6 +109,7 @@ void Skeleton::SetLocalTransform(unsigned int boneIndex, const Matrix44& localTr
 	m_boneData[boneIndex].localTransform = localTransform;
 }
 
+
 //-----------------------------------------------------------------------------------------------
 // Sets the world matrix of the bone given by boneIndex
 // The world matrix is the matrix that transforms from bone space directly to world space
@@ -116,20 +117,6 @@ void Skeleton::SetLocalTransform(unsigned int boneIndex, const Matrix44& localTr
 void Skeleton::SetWorldTransform(unsigned int boneIndex, const Matrix44& worldTransform)
 {
 	m_boneData[boneIndex].worldTransform = worldTransform;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Sets the final transformation matrix of the bone given by boneIndex
-// The final transformation is the matrix that is used in the shader, that transforms the vertex
-// into local space with an applied weight per vertex. For this base, it just transforms to the
-// bind pose
-//
-void Skeleton::SetFinalTransformation(unsigned int boneIndex, const Matrix44& toWorldMatrix)
-{
-	ASSERT_OR_DIE(boneIndex < m_boneData.size(), Stringf("Error: SkeletonBase::SetToWorldMatrix received index out of bounds - size is %i, index is %i.", m_boneData.size(), boneIndex));
-
-	m_boneData[boneIndex].finalTransformation = toWorldMatrix;
 }
 
 
@@ -149,6 +136,9 @@ void Skeleton::SetParentBoneIndex(unsigned int boneIndex, int parentBoneIndex)
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Sets the mesh to bone matrix (inverse bind pose)
+//
 void Skeleton::SetMeshToBoneMatrix(unsigned int boneIndex, const Matrix44& meshToBoneTransform)
 {
 	ASSERT_OR_DIE(boneIndex < m_boneData.size(), Stringf("Error: SkeletonBase::SetBindPose received index out of bounds - size is %i, index is %i.", m_boneData.size(), boneIndex));
@@ -156,6 +146,10 @@ void Skeleton::SetMeshToBoneMatrix(unsigned int boneIndex, const Matrix44& meshT
 	m_boneData[boneIndex].meshToBoneMatrix = meshToBoneTransform;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Sets the offset matrix from Assimp's data
+//
 void Skeleton::SetOffsetMatrix(unsigned int boneIndex, const Matrix44& offsetTransform)
 {
 	ASSERT_OR_DIE(boneIndex < m_boneData.size(), Stringf("Error: SkeletonBase::SetBindPose received index out of bounds - size is %i, index is %i.", m_boneData.size(), boneIndex));
@@ -163,6 +157,10 @@ void Skeleton::SetOffsetMatrix(unsigned int boneIndex, const Matrix44& offsetTra
 	m_boneData[boneIndex].offsetMatrix = offsetTransform;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Sets the prerotation of this bone to the one specified
+//
 void Skeleton::SetBonePreRotation(unsigned int boneIndex, const Matrix44& preRotation)
 {
 	ASSERT_OR_DIE(boneIndex < m_boneData.size(), Stringf("Error: SkeletonBase::SetBindPose received index out of bounds - size is %i, index is %i.", m_boneData.size(), boneIndex));

@@ -305,7 +305,6 @@
     <ClCompile Include="Rendering\Animation\Animator.cpp" />
     <ClCompile Include="Rendering\Animation\Pose.cpp" />
     <ClCompile Include="Rendering\Animation\Skeleton.cpp" />
-    <ClCompile Include="Rendering\Animation\SkeletonInstance.cpp" />
     <ClCompile Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.cpp" />
     <ClCompile Include="Rendering\Resources\BitmapFont.cpp" />
     <ClCompile Include="Rendering\Core\Camera.cpp" />
@@ -422,7 +421,6 @@
     <ClInclude Include="Rendering\Animation\Animator.hpp" />
     <ClInclude Include="Rendering\Animation\Pose.hpp" />
     <ClInclude Include="Rendering\Animation\Skeleton.hpp" />
-    <ClInclude Include="Rendering\Animation\SkeletonInstance.hpp" />
     <ClInclude Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.hpp" />
     <ClInclude Include="Rendering\Resources\BitmapFont.hpp" />
     <ClInclude Include="Rendering\Core\Camera.hpp" />

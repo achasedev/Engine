@@ -48,8 +48,13 @@ void DebugRenderTask_Skeleton::Render() const
 void DebugRenderTask_Skeleton::AssembleMesh(const Skeleton* skeleton)
 {
 	MeshBuilder mb;
+	mb.BeginBuilding(PRIMITIVE_TRIANGLES, true);
+	mb.PushCube(Vector3::ZERO, Vector3::ONES);
+	mb.FinishBuilding();
+	Mesh* cube = mb.CreateMesh<Vertex3D_PCU>();
+
+	mb.Clear();
 	mb.BeginBuilding(PRIMITIVE_LINES, false);
-	Mesh* cube = AssetDB::CreateOrGetMesh("Cube");
 
 	for (unsigned int boneIndex = 0; boneIndex < skeleton->GetBoneCount(); ++boneIndex)
 	{

@@ -41,6 +41,9 @@ public:
 	void AddInstanceMatrix(const Matrix44& model);
 	void RemoveInstanceMatrix(unsigned int instanceIndex);
 
+	void SetDraw(unsigned int index, RenderableDraw_t draw);
+	void SetSharedMaterial(unsigned int index, Material* material);
+
 	// Accessors
 	RenderableDraw_t	GetDraw(unsigned int drawIndex) const;
 	Mesh*				GetMesh(unsigned int drawIndex) const;

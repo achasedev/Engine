@@ -90,6 +90,24 @@ void Renderable::RemoveInstanceMatrix(unsigned int instanceIndex)
 
 
 //-----------------------------------------------------------------------------------------------
+// Sets the draw to the one specified
+//
+void Renderable::SetDraw(unsigned int index, RenderableDraw_t draw)
+{
+	m_draws[index] = draw;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the shared material at the index to the material provided
+//
+void Renderable::SetSharedMaterial(unsigned int index, Material* material)
+{
+	m_draws[index].sharedMaterial = material;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the given draw object at the index
 //
 RenderableDraw_t Renderable::GetDraw(unsigned int drawIndex) const

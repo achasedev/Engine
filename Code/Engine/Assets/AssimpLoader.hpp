@@ -62,7 +62,7 @@ private:
 	// Meshes and materials
 	void BuildMeshesAndMaterials_FromScene(Renderable* renderable, Skeleton* skeleton);
 		void BuildMeshesAndMaterials_FromNode(aiNode* node, const Matrix44& parentTransform, Renderable* renderable, Skeleton* skeleton);
-			void BuildMeshAndMaterial_FromAIMesh(aiMesh* mesh, const Matrix44& transformation, Renderable* renderable, Skeleton* skeleton);
+			void BuildMeshAndMaterials_FromAIMesh(aiMesh* mesh, const Matrix44& transformation, Renderable* renderable, Skeleton* skeleton);
 
 
 	// Animation

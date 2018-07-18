@@ -1,3 +1,9 @@
+/************************************************************************/
+/* File: Animator.cpp
+/* Author: Andrew Chase
+/* Date: July 16th, 2018
+/* Description: Implementation of the Animator class
+/************************************************************************/
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/Time/Stopwatch.hpp"
 #include "Engine/Rendering/Animation/Animator.hpp"
@@ -6,6 +12,10 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Core/Utility/StringUtils.hpp"
 
+
+//-----------------------------------------------------------------------------------------------
+// Constructor
+//
 Animator::Animator()
 {
 	m_currStopwatch = new Stopwatch(nullptr);
@@ -13,6 +23,10 @@ Animator::Animator()
 	m_transitionStopwatch = new Stopwatch(nullptr);
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Destructor
+//
 Animator::~Animator()
 {
 	delete m_currStopwatch;
@@ -25,6 +39,10 @@ Animator::~Animator()
 	m_transitionStopwatch = nullptr;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Plays the given animation from the beginning, ignoring any initial state of the animator
+//
 void Animator::Play(AnimationClip* clip)
 {
 	m_currAnimation = clip;
@@ -36,6 +54,9 @@ void Animator::Play(AnimationClip* clip)
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Transitions from the currenly playing animation to the given one, over the course of time specified
+//
 void Animator::TransitionToClip(AnimationClip* clip, float transitionTime)
 {
 	// If we're currently transitioning then don't do anything
@@ -51,19 +72,23 @@ void Animator::TransitionToClip(AnimationClip* clip, float transitionTime)
 		transitionTime = clipDuration;
 	}
 
+	// Set up for transition
 	m_nextAnimation = clip;
 	m_nextStopwatch->SetInterval(clipDuration);
 	m_transitionStopwatch->SetInterval(transitionTime);
 	m_isTransitioning = true;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the pose to render given the animator's current state
+//
 Pose* Animator::GetCurrentPose()
 {
 	if (m_currAnimation == nullptr)
 	{
 		return nullptr;
 	}
-
 
 	if (m_isTransitioning)
 	{
@@ -111,4 +136,3 @@ Pose* Animator::GetCurrentPose()
 		return m_currAnimation->CalculatePoseAtNormalizedTime(timeElapsed);
 	}
 }
-

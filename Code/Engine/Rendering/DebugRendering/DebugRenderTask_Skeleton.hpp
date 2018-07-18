@@ -16,6 +16,7 @@ public:
 	//-----Public Methods-----
 
 	DebugRenderTask_Skeleton(const Skeleton* skeleton, const Matrix44& transform, const DebugRenderOptions& options);
+	virtual ~DebugRenderTask_Skeleton() {}
 
 	virtual void Render() const override;
 
