@@ -443,6 +443,35 @@ bool Material::SetProperty(const char* propertyName, const void* data, size_t by
 
 
 //-----------------------------------------------------------------------------------------------
+// Sets the block to the data given, creating a block if one doesn't already exist
+//
+bool Material::SetPropertyBlock(const char* blockName, const void* data, size_t byteSize)
+{
+	MaterialPropertyBlock* block = GetPropertyBlock(blockName);
+
+	if (block != nullptr)
+	{
+		block->SetCPUData(byteSize, data);	
+		return true;
+	}
+
+	// No block exists, so see if we can create it
+	const ShaderDescription*		shaderDescription	= m_shader->GetProgram()->GetUniformDescription();
+	const PropertyBlockDescription* blockDescription	= shaderDescription->GetBlockDescription(blockName); 
+
+	// If the block doesn't exist or if the uniform block is an engine reserved one, do nothing
+	if (blockDescription == nullptr || blockDescription->GetBlockBinding() < ENGINE_RESERVED_UNIFORM_BLOCK_COUNT)
+	{
+		return false;
+	}
+
+	block = CreatePropertyBlock(blockDescription);
+	block->SetCPUData(byteSize, data);
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Creates a new MaterialPropertyBlock on this material given the block description
 //
 MaterialPropertyBlock* Material::CreatePropertyBlock(const PropertyBlockDescription* blockDescription)

@@ -6,9 +6,10 @@
 /************************************************************************/
 #include "Engine/Core/Time/Time.hpp"
 #include "Engine/Core/Time/Clock.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Time/Stopwatch.hpp"
 
-
+TODO("Pause stopwatch");
 //-----------------------------------------------------------------------------------------------
 // Constructor, refers to the master clock of nullptr is passed
 //

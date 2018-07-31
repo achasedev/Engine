@@ -8,14 +8,15 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Rendering/DebugRendering/DebugRenderTask.hpp"
 
-class SkeletonBase;
+class Skeleton;
 
 class DebugRenderTask_Skeleton : public DebugRenderTask
 {
 public:
 	//-----Public Methods-----
 
-	DebugRenderTask_Skeleton(const SkeletonBase* skeleton, const Matrix44& transform, const DebugRenderOptions& options);
+	DebugRenderTask_Skeleton(const Skeleton* skeleton, const Matrix44& transform, const DebugRenderOptions& options);
+	virtual ~DebugRenderTask_Skeleton() {}
 
 	virtual void Render() const override;
 
@@ -23,6 +24,6 @@ public:
 private:
 	//-----Private Methods-----
 
-	void AssembleMesh(const SkeletonBase* skeleton);
+	void AssembleMesh(const Skeleton* skeleton);
 
 };

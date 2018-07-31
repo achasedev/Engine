@@ -62,30 +62,12 @@ public:
 		return SetProperty(propertyName, &value, sizeof(T));
 	}
 
+	bool SetPropertyBlock(const char* blockName, const void* data, size_t byteSize);
+
 	template <typename T>
 	bool SetPropertyBlock(const char* blockName, const T& blockData)
 	{
-		MaterialPropertyBlock* block = GetPropertyBlock(blockName);
-
-		if (block != nullptr)
-		{
-			block->SetCPUData(blockData);	
-			return true;
-		}
-
-		// No block exists, so see if we can create it
-		const ShaderDescription*		shaderDescription	= m_shader->GetProgram()->GetUniformDescription();
-		const PropertyBlockDescription* blockDescription	= shaderDescription->GetBlockDescription(blockName); 
-
-		// If the block doesn't exist or ff the uniform block is an engine reserved one, do nothing
-		if (blockDescription == nullptr || blockDescription->GetBlockBinding() < ENGINE_RESERVED_UNIFORM_BLOCK_COUNT)
-		{
-			return false;
-		}
-
-		block = CreatePropertyBlock(blockDescription);
-		block->SetCPUData(blockData);
-		return true;
+		return SetPropertyBlock(blockName, &blockData, sizeof(T));
 	}
 
 

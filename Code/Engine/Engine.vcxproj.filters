@@ -349,12 +349,10 @@
       <Filter>Core\Utilities</Filter>
     </ClCompile>
     <ClCompile Include="Math\Quaternion.cpp" />
-    <ClCompile Include="Rendering\Animation\SkeletonBase.cpp" />
     <ClCompile Include="Assets\AssimpLoader.cpp" />
     <ClCompile Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.cpp" />
     <ClCompile Include="Rendering\Animation\Pose.cpp" />
     <ClCompile Include="Rendering\Animation\AnimationClip.cpp" />
-    <ClCompile Include="Rendering\Animation\SkeletonInstance.cpp" />
     <ClCompile Include="Core\Time\ProfileLogScoped.cpp" />
     <ClCompile Include="Core\Time\ProfileMeasurement.cpp" />
     <ClCompile Include="Core\Time\Profiler.cpp" />
@@ -685,12 +683,10 @@
       <Filter>Core\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="Math\Quaternion.hpp" />
-    <ClInclude Include="Rendering\Animation\SkeletonBase.hpp" />
     <ClInclude Include="Assets\AssimpLoader.hpp" />
     <ClInclude Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.hpp" />
     <ClInclude Include="Rendering\Animation\Pose.hpp" />
     <ClInclude Include="Rendering\Animation\AnimationClip.hpp" />
-    <ClInclude Include="Rendering\Animation\SkeletonInstance.hpp" />
     <ClInclude Include="Core\Time\ProfileLogScoped.hpp" />
     <ClInclude Include="Core\Time\ProfileMeasurement.hpp" />
     <ClInclude Include="Core\Time\Profiler.hpp" />
@@ -703,5 +699,7 @@
     <ClInclude Include="Core\Threading\Threading.hpp" />
     <ClInclude Include="DataStructures\ThreadSafeSet.hpp" />
     <ClInclude Include="DataStructures\ThreadSafeMap.hpp" />
+    <ClInclude Include="Rendering\Animation\Animator.hpp" />
+    <ClInclude Include="Rendering\Animation\Skeleton.hpp" />
   </ItemGroup>
 </Project>

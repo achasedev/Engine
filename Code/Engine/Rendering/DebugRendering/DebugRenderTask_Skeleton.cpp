@@ -6,7 +6,7 @@
 /************************************************************************/
 #include "Engine/Assets/AssetDB.hpp"
 #include "Engine/Rendering/Core/Renderer.hpp"
-#include "Engine/Rendering/Animation/SkeletonBase.hpp"
+#include "Engine/Rendering/Animation/Skeleton.hpp"
 #include "Engine/Rendering/Materials/MaterialInstance.hpp"
 #include "Engine/Rendering/DebugRendering/DebugRenderSystem.hpp"
 #include "Engine/Rendering/DebugRendering/DebugRenderTask_Skeleton.hpp"
@@ -15,7 +15,7 @@
 //-----------------------------------------------------------------------------------------------
 // Constructor
 //
-DebugRenderTask_Skeleton::DebugRenderTask_Skeleton(const SkeletonBase* skeleton, const Matrix44& transform, const DebugRenderOptions& options)
+DebugRenderTask_Skeleton::DebugRenderTask_Skeleton(const Skeleton* skeleton, const Matrix44& transform, const DebugRenderOptions& options)
 	: DebugRenderTask(options, DEBUG_CAMERA_WORLD)
 {
 	AssembleMesh(skeleton);
@@ -45,35 +45,27 @@ void DebugRenderTask_Skeleton::Render() const
 //-----------------------------------------------------------------------------------------------
 // Builds the mesh for the skeleton
 //
-void DebugRenderTask_Skeleton::AssembleMesh(const SkeletonBase* skeleton)
+void DebugRenderTask_Skeleton::AssembleMesh(const Skeleton* skeleton)
 {
- 	Matrix44 globalInverseTransform = skeleton->GetGlobalInverseTransform();
 	MeshBuilder mb;
+	mb.BeginBuilding(PRIMITIVE_TRIANGLES, true);
+	mb.PushCube(Vector3::ZERO, Vector3::ONES);
+	mb.FinishBuilding();
+	Mesh* cube = mb.CreateMesh<Vertex3D_PCU>();
+
+	mb.Clear();
 	mb.BeginBuilding(PRIMITIVE_LINES, false);
-	Mesh* cube = AssetDB::CreateOrGetMesh("Cube");
 
 	for (unsigned int boneIndex = 0; boneIndex < skeleton->GetBoneCount(); ++boneIndex)
 	{
 		int parentIndex = skeleton->GetBoneData(boneIndex).parentIndex;
 		if (parentIndex != -1)
 		{
-			Vector3 start = Matrix44::ExtractTranslation(globalInverseTransform * skeleton->GetBoneData(parentIndex).bindPose);
-			Vector3 end = Matrix44::ExtractTranslation(globalInverseTransform * skeleton->GetBoneData(boneIndex).bindPose);
+			Vector3 start = Matrix44::ExtractTranslation(skeleton->GetBoneData(parentIndex).boneToMeshMatrix);
+			Vector3 end = Matrix44::ExtractTranslation(skeleton->GetBoneData(boneIndex).boneToMeshMatrix);
 
 			mb.PushLine(start, end);
 		}
-
-		RenderableDraw_t cubedraw;
-		
-		cubedraw.sharedMaterial = cubedraw.sharedMaterial = AssetDB::GetSharedMaterial("Debug_Render");
-		cubedraw.mesh = cube;
-		cubedraw.drawMatrix = skeleton->GetBoneData(boneIndex).bindPose;
-
-		if (boneIndex == 0)
-		{
-			cubedraw.drawMatrix = cubedraw.drawMatrix * Matrix44::MakeScale(Vector3(5.f, 5.f, 5.f));
-		}
-		m_renderable->AddDraw(cubedraw);
 	}
 
 	mb.FinishBuilding();
@@ -84,4 +76,19 @@ void DebugRenderTask_Skeleton::AssembleMesh(const SkeletonBase* skeleton)
 	draw.mesh = mesh;
 
 	m_renderable->AddDraw(draw);
+
+	for (unsigned int boneIndex = 0; boneIndex < skeleton->GetBoneCount(); ++boneIndex)
+	{
+		RenderableDraw_t cubedraw;
+
+		cubedraw.sharedMaterial = cubedraw.sharedMaterial = AssetDB::GetSharedMaterial("Debug_Render");
+		cubedraw.mesh = cube;
+		cubedraw.drawMatrix = skeleton->GetBoneData(boneIndex).boneToMeshMatrix;
+
+		if (boneIndex == 0)
+		{
+			cubedraw.drawMatrix = cubedraw.drawMatrix * Matrix44::MakeScale(Vector3(5.f, 5.f, 5.f));
+		}
+		m_renderable->AddDraw(cubedraw);
+	}
 }

@@ -16,13 +16,14 @@ struct BoneData_t
 {
 	Matrix44	localTransform;				// Transform of the bone local to it's parent bone
 	Matrix44	worldTransform;				// Transform of the bone in world space
-	Matrix44	finalTransformation;		// Full transformation: From Node local -> bone space -> World -> Model Local
-	Matrix44	offsetMatrix;				// Matrix that converts vertices from the local space into the bone space
+	Matrix44	boneToMeshMatrix;			// Bind pose matrix, from bone to world
+	Matrix44	meshToBoneMatrix;			// Inverse bind pose matrix, from world to bone
+	Matrix44	offsetMatrix;				// Assimp's offset matrix
+	Matrix44	preRotation;				// Pre-rotation for the bone
 	int			parentIndex = -1;			// Index of the parent of this bone, -1 indicates no parent (root)
-	Matrix44	bindPose;
 };
 
-class SkeletonBase
+class Skeleton
 {
 public:
 	//-----Public Methods-----
@@ -33,31 +34,25 @@ public:
 	int			CreateOrGetBoneMapping(const std::string& boneName);
 	
 	unsigned int	GetBoneCount() const;
-	Matrix44		GetGlobalInverseTransform() const;
-	Matrix44		GetRootBoneOffset() const;
 	std::string		GetRootBoneName() const;
 
 	std::vector<std::string> GetAllBoneNames() const;
 
 	// Mutators
-	void SetOffsetMatrix(unsigned int boneIndex, const Matrix44& offsetMatrix);
+	void SetBoneToMeshMatrix(unsigned int boneIndex, const Matrix44& offsetMatrix);
 	void SetLocalTransform(unsigned int boneIndex, const Matrix44& localTransform);
 	void SetWorldTransform(unsigned int boneIndex, const Matrix44& worldTransform);
 	void SetParentBoneIndex(unsigned int boneIndex, int parentBoneIndex);
-	void SetFinalTransformation(unsigned int boneIndex, const Matrix44& toWorldMatrix);
-	void SetGlobalInverseTransform(const Matrix44& inverseTransform);
-	void SetRootBoneOffset(const Matrix44& transform);
-	void SetBindPose(unsigned int boneIndex, const Matrix44& bindPoseTransform);
+	void SetMeshToBoneMatrix(unsigned int boneIndex, const Matrix44& bindPoseTransform);
+	void SetOffsetMatrix(unsigned int boneIndex, const Matrix44& offsetTransform);
+	void SetBonePreRotation(unsigned int boneIndex, const Matrix44& prerotation);
 
 
 private:
 	//-----Private Data-----
 
-	std::map<std::string, unsigned int> m_boneNameMappings;	// Registry that maps bone names to element positions in the m_boneData array
-	std::vector<BoneData_t>				m_boneData;			// Collection of bone information (transforms, parent indices)
+	std::map<std::string, unsigned int> m_boneNameMappings;		// Registry that maps bone names to element positions in the m_boneData array
+	std::vector<BoneData_t>				m_boneData;				// Collection of bone information (transforms, parent indices)
+	std::vector<std::string>			m_boneNames;			// Names of all bones in the skeleton
 
-	Matrix44 m_globalInverseTransform;	// Inverse transform of the Root node for the entire Assimp tree
-										// Used to transform a vertex back into "model" space after the bone transformation
-
-	Matrix44 m_rootBoneOffset;
 };

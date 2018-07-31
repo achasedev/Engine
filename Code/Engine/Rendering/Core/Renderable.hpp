@@ -12,7 +12,7 @@ class Material;
 class Transform;
 class MeshGroup;
 class MeshBuilder;
-class SkeletonBase;
+class Skeleton;
 class MaterialInstance;
 
 struct RenderableDraw_t
@@ -40,6 +40,9 @@ public:
 	void SetInstanceMatrix(unsigned int instanceIndex, const Matrix44& model);
 	void AddInstanceMatrix(const Matrix44& model);
 	void RemoveInstanceMatrix(unsigned int instanceIndex);
+
+	void SetDraw(unsigned int index, RenderableDraw_t draw);
+	void SetSharedMaterial(unsigned int index, Material* material);
 
 	// Accessors
 	RenderableDraw_t	GetDraw(unsigned int drawIndex) const;

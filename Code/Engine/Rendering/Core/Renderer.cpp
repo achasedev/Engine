@@ -943,13 +943,26 @@ void Renderer::BindMeshToProgram(const ShaderProgram* program, const Mesh* mesh)
 			glEnableVertexAttribArray(bind);
 			GL_CHECK_ERROR();
 
-			glVertexAttribPointer(bind,					// Where the bind point is at
-				attribute.m_elementCount,				// Number of components in this data type
-				ToGLType(attribute.m_dataType),									// glType of this data
-				attribute.m_isNormalized,				// Are they normalized
-				vertexStride,							// stride of the vertex
-				(GLvoid*)attribute.m_memberOffset		// offset into the layout this member is
-			);
+			// Need to use a different bind for integer data types
+			if (attribute.m_dataType == RDT_UNSIGNED_INT)  
+			{
+				glVertexAttribIPointer(bind,				// Where the bind point is at
+					attribute.m_elementCount,				// Number of components in this data type
+					ToGLType(attribute.m_dataType),			// glType of this data, integer
+					vertexStride,							// stride of the vertex
+					(GLvoid*)attribute.m_memberOffset		// offset into the layout this member is
+				); 
+			} 
+			else 
+			{
+				glVertexAttribPointer(bind,					// Where the bind point is at
+					attribute.m_elementCount,				// Number of components in this data type
+					ToGLType(attribute.m_dataType),									// glType of this data
+					attribute.m_isNormalized,				// Are they normalized
+					vertexStride,							// stride of the vertex
+					(GLvoid*)attribute.m_memberOffset		// offset into the layout this member is
+				);
+			}
 		}
 
 		GL_CHECK_ERROR();

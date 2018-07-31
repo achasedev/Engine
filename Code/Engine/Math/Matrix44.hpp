@@ -27,6 +27,7 @@ public:
 	const Matrix44	operator*(const Matrix44& rightMat) const;			
 	const Matrix44	operator*(float scaler) const;
 	const Vector4	operator*(const Vector4& rightVector) const;
+	bool			operator==(const Matrix44& other) const;
 
 	// Vector transformers
 	Vector4 TransformPoint(const Vector2& point) const;

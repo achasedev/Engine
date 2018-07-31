@@ -43,7 +43,7 @@ const VertexAttribute VertexSkinned::ATTRIBUTES[] =
 	VertexAttribute("UV",				RDT_FLOAT,			2,						false,		offsetof(VertexSkinned, m_texUVs)),
 	VertexAttribute("NORMAL",			RDT_FLOAT,			3,						false,		offsetof(VertexSkinned, m_normal)),
 	VertexAttribute("TANGENT",			RDT_FLOAT,			3,						false,		offsetof(VertexSkinned, m_tangent)),
-	VertexAttribute("BONE_INDICES",		RDT_UNSIGNED_INT,	MAX_BONES_PER_VERTEX,	false,		offsetof(VertexSkinned, m_bones)),
+	VertexAttribute("BONE_IDS",			RDT_UNSIGNED_INT,	MAX_BONES_PER_VERTEX,	false,		offsetof(VertexSkinned, m_bones)),
 	VertexAttribute("BONE_WEIGHTS",		RDT_FLOAT,			MAX_BONES_PER_VERTEX,	false,		offsetof(VertexSkinned, m_boneWeights))
 };
 

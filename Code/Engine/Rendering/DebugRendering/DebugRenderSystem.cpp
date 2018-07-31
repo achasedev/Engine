@@ -451,7 +451,7 @@ void DebugRenderSystem::DrawCube(const Vector3& position, float lifetime, const 
 //-----------------------------------------------------------------------------------------------
 // Draws an animation skeleton, helper function
 //
-void DebugRenderSystem::DrawSkeleton(const SkeletonBase* skeleton, const Matrix44& transform, float lifetime)
+void DebugRenderSystem::DrawSkeleton(const Skeleton* skeleton, const Matrix44& transform, float lifetime)
 {
 	DebugRenderOptions options;
 	options.m_lifetime = lifetime;
@@ -463,7 +463,7 @@ void DebugRenderSystem::DrawSkeleton(const SkeletonBase* skeleton, const Matrix4
 //-----------------------------------------------------------------------------------------------
 // Draws an animation skeleton, base function
 //
-void DebugRenderSystem::DrawSkeleton(const SkeletonBase* skeleton, const Matrix44& transform, const DebugRenderOptions& options)
+void DebugRenderSystem::DrawSkeleton(const Skeleton* skeleton, const Matrix44& transform, const DebugRenderOptions& options)
 {
 	DebugRenderTask_Skeleton* skeletonTask = new DebugRenderTask_Skeleton(skeleton, transform, options);
 	s_instance->m_tasks.push_back(skeletonTask);
