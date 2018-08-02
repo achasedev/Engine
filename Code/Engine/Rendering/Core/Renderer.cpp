@@ -943,7 +943,7 @@ void Renderer::BindMeshToProgram(const ShaderProgram* program, const Mesh* mesh)
 			glEnableVertexAttribArray(bind);
 			GL_CHECK_ERROR();
 
-			// Need to use a different bind for integer data types
+			// If we're using an int type, use glVertexAttrib-"I"-pointer, else just use glVertexAttribPointer
 			if (attribute.m_dataType == RDT_UNSIGNED_INT)  
 			{
 				glVertexAttribIPointer(bind,				// Where the bind point is at
@@ -957,7 +957,7 @@ void Renderer::BindMeshToProgram(const ShaderProgram* program, const Mesh* mesh)
 			{
 				glVertexAttribPointer(bind,					// Where the bind point is at
 					attribute.m_elementCount,				// Number of components in this data type
-					ToGLType(attribute.m_dataType),									// glType of this data
+					ToGLType(attribute.m_dataType),			// glType of this data
 					attribute.m_isNormalized,				// Are they normalized
 					vertexStride,							// stride of the vertex
 					(GLvoid*)attribute.m_memberOffset		// offset into the layout this member is
@@ -1041,6 +1041,7 @@ void Renderer::UpdateVAO(unsigned int& vaoHandle, Mesh* mesh, Material* material
 {
 	ASSERT_OR_DIE(mesh != nullptr && material != nullptr, Stringf("Error: Renderer::UpdateVAO() received null parameters."));
 
+	// If a VAO isn't made yet for whoever called this, make one (lazy instantiation)
 	if (glIsVertexArray(vaoHandle) == GL_FALSE)
 	{
 		glGenVertexArrays(1, &vaoHandle);
@@ -1050,6 +1051,8 @@ void Renderer::UpdateVAO(unsigned int& vaoHandle, Mesh* mesh, Material* material
 	glBindVertexArray(vaoHandle);
 
 	const Shader* shader = material->GetShader();
+
+	// Do the binding
 	BindMeshToProgram(shader->GetProgram(), mesh);
 }
 

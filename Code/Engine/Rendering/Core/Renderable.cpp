@@ -1,5 +1,5 @@
 /************************************************************************/
-/* File: RenderScene.cpp
+/* File: Renderable.cpp
 /* Author: Andrew Chase
 /* Date: May 2nd, 2018
 /* Description: Implementation of the renderable class
@@ -14,24 +14,6 @@
 #include "Engine/Rendering/Meshes/MeshBuilder.hpp"
 #include "Engine/Rendering/Materials/MaterialInstance.hpp"
 
-//-----------------------------------------------------------------------------------------------
-// Constructor from members
-//
-Renderable::Renderable(const Matrix44& model, Mesh* mesh, Material* sharedMaterial)
-{
-	m_instanceModels.push_back(model);
-
-	RenderableDraw_t draw;
-	draw.sharedMaterial = sharedMaterial;
-	draw.mesh = mesh;
-
-	m_draws.push_back(draw);
-
-	if (mesh != nullptr && sharedMaterial != nullptr)
-	{
-		BindMeshToMaterial(0);
-	}
-}
 
 
 //-----------------------------------------------------------------------------------------------
@@ -67,6 +49,7 @@ void Renderable::AddDraw(const RenderableDraw_t& draw)
 //
 void Renderable::SetInstanceMatrix(unsigned int instanceIndex, const Matrix44& model)
 {
+	ASSERT_OR_DIE(instanceIndex < m_instanceModels.size(), Stringf("Error: Renderable::SetInstanceMatrix received index out of range, index was %i", instanceIndex));
 	m_instanceModels[instanceIndex] = model;
 }
 
@@ -90,6 +73,26 @@ void Renderable::RemoveInstanceMatrix(unsigned int instanceIndex)
 
 
 //-----------------------------------------------------------------------------------------------
+// Sets the mesh of the draw at the given index to the given mesh
+//
+void Renderable::SetMesh(unsigned int index, Mesh* mesh)
+{
+	ASSERT_OR_DIE(index < m_draws.size(), Stringf("Error: Renderable::SetMesh received index out of range, index was %i", index));
+	m_draws[index].mesh = mesh;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the model matrix of the draw at the given index to the given matrix
+//
+void Renderable::SetModelMatrix(unsigned int index, const Matrix44& model)
+{
+	ASSERT_OR_DIE(index < m_draws.size(), Stringf("Error: Renderable::SetModelMatrix received index out of range, index was %i", index));
+	m_draws[index].drawMatrix = model;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Sets the draw to the one specified
 //
 void Renderable::SetDraw(unsigned int index, RenderableDraw_t draw)
@@ -101,9 +104,20 @@ void Renderable::SetDraw(unsigned int index, RenderableDraw_t draw)
 //-----------------------------------------------------------------------------------------------
 // Sets the shared material at the index to the material provided
 //
-void Renderable::SetSharedMaterial(unsigned int index, Material* material)
+void Renderable::SetSharedMaterial(unsigned int index, Material* sharedMaterial)
 {
-	m_draws[index].sharedMaterial = material;
+	ASSERT_OR_DIE(index < m_draws.size(), Stringf("Error: Renderable::SetSharedMaterial received index out of range, index was %i", index));
+	m_draws[index].sharedMaterial = sharedMaterial;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the material instance of the draw at the given index to the given instance
+//
+void Renderable::SetMaterialInstance(unsigned int index, MaterialInstance* materialInstance)
+{
+	ASSERT_OR_DIE(index < m_draws.size(), Stringf("Error: Renderable::SetMaterialInstance received index out of range, index was %i", index));
+	m_draws[index].materialInstance = materialInstance;
 }
 
 
@@ -223,18 +237,22 @@ void Renderable::ClearInstances()
 //
 void Renderable::ClearDraws()
 {
-	int numSets = (int) m_draws.size();
+	int numDraws = (int) m_draws.size();
 
 	Renderer* renderer = Renderer::GetInstance();
 
-	for (int setIndex = 0; setIndex < numSets; ++setIndex)
+	for (int drawIndex = 0; drawIndex < numDraws; ++drawIndex)
 	{
-		if (m_draws[setIndex].materialInstance != nullptr)
+		// Delete the material instance
+		if (m_draws[drawIndex].materialInstance != nullptr)
 		{
-			delete m_draws[setIndex].materialInstance;
+			delete m_draws[drawIndex].materialInstance;
+		}
 
-			// Also check to free the VAO
-			renderer->DeleteVAO(m_draws[setIndex].vaoHandle);
+		// Also check to free the VAO
+		if (m_draws[drawIndex].vaoHandle != 0)
+		{
+			renderer->DeleteVAO(m_draws[drawIndex].vaoHandle);
 		}
 	}
 

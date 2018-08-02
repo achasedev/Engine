@@ -449,28 +449,6 @@ void DebugRenderSystem::DrawCube(const Vector3& position, float lifetime, const 
 
 
 //-----------------------------------------------------------------------------------------------
-// Draws an animation skeleton, helper function
-//
-void DebugRenderSystem::DrawSkeleton(const Skeleton* skeleton, const Matrix44& transform, float lifetime)
-{
-	DebugRenderOptions options;
-	options.m_lifetime = lifetime;
-
-	DrawSkeleton(skeleton, transform, options);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Draws an animation skeleton, base function
-//
-void DebugRenderSystem::DrawSkeleton(const Skeleton* skeleton, const Matrix44& transform, const DebugRenderOptions& options)
-{
-	DebugRenderTask_Skeleton* skeletonTask = new DebugRenderTask_Skeleton(skeleton, transform, options);
-	s_instance->m_tasks.push_back(skeletonTask);
-}
-
-
-//-----------------------------------------------------------------------------------------------
 // Draws a screenspace quad, base function
 //
 void DebugRenderSystem::Draw2DQuad(const AABB2& bounds, const DebugRenderOptions& options)
