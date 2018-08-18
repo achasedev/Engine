@@ -93,7 +93,7 @@ std::string GetFormattedSystemTime()
 	SYSTEMTIME st;
 	GetLocalTime(&st);
 
-	std::string formattedTime = Stringf("%d_%d_%d", 
+	std::string formattedTime = Stringf("%d:%d:%d", 
 		st.wHour, st.wMinute, st.wSecond);
 
 	return formattedTime;

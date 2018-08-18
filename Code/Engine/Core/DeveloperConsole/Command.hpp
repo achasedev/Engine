@@ -75,8 +75,8 @@ public:
 private:
 	//-----Private Methods-----
 
-	void	ParseNameAndArguments(const std::string& commandLine);				// Separates the name from the arguments, for Command constructor
-	int		ParseSingleArgument(const std::string& commandLine, int startIndex);
+	void				ParseNameAndArguments(const std::string& commandLine);				// Separates the name from the arguments, for Command constructor
+	size_t				ParseSingleArgument(const std::string& commandLine, size_t startIndex);
 
 	void	AddArgumentToMap(const std::string& flag, const std::string& value);
 

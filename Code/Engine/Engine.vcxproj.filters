@@ -362,6 +362,8 @@
     <ClCompile Include="Core\Gif.cpp" />
     <ClCompile Include="Core\LogSystem.cpp" />
     <ClCompile Include="Core\Threading\Threading.cpp" />
+    <ClCompile Include="Rendering\Animation\Animator.cpp" />
+    <ClCompile Include="Rendering\Animation\Skeleton.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">

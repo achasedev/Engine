@@ -165,19 +165,19 @@ const std::map<std::string, CommandRegistration*>& Command::GetCommands()
 void Command::ParseNameAndArguments(const std::string& commandLine)
 {
 	// First get the name parsed
-	int nameStart = static_cast<int>(commandLine.find_first_not_of(' '));
+	size_t nameStart = commandLine.find_first_not_of(' ');
 
 	// If the line is empty or all white space don't do anything
-	if (commandLine.size() == 0 || nameStart == static_cast<int>(std::string::npos))
+	if (commandLine.size() == 0 || nameStart == std::string::npos)
 	{
 		return;
 	}
 
 	// Get the end of the name by finding the next whitespace
-	int nameEnd = static_cast<int>(commandLine.find_first_of(' ', nameStart));
+	size_t nameEnd = commandLine.find_first_of(' ', nameStart);
 
 	// No white space exists means the line is a single token, so no arguments
-	if (nameEnd == static_cast<int>(std::string::npos))
+	if (nameEnd == std::string::npos)
 	{
 		m_name = commandLine;
 	}
@@ -187,14 +187,14 @@ void Command::ParseNameAndArguments(const std::string& commandLine)
 		m_name = std::string(commandLine, nameStart, nameEnd - nameStart);
 
 		// Parse the rest of the arguments
-		int dashIndex = static_cast<int>(commandLine.find_first_of('-', nameEnd));
+		size_t dashIndex = commandLine.find_first_of('-', nameEnd);
 
-		while (dashIndex != static_cast<int>(std::string::npos))
+		while (dashIndex != std::string::npos)
 		{
-			int endIndex = ParseSingleArgument(commandLine, dashIndex);
+			size_t endIndex = ParseSingleArgument(commandLine, dashIndex);
 
 			// Increment and continue
-			dashIndex = static_cast<int>(commandLine.find_first_of('-', endIndex));
+			dashIndex = commandLine.find_first_of('-', endIndex);
 		}
 	}
 }
@@ -203,17 +203,17 @@ void Command::ParseNameAndArguments(const std::string& commandLine)
 //-----------------------------------------------------------------------------------------------
 // Parses the command line for the next flag/param from the start index
 //
-int Command::ParseSingleArgument(const std::string& commandLine, int dashIndex)
+size_t Command::ParseSingleArgument(const std::string& commandLine, size_t dashIndex)
 {
-	int flagNameEnd = static_cast<int>(commandLine.find_first_of(' ', dashIndex));
+	size_t flagNameEnd = commandLine.find_first_of(' ', dashIndex);
 
 	// The rest of the line is just a single flag with no param value associated, so throw it out
-	if (flagNameEnd == static_cast<int>(std::string::npos))
+	if (flagNameEnd == std::string::npos)
 	{
 		return dashIndex + 1;
 	}
 
-	int flagLength = flagNameEnd - dashIndex - 1;
+	size_t flagLength = flagNameEnd - dashIndex - 1;
 
 	// Just a dash is specified, no name for the flag after it, so ignore it
 	if (flagLength == 0)
@@ -225,18 +225,18 @@ int Command::ParseSingleArgument(const std::string& commandLine, int dashIndex)
 	std::string paramValue;
 
 	// Get the parameter value
-	int paramValueStart = static_cast<int>(commandLine.find_first_not_of(' '), flagNameEnd + 1);
+	size_t paramValueStart = commandLine.find_first_not_of(' ', flagNameEnd + 1);
 
 	// No param value specified for the flag, and no other data is associated afterward so exit
-	if (paramValueStart == static_cast<int>(std::string::npos))
+	if (paramValueStart == std::string::npos)
 	{
 		return dashIndex + 1;
 	}
 
-	int paramValueEnd = static_cast<int>(commandLine.find_first_of(' ', paramValueStart));
+	size_t paramValueEnd = commandLine.find_first_of(' ', paramValueStart);
 
 	// No more spaces in the param value string, so pull the rest of the command line as the value
-	if (paramValueEnd == static_cast<int>(std::string::npos))
+	if (paramValueEnd == std::string::npos)
 	{
 		paramValue = std::string(commandLine, paramValueStart, paramValueEnd);
 	}
