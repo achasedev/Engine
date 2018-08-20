@@ -131,20 +131,20 @@ bool Rgba::SetFromText(const char* text)
 	std::string stringText = std::string(text);
 
 	// Red
-	int firstComma = static_cast<int>(stringText.find(","));
-	if (firstComma == static_cast<int>(std::string::npos)) { return false; }
+	size_t firstComma = stringText.find(",");
+	if (firstComma == std::string::npos) { return false; }
 	std::string redText = std::string(stringText, 0, firstComma);
 	r = static_cast<unsigned char>(atoi(redText.c_str()));
 
 	// Green
-	int secondComma = static_cast<int>(stringText.find(",", firstComma + 1));
-	if (secondComma == static_cast<int>(std::string::npos)) { return false; }
+	size_t secondComma = stringText.find(",", firstComma + 1);
+	if (secondComma == std::string::npos) { return false; }
 	std::string greenText = std::string(stringText, firstComma + 1, secondComma - firstComma - 1);
 	g = static_cast<unsigned char>(atoi(greenText.c_str()));
 
 	// Blue and Alpha, if alpha is present
-	int thirdComma = static_cast<int>(stringText.find(",", secondComma + 1));
-	if (thirdComma == static_cast<int>(std::string::npos))
+	size_t thirdComma = stringText.find(",", secondComma + 1);
+	if (thirdComma == std::string::npos)
 	{
 		std::string blueText = std::string(stringText, secondComma + 1);
 		b = static_cast<unsigned char>(atoi(blueText.c_str()));

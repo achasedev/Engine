@@ -234,26 +234,26 @@ bool Vector3::SetFromText(const char* text)
 	bool usingCommas = true;
 	std::string stringText = std::string(text);
 
-	int firstComma = static_cast<int>(stringText.find(","));
+	size_t firstComma = stringText.find(",");
 
 	// No comma present in text, so instead look for spaces
-	if (firstComma == static_cast<int>(std::string::npos))
+	if (firstComma == std::string::npos)
 	{
 		usingCommas = false;
-		firstComma = static_cast<int>(stringText.find(" "));
+		firstComma = stringText.find(" ");
 
 		// No spaces either, so return false
-		if (firstComma == static_cast<int>(std::string::npos))
+		if (firstComma == std::string::npos)
 		{
 			return false;
 		}
 	}
 
 	// Look for a comma or space, depending on the first comma/space
-	int secondComma = (usingCommas ? static_cast<int>(stringText.find(",", firstComma + 1)) : static_cast<int>(stringText.find(" ", firstComma + 1)));
+	size_t secondComma = (usingCommas ? stringText.find(",", firstComma + 1) : stringText.find(" ", firstComma + 1));
 
 	// No second comma/space present in text
-	if (secondComma == static_cast<int>(std::string::npos))
+	if (secondComma == std::string::npos)
 	{
 		return false;
 	}

@@ -64,10 +64,10 @@ void IntRange::SetFromText(const char* text)
 {
 	std::string stringText = std::string(text);
 
-	int tildePosition = static_cast<int>(stringText.find("~"));
+	size_t tildePosition = stringText.find("~");
 
 	// No tilde present in text
-	if (tildePosition == static_cast<int>(std::string::npos))
+	if (tildePosition == std::string::npos)
 	{
 		min = atoi(std::string(stringText).c_str());
 		max = min;

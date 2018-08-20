@@ -54,11 +54,11 @@ const std::vector<std::string> Tokenize(const std::string& stringToTokenize, con
 	
 	// Set up the substring indices
 	size_t subStringStartIndex = stringToTokenize.find_first_not_of(delimiter);
-	if (subStringStartIndex == (int) std::string::npos) { return tokens; }	// Return if the entire string is just delimiters
+	if (subStringStartIndex == std::string::npos) { return tokens; }	// Return if the entire string is just delimiters
 	size_t subStringEndPostion = stringToTokenize.find(delimiter, subStringStartIndex + 1);
 
 	// Iterate across the entire string
-	while (subStringEndPostion != (int) std::string::npos)
+	while (subStringEndPostion != std::string::npos)
 	{
 		// Create the substring
 		size_t substringLength = (subStringEndPostion - subStringStartIndex);
@@ -66,7 +66,7 @@ const std::vector<std::string> Tokenize(const std::string& stringToTokenize, con
 
 		// Update the indices
 		subStringStartIndex = stringToTokenize.find_first_not_of(delimiter, subStringEndPostion + 1);
-		if (subStringStartIndex == (int) std::string::npos) { return tokens; } // Return if the rest of the string is just delimiters
+		if (subStringStartIndex == std::string::npos) { return tokens; } // Return if the rest of the string is just delimiters
 		subStringEndPostion = stringToTokenize.find(delimiter, subStringStartIndex + 1);
 	}
 
@@ -161,18 +161,18 @@ bool StringToBool(const std::string& text, bool& out_bool)
 //
 bool SetFromText(const std::string& text, Vector3& out_val)
 {
-	int firstComma = static_cast<int>(text.find(","));
+	size_t firstComma = static_cast<int>(text.find(","));
 
 	// No comma present in text
-	if (firstComma == static_cast<int>(std::string::npos))
+	if (firstComma == std::string::npos)
 	{
 		return false;
 	}
 
-	int secondComma = static_cast<int>(text.find(",", firstComma + 1));
+	size_t secondComma = text.find(",", firstComma + 1);
 
 	// No second comma present in text
-	if (secondComma == static_cast<int>(std::string::npos))
+	if (secondComma == std::string::npos)
 	{
 		return false;
 	}
@@ -252,10 +252,10 @@ bool SetFromText(const std::string& text, Rgba& out_value)
 //
 bool SetFromText(const std::string& text, Vector2& out_value)
 {
-	int firstComma = static_cast<int>(text.find(","));
+	size_t firstComma = text.find(",");
 
 	// No comma present in text
-	if (firstComma == static_cast<int>(std::string::npos))
+	if (firstComma == std::string::npos)
 	{
 		return false;
 	}

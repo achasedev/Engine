@@ -182,10 +182,10 @@ void IntVector2::SetFromText(const char* text)
 {
 	std::string stringText = std::string(text);
 
-	int commaPosition = static_cast<int>(stringText.find(","));
+	size_t commaPosition = stringText.find(",");
 
 	// No comma present in text
-	if (commaPosition == static_cast<int>(std::string::npos))
+	if (commaPosition == std::string::npos)
 	{
 		return;
 	}
