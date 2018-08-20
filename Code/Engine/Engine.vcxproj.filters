@@ -364,6 +364,7 @@
     <ClCompile Include="Core\Threading\Threading.cpp" />
     <ClCompile Include="Rendering\Animation\Animator.cpp" />
     <ClCompile Include="Rendering\Animation\Skeleton.cpp" />
+    <ClCompile Include="Networking\Net.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -703,5 +704,6 @@
     <ClInclude Include="DataStructures\ThreadSafeMap.hpp" />
     <ClInclude Include="Rendering\Animation\Animator.hpp" />
     <ClInclude Include="Rendering\Animation\Skeleton.hpp" />
+    <ClInclude Include="Networking\Net.hpp" />
   </ItemGroup>
 </Project>

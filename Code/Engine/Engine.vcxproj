@@ -308,6 +308,7 @@
     <ClCompile Include="Math\Vector2.cpp" />
     <ClCompile Include="Math\Vector3.cpp" />
     <ClCompile Include="Math\Vector4.cpp" />
+    <ClCompile Include="Networking\Net.cpp" />
     <ClCompile Include="Rendering\Animation\AnimationClip.cpp" />
     <ClCompile Include="Rendering\Animation\Animator.cpp" />
     <ClCompile Include="Rendering\Animation\Pose.cpp" />
@@ -435,6 +436,7 @@
     <ClInclude Include="Math\Vector2.hpp" />
     <ClInclude Include="Math\Vector3.hpp" />
     <ClInclude Include="Math\Vector4.hpp" />
+    <ClInclude Include="Networking\Net.hpp" />
     <ClInclude Include="Rendering\Animation\AnimationClip.hpp" />
     <ClInclude Include="Rendering\Animation\Animator.hpp" />
     <ClInclude Include="Rendering\Animation\Pose.hpp" />
