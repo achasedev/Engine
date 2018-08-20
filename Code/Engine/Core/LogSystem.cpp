@@ -349,7 +349,7 @@ static void WriteToFile(LogMessage_t log, void* fileptr)
 static void WriteToDebugOutput(LogMessage_t log, void* fileptr)
 {
 	UNUSED(fileptr);
-	std::string toPrint = Stringf("%s: %s", log.tag.c_str(), log.message.c_str());
+	std::string toPrint = Stringf("%s: %s\n", log.tag.c_str(), log.message.c_str());
 
 #if defined( PLATFORM_WINDOWS )
 	if( IsDebuggerAvailable() )

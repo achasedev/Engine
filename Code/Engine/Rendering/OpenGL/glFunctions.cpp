@@ -212,12 +212,12 @@ HGLRC CreateRealRenderContext( HDC hdc, int major, int minor )
 	// Loop through returned formats, till we find one that works
 	for (unsigned int i = 0; i < format_count; ++i) {
 		pixel_format = formats[i];
-		succeeded = SetPixelFormat( hdc, pixel_format, NULL ); // same as the temp context; 
+		succeeded = SetPixelFormat(hdc, pixel_format, NULL); // same as the temp context; 
 		if (succeeded) {
 			break;
 		} else {
 			DWORD error = GetLastError();
-			DebuggerPrintf( "Failed to set the format: %u", error ); 
+			DebuggerPrintf("Failed to set the format: %u", error); 
 		}
 	}
 

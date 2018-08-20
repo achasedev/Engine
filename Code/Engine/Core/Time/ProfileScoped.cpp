@@ -33,5 +33,5 @@ ProfileScoped::~ProfileScoped()
 		ConsolePrintf("Profile for \"%s\" took %f milliseconds", m_name.c_str(), milliseconds);
 	}
 
-	DebuggerPrintf("Profile for \"%s\" took %f milliseconds\n", m_name.c_str(), milliseconds);
+	DebuggerPrintf("Profile for \"%s\" took %f milliseconds", m_name.c_str(), milliseconds);
 }

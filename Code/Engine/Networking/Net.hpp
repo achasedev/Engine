@@ -7,6 +7,9 @@
 #pragma once
 #pragma comment(lib, "ws2_32.lib") // winsock libraries
 
+#include <string>
+struct sockaddr_in;
+
 class Net
 {
 public:
@@ -14,4 +17,7 @@ public:
 
 	static bool Initialize();
 	static void Shutdown();
+
+	static bool GetLocalHostName(std::string& out_hostname);
+	static bool GetAddressForHost(sockaddr_in* out_addr, int* out_addrlen, const char* hostname, const char* service = "12345");
 };
