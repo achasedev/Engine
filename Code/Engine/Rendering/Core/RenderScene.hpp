@@ -24,6 +24,10 @@ public:
 	// To allow direct access to the lists for rendering
 	friend class ForwardRenderingPath;
 
+	RenderScene(const std::string& name);
+	~RenderScene() {}
+	RenderScene(const RenderScene& copy) = delete;
+
 	// List mutators
 	void AddRenderable(Renderable* renderable);
 	void AddLight(Light* light);
@@ -47,14 +51,6 @@ public:
 	int GetCameraCount();
 
 	Skybox* GetSkybox() const;
-
-
-public:
-	//-----Deleted Methods-----
-
-	RenderScene(const std::string& name);
-	~RenderScene() {}
-	RenderScene(const RenderScene& copy) = delete;
 
 
 private:

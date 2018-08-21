@@ -10,6 +10,7 @@
 class RenderScene;
 class Camera;
 class Renderer;
+class DrawCall;
 
 class ForwardRenderingPath
 {
