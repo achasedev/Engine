@@ -34,3 +34,5 @@ extern Blackboard* g_gameConfigBlackboard;
 //-----------------------------------------------------------------------------------------------
 
 #define ENGINE_RESERVED_UNIFORM_BLOCK_COUNT (8)
+
+#define STATIC

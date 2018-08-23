@@ -6,6 +6,7 @@
 /************************************************************************/
 #include "Engine/Networking/Net.hpp"
 #include "Engine/Core/LogSystem.hpp"
+#include "Engine/Networking/TCPSocket.hpp"
 #include "Engine/Networking/NetAddress.hpp"
 #include "Engine/Core/DeveloperConsole/Command.hpp"
 #include "Engine/Core/Utility/ErrorWarningAssert.hpp"
@@ -175,6 +176,9 @@ void Command_GetAddressForHost(Command& cmd)
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Command to connect to a remote IP and send a message
+//
 void Command_ConnectDirectWithWinSock(Command& cmd)
 {
 	std::string addr_string, ip, port, message;
@@ -192,43 +196,22 @@ void Command_ConnectDirectWithWinSock(Command& cmd)
 
 	TODO("Check for valid address");
 
-	// First create the socket
-	SOCKET sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (sock == INVALID_SOCKET)
+	TCPSocket socket;
+	if (!socket.Connect(addr))
 	{
-		ConsoleErrorf("Couldn't create the socket");
-		return;
-	}
-
-	sockaddr_storage sockAddrStorage;	// structure large enough to store any sockaddr
-	size_t sockAddrLen;					// How large the actual sockaddr_ * structure is
-
-	addr.ToSockAddr((sockaddr*)&sockAddrStorage, &sockAddrLen);
-
-	int result = ::connect(sock, (sockaddr*)&sockAddrStorage, (int)sockAddrLen);
-	if (result == SOCKET_ERROR)
-	{
-		int error = WSAGetLastError();
-		ConsoleErrorf("Couldn't connect");
-		::closesocket(sock);
+		ConsoleErrorf("Failed to connect");
 		return;
 	}
 
 	ConsolePrintf("Connected to %s", addr_string.c_str());
 
-	// Send the message now
-	::send(sock, message.c_str(), (int) message.size(), 0);
+	socket.Send(message.c_str(), message.size());
 
-	// with TCP/IP, data sent together is not guaranteed to arrive together.  
-	// so make sure you check the return value.  This will return SOCKET_ERROR
-	// if the host disconnected, or if we're non-blocking and no data is there. 
-	char payload[256];
-	size_t recvd = ::recv(sock, payload, 256 - 1U, 0);
+	char* payload[256];
+	size_t amountReceived = socket.Receive(payload, 256 - 1U);
+	payload[amountReceived] = NULL;
 
-	// it may not be null terminated and I'm printing it, so just for safety. 
-	payload[recvd] = NULL;
 	ConsolePrintf("Received: %s", payload);
 
-	// cleanup
-	::closesocket(sock);
+	socket.Close();
 }

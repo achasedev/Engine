@@ -310,6 +310,7 @@
     <ClCompile Include="Math\Vector4.cpp" />
     <ClCompile Include="Networking\Net.cpp" />
     <ClCompile Include="Networking\NetAddress.cpp" />
+    <ClCompile Include="Networking\TCPSocket.cpp" />
     <ClCompile Include="Rendering\Animation\AnimationClip.cpp" />
     <ClCompile Include="Rendering\Animation\Animator.cpp" />
     <ClCompile Include="Rendering\Animation\Pose.cpp" />
@@ -439,6 +440,7 @@
     <ClInclude Include="Math\Vector4.hpp" />
     <ClInclude Include="Networking\Net.hpp" />
     <ClInclude Include="Networking\NetAddress.hpp" />
+    <ClInclude Include="Networking\TCPSocket.hpp" />
     <ClInclude Include="Rendering\Animation\AnimationClip.hpp" />
     <ClInclude Include="Rendering\Animation\Animator.hpp" />
     <ClInclude Include="Rendering\Animation\Pose.hpp" />
