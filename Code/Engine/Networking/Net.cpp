@@ -78,7 +78,7 @@ bool Net::GetLocalHostName(std::string& out_hostname)
 //-----------------------------------------------------------------------------------------------
 // Returns in string format the address for the host given by hostname
 //
-bool Net::GetAddressForHost(sockaddr_in* out_addr, int* out_addrlen, const char* hostname, const char* service /*= "12345"*/)
+bool Net::GetAddressForHost(sockaddr_in* out_addr, int* out_addrlen, const char* hostname, const char* service /*= "12345"*/, bool getHostableAddress /*= false*/)
 {
 	// There are many different ways to communicate with this machine, so we provide
 	// hints to the API to filter down to only the addresses we care about
@@ -88,11 +88,10 @@ bool Net::GetAddressForHost(sockaddr_in* out_addr, int* out_addrlen, const char*
 	hints.ai_family = AF_INET;			// IPv4 Addresses
 	hints.ai_socktype = SOCK_STREAM;	// TCP socket (SOCK_DGRAM for UDP, this doesn't really matter for just getting the host name)
 
-	// Will never return a hostable address...
-// 	if (hostname == nullptr)
-// 	{
-// 		hints.ai_flags = AI_PASSIVE;		// An address we can host on, for looking up this device's address
-// 	}
+	if (getHostableAddress)
+	{
+		hints.ai_flags = AI_PASSIVE;		// An address we can host on
+	}
 
 	//hints.ai_flags |= AI_NUMERICHOST;		// Will speed up this function since it won't have to lookup the address
 
@@ -108,7 +107,7 @@ bool Net::GetAddressForHost(sockaddr_in* out_addr, int* out_addrlen, const char*
 	addrinfo* itr = result;
 	while (itr != nullptr)
 	{
-		// Could filter more here if we like, or return all of them and try them in roder
+		// Could filter more here if we like, or return all of them and try them in order
 		// For example, if you're using VPN you'll get two unique addresses for yourself
 		// If we're using AF_INET, the address is a sockaddr_in
 
@@ -147,7 +146,12 @@ void Command_GetAddressForHost(Command& cmd)
 	// If no name was specified, default to this device's host name
 	if (IsStringNullOrEmpty(hostname))
 	{
-		Net::GetLocalHostName(hostname);
+		bool foundLocalHostname = Net::GetLocalHostName(hostname);
+
+		if (!foundLocalHostname)
+		{
+			return;
+		}
 	}
 
 	// Get the address

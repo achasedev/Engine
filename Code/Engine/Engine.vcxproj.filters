@@ -365,6 +365,7 @@
     <ClCompile Include="Rendering\Animation\Animator.cpp" />
     <ClCompile Include="Rendering\Animation\Skeleton.cpp" />
     <ClCompile Include="Networking\Net.cpp" />
+    <ClCompile Include="Networking\NetAddress.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -705,5 +706,6 @@
     <ClInclude Include="Rendering\Animation\Animator.hpp" />
     <ClInclude Include="Rendering\Animation\Skeleton.hpp" />
     <ClInclude Include="Networking\Net.hpp" />
+    <ClInclude Include="Networking\NetAddress.hpp" />
   </ItemGroup>
 </Project>

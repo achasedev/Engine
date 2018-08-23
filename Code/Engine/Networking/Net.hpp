@@ -19,5 +19,5 @@ public:
 	static void Shutdown();
 
 	static bool GetLocalHostName(std::string& out_hostname);
-	static bool GetAddressForHost(sockaddr_in* out_addr, int* out_addrlen, const char* hostname, const char* service = "12345");
+	static bool GetAddressForHost(sockaddr_in* out_addr, int* out_addrlen, const char* hostname, const char* service = "12345", bool getBindableAddresses = false);
 };
