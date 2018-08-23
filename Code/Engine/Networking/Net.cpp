@@ -6,6 +6,7 @@
 /************************************************************************/
 #include "Engine/Networking/Net.hpp"
 #include "Engine/Core/LogSystem.hpp"
+#include "Engine/Networking/NetAddress.hpp"
 #include "Engine/Core/DeveloperConsole/Command.hpp"
 #include "Engine/Core/Utility/ErrorWarningAssert.hpp"
 
@@ -15,6 +16,7 @@
 #include <Windows.h>
 
 void Command_GetAddressForHost(Command& cmd);
+void Command_ConnectDirectWithWinSock(Command& cmd);
 
 //-----------------------------------------------------------------------------------------------
 // Starts up the network system
@@ -32,10 +34,10 @@ bool Net::Initialize()
 
 	// Check if it succeeded
 	Command::Register("net_address", "Returns the IP address for the given host name.", &Command_GetAddressForHost);
-	
+	Command::Register("net_connect", "Connects to a remote host and sends a message.", &Command_ConnectDirectWithWinSock);
+
 	ASSERT_RECOVERABLE(error == 0, "Error: WSAStartup failed to initialze the sock API");
 	return (error == 0);
-
 }
 
 
@@ -170,4 +172,63 @@ void Command_GetAddressForHost(Command& cmd)
 		ConsoleErrorf("Couldn't find address for hostname %s", hostname.c_str());
 		LogTaggedPrintf("NET", "Couldn't find address for hostname %s", hostname.c_str());
 	}
+}
+
+
+void Command_ConnectDirectWithWinSock(Command& cmd)
+{
+	std::string addr_string, ip, port, message;
+
+	bool messageSpecified = cmd.GetParam("m", message);
+	bool addressSpecified = cmd.GetParam("a", addr_string);
+	
+	if (!messageSpecified || !addressSpecified)
+	{
+		ConsoleErrorf("No message or address specified, use the -m and -a flags");
+		return;
+	}
+
+	NetAddress_t addr(addr_string.c_str());
+
+	TODO("Check for valid address");
+
+	// First create the socket
+	SOCKET sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (sock == INVALID_SOCKET)
+	{
+		ConsoleErrorf("Couldn't create the socket");
+		return;
+	}
+
+	sockaddr_storage sockAddrStorage;	// structure large enough to store any sockaddr
+	size_t sockAddrLen;					// How large the actual sockaddr_ * structure is
+
+	addr.ToSockAddr((sockaddr*)&sockAddrStorage, &sockAddrLen);
+
+	int result = ::connect(sock, (sockaddr*)&sockAddrStorage, (int)sockAddrLen);
+	if (result == SOCKET_ERROR)
+	{
+		int error = WSAGetLastError();
+		ConsoleErrorf("Couldn't connect");
+		::closesocket(sock);
+		return;
+	}
+
+	ConsolePrintf("Connected to %s", addr_string.c_str());
+
+	// Send the message now
+	::send(sock, message.c_str(), (int) message.size(), 0);
+
+	// with TCP/IP, data sent together is not guaranteed to arrive together.  
+	// so make sure you check the return value.  This will return SOCKET_ERROR
+	// if the host disconnected, or if we're non-blocking and no data is there. 
+	char payload[256];
+	size_t recvd = ::recv(sock, payload, 256 - 1U, 0);
+
+	// it may not be null terminated and I'm printing it, so just for safety. 
+	payload[recvd] = NULL;
+	ConsolePrintf("Received: %s", payload);
+
+	// cleanup
+	::closesocket(sock);
 }
