@@ -37,6 +37,7 @@ class FrameBuffer;
 class ShaderProgram;
 class Clock;
 class Material;
+class IntVector3;
 
 // For TextInBox draw styles
 enum TextDrawMode
@@ -132,6 +133,8 @@ public:
 	void DrawMeshWithMaterial(Mesh* mesh, Material* material);
 	void DrawRenderable(Renderable* renderable);
 	void Draw(const DrawCall& drawCall);
+
+	void DrawVoxelGrid(const IntVector3& dimensions, const Rgba* colorData, Renderable* voxel);
 
 	// Drawing convenience functions
 
@@ -265,6 +268,7 @@ private:
 	mutable RenderBuffer	m_modelInstanceBuffer;
 	mutable UniformBuffer	m_lightUniformBuffer;
 
+	mutable RenderBuffer	m_voxelColorBuffer;
 	// VAO
 	GLuint m_defaultVAO;
 

@@ -32,6 +32,7 @@
 #include "Engine/Rendering/Shaders/PropertyBlockDescription.hpp"
 #include "Engine/Rendering/Core/Light.hpp"
 #include "Engine/Core/Threading/Threading.hpp"
+#include "Engine/Math/IntVector3.hpp"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "ThirdParty/gl/glcorearb.h"
@@ -1160,6 +1161,84 @@ void Renderer::Draw(const DrawCall& drawCall)
 		}
 		GL_CHECK_ERROR();
 	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Draws a 3D grid of voxels using the color data provided
+//
+void Renderer::DrawVoxelGrid(const IntVector3& dimensions, const Rgba* colorData, Renderable* voxel)
+{
+	// Number of voxels * number of color channels (4)
+	int voxelCount = dimensions.x * dimensions.y * dimensions.z;
+	int byteSize = voxelCount * sizeof(Rgba);
+
+	// Buffer the color data
+	m_voxelColorBuffer.CopyToGPU(byteSize, colorData);
+	glBindBuffer(GL_ARRAY_BUFFER, m_voxelColorBuffer.GetHandle());
+
+	// Bind the color data as a vertex attribute
+	//glUseProgram(material->GetShader()->GetProgram()->GetHandle());
+	int bind = glGetAttribLocation(voxel->GetSharedMaterial(0)->GetShader()->GetProgram()->GetHandle(), "INSTANCE_COLOR");
+
+	// If the attribute exists on the shader, then bind the data to it as a color
+	if (bind >= 0)
+	{
+		glEnableVertexAttribArray(bind);
+		GL_CHECK_ERROR();
+
+		glVertexAttribPointer(bind,					// Where the bind point is at
+			4,										// Number of components in this data type (4 for Rgba)
+			GL_UNSIGNED_BYTE,						// glType of this data, which is 4 unsigned bytes
+			GL_TRUE,								// Normalize
+			sizeof(Rgba),							// Stride by a single Rgba
+			0										// offset into this element for this value
+		);
+		
+		// Make the bindings instanced, so they don't update per vertex
+		glVertexAttribDivisor(bind, 1); // Set to move every 1 instances
+	}
+	else
+	{
+		ERROR_AND_DIE("Couldn't find the bind point for the INSTANCE_COLOR vertex attribute");
+	}
+
+	//-----Now Draw-----
+	DrawCall drawCall;
+	drawCall.SetDataFromRenderable(voxel, 0);
+
+	// Bind all the state
+	BindVAO(drawCall.GetVAOHandle());
+	BindMaterial(drawCall.GetMaterial());
+	BindRenderState(drawCall.GetMaterial()->GetShader()->GetRenderState());
+
+	// Copy light data from draw call
+	SetAmbientLight(drawCall.GetAmbience());
+	EnableLightsForDrawCall(&drawCall);
+
+	// Update the GPU with the light data
+	m_lightUniformBuffer.CheckAndUpdateGPUData();
+
+	// Bind the frame buffer
+	glBindFramebuffer(GL_FRAMEBUFFER, m_currentCamera->GetFrameBufferHandle());
+	GL_CHECK_ERROR();
+
+	// Just bind the singular model matrix as a uniform buffer
+	BindModelMatrix(drawCall.GetModelMatrix(0));
+
+	// Draw using the instruction
+	DrawInstruction instruction = drawCall.GetMesh()->GetDrawInstruction();
+	if (instruction.m_usingIndices)
+	{
+		// Draw with indices
+		glDrawElementsInstanced(ToGLType(instruction.m_primType), instruction.m_elementCount, GL_UNSIGNED_INT, 0, voxelCount);
+	}
+	else
+	{
+		// Draw without indices
+		glDrawArraysInstanced(ToGLType(instruction.m_primType), instruction.m_startIndex, instruction.m_elementCount, voxelCount);
+	}
+	GL_CHECK_ERROR();
 }
 
 
