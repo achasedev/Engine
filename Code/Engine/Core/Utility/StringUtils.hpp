@@ -26,6 +26,7 @@ bool SetFromText(const std::string& text, float& out_value);
 bool SetFromText(const std::string& text, int& out_value);
 bool SetFromText(const std::string& text, unsigned int& out_value);
 bool SetFromText(const std::string& text, bool& out_value);
+bool SetFromText(const std::string& text, unsigned short& out_value);
 
 bool SetFromText(const std::string& text, Rgba& out_value);
 bool SetFromText(const std::string& text, Vector2& out_value);

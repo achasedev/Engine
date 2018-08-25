@@ -17,7 +17,10 @@
 #include <Windows.h>
 
 void Command_GetAddressForHost(Command& cmd);
-void Command_ConnectDirectWithWinSock(Command& cmd);
+void Command_Connect(Command& cmd);
+void Command_Host(Command& cmd);
+
+bool Net::s_isRunning = false;
 
 //-----------------------------------------------------------------------------------------------
 // Starts up the network system
@@ -34,11 +37,19 @@ bool Net::Initialize()
 	int error = ::WSAStartup(version, &data);
 
 	// Check if it succeeded
-	Command::Register("net_address", "Returns the IP address for the given host name.", &Command_GetAddressForHost);
-	Command::Register("net_connect", "Connects to a remote host and sends a message.", &Command_ConnectDirectWithWinSock);
+	Command::Register("net_address",	"Returns the IP address for the given host name.",					&Command_GetAddressForHost);
+	Command::Register("net_connect",	"Connects to a remote host and sends a message.",					&Command_Connect);
+	Command::Register("net_host",		"Creates a host session on this device for client connections",		&Command_Host);
 
-	ASSERT_RECOVERABLE(error == 0, "Error: WSAStartup failed to initialze the sock API");
-	return (error == 0);
+	bool success = (error == 0);
+	ASSERT_RECOVERABLE(success, "Error: WSAStartup failed to initialze the sock API");
+
+	if (success)
+	{
+		s_isRunning = true;
+	}
+	
+	return success;
 }
 
 
@@ -49,6 +60,17 @@ void Net::Shutdown()
 {
 	// Not necessary, but a good habit
 	::WSACleanup();
+
+	s_isRunning = false;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns true if the Net system is currently running, false otherwise
+//
+bool Net::IsRunning()
+{
+	return s_isRunning;
 }
 
 
@@ -179,7 +201,7 @@ void Command_GetAddressForHost(Command& cmd)
 //-----------------------------------------------------------------------------------------------
 // Command to connect to a remote IP and send a message
 //
-void Command_ConnectDirectWithWinSock(Command& cmd)
+void Command_Connect(Command& cmd)
 {
 	std::string addr_string, ip, port, message;
 
@@ -195,7 +217,7 @@ void Command_ConnectDirectWithWinSock(Command& cmd)
 	NetAddress_t addr(addr_string.c_str());
 
 	TODO("Check for valid address");
-
+	
 	TCPSocket socket;
 	if (!socket.Connect(addr))
 	{
@@ -207,11 +229,75 @@ void Command_ConnectDirectWithWinSock(Command& cmd)
 
 	socket.Send(message.c_str(), message.size());
 
-	char* payload[256];
-	size_t amountReceived = socket.Receive(payload, 256 - 1U);
-	payload[amountReceived] = NULL;
+	char payload[256];
+	int amountReceived = socket.Receive(payload, 256 - 1U);
 
-	ConsolePrintf("Received: %s", payload);
+	if (amountReceived > 0)
+	{
+		payload[amountReceived] = NULL;
+		ConsolePrintf("Received: %s", payload);
+	}
 
 	socket.Close();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Function to listen for connections on a separate thread, to allow console printing
+//
+void HostThread(void* params)
+{
+	int maxQueued = *((int*)params);
+	unsigned short port = *((unsigned short*)(((int*)params) + 1));
+	free(params);
+
+	TCPSocket hostSocket;
+	if (!hostSocket.Listen(port, maxQueued))
+	{
+		ConsoleErrorf("Error occurred while trying to host, see log for details");
+		return;
+	}
+
+	while (hostSocket.IsListening() && Net::IsRunning())
+	{
+		TCPSocket* clientSocket = hostSocket.Accept();
+		if (clientSocket != nullptr)
+		{
+			// Client connected, receive their data
+			char buffer[1024];
+			int receivedSize = clientSocket->Receive(buffer, 1023);
+
+			if (receivedSize > 0)
+			{
+				buffer[receivedSize] = NULL;
+
+				ConsolePrintf(Rgba::GREEN, "Received: %s", buffer);
+				clientSocket->Send("PONG", 5);
+			}
+
+			delete clientSocket;
+		}
+	}
+
+	// Done accepting connections, so close
+	hostSocket.Close();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Command to create a listening host on this device, using the port specified
+//
+void Command_Host(Command& cmd)
+{
+	int maxQueued = 16;
+	cmd.GetParam("q", maxQueued, &maxQueued);
+
+	unsigned short port = 80;
+	cmd.GetParam("p", port, &port);
+
+	void* params = malloc(sizeof(int) + sizeof(unsigned short));
+	*((int*)params) = maxQueued;
+	*(unsigned short*)(((int*)params) + 1) = port;
+
+	Thread::CreateAndDetach(HostThread, params);
 }

@@ -279,6 +279,16 @@ bool SetFromText(const std::string& text, std::string& out_value)
 
 
 //-----------------------------------------------------------------------------------------------
+// Sets the string out_value to the value represented in the text passed (for use with templates)
+//
+bool SetFromText(const std::string& text, unsigned short& out_value)
+{
+	out_value = (unsigned short) atoi(text.c_str());
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns text representation of the float
 //
 std::string ToString(float value)

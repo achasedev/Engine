@@ -16,6 +16,7 @@ public:
 	//-----Public Methods-----
 
 	TCPSocket();
+	TCPSocket(Socket_t* socketHandle, NetAddress_t& netAddress, bool isListening = false);
 	~TCPSocket();
 
 
@@ -24,16 +25,18 @@ public:
 	bool				Connect(const NetAddress_t& addr);
 	void				Close();
 
-	size_t				Send(const void* data, const size_t byteSize);
-	size_t				Receive(void *buffer, size_t const max_byte_size); 	
+	int					Send(const void* data, const size_t byteSize);
+	int					Receive(void *buffer, size_t const max_byte_size);
 
 	bool				IsClosed() const;
+	bool				IsListening() const;
 
 
 private:
 	//-----Private Data-----
 
 	Socket_t*		m_socketHandle = nullptr;
+	bool			m_isListening = false;
 
 	// If listening, the address is YOUR address
 	// If connecting (or socket from an accept) this address is THEIR address

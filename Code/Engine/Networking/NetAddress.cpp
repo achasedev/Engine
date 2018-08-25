@@ -38,21 +38,41 @@ NetAddress_t::NetAddress_t(const sockaddr* addr)
 // Constructor from a string representation of the address
 // e.g. "10.8.151.155:12345" or "google.com:80"
 //
-NetAddress_t::NetAddress_t(const char* string)
+NetAddress_t::NetAddress_t(const char* addressText)
 {
-	// Parse the string
-	std::vector<std::string> tokens = Tokenize(string, ':');
+	if (IsStringNullOrEmpty(addressText))
+	{
+		return;
+	}
 
-	std::string hostname = tokens[0];
-	std::string portString = tokens[1];
-	
-	// Get the socket address
-	sockaddr_in sockAddr;
-	int addrLen;
-	Net::GetAddressForHost(&sockAddr, &addrLen, hostname.c_str(), portString.c_str(), false);
+	// Check for "localhost" shortcut
+	std::string addressString = std::string(addressText);
+	if (addressString == "localhost")
+	{
+		NetAddress_t::GetLocalBindableAddress(this, 80);
+	}
+	else
+	{
+		// Parse the string
+		std::vector<std::string> tokens = Tokenize(addressText, ':');
 
-	// Set member variables
-	FromSockAddr((const sockaddr*)&sockAddr);
+		std::string hostname = tokens[0];
+
+		// Default the port string to 80 if one isn't specified
+		std::string portString = "80";
+		if (tokens.size() > 1)
+		{
+			portString = tokens[1];
+		}
+
+		// Get the socket address
+		sockaddr_in sockAddr;
+		int addrLen;
+		Net::GetAddressForHost(&sockAddr, &addrLen, hostname.c_str(), portString.c_str(), false);
+
+		// Set member variables
+		FromSockAddr((const sockaddr*)&sockAddr);
+	}
 }
 
 
@@ -105,18 +125,35 @@ std::string NetAddress_t::ToString() const
 
 
 //-----------------------------------------------------------------------------------------------
-// Returns the NetAddress corresponding to this device's IP address using port 80
+// Returns the NetAddress corresponding to this device's IP address using the port given
 //
-STATIC NetAddress_t NetAddress_t::GetLocal()
+STATIC bool NetAddress_t::GetLocalBindableAddress(NetAddress_t* out_addr, unsigned short port)
 {
+	// Get the host name for this device
 	std::string localHostName;
-	Net::GetLocalHostName(localHostName);
+	bool foundHostName = Net::GetLocalHostName(localHostName);
 
+	if (!foundHostName)
+	{
+		return false;
+	}
+
+	// Get the IP address for this device
 	sockaddr_in sockAddr;
 	int sockAddrLen;
-	Net::GetAddressForHost(&sockAddr, &sockAddrLen, localHostName.c_str(), "80", true);
+	bool foundAddress = Net::GetAddressForHost(&sockAddr, 
+		&sockAddrLen, 
+		localHostName.c_str(), 
+		Stringf("%u", port).c_str(), 
+		true	// Ensure AI_PASSIVE is set
+	); 
 
-	NetAddress_t netAddress = NetAddress_t((sockaddr*)&sockAddr);
+	if (!foundAddress)
+	{
+		return false;
+	}
 
-	return netAddress;
+	// Make the NetAddress
+	out_addr->FromSockAddr((sockaddr*)&sockAddr);
+	return true;
 }

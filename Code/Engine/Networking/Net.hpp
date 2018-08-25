@@ -17,8 +17,15 @@ public:
 
 	static bool Initialize();
 	static void Shutdown();
+	static bool IsRunning();
 
 	static bool GetLocalHostName(std::string& out_hostname);
 	static bool GetAddressForHost(sockaddr_in* out_addr, int* out_addrlen, const char* hostname, const char* service = "12345", bool getBindableAddresses = false);
+
+	
+private:
+	//-----Private Data-----
+
+	static bool s_isRunning;
 
 };

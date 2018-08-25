@@ -54,23 +54,36 @@ void LogSystem::Initialize()
 
 	// Make the file objects
 	s_latestLogFile = new File();
-	s_timeStampedFile = new File();
 
 	// Get the paths, and open the files
 	std::string latestName = "Data/Logs/SystemLog.txt";
+	bool success = s_latestLogFile->Open(latestName.c_str(), "w+");
+
+	// If we can't open the latest log file, that means there's an instance already open that has it
+	// So only on success do we want to do something about it
+	if (success)
+	{
+		LogCallBack_t writerCallback;
+		writerCallback.callback = WriteToFile;
+		writerCallback.name = "File_writer_current";
+		writerCallback.argumentData = s_latestLogFile;
+		AddCallback(writerCallback);
+	}
+	else
+	{
+		delete s_latestLogFile;
+		s_latestLogFile = nullptr;
+	}
+
+	// Make a file writer callback for the time stamped log file
+	s_timeStampedFile = new File();
 	std::string timeStampedName = Stringf(LOG_FILE_NAME_FORMAT, GetFormattedSystemDateAndTime().c_str());
 	s_timeStampedFile->Open(timeStampedName.c_str(), "a+");
-	s_latestLogFile->Open(latestName.c_str(), "w+");
 
-	// Add the writer callbacks
 	LogCallBack_t writerCallback;
 	writerCallback.name = "File_writer_timestamped";
 	writerCallback.argumentData = s_timeStampedFile;
 	writerCallback.callback = WriteToFile;
-	AddCallback(writerCallback);
-
-	writerCallback.name = "File_writer_current";
-	writerCallback.argumentData = s_latestLogFile;
 	AddCallback(writerCallback);
 
 	// For printing logs to output - only listen for DEBUG tags to avoid spamming
@@ -83,7 +96,6 @@ void LogSystem::Initialize()
 	AddCallbackFilter("Debug Output", "DEBUG");
 
 	s_logThread = Thread::Create(&ProcessLog, nullptr);
-
 	s_isRunning = true;
 
 	// Initialize the console commands
@@ -102,14 +114,20 @@ void LogSystem::Shutdown()
 	Thread::Join(s_logThread);
 	s_logThread = nullptr;
 
-	s_latestLogFile->Close();
-	s_timeStampedFile->Close();
+	if (s_latestLogFile != nullptr)
+	{
+		s_latestLogFile->Close();
+		delete s_latestLogFile;
+		s_latestLogFile = nullptr;
+	}
 
-	delete s_latestLogFile;
-	s_latestLogFile = nullptr;
+	if (s_timeStampedFile != nullptr)
+	{
+		s_timeStampedFile->Close();
 
-	delete s_timeStampedFile;
-	s_timeStampedFile = nullptr;
+		delete s_timeStampedFile;
+		s_timeStampedFile = nullptr;
+	}
 }
 
 

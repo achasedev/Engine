@@ -23,7 +23,7 @@ public:
 
 	std::string				ToString() const;
 
-	static NetAddress_t		GetLocal();
+	static bool				GetLocalBindableAddress(NetAddress_t* out_addr, unsigned short port);
 
 public:
 	//-----Public Data-----
