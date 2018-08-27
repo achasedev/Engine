@@ -119,6 +119,7 @@ void DebugRenderSystem::Shutdown()
 //
 void DebugRenderSystem::UpdateAndRender()
 {
+	PROFILE_LOG_SCOPE_FUNCTION();
 	Update();
 	Render();
 }

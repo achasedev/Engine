@@ -5,9 +5,9 @@
 /* Description: Class to represent a set of vertices/indices for rendering
 /************************************************************************/
 #pragma once
+#include "Engine/Core/Time/ProfileLogScoped.hpp"
 #include "Engine/Rendering/Buffers/IndexBuffer.hpp"
 #include "Engine/Rendering/Buffers/VertexBuffer.hpp"
-
 
 struct DrawInstruction
 {
@@ -28,11 +28,12 @@ public:
 	//-----Public Methods-----
 
 	// Mutators
-	void SetIndices(unsigned int indexCount,	const unsigned int* indices);
+	void SetIndices(unsigned int indexCount, const unsigned int* indices);
 
 	template <typename VERT_TYPE>
-	void SetVertices(unsigned int vertexCount,	const VERT_TYPE* vertices)
+	void SetVertices(unsigned int vertexCount, const VERT_TYPE* vertices)
 	{
+		PROFILE_LOG_SCOPE_FUNCTION();
 		bool succeeded = m_vertexBuffer.CopyToGPU(vertexCount, vertices);
 		
 		if (succeeded)
@@ -47,7 +48,7 @@ public:
 	// Accessors
 	const VertexBuffer*	GetVertexBuffer() const;
 	const IndexBuffer*	GetIndexBuffer() const;
-	DrawInstruction	GetDrawInstruction() const;
+	DrawInstruction		GetDrawInstruction() const;
 	const VertexLayout*	GetVertexLayout() const;
 
 

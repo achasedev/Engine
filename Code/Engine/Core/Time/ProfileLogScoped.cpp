@@ -3,12 +3,18 @@
 
 ProfileLogScoped::ProfileLogScoped(const char* name)
 {
-	m_name = name;
-	Profiler::PushMeasurement(name);
+	if (Profiler::GetInstance() != nullptr)
+	{
+		m_name = name;
+		Profiler::PushMeasurement(name);
+	}
 }
 
 ProfileLogScoped::~ProfileLogScoped()
 {
-	Profiler::PopMeasurement();
+	if (Profiler::GetInstance() != nullptr)
+	{
+		Profiler::PopMeasurement();
+	}
 }
 

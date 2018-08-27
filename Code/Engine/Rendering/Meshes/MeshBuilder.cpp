@@ -8,6 +8,7 @@
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/Time/ProfileLogScoped.hpp"
 #include "Engine/Rendering/Meshes/MeshBuilder.hpp"
 
 #include "ThirdParty/mikkt/mikktspace.h"
@@ -649,6 +650,8 @@ void MeshBuilder::Push3DQuad(const Vector3& position, const Vector2& dimensions,
 void MeshBuilder::PushCube(const Vector3& center, const Vector3& dimensions, const Rgba& color /*= Rgba::WHITE*/, 
 	const AABB2& sideUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& topUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& bottomUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/)
 {
+	ProfileLogScoped log("PushCube");
+	UNUSED(log);
 	AssertBuildState(true, PRIMITIVE_TRIANGLES, true);
 
 	// Set up the corner vertices

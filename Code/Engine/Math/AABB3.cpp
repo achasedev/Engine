@@ -48,73 +48,73 @@ Vector3 AABB3::GetCenter() const
 }
 
 
-//-----------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------
 // Returns the FrontBottomLeft point
-//
-Vector3 AABB3::GetFrontBottomLeft() const
-{
-	return mins;
-}
-
-
-//-----------------------------------------------------------------------------------------------
+// 
+// Vector3 AABB3::GetFrontBottomLeft() const
+// {
+// 	return mins;
+// }
+// 
+// 
+// -----------------------------------------------------------------------------------------------
 // Returns the FrontBottomRight point
-//
-Vector3 AABB3::GetFrontBottomRight() const
-{
-	return Vector3(maxs.x, mins.y, mins.z);
-}
-
-
-//-----------------------------------------------------------------------------------------------
+// 
+// Vector3 AABB3::GetFrontBottomRight() const
+// {
+// 	return Vector3(maxs.x, mins.y, mins.z);
+// }
+// 
+// 
+// -----------------------------------------------------------------------------------------------
 // Returns the FrontTopRight point
-//
-Vector3 AABB3::GetFrontTopRight() const
-{
-	return Vector3(maxs.x, maxs.y, mins.z);
-}
-
-
-//-----------------------------------------------------------------------------------------------
+// 
+// Vector3 AABB3::GetFrontTopRight() const
+// {
+// 	return Vector3(maxs.x, maxs.y, mins.z);
+// }
+// 
+// 
+// -----------------------------------------------------------------------------------------------
 // Returns the FrontTopLeft point
-//
-Vector3 AABB3::GetFrontTopLeft() const
-{
-	return Vector3(mins.x, maxs.y, mins.z);
-}
-
-
-//-----------------------------------------------------------------------------------------------
+// 
+// Vector3 AABB3::GetFrontTopLeft() const
+// {
+// 	return Vector3(mins.x, maxs.y, mins.z);
+// }
+// 
+// 
+// -----------------------------------------------------------------------------------------------
 // Returns the BackBottomLeft point
-//
-Vector3 AABB3::GetBackBottomLeft() const
-{
-	return Vector3(mins.x, mins.y, maxs.z);
-}
-
-
-//-----------------------------------------------------------------------------------------------
+// 
+// Vector3 AABB3::GetBackBottomLeft() const
+// {
+// 	return Vector3(mins.x, mins.y, maxs.z);
+// }
+// 
+// 
+// -----------------------------------------------------------------------------------------------
 // Returns the BackBottomRight point
-//
-Vector3 AABB3::GetBackBottomRight() const
-{
-	return Vector3(maxs.x, mins.y, maxs.z);
-}
-
-
-//-----------------------------------------------------------------------------------------------
+// 
+// Vector3 AABB3::GetBackBottomRight() const
+// {
+// 	return Vector3(maxs.x, mins.y, maxs.z);
+// }
+// 
+// 
+// -----------------------------------------------------------------------------------------------
 // Returns the BackTopRight point
-//
-Vector3 AABB3::GetBackTopRight() const
-{
-	return maxs;
-}
-
-
-//-----------------------------------------------------------------------------------------------
+// 
+// Vector3 AABB3::GetBackTopRight() const
+// {
+// 	return maxs;
+// }
+// 
+// 
+// -----------------------------------------------------------------------------------------------
 // Returns the BackTopLeft point
-//
-Vector3 AABB3::GetBackTopLeft() const
-{
-	return Vector3(mins.x, maxs.y, maxs.z);
-}
+// 
+// Vector3 AABB3::GetBackTopLeft() const
+// {
+// 	return Vector3(mins.x, maxs.y, maxs.z);
+// }

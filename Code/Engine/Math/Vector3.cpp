@@ -63,6 +63,16 @@ Vector3::Vector3(float value)
 {
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Constructor - from int values
+//
+Vector3::Vector3(int initialX, int initialY, int initialZ)
+	: x((float)initialX), y((float)initialY), z((float)initialZ)
+{
+}
+
+
 //------------------------------ Operator Overloads ---------------------------------------------
 
 //-----------------------------------------------------------------------------------------------

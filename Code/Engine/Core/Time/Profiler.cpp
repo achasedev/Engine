@@ -255,6 +255,8 @@ void Profiler::Shutdown()
 //
 void Profiler::Render()
 {
+	PROFILE_LOG_SCOPE_FUNCTION();
+
 	// Only render if the profiler is open
 	if (m_isOpen)
 	{

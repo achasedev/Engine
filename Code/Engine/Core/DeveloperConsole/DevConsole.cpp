@@ -559,6 +559,8 @@ void DevConsole::Update()
 //
 void DevConsole::Render() const
 {
+	PROFILE_LOG_SCOPE_FUNCTION();
+
 	Renderer* renderer = Renderer::GetInstance();
 	renderer->SetCurrentCamera(renderer->GetUICamera());
 

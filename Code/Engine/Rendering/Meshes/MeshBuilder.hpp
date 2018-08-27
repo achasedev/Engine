@@ -9,6 +9,7 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Rendering/Meshes/Mesh.hpp"
 #include "Engine/Rendering/Core/Vertex.hpp"
+#include "Engine/Core/Time/ProfileLogScoped.hpp"
 
 typedef Vector3 (*SurfacePatchFunction)(const Vector2&);
 class Matrix44;
@@ -103,6 +104,7 @@ public:
 	template <typename VERT_TYPE = VertexLit>
 	void UpdateMesh(Mesh& out_mesh) const
 	{
+		PROFILE_LOG_SCOPE_FUNCTION();
 		// Convert the list of VertexMasters to the specified vertex type
 		unsigned int vertexCount = (unsigned int) m_vertices.size();
 		VERT_TYPE* temp = (VERT_TYPE*)malloc(sizeof(VERT_TYPE) * vertexCount);

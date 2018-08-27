@@ -24,15 +24,15 @@ public:
 	Vector3 GetDimensions() const;
 	Vector3 GetCenter() const;
 
-	Vector3 GetFrontBottomLeft() const;
-	Vector3 GetFrontBottomRight() const;
-	Vector3 GetFrontTopRight() const;
-	Vector3 GetFrontTopLeft() const;
+	inline Vector3 GetFrontBottomLeft() const { return mins; }
+	inline Vector3 GetFrontBottomRight() const { return Vector3(maxs.x, mins.y, mins.z); }
+	inline Vector3 GetFrontTopRight() const { return Vector3(maxs.x, maxs.y, mins.z); }
+	inline Vector3 GetFrontTopLeft() const { return Vector3(mins.x, maxs.y, mins.z); }
 
-	Vector3 GetBackBottomLeft() const;
-	Vector3 GetBackBottomRight() const;
-	Vector3 GetBackTopRight() const;
-	Vector3 GetBackTopLeft() const;
+	inline Vector3 GetBackBottomLeft() const { return Vector3(mins.x, mins.y, maxs.z); }
+	inline Vector3 GetBackBottomRight() const { return Vector3(maxs.x, mins.y, maxs.z); }
+	inline Vector3 GetBackTopRight() const { return maxs; }
+	inline Vector3 GetBackTopLeft() const { return Vector3(mins.x, maxs.y, maxs.z); }
 
 	//-----Static Constants-----
 	static const AABB3 UNIT_CUBE;
