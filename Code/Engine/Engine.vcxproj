@@ -369,6 +369,7 @@
     <ClCompile Include="Rendering\Buffers\UniformBuffer.cpp" />
     <ClCompile Include="Rendering\Core\Vertex.cpp" />
     <ClCompile Include="Rendering\Buffers\VertexBuffer.cpp" />
+    <ClCompile Include="Rendering\Thesis\Ray.cpp" />
     <ClCompile Include="Rendering\Thesis\RayTraceRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -500,6 +501,7 @@
     <ClInclude Include="Rendering\Buffers\UniformBuffer.hpp" />
     <ClInclude Include="Rendering\Core\Vertex.hpp" />
     <ClInclude Include="Rendering\Buffers\VertexBuffer.hpp" />
+    <ClInclude Include="Rendering\Thesis\Ray.hpp" />
     <ClInclude Include="Rendering\Thesis\RayTraceRenderer.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

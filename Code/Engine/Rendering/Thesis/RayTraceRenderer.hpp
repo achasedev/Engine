@@ -2,6 +2,7 @@
 #include "Engine/Math/IntVector2.hpp"
 
 class Rgba;
+class Camera;
 
 class RayTraceRenderer
 {
@@ -9,7 +10,7 @@ class RayTraceRenderer
 public:
 	//-----Public Methods-----
 
-	void Draw();
+	void Draw(Camera* camera);
 	void WriteToFile(const char* filename);
 
 	static void Initialize();
