@@ -367,6 +367,7 @@
     <ClCompile Include="Networking\Net.cpp" />
     <ClCompile Include="Networking\NetAddress.cpp" />
     <ClCompile Include="Networking\TCPSocket.cpp" />
+    <ClCompile Include="Rendering\Thesis\RayTraceRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -709,5 +710,6 @@
     <ClInclude Include="Networking\Net.hpp" />
     <ClInclude Include="Networking\NetAddress.hpp" />
     <ClInclude Include="Networking\TCPSocket.hpp" />
+    <ClInclude Include="Rendering\Thesis\RayTraceRenderer.hpp" />
   </ItemGroup>
 </Project>
