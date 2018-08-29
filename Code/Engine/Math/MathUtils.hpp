@@ -25,6 +25,7 @@ int		Ceiling(float value);
 float 	Log2(float value);
 float 	Log10(float value);
 float 	ModFloat(float x, float y);
+float	Sqrt(float value);
 
 // Coordinate system
 Vector2 PolarToCartesian(float radius, float angleRadians);

@@ -28,9 +28,8 @@ RayTraceRenderer::~RayTraceRenderer()
 }
 
 
-bool HitSphere(const Vector3& center, float radius, const Ray& r)
+float HitSphere(const Vector3& center, float radius, const Ray& r)
 {
-	return false;
 	// From ray origin to sphere center
 	Vector3 oc = r.GetPosition() - center;
 	float a = DotProduct(r.GetDirection(), r.GetDirection());
@@ -38,24 +37,40 @@ bool HitSphere(const Vector3& center, float radius, const Ray& r)
 	float c = DotProduct(oc, oc) - radius * radius;
 
 	float discriminant = b * b - 4 * a * c;
-	return discriminant > 0.f;
+
+	// No solution (imaginary) == didn't hit the sphere
+	if (discriminant < 0.f)
+	{
+		return -1.0f;
+	}
+	else
+	{
+		// Solve for a solution, returning the - solution, for the t close to the camera
+		return (-b - Sqrt(discriminant)) / (2.f * a);
+	}
 }
 
 Rgba GetColorForRay(const Vector3& center, float radius, const Ray& r)
 {
-	if (HitSphere(center, radius, r))
+	float t = HitSphere(center, radius, r);
+	if (t > 0.f)
 	{
-		return Rgba::RED;
+		Vector3 hitPosition = r.GetPointAtParameter(t);
+		Vector3 normal = (hitPosition - center).GetNormalized();
+
+		Vector3 colors = 0.5f * (normal + Vector3::ONES);
+
+		return Rgba(colors.x, colors.y, colors.z, 1.0f);
 	}
 	else
 	{
 		// For now just return a color between blue and white
 		Vector3 unitDirection = r.GetDirection().GetNormalized();
 
-		float t = RangeMapFloat(unitDirection.y, -1.f, 1.0f, 0.f, 1.f);
+		float blend = RangeMapFloat(unitDirection.y, -1.f, 1.0f, 0.f, 1.f);
 		Rgba blue;
 		blue.SetAsFloats(0.5f, 0.7f, 1.0f, 1.0f);
-		return Interpolate(Rgba::WHITE, Rgba::BLUE, t);
+		return Interpolate(Rgba::WHITE, Rgba::BLUE, blend);
 	}
 }
 

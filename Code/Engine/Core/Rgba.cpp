@@ -51,6 +51,27 @@ Rgba::Rgba(unsigned char redByte, unsigned char greenByte, unsigned char blueByt
 
 
 //-----------------------------------------------------------------------------------------------
+// Constructs from normalized float values
+//
+Rgba::Rgba(float red, float green, float blue, float alpha)
+{
+	SetAsFloats(red, green, blue, alpha);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the values of the rgba to the int values provided
+//
+Rgba::Rgba(int red, int green, int blue, int alpha)
+{
+	r = (unsigned char)red;
+	g = (unsigned char)green;
+	b = (unsigned char)blue;
+	a = (unsigned char)alpha;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Sets the values of the rgba to the byte values provided
 //
 void Rgba::SetAsBytes(unsigned char redByte, unsigned char greenByte, unsigned char blueByte, unsigned char alphabyte)
@@ -174,7 +195,7 @@ Rgba Rgba::GetRandomColor()
 	green = (unsigned char)GetRandomIntInRange(0, 255);
 	blue = (unsigned char)GetRandomIntInRange(0, 255);
 
-	return Rgba(red, green, blue, 255);
+	return Rgba(red, green, blue, (unsigned char)255);
 }
 
 

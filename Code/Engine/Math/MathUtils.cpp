@@ -49,6 +49,15 @@ float ModFloat(float x, float y)
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the square root of the value given
+//
+float Sqrt(float value)
+{
+	return sqrtf(value);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Converts the radius and radian angle to cartesian coordinates
 //
 Vector2 PolarToCartesian(float radius, float angleRadians)

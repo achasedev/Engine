@@ -15,9 +15,14 @@ public:
 
 	// Default constructor - initializes it to opaque white
 	Rgba();
-
 	// Construct from individual byte values
 	explicit Rgba(unsigned char redByte, unsigned char greenByte, unsigned char blueByte, unsigned char alphabyte=255);
+	
+	// Construct from normalized float values
+	explicit Rgba(float red, float green, float blue, float alpha);
+
+	// Construct from int values
+	explicit Rgba(int red, int green, int blue, int alpha);
 
 	// Sets all values by byte
 	void SetAsBytes(unsigned char redByte, unsigned char greenByte, unsigned char blueByte, unsigned char alphabyte=255);
