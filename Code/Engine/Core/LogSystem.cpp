@@ -59,28 +59,25 @@ void LogSystem::Initialize()
 	std::string latestName = "Data/Logs/SystemLog.txt";
 	bool success = s_latestLogFile->Open(latestName.c_str(), "w+");
 
-	// If we can't open the latest log file, that means there's an instance already open that has it
-	// So only on success do we want to do something about it
-	if (success)
+	// If we can't open the latest log file, that means this is a client, so open a different log file
+	if (!success)
 	{
-		LogCallBack_t writerCallback;
-		writerCallback.callback = WriteToFile;
-		writerCallback.name = "File_writer_current";
-		writerCallback.argumentData = s_latestLogFile;
-		AddCallback(writerCallback);
+		latestName = "Data/Logs/SystemLog_Client.txt";
+		s_latestLogFile->Open(latestName.c_str(), "w+");
 	}
-	else
-	{
-		delete s_latestLogFile;
-		s_latestLogFile = nullptr;
-	}
+
+	// Make a file writer for the latest log file
+	LogCallBack_t writerCallback;
+	writerCallback.callback = WriteToFile;
+	writerCallback.name = "File_writer_current";
+	writerCallback.argumentData = s_latestLogFile;
+	AddCallback(writerCallback);
 
 	// Make a file writer callback for the time stamped log file
 	s_timeStampedFile = new File();
 	std::string timeStampedName = Stringf(LOG_FILE_NAME_FORMAT, GetFormattedSystemDateAndTime().c_str());
 	s_timeStampedFile->Open(timeStampedName.c_str(), "a+");
 
-	LogCallBack_t writerCallback;
 	writerCallback.name = "File_writer_timestamped";
 	writerCallback.argumentData = s_timeStampedFile;
 	writerCallback.callback = WriteToFile;

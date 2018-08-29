@@ -646,7 +646,7 @@ void DevConsole::AddCommandLineToHistory(const std::string& commandLine)
 	}
 	else
 	{
-		bool isMostRecentCommand	= s_instance->m_commandHistory.back() == commandLine;
+		bool isMostRecentCommand = s_instance->m_commandHistory.back() == commandLine;
 
 		if (!isMostRecentCommand)
 		{
@@ -723,6 +723,28 @@ void DevConsole::ProcessKeydownCode(unsigned char keyCode)
 		// Do nothing here, or else we risk doing duplicate things for a character
 		break;
 	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Writes the command history to a text file
+//
+void DevConsole::WriteHistoryToFile()
+{
+	File file;
+
+	bool success = file.Open("Data/Logs/Command_History.txt", "w");
+
+	if (!success)
+	{
+		LogTaggedPrintf("DEV_CONSOLE", "Error: Couldn't open the log history file");
+		return;
+	}
+
+	int numCommandsInHistory = (int) m_commandHistory.size();
+	int lineCountToWrite = (numCommandsInHistory < MAX_HISTORY_WRITE_COUNT ? numCommandsInHistory : MAX_HISTORY_WRITE_COUNT);
+
+	//for ()
 }
 
 

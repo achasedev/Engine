@@ -11,6 +11,9 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/DataStructures/ThreadSafeQueue.hpp"
 #include <vector>
+
+#define MAX_HISTORY_WRITE_COUNT 32
+
 TODO("Max console line length, or line wrap");
 class Renderer;
 class BitmapFont;
@@ -45,6 +48,8 @@ public:
 
 	void ProcessCharacterCode(unsigned char keyCode);
 	void ProcessKeydownCode(unsigned char keyCode);
+
+	void WriteHistoryToFile();
 
 	static void			Initialize();
 	static void			Shutdown();
