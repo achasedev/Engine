@@ -369,6 +369,8 @@
     <ClCompile Include="Networking\TCPSocket.cpp" />
     <ClCompile Include="Rendering\Thesis\RayTraceRenderer.cpp" />
     <ClCompile Include="Rendering\Thesis\Ray.cpp" />
+    <ClCompile Include="Networking\Endianness.cpp" />
+    <ClCompile Include="Networking\BytePacker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -713,5 +715,7 @@
     <ClInclude Include="Networking\TCPSocket.hpp" />
     <ClInclude Include="Rendering\Thesis\RayTraceRenderer.hpp" />
     <ClInclude Include="Rendering\Thesis\Ray.hpp" />
+    <ClInclude Include="Networking\Endianness.hpp" />
+    <ClInclude Include="Networking\BytePacker.hpp" />
   </ItemGroup>
 </Project>
