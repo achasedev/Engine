@@ -37,20 +37,22 @@ void BytePacker::SetEndianness(eEndianness endianness)
 bool BytePacker::SetReadableByteCount(size_t byteCount)
 {
 	m_readableByteCount = byteCount;
+
+	return false;
 }
 
 bool BytePacker::WriteBytes(size_t byteCount, void const *data)
 {
-
+	return false;
 }
 
 size_t BytePacker::ReadBytes(void *out_data, size_t maxByteCount)
 {
-
+	return 0;
 }
 
 size_t BytePacker::WriteSize(size_t size)
 {
-	return 
+	return 0;
 }
 
