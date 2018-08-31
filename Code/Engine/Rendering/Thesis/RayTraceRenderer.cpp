@@ -52,14 +52,12 @@ float HitSphere(const Vector3& center, float radius, const Ray& r)
 	}
 }
 
-Rgba GetColorForRay(const Ray& r, Hitable* hitable)
+Vector3 GetColorForRay(const Ray& r, Hitable* hitable)
 {
 	HitRecord_t record;
 	if (hitable->Hit(&r, 0.f, 1000.f, record))
 	{
-		Vector3 colors = 0.5f * (record.normal + Vector3::ONES);
-
-		return Rgba(colors.x, colors.y, colors.z, 1.0f);
+		return 0.5f * (record.normal + Vector3::ONES);
 	}
 	else
 	{
@@ -67,27 +65,32 @@ Rgba GetColorForRay(const Ray& r, Hitable* hitable)
 		Vector3 unitDirection = r.GetDirection().GetNormalized();
 
 		float blend = RangeMapFloat(unitDirection.y, -1.f, 1.0f, 0.f, 1.f);
-		Rgba blue;
-		blue.SetAsFloats(0.5f, 0.7f, 1.0f, 1.0f);
-		return Interpolate(Rgba::WHITE, blue, blend);
+		return Interpolate(Vector3::ONES, Vector3(0.5f, 0.7f, 1.0f), blend);
 	}
 }
 
+Ray GetRayForUV(float u, float v, Camera* camera)
+{
+	// Set up values - everything defined in CAMERA space
+	Vector3 origin = Vector3::ZERO;
+	Vector3 bl = (Matrix44::GetInverse(camera->GetProjectionMatrix()) * Vector4(-1.f, -1.f, -1.f, 1.f)).xyz();
+	Vector3 tr = (Matrix44::GetInverse(camera->GetProjectionMatrix()) * Vector4(1.f, 1.f, 1.f, 1.f)).xyz();
 
+	// Make the vectors the full length of the projection plane, for uv coordinates
+	Vector3 up = Vector3(0.f, tr.y - bl.y, 0.f);
+	Vector3 right = Vector3(tr.x - bl.x, 0.f, 0.f);
+
+	Vector3 direction = bl + u * right + v * up;
+	Ray r(origin, direction);
+
+	return r;
+}
 
 
 void RayTraceRenderer::Draw(Camera* camera)
 {
 	UNUSED(camera);
 	ProfileScoped test("RayTraceRenderer::Draw"); UNUSED(test);
-
-	// Set up values - everything defined in CAMERA space
-	Vector3 bl = (Matrix44::GetInverse(camera->GetProjectionMatrix()) * Vector4(-1.f, -1.f, -1.f, 1.f)).xyz();
-	Vector3 tr = (Matrix44::GetInverse(camera->GetProjectionMatrix()) * Vector4(1.f, 1.f, 1.f, 1.f)).xyz();
-
-	// Make the vectors the full length of the projection plane, for uv coordinates
-	Vector3 up		= Vector3(0.f,			tr.y - bl.y,	0.f);
-	Vector3 right	= Vector3(tr.x - bl.x,	0.f,			0.f);
 
 	// Make a few spheres
 	Hitable *hitables[3];
@@ -100,21 +103,29 @@ void RayTraceRenderer::Draw(Camera* camera)
 
 	// Positions of the sphere and camera in camera space, so origin should always be (0,0,0)
 	//Vector3 spherePosition = (camera->GetViewMatrix() * Vector4(0.f, 0.f, 0.f, 1.f)).xyz();
-	Vector3 origin = Vector3::ZERO;
 
 	// Pixels are drawn from top left to bottom right, but (0,0) is the bottom left
 	for (int y = m_pixelDimensions.y - 1; y >= 0; --y)
 	{
 		for (int x = 0; x < m_pixelDimensions.x; ++x)
 		{
-			float u = (float)x / (float)m_pixelDimensions.x;
-			float v = (float)y / (float)m_pixelDimensions.y;
+			Vector3 colorValues = Vector3::ZERO;
 
-			Vector3 direction = bl + u * right + v * up;
-			Ray r(origin, direction);
+			int numSamples = 1;
+			for (int sampleNumber = 0; sampleNumber < numSamples; ++sampleNumber)
+			{
+				float u = ((float)x + GetRandomFloatZeroToOne()) / (float)m_pixelDimensions.x;
+				float v = ((float)y + GetRandomFloatZeroToOne()) / (float)m_pixelDimensions.y;
+
+				Ray ray = GetRayForUV(u, v, camera);
+				colorValues += GetColorForRay(ray, collection);
+			}
+
+			colorValues /= numSamples;
+			Rgba finalColor(colorValues.x, colorValues.y, colorValues.z, 1.0f);
 
 			int index = y * m_pixelDimensions.x + x;
-			m_colorData[index] = GetColorForRay(r, collection);
+			m_colorData[index] = finalColor;
 		}
 	}
 }
