@@ -371,7 +371,10 @@
     <ClCompile Include="Rendering\Buffers\UniformBuffer.cpp" />
     <ClCompile Include="Rendering\Core\Vertex.cpp" />
     <ClCompile Include="Rendering\Buffers\VertexBuffer.cpp" />
+    <ClCompile Include="Rendering\Thesis\Hitable.cpp" />
+    <ClCompile Include="Rendering\Thesis\HitableList.cpp" />
     <ClCompile Include="Rendering\Thesis\Ray.cpp" />
+    <ClCompile Include="Rendering\Thesis\RaySphere.cpp" />
     <ClCompile Include="Rendering\Thesis\RayTraceRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -505,7 +508,10 @@
     <ClInclude Include="Rendering\Buffers\UniformBuffer.hpp" />
     <ClInclude Include="Rendering\Core\Vertex.hpp" />
     <ClInclude Include="Rendering\Buffers\VertexBuffer.hpp" />
+    <ClInclude Include="Rendering\Thesis\Hitable.hpp" />
+    <ClInclude Include="Rendering\Thesis\HitableList.hpp" />
     <ClInclude Include="Rendering\Thesis\Ray.hpp" />
+    <ClInclude Include="Rendering\Thesis\RaySphere.hpp" />
     <ClInclude Include="Rendering\Thesis\RayTraceRenderer.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

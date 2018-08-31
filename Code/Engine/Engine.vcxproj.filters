@@ -371,6 +371,9 @@
     <ClCompile Include="Rendering\Thesis\Ray.cpp" />
     <ClCompile Include="Networking\Endianness.cpp" />
     <ClCompile Include="Networking\BytePacker.cpp" />
+    <ClCompile Include="Rendering\Thesis\Hitable.cpp" />
+    <ClCompile Include="Rendering\Thesis\RaySphere.cpp" />
+    <ClCompile Include="Rendering\Thesis\HitableList.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -717,5 +720,8 @@
     <ClInclude Include="Rendering\Thesis\Ray.hpp" />
     <ClInclude Include="Networking\Endianness.hpp" />
     <ClInclude Include="Networking\BytePacker.hpp" />
+    <ClInclude Include="Rendering\Thesis\Hitable.hpp" />
+    <ClInclude Include="Rendering\Thesis\RaySphere.hpp" />
+    <ClInclude Include="Rendering\Thesis\HitableList.hpp" />
   </ItemGroup>
 </Project>
