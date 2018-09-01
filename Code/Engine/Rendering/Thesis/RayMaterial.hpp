@@ -58,6 +58,12 @@ public:
 
 
 private:
+	//-----Private Methods-----
+
+	static float GetSchlickApproximation(float cosine, float indexOfRefraction);
+
+
+private:
 	//-----Private Data-----
 
 	float m_indexOfRefraction;

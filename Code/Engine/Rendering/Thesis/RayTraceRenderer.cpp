@@ -8,7 +8,9 @@
 #include "Engine/Rendering/Thesis/RaySphere.hpp"
 #include "Engine/Rendering/Thesis/HitableList.hpp"
 #include "Engine/Rendering/Thesis/RayMaterial.hpp"
+#include "Engine/Rendering/Thesis/RayTraceCamera.hpp"
 #include "Engine/Rendering/Thesis/RayTraceRenderer.hpp"
+
 #include "ThirdParty/stb/stb_image_write.h"
 #include <cstdlib>
 
@@ -104,10 +106,16 @@ Ray GetRayForUV(float u, float v, Camera* camera)
 }
 
 
-void RayTraceRenderer::Draw(Camera* camera)
+void RayTraceRenderer::Draw()
 {
-	UNUSED(camera);
 	ProfileScoped test("RayTraceRenderer::Draw"); UNUSED(test);
+
+	// Make the camera
+	Vector3 lookFrom = Vector3(3.f, 3.f, -2.f);
+	Vector3 lookAt = Vector3(0.f, 0.f, 5.f);
+	float focusDistance = (lookAt - lookFrom).GetLength();
+
+	RayTraceCamera camera(lookFrom, lookAt, Vector3::DIRECTION_UP, 90.f, ((float) m_pixelDimensions.x / (float) m_pixelDimensions.y), 1.0f, focusDistance);
 
 	// Make a few spheres
 	Hitable *hitables[4];
@@ -142,7 +150,8 @@ void RayTraceRenderer::Draw(Camera* camera)
 				float u = ((float)x + GetRandomFloatZeroToOne()) / (float)m_pixelDimensions.x;
 				float v = ((float)y + GetRandomFloatZeroToOne()) / (float)m_pixelDimensions.y;
 
-				Ray ray = GetRayForUV(u, v, camera);
+				//Ray ray = GetRayForUV(u, v, camera);
+				Ray ray = camera.GetRay(u, v);
 				colorValues += GetColorForRay(ray, collection, 0);
 			}
 

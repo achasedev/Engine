@@ -45,26 +45,48 @@ bool RayMaterial_Dielectric::Scatter(const Ray& incomingRay, const HitRecord_t& 
 	out_attentuation = Vector3(1.f, 1.f, 1.f);
 	Vector3 refracted;
 
+	float reflectionProbability;
+	float cosine;
+
 	if (DotProduct(incomingRay.GetDirection(), record.normal) > 0)
 	{
 		outwardNormal = -1.f * record.normal;
 		niOverNt = m_indexOfRefraction;
+		cosine = m_indexOfRefraction * DotProduct(incomingRay.GetDirection(), record.normal) / incomingRay.GetDirection().GetLength();
 	}
 	else
 	{
 		outwardNormal = record.normal;
 		niOverNt = 1.0f / m_indexOfRefraction;
+		cosine = -1.0f * DotProduct(incomingRay.GetDirection(), record.normal) / incomingRay.GetDirection().GetLength();
 	}
 
 	// Check for reflect or refract
 	if (Refract(incomingRay.GetDirection(), outwardNormal, niOverNt, refracted))
 	{
-		out_scatteredRay = Ray(record.position, refracted);
+		reflectionProbability = GetSchlickApproximation(cosine, m_indexOfRefraction);
 	}
 	else
 	{
+		reflectionProbability = 1.0f;
+	}
+
+	if (CheckRandomChance(reflectionProbability))
+	{
 		out_scatteredRay = Ray(record.position, reflected);
+	}
+	else
+	{
+		out_scatteredRay = Ray(record.position, refracted);
 	}
 
 	return true;
+}
+
+float RayMaterial_Dielectric::GetSchlickApproximation(float cosine, float indexOfRefraction)
+{
+	float r0 = (1.0f - indexOfRefraction) / (1.0f + indexOfRefraction);
+	r0 = r0 * r0;
+
+	return r0 + (1.0f - r0) * Pow((1 - cosine), 5.f);
 }

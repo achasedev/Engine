@@ -376,6 +376,7 @@
     <ClCompile Include="Rendering\Thesis\Ray.cpp" />
     <ClCompile Include="Rendering\Thesis\RayMaterial.cpp" />
     <ClCompile Include="Rendering\Thesis\RaySphere.cpp" />
+    <ClCompile Include="Rendering\Thesis\RayTraceCamera.cpp" />
     <ClCompile Include="Rendering\Thesis\RayTraceRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -514,6 +515,7 @@
     <ClInclude Include="Rendering\Thesis\Ray.hpp" />
     <ClInclude Include="Rendering\Thesis\RayMaterial.hpp" />
     <ClInclude Include="Rendering\Thesis\RaySphere.hpp" />
+    <ClInclude Include="Rendering\Thesis\RayTraceCamera.hpp" />
     <ClInclude Include="Rendering\Thesis\RayTraceRenderer.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

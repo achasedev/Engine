@@ -10,7 +10,7 @@ class RayTraceRenderer
 public:
 	//-----Public Methods-----
 
-	void Draw(Camera* camera);
+	void Draw();
 	void WriteToFile(const char* filename);
 
 	static void Initialize();

@@ -26,6 +26,7 @@ float 	Log2(float value);
 float 	Log10(float value);
 float 	ModFloat(float x, float y);
 float	Sqrt(float value);
+float   Pow(float base, float exponent);
 
 // Coordinate system
 Vector2 PolarToCartesian(float radius, float angleRadians);
@@ -54,6 +55,7 @@ float	GetRandomFloatZeroToOne();												// Generates a random float between 
 int		GetRandomIntLessThan(int maxExclusive);									// Generates a random int between zero (inclusive) and maxExclusive
 bool	GetRandomTrueOrFalse();													// Randomly returns true or false
 bool	CheckRandomChance(float chanceForSuccess);								// Returns true if we generate a number less than chanceForSuccess,  between 0.f and 1.f
+Vector2 GetRandomPointWithinCircle();
 Vector3 GetRandomPointOnSphere();													// Returns a random unit vector
 Vector3 GetRandomPointWithinSphere();
 

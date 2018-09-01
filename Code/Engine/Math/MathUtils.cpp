@@ -58,6 +58,15 @@ float Sqrt(float value)
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the result of raising base to the exponent power
+//
+float Pow(float base, float exponent)
+{
+	return powf(base, exponent);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Converts the radius and radian angle to cartesian coordinates
 //
 Vector2 PolarToCartesian(float radius, float angleRadians)
@@ -335,6 +344,15 @@ bool CheckRandomChance(float chanceForSuccess)
 		float outcome = GetRandomFloatZeroToOne();
 		return (outcome <= chanceForSuccess);
 	}
+}
+
+//-----------------------------------------------------------------------------------------------
+// Returns a random point within the unit circle
+//
+Vector2 GetRandomPointWithinCircle()
+{
+	float randomMagnitude = GetRandomFloatInRange(0.1f, 0.9f);
+	return Vector2::GetRandomVector(randomMagnitude);
 }
 
 
