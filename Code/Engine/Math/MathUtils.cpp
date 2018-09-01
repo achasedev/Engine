@@ -586,6 +586,17 @@ Vector3 CrossProduct(const Vector3& a, const Vector3& b)
 
 
 //-----------------------------------------------------------------------------------------------
+// Reflects the incident vector on the plane defined by normal
+//
+Vector3 Reflect(const Vector3& incidentVector, const Vector3& normal)
+{
+	Vector3 alongNormal = DotProduct(incidentVector, normal) * normal;
+
+	return incidentVector - 2 * alongNormal;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Checks to see if the bits are set in the 8 bit flag
 //
 bool AreBitsSet(unsigned char bitFlags8, unsigned char flagsToCheck)

@@ -7,10 +7,12 @@
 #include "Engine/Core/Time/ProfileScoped.hpp"
 #include "Engine/Rendering/Thesis/RaySphere.hpp"
 #include "Engine/Rendering/Thesis/HitableList.hpp"
+#include "Engine/Rendering/Thesis/RayMaterial.hpp"
 #include "Engine/Rendering/Thesis/RayTraceRenderer.hpp"
 #include "ThirdParty/stb/stb_image_write.h"
 #include <cstdlib>
 
+#define MAX_BOUNCES 50
 // Singleton instance
 RayTraceRenderer* RayTraceRenderer::s_instance = nullptr;
 
@@ -52,12 +54,27 @@ float HitSphere(const Vector3& center, float radius, const Ray& r)
 	}
 }
 
-Vector3 GetColorForRay(const Ray& r, Hitable* hitable)
+Vector3 GetColorForRay(const Ray& r, Hitable* hitable, int depth)
 {
 	HitRecord_t record;
-	if (hitable->Hit(&r, 0.f, 1000.f, record))
+	if (hitable->Hit(r, 0.1f, 1000.f, record))
 	{
-		return 0.5f * (record.normal + Vector3::ONES);
+		Ray scatteredRay;
+		Vector3 attentuation;
+
+		if (depth < MAX_BOUNCES && record.rayMaterial->Scatter(r, record, attentuation, scatteredRay))
+		{
+			Vector3 recursiveColor = GetColorForRay(scatteredRay, hitable, depth + 1);
+			Vector3 finalResult;
+			finalResult.x = attentuation.x * recursiveColor.x;
+			finalResult.y = attentuation.y * recursiveColor.y;
+			finalResult.z = attentuation.z * recursiveColor.z;
+
+			return finalResult;
+		}
+		{
+			return Vector3::ZERO;
+		}
 	}
 	else
 	{
@@ -65,7 +82,7 @@ Vector3 GetColorForRay(const Ray& r, Hitable* hitable)
 		Vector3 unitDirection = r.GetDirection().GetNormalized();
 
 		float blend = RangeMapFloat(unitDirection.y, -1.f, 1.0f, 0.f, 1.f);
-		return Interpolate(Vector3::ONES, Vector3(0.5f, 0.7f, 1.0f), blend);
+		return Interpolate(Vector3::ONES, Vector3(0.5f, 0.7f, 1.f) , blend);
 	}
 }
 
@@ -93,13 +110,21 @@ void RayTraceRenderer::Draw(Camera* camera)
 	ProfileScoped test("RayTraceRenderer::Draw"); UNUSED(test);
 
 	// Make a few spheres
-	Hitable *hitables[3];
+	Hitable *hitables[4];
 
-	hitables[0] = new RaySphere(Vector3(-10.f, 0.f, 50.f), 5.f);
-	hitables[1] = new RaySphere(Vector3(10.f, 0.f, 50.f), 2.f);
-	hitables[2] = new RaySphere(Vector3(0.f, 0.f, 100.f), 20.f);
+	// Mine
+	//hitables[0] = new RaySphere(Vector3(-10.f, 0.f, 50.f), 5.f, new RayMaterial_Diffuse(Vector3(0.f, 0.f, 1.f)));
+	//hitables[1] = new RaySphere(Vector3(10.f, 0.f, 50.f), 2.f, new RayMaterial_Diffuse(Vector3(1.f, 0.f, 0.f)));
+	//hitables[2] = new RaySphere(Vector3(0.f, 0.f, 100.f), 20.f, new RayMaterial_Metal(Vector3(0.8f, 0.8f, 0.8f)));
+	//hitables[3] = new RaySphere(Vector3(0.f, -100.f, 50.f), 84.5f, new RayMaterial_Diffuse(Vector3(0.f, 1.f, 0.f)));
 
-	Hitable* collection = new HitableList(hitables, 3);
+	// His
+	hitables[0] = new RaySphere(Vector3(0.f, 0.f, 5.f), 0.5f, new RayMaterial_Diffuse(Vector3(0.8f, 0.3f, 0.3f)));
+	hitables[1] = new RaySphere(Vector3(0.f, -100.5f, 5.f), 100.f, new RayMaterial_Diffuse(Vector3(0.8f, 0.8f, 0.f)));
+	hitables[2] = new RaySphere(Vector3(1.f, 0.f, 5.f), 0.5f, new RayMaterial_Metal(Vector3(0.8f, 0.6f, 0.2f), 1.f));
+	hitables[3] = new RaySphere(Vector3(-1.f, 0.f, 5.f), 0.5f, new RayMaterial_Metal(Vector3(0.8f, 0.8f, 0.8f), 0.3f));
+
+	Hitable* collection = new HitableList(hitables, 4);
 
 	// Positions of the sphere and camera in camera space, so origin should always be (0,0,0)
 	//Vector3 spherePosition = (camera->GetViewMatrix() * Vector4(0.f, 0.f, 0.f, 1.f)).xyz();
@@ -111,17 +136,18 @@ void RayTraceRenderer::Draw(Camera* camera)
 		{
 			Vector3 colorValues = Vector3::ZERO;
 
-			int numSamples = 1;
+			int numSamples = 100;
 			for (int sampleNumber = 0; sampleNumber < numSamples; ++sampleNumber)
 			{
 				float u = ((float)x + GetRandomFloatZeroToOne()) / (float)m_pixelDimensions.x;
 				float v = ((float)y + GetRandomFloatZeroToOne()) / (float)m_pixelDimensions.y;
 
 				Ray ray = GetRayForUV(u, v, camera);
-				colorValues += GetColorForRay(ray, collection);
+				colorValues += GetColorForRay(ray, collection, 0);
 			}
 
 			colorValues /= numSamples;
+			colorValues = Vector3(Sqrt(colorValues.x), Sqrt(colorValues.y), Sqrt(colorValues.z));
 			Rgba finalColor(colorValues.x, colorValues.y, colorValues.z, 1.0f);
 
 			int index = y * m_pixelDimensions.x + x;

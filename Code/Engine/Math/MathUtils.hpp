@@ -76,6 +76,7 @@ float	DotProduct(const Vector3& a, const Vector3& b);
 float	DotProduct(const Vector4& a, const Vector4& b);
 float	DotProduct(const Quaternion& a, const Quaternion& b);
 Vector3 CrossProduct(const Vector3& a, const Vector3& b);								// Returns the cross product between a and b
+Vector3 Reflect(const Vector3& incidentVector, const Vector3& normal);					// Reflects the incident vector about the normal
 
 // Bitflag utilities
 bool	AreBitsSet(unsigned char bitFlags8, unsigned char flagsToCheck);				// Checks to see if the bits are set in the 8 bit flag

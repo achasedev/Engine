@@ -8,7 +8,7 @@ public:
 
 	HitableList(Hitable** list, int count);
 
-	virtual bool Hit(const Ray* ray, float tMin, float tMax, HitRecord_t& out_record) override;
+	virtual bool Hit(const Ray& ray, float tMin, float tMax, HitRecord_t& out_record) override;
 
 
 private:

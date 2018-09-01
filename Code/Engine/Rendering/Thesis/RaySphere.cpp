@@ -8,18 +8,19 @@ RaySphere::RaySphere()
 {
 }
 
-RaySphere::RaySphere(const Vector3& center, float radius)
+RaySphere::RaySphere(const Vector3& center, float radius, RayMaterial* rayMaterial)
 	: m_center(center)
 	, m_radius(radius)
+	, m_rayMaterial(rayMaterial)
 {
 }
 
-bool RaySphere::Hit(const Ray* ray, float tMin, float tMax, HitRecord_t& out_record)
+bool RaySphere::Hit(const Ray& ray, float tMin, float tMax, HitRecord_t& out_record)
 {
 	// From ray origin to sphere center
-	Vector3 oc = ray->GetPosition() - m_center;
-	float a = DotProduct(ray->GetDirection(), ray->GetDirection());
-	float b = 2.0f * DotProduct(oc, ray->GetDirection());
+	Vector3 oc = ray.GetPosition() - m_center;
+	float a = DotProduct(ray.GetDirection(), ray.GetDirection());
+	float b = 2.0f * DotProduct(oc, ray.GetDirection());
 	float c = DotProduct(oc, oc) - m_radius * m_radius;
 
 	float discriminant = b * b - 4 * a * c;
@@ -33,8 +34,9 @@ bool RaySphere::Hit(const Ray* ray, float tMin, float tMax, HitRecord_t& out_rec
 		if (temp < tMax && temp > tMin)
 		{
 			out_record.t = temp;
-			out_record.position = ray->GetPointAtParameter(temp);
+			out_record.position = ray.GetPointAtParameter(temp);
 			out_record.normal = (out_record.position - m_center) / m_radius;
+			out_record.rayMaterial = m_rayMaterial;
 			return true;
 		}
 
@@ -43,8 +45,9 @@ bool RaySphere::Hit(const Ray* ray, float tMin, float tMax, HitRecord_t& out_rec
 		if (temp < tMax && temp > tMin)
 		{
 			out_record.t = temp;
-			out_record.position = ray->GetPointAtParameter(temp);
+			out_record.position = ray.GetPointAtParameter(temp);
 			out_record.normal = (out_record.position - m_center) / m_radius;
+			out_record.rayMaterial = m_rayMaterial;
 			return true;
 		}
 	}

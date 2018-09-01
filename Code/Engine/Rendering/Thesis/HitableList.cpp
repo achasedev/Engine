@@ -8,11 +8,11 @@ HitableList::HitableList(Hitable** list, int count)
 {
 }
 
-bool HitableList::Hit(const Ray* ray, float tMin, float tMax, HitRecord_t& out_record)
+bool HitableList::Hit(const Ray& ray, float tMin, float tMax, HitRecord_t& out_record)
 {
 	HitRecord_t tempRecord;
 	bool hitAnything = false;
-	double closestSoFar = tMax;
+	float closestSoFar = tMax;
 
 	for (int i = 0; i < m_size; ++i)
 	{
