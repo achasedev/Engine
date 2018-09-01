@@ -57,7 +57,7 @@ float HitSphere(const Vector3& center, float radius, const Ray& r)
 Vector3 GetColorForRay(const Ray& r, Hitable* hitable, int depth)
 {
 	HitRecord_t record;
-	if (hitable->Hit(r, 0.1f, 1000.f, record))
+	if (hitable->Hit(r, 0.001f, 100000.f, record))
 	{
 		Ray scatteredRay;
 		Vector3 attentuation;
@@ -121,8 +121,8 @@ void RayTraceRenderer::Draw(Camera* camera)
 	// His
 	hitables[0] = new RaySphere(Vector3(0.f, 0.f, 5.f), 0.5f, new RayMaterial_Diffuse(Vector3(0.8f, 0.3f, 0.3f)));
 	hitables[1] = new RaySphere(Vector3(0.f, -100.5f, 5.f), 100.f, new RayMaterial_Diffuse(Vector3(0.8f, 0.8f, 0.f)));
-	hitables[2] = new RaySphere(Vector3(1.f, 0.f, 5.f), 0.5f, new RayMaterial_Metal(Vector3(0.8f, 0.6f, 0.2f), 1.f));
-	hitables[3] = new RaySphere(Vector3(-1.f, 0.f, 5.f), 0.5f, new RayMaterial_Metal(Vector3(0.8f, 0.8f, 0.8f), 0.3f));
+	hitables[2] = new RaySphere(Vector3(1.f, 0.f, 5.f), 0.5f, new RayMaterial_Metal(Vector3(0.8f, 0.6f, 0.2f)));
+	hitables[3] = new RaySphere(Vector3(-1.f, 0.f, 5.f), 0.5f, new RayMaterial_Dielectric(1.5f));
 
 	Hitable* collection = new HitableList(hitables, 4);
 

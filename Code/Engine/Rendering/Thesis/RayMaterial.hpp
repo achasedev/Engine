@@ -47,3 +47,19 @@ private:
 	Vector3 m_albedoColor;
 	float m_fuzziness; // 0 to 1
 };
+
+class RayMaterial_Dielectric : public RayMaterial
+{
+public:
+	//-----Public Methods-----
+
+	RayMaterial_Dielectric(float indexOfRefraction);
+	virtual bool Scatter(const Ray& incomingRay, const HitRecord_t& record, Vector3& out_attentuation, Ray& out_scatteredRay) override;
+
+
+private:
+	//-----Private Data-----
+
+	float m_indexOfRefraction;
+	
+};

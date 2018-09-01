@@ -351,6 +351,18 @@ Vector3 GetRandomPointOnSphere()
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns a random point within a unit sphere, excluding the boundary
+//
+Vector3 GetRandomPointWithinSphere()
+{
+	Vector3 boundaryVector = GetRandomPointOnSphere();
+	float randomMagnitude = GetRandomFloatInRange(0.1f, 0.9f);
+
+	return randomMagnitude * boundaryVector;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Rounds inValue to the nearest integer, with 0.5 rounding to 1, -0.5 rounding to 0
 //
 int RoundToNearestInt(float inValue)
@@ -593,6 +605,27 @@ Vector3 Reflect(const Vector3& incidentVector, const Vector3& normal)
 	Vector3 alongNormal = DotProduct(incidentVector, normal) * normal;
 
 	return incidentVector - 2 * alongNormal;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Attempts to refract the incident vector through the surface defined by normal, returining it in out_refracedVector
+// Returns true if the vector was refracted, false otherwise (See Snell's Law)
+//
+bool Refract(const Vector3& incidentVector, const Vector3& normal, float niOverNt, Vector3& out_refractedVector)
+{
+	Vector3 normalizedIncident = incidentVector.GetNormalized();
+
+	float dt = DotProduct(normalizedIncident, normal);
+	float discriminant = 1.0f - niOverNt * niOverNt * (1.0f - dt * dt);
+
+	if (discriminant > 0) // Can be refracted
+	{
+		out_refractedVector = niOverNt * (normalizedIncident - normal * dt) - normal * sqrtf(discriminant);
+		return true;
+	}
+
+	return false;
 }
 
 

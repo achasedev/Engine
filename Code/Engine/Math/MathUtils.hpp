@@ -55,6 +55,7 @@ int		GetRandomIntLessThan(int maxExclusive);									// Generates a random int b
 bool	GetRandomTrueOrFalse();													// Randomly returns true or false
 bool	CheckRandomChance(float chanceForSuccess);								// Returns true if we generate a number less than chanceForSuccess,  between 0.f and 1.f
 Vector3 GetRandomPointOnSphere();													// Returns a random unit vector
+Vector3 GetRandomPointWithinSphere();
 
 // Rounding, clamping, and range mapping
 int		RoundToNearestInt(float inValue);										// 0.5 rounds up to 1, -0.5 rounds up to 0
@@ -77,6 +78,7 @@ float	DotProduct(const Vector4& a, const Vector4& b);
 float	DotProduct(const Quaternion& a, const Quaternion& b);
 Vector3 CrossProduct(const Vector3& a, const Vector3& b);								// Returns the cross product between a and b
 Vector3 Reflect(const Vector3& incidentVector, const Vector3& normal);					// Reflects the incident vector about the normal
+bool	Refract(const Vector3& incidentVector, const Vector3& normal, float niOverNt, Vector3& out_refractedVector); // Returns true if the given vector will refract across the surface, false otherwise
 
 // Bitflag utilities
 bool	AreBitsSet(unsigned char bitFlags8, unsigned char flagsToCheck);				// Checks to see if the bits are set in the 8 bit flag
