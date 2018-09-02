@@ -26,12 +26,29 @@ ProfileScoped::ProfileScoped(const std::string& name)
 ProfileScoped::~ProfileScoped()
 {
 	uint64_t deltaHPC = GetPerformanceCounter() - m_startHPC;
-	float milliseconds = (float) TimeSystem::PerformanceCountToSeconds(deltaHPC) * 1000.f;
+	float timeTaken = (float) TimeSystem::PerformanceCountToSeconds(deltaHPC) * 1000.f;
 
+	
 	if (DevConsole::GetInstance() != nullptr)
 	{
-		ConsolePrintf("Profile for \"%s\" took %f milliseconds", m_name.c_str(), milliseconds);
+		if (timeTaken < 1000.f)
+		{
+			ConsolePrintf("Profile for \"%s\" took %f milliseconds", m_name.c_str(), timeTaken);
+		}
+		else
+		{
+			timeTaken *= (1.f / 1000.f);
+			ConsolePrintf("Profile for \"%s\" took %f seconds", m_name.c_str(), timeTaken);
+		}
 	}
 
-	DebuggerPrintf("Profile for \"%s\" took %f milliseconds", m_name.c_str(), milliseconds);
+	if (timeTaken < 1000.f)
+	{
+		DebuggerPrintf("Profile for \"%s\" took %f milliseconds", m_name.c_str(), timeTaken);
+	}
+	else
+	{
+		timeTaken *= (1.f / 1000.f);
+		DebuggerPrintf("Profile for \"%s\" took %f seconds", m_name.c_str(), timeTaken);
+	}
 }
