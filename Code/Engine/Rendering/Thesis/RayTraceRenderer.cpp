@@ -175,7 +175,7 @@ void ThreadWork_Draw(void* params)
 		{
 			Vector3 colorValues = Vector3::ZERO;
 
-			int numSamples = 500;
+			int numSamples = 1;
 			for (int sampleNumber = 0; sampleNumber < numSamples; ++sampleNumber)
 			{
 				float u = ((float)x + GetRandomFloatZeroToOne()) / 1920.f;
