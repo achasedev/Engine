@@ -8,11 +8,13 @@
 
 struct Voxel_t
 {
-	uint8_t solidFlags;
+	//uint8_t solidFlags;
 	Rgba color;
 
 	int GetChildIndex(int index) { return (index - 1) / 8; }
 	bool IsLeaf(int level) { return Pow(2, level) == 256;  }
+
+	// Pass in index, level
 };
 
 class VoxelGrid

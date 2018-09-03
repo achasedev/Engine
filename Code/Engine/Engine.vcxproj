@@ -379,6 +379,7 @@
     <ClCompile Include="Rendering\Thesis\RaySphere.cpp" />
     <ClCompile Include="Rendering\Thesis\RayTraceCamera.cpp" />
     <ClCompile Include="Rendering\Thesis\RayTraceRenderer.cpp" />
+    <ClCompile Include="Rendering\Thesis\VoxelGrid.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ThirdParty\fmod\fmod.h" />
@@ -519,6 +520,7 @@
     <ClInclude Include="Rendering\Thesis\RaySphere.hpp" />
     <ClInclude Include="Rendering\Thesis\RayTraceCamera.hpp" />
     <ClInclude Include="Rendering\Thesis\RayTraceRenderer.hpp" />
+    <ClInclude Include="Rendering\Thesis\VoxelGrid.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
