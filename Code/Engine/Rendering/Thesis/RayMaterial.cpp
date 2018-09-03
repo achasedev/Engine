@@ -1,5 +1,6 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Rendering/Thesis/Ray.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Rendering/Thesis/Hitable.hpp"
 #include "Engine/Rendering/Thesis/RayMaterial.hpp"
 
@@ -11,6 +12,7 @@ RayMaterial_Diffuse::RayMaterial_Diffuse(const Vector3& albedo)
 
 bool RayMaterial_Diffuse::Scatter(const Ray& incomingRay, const HitRecord_t& record, Vector3& out_attentuation, Ray& out_scatteredRay)
 {
+	UNUSED(incomingRay);
 	Vector3 target = record.position + record.normal + GetRandomPointWithinSphere();
 	out_scatteredRay = Ray(record.position, target - record.position);
 	out_attentuation = m_albedoColor;

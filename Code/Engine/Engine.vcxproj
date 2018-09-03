@@ -312,6 +312,7 @@
     <ClCompile Include="Networking\Endianness.cpp" />
     <ClCompile Include="Networking\Net.cpp" />
     <ClCompile Include="Networking\NetAddress.cpp" />
+    <ClCompile Include="Networking\RemoteCommandService.cpp" />
     <ClCompile Include="Networking\TCPSocket.cpp" />
     <ClCompile Include="Rendering\Animation\AnimationClip.cpp" />
     <ClCompile Include="Rendering\Animation\Animator.cpp" />
@@ -451,6 +452,7 @@
     <ClInclude Include="Networking\Endianness.hpp" />
     <ClInclude Include="Networking\Net.hpp" />
     <ClInclude Include="Networking\NetAddress.hpp" />
+    <ClInclude Include="Networking\RemoteCommandService.hpp" />
     <ClInclude Include="Networking\TCPSocket.hpp" />
     <ClInclude Include="Rendering\Animation\AnimationClip.hpp" />
     <ClInclude Include="Rendering\Animation\Animator.hpp" />

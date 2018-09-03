@@ -9,5 +9,5 @@ enum eEndianness
 
 eEndianness GetPlatformEndianness();
 
-void ToPlatformEndianness(const size_t byteSize, void* data, eEndianness endianness);
-void FromPlatformEndianness(const size_t byteSize, void* data,eEndianness endianness);
+void ToEndianness(const size_t byteSize, void* data, eEndianness endianness);
+void FromEndianness(const size_t byteSize, void* data,eEndianness endianness);

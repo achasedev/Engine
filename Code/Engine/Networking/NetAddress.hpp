@@ -16,14 +16,14 @@ public:
 
 	NetAddress_t();
 	NetAddress_t(const sockaddr* addr);
-	NetAddress_t(const char* string);
+	NetAddress_t(const char* string, bool bindable = false);
 
 	bool					ToSockAddr(sockaddr* out_addr, size_t* out_addrLen) const;
 	bool					FromSockAddr(const sockaddr* addr);
 
 	std::string				ToString() const;
 
-	static bool				GetLocalBindableAddress(NetAddress_t* out_addr, unsigned short port);
+	static bool				GetLocalAddress(NetAddress_t* out_addr, unsigned short port, bool bindable);
 
 public:
 	//-----Public Data-----

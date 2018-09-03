@@ -731,18 +731,19 @@ void DevConsole::ProcessKeydownCode(unsigned char keyCode)
 //
 void DevConsole::WriteHistoryToFile()
 {
-	File file;
-
-	bool success = file.Open("Data/Logs/Command_History.txt", "w");
-
-	if (!success)
-	{
-		LogTaggedPrintf("DEV_CONSOLE", "Error: Couldn't open the log history file");
-		return;
-	}
-
-	int numCommandsInHistory = (int) m_commandHistory.size();
-	int lineCountToWrite = (numCommandsInHistory < MAX_HISTORY_WRITE_COUNT ? numCommandsInHistory : MAX_HISTORY_WRITE_COUNT);
+	UNIMPLEMENTED();
+// 	File file;
+// 
+// 	bool success = file.Open("Data/Logs/Command_History.txt", "w");
+// 
+// 	if (!success)
+// 	{
+// 		LogTaggedPrintf("DEV_CONSOLE", "Error: Couldn't open the log history file");
+// 		return;
+// 	}
+// 
+// 	int numCommandsInHistory = (int) m_commandHistory.size();
+// 	int lineCountToWrite = (numCommandsInHistory < MAX_HISTORY_WRITE_COUNT ? numCommandsInHistory : MAX_HISTORY_WRITE_COUNT);
 
 	//for ()
 }

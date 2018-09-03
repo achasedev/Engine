@@ -61,7 +61,7 @@ bool TCPSocket::Listen(unsigned short port, unsigned int maxQueued)
 
 	// Get an address to bind to
 	NetAddress_t addr;
-	if (!NetAddress_t::GetLocalBindableAddress(&addr, port)) {
+	if (!NetAddress_t::GetLocalAddress(&addr, port, true)) {
 		return false;
 	}
 

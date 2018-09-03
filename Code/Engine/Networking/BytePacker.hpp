@@ -1,5 +1,6 @@
 #pragma once
 #include "Engine/Networking/Endianness.hpp"
+#include <stdint.h>
 
 class BytePacker
 {
@@ -37,9 +38,9 @@ public:
 	void			ResetRead();   // resets reading to the beginning of the buffer
 
 	eEndianness		GetEndianness() const;
-	size_t			GetWrittenByteCount() const;    // how much have I written to this buffer
-	size_t			GetWritableByteCount() const;   // how much more can I write to this buffer (if growble, this returns UINFINITY)
-	size_t			GetReadableByteCount() const;   // how much more data can I read;
+	size_t			GetWrittenByteCount() const;				// how much have I written to this buffer
+	size_t			GetRemainingWritableByteCount() const;		// how much more can I write to this buffer (if growble, this returns UINFINITY)
+	size_t			GetRemainingReadableByteCount() const;		// how much more data can I read;
 
 
 private:
@@ -48,11 +49,11 @@ private:
 	void* m_buffer = nullptr;
 	size_t m_bufferSize;
 
-	size_t m_readHead;
-	size_t m_writeHead;
+	uint8_t* m_readHead = nullptr;
+	uint8_t* m_writeHead = nullptr;
 
-	size_t m_readableByteCount;
-	size_t m_writableByteCount;
+	size_t m_remainingReadableByteCount;
+	size_t m_remainingWritableByteCount;
 
 	eEndianness m_endianness;
 

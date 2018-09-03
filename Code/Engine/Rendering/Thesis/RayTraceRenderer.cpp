@@ -186,7 +186,7 @@ void ThreadWork_Draw(void* params)
 				colorValues += GetColorForRay(ray, data->scene, 0);
 			}
 
-			colorValues /= numSamples;
+			colorValues /= (float)numSamples;
 			colorValues = Vector3(Sqrt(colorValues.x), Sqrt(colorValues.y), Sqrt(colorValues.z));
 			Rgba finalColor(colorValues.x, colorValues.y, colorValues.z, 1.0f);
 

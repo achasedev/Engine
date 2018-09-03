@@ -38,41 +38,37 @@ NetAddress_t::NetAddress_t(const sockaddr* addr)
 // Constructor from a string representation of the address
 // e.g. "10.8.151.155:12345" or "google.com:80"
 //
-NetAddress_t::NetAddress_t(const char* addressText)
+NetAddress_t::NetAddress_t(const char* addressText, bool bindable /*= false*/)
 {
 	if (IsStringNullOrEmpty(addressText))
 	{
 		return;
 	}
 
-	// Check for "localhost" shortcut
-	std::string addressString = std::string(addressText);
-	if (addressString == "localhost")
+	// Parse the string
+	std::vector<std::string> tokens = Tokenize(addressText, ':');
+
+	std::string hostname = tokens[0];
+	if (hostname == "localhost")
 	{
-		NetAddress_t::GetLocalBindableAddress(this, 80);
+		Net::GetLocalHostName(hostname);
 	}
-	else
+
+	// Default the port string to 12345 if one isn't specified
+	std::string portString = "12345";
+	if (tokens.size() > 1)
 	{
-		// Parse the string
-		std::vector<std::string> tokens = Tokenize(addressText, ':');
-
-		std::string hostname = tokens[0];
-
-		// Default the port string to 80 if one isn't specified
-		std::string portString = "80";
-		if (tokens.size() > 1)
-		{
-			portString = tokens[1];
-		}
-
-		// Get the socket address
-		sockaddr_in sockAddr;
-		int addrLen;
-		Net::GetAddressForHost(&sockAddr, &addrLen, hostname.c_str(), portString.c_str(), false);
-
-		// Set member variables
-		FromSockAddr((const sockaddr*)&sockAddr);
+		portString = tokens[1];
 	}
+
+	// Get the socket address
+	sockaddr_in sockAddr;
+	int addrLen;
+	Net::GetAddressForHost(&sockAddr, &addrLen, hostname.c_str(), portString.c_str(), bindable);
+
+	// Set member variables
+	FromSockAddr((const sockaddr*)&sockAddr);
+
 }
 
 
@@ -127,7 +123,7 @@ std::string NetAddress_t::ToString() const
 //-----------------------------------------------------------------------------------------------
 // Returns the NetAddress corresponding to this device's IP address using the port given
 //
-STATIC bool NetAddress_t::GetLocalBindableAddress(NetAddress_t* out_addr, unsigned short port)
+STATIC bool NetAddress_t::GetLocalAddress(NetAddress_t* out_addr, unsigned short port, bool bindable)
 {
 	// Get the host name for this device
 	std::string localHostName;
@@ -145,7 +141,7 @@ STATIC bool NetAddress_t::GetLocalBindableAddress(NetAddress_t* out_addr, unsign
 		&sockAddrLen, 
 		localHostName.c_str(), 
 		Stringf("%u", port).c_str(), 
-		true	// Ensure AI_PASSIVE is set
+		bindable	// Sets AI_PASSIVE
 	); 
 
 	if (!foundAddress)

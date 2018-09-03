@@ -17,15 +17,15 @@ eEndianness GetPlatformEndianness()
 	}
 }
 
-void ToPlatformEndianness(const size_t byteSize, void* data, eEndianness endianness)
+void ToEndianness(const size_t byteSize, void* data, eEndianness endianness)
 {
 	if (endianness == GetPlatformEndianness())
 	{
 		return;
 	}
 
-	unsigned int i = 0;
-	unsigned int j = byteSize - 1;
+	size_t i = 0;
+	size_t j = byteSize - 1;
 
 	uint8_t* byteBuffer = (uint8_t*)data;
 
@@ -40,15 +40,15 @@ void ToPlatformEndianness(const size_t byteSize, void* data, eEndianness endiann
 	}
 }
 
-void FromPlatformEndianness(const size_t byteSize, void* data, eEndianness endianness)
+void FromEndianness(const size_t byteSize, void* data, eEndianness endianness)
 {
-	if (endianness != GetPlatformEndianness())
+	if (endianness == GetPlatformEndianness())
 	{
 		return;
 	}
 
-	unsigned int i = 0;
-	unsigned int j = byteSize - 1;
+	size_t i = 0;
+	size_t j = byteSize - 1;
 
 	uint8_t* byteBuffer = (uint8_t*)data;
 
