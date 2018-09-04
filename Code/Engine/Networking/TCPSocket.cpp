@@ -16,6 +16,22 @@
 
 
 //-----------------------------------------------------------------------------------------------
+// For error checking against non-fatal errors with non-blocking sockets
+//
+bool WasLastErrorFatal(int* errorCode = nullptr)
+{
+	*errorCode = ::WSAGetLastError();
+
+	if (*errorCode == WSAEWOULDBLOCK || *errorCode == WSAEMSGSIZE || *errorCode == WSAECONNRESET)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Constructor
 //
 TCPSocket::TCPSocket()
@@ -31,6 +47,15 @@ TCPSocket::TCPSocket(Socket_t* socketHandle, NetAddress_t& netAddress, bool isLi
 	: m_socketHandle(socketHandle)
 	, m_address(netAddress)
 	, m_isListening(isListening)
+{
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Constructor to create non-blocking sockets, used for RemoteCommandService
+//
+TCPSocket::TCPSocket(bool shouldBlock)
+	: m_isBlocking(shouldBlock)
 {
 }
 
@@ -107,6 +132,19 @@ bool TCPSocket::Listen(unsigned short port, unsigned int maxQueued)
 //
 TCPSocket* TCPSocket::Accept()
 {
+	if (IsClosed())
+	{
+		LogTaggedPrintf("NET", "Error: TCPSocket::Accept() called on a closed socket.");
+		return nullptr;
+	}
+
+	if (!m_isListening)
+	{
+		LogTaggedPrintf("NET", "Error: TCPSocket::Accept() called on a socket that isn't listening.");
+		Close();
+		return nullptr;
+	}
+
 	sockaddr_storage clientAddr;
 	int clientAddrLen = sizeof(sockaddr_storage);
 
@@ -114,8 +152,12 @@ TCPSocket* TCPSocket::Accept()
 
 	if (clientSocketHandle == SOCKET_ERROR)
 	{
-		int errorCode = ::WSAGetLastError();
-		LogTaggedPrintf("NET", "Error: TCPSocket::Accept() couldn't accept client connection, error code %i", errorCode);
+		int errorCode;
+		if (WasLastErrorFatal(&errorCode))
+		{
+			LogTaggedPrintf("NET", "Error: TCPSocket::Accept() couldn't accept client connection, error code %i.", errorCode);
+		}
+
 		return nullptr;
 	}
 
@@ -132,9 +174,8 @@ TCPSocket* TCPSocket::Accept()
 //
 int TCPSocket::Receive(void *buffer, size_t const maxByteSize)
 {
-	if (IsClosed())
+	if (!IsConnected())
 	{
-		LogTaggedPrintf("NET", "Warning: TCPSocket::Receive called on a closed connection");
 		return 0;
 	}
 
@@ -143,7 +184,15 @@ int TCPSocket::Receive(void *buffer, size_t const maxByteSize)
 	// if the host disconnected, or if we're non-blocking and no data is there. 
 	int sizeReceived = ::recv((SOCKET)m_socketHandle, (char*) buffer, (int) maxByteSize, 0);
 
-	LogTaggedPrintf("NET", "Received: %s", buffer);
+	if (sizeReceived < 0)
+	{
+		int errorCode;
+		if (WasLastErrorFatal(&errorCode))
+		{
+			LogTaggedPrintf("NET", "Error: TCPSocket::Receive() failed unexpectantly, error code %i.", errorCode);
+			Close();
+		}
+	}
 
 	return sizeReceived;
 }
@@ -154,9 +203,14 @@ int TCPSocket::Receive(void *buffer, size_t const maxByteSize)
 //
 bool TCPSocket::Connect(const NetAddress_t& netAddress)
 {
-	if (!IsClosed())
+	if (IsStillConnecting())
 	{
-		LogTaggedPrintf("NET", "Warning: TCPSocket::Connect called on a socket that is still connected to a connection");
+		LogTaggedPrintf("NET", "Warning: TCPSocket::Connect() called on a non-blocking socket that is still trying to connect to a connection");
+		Close();
+	}
+	else if (IsConnected())
+	{
+		LogTaggedPrintf("NET", "Warning: TCPSocket::Connect() called on a socket that is still connected to a connection");
 		Close();
 	}
 
@@ -172,12 +226,19 @@ bool TCPSocket::Connect(const NetAddress_t& netAddress)
 	size_t addrlen;         
 	netAddress.ToSockAddr((sockaddr*)&saddr, &addrlen);
 
+	// Check if we should block before connecting
+	SetBlocking(m_isBlocking);
+
 	int result = ::connect((SOCKET)m_socketHandle, (sockaddr*)&saddr, (int)addrlen);
 	if (result == SOCKET_ERROR)
 	{
-		LogTaggedPrintf("NET", "Couldn't connect to socket address %s", netAddress.ToString().c_str());
-		Close();
-		return false;
+		int errorCode;
+		if (WasLastErrorFatal(&errorCode))
+		{
+			LogTaggedPrintf("NET", "TCPSocket::Connect() couldn't connect to socket address %s", netAddress.ToString().c_str());
+			Close();
+			return false;
+		}
 	}
 
 	LogTaggedPrintf("NET", "Connected to %s", netAddress.ToString().c_str());
@@ -211,21 +272,22 @@ void TCPSocket::Close()
 //
 int TCPSocket::Send(const void* data, const size_t byteSize)
 {
-	if (IsClosed())
+	if (!IsConnected())
 	{
-		LogTaggedPrintf("NET", "Warning: TCPSocket::Send called on a socket that has no active connection");
+		LogTaggedPrintf("NET", "Warning: TCPSocket::Send called on a blocking socket that has no active connection");
 		return 0;
 	}
 
 	int amountSent = ::send((SOCKET)m_socketHandle, (const char*)data, (int)byteSize, 0);
 
-	if (amountSent == SOCKET_ERROR)
+	if (amountSent < 0)
 	{
-		int errorCode = ::WSAGetLastError();
-		LogTaggedPrintf("NET", "Error: TCPSocket::Send couldn't send, error %i", errorCode);
-
-		// For now assume all send errors are disconnects
-		Close();
+		int errorCode;
+		if (WasLastErrorFatal(&errorCode))
+		{
+			LogTaggedPrintf("NET", "Error: TCPSocket::Send() couldn't send, error %i", errorCode);
+			Close();
+		}
 	}
 
 	return amountSent;
@@ -247,4 +309,101 @@ bool TCPSocket::IsClosed() const
 bool TCPSocket::IsListening() const
 {
 	return m_isListening;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns whether this socket is blocking or not
+//
+bool TCPSocket::IsBlocking() const
+{
+	return m_isBlocking;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets whether or not this socket will block on receives, accepts, etc
+//
+void TCPSocket::SetBlocking(bool blockingState)
+{
+	if (blockingState == m_isBlocking)
+	{
+		return;
+	}
+
+	u_long state = (blockingState ? 0 : 1);
+	::ioctlsocket((SOCKET)m_socketHandle, FIONBIO, &state);
+
+	m_isBlocking = blockingState;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns whether this socket is active and still connecting to a connection
+//
+bool TCPSocket::IsStillConnecting()
+{
+	// Blocking sockets won't have this check
+	if (m_isBlocking)
+	{
+		return false;
+	}
+
+	// If no socket at all, then not connecting
+	if (IsClosed())
+	{
+		return false;
+	}
+
+	// Check the socket's status
+	SOCKET socket = (SOCKET)m_socketHandle;
+	WSAPOLLFD fd;
+
+	fd.fd = socket;
+	fd.events = POLLWRNORM;
+
+	if (::WSAPoll(&fd, 1, 0) == SOCKET_ERROR)
+	{
+		// Socket is bad, so close it
+		Close();
+		return false;
+	}
+
+	if (fd.revents & POLLHUP != 0)
+	{
+		// Socket was [H]ung-[U]p
+		Close();
+		return false;
+	}
+
+	if (fd.revents & POLLWRNORM != 0)
+	{
+		// Socket can read/write, i.e. is connected
+		return false;
+	}
+
+	// Not connected but socket is still good, so still connecting
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns true if this socket is connected to a connection
+//
+bool TCPSocket::IsConnected()
+{
+	// Not connected if we're closed
+	if (IsClosed())
+	{
+		return false;
+	}
+
+	// Socket's good but not finished connecting
+	if (IsStillConnecting())
+	{
+		return false;
+	}
+
+	// Socket's good and we can read/write, so connected
+	return true;
 }

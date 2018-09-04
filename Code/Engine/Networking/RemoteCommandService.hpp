@@ -5,11 +5,16 @@
 enum eServiceState
 {
 	STATE_INITIAL = 0,
-	STATE_CLIENT,
-	STATE_HOST,
+	STATE_TRYTOJOINLOCAL,
+	STATE_TRYTOJOINADDRESS,
+	STATE_TRYTOHOST,
 	STATE_DELAY,
+	STATE_HOST,
+	STATE_CLIENT,
 	NUM_STATES
 };
+
+class Stopwatch;
 
 class RemoteCommandService
 {
@@ -20,9 +25,6 @@ public:
 	void Update();
 	void Render() const;
 
-	bool Host();
-	bool Join(const char* address);
-
 	static bool IsHosting();
 
 private:
@@ -32,13 +34,28 @@ private:
 	~RemoteCommandService();
 	RemoteCommandService(const RemoteCommandService& copy) = delete;
 
+	void Update_Initial();
+	void Update_TryToJoinLocal();
+	void Update_TryToJoinAddress();
+	void Update_TryToHost();
+	void Update_Delay();
+	void Update_Host();
+	void Update_Client();
+
+	void CheckForNewConnections();
+	void ProcessConnections();
+		void ProcessMessage();
+	void CleanUpClosedConnections();
+
 private:
 	//-----Private Data-----
 
-	bool m_isHosting = false;
-	eServiceState m_state;
-	TCPSocket m_socket;
-	std::vector<TCPSocket> m_connections;
+	eServiceState			m_state;
+	TCPSocket				m_hostListenSocket;
+	std::vector<TCPSocket>	m_connections;
+
+	Stopwatch*				m_delayTimer = nullptr;
+	std::string				m_joinRequestAddress;
 
 	static RemoteCommandService* s_instance;
 
