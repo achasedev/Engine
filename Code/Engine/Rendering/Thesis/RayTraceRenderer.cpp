@@ -83,6 +83,7 @@ Vector3 dimensionKeys[8] =
 	Vector3(1.f, 1.f, 1.f),
 };
 
+
 RayHit_t DoesRayIntersectBox(const Ray& ray, const AABB3& box)
 {
 	float tmin = (box.mins.x - ray.GetPosition().x) / ray.GetDirection().x;
@@ -150,27 +151,35 @@ RayHit_t DoesRayIntersectBox(const Ray& ray, const AABB3& box)
 	return hit;
 }
 
-RayHit_t GetRayHitInfo(const Ray& r, VoxelGrid* grid, int level, int gridID)
+AABB3 GetBounds(int level, int gridID, VoxelGrid* grid)
 {
-	AABB3 bounds;
-
-	float divisor = Pow(2.0f, (float)level);
-
-	Vector3 dimensions = Vector3((float) grid->m_dimensions.x / divisor, (float)grid->m_dimensions.y / divisor, (float)grid->m_dimensions.z / divisor);
+	if (level == 0)
+	{
+		return AABB3(Vector3::ZERO, Vector3(256.f));
+	}
 
 	int parentIndex = (gridID - 1) / 8;
-	int childIndex = gridID - (8 * parentIndex + 1);
+	float divisor = Pow(2.0f, (float)level);
 
+	Vector3 dimensions = Vector3((float)grid->m_dimensions.x / divisor, (float)grid->m_dimensions.y / divisor, (float)grid->m_dimensions.z / divisor);
+
+	AABB3 parentBounds = GetBounds(level - 1, parentIndex, grid);
+
+	int childIndex = gridID - (8 * parentIndex + 1);
 	Vector3 dimensionKey = dimensionKeys[childIndex];
 
-	Vector3 bottomLeft;
-	bottomLeft.x = dimensionKey.x * dimensions.x;
-	bottomLeft.y = dimensionKey.y * dimensions.y;
-	bottomLeft.z = dimensionKey.z * dimensions.z;
 
-	bounds.mins = bottomLeft;
-	bounds.maxs = bottomLeft + dimensions;
+	Vector3 bottomLeft = parentBounds.mins;
+	bottomLeft.x += dimensionKey.x * dimensions.x;
+	bottomLeft.y += dimensionKey.y * dimensions.y;
+	bottomLeft.z += dimensionKey.z * dimensions.z;
 
+	return AABB3(bottomLeft, bottomLeft + dimensions);
+}
+
+RayHit_t GetRayHitInfo(const Ray& r, VoxelGrid* grid, int level, int gridID)
+{
+	AABB3 bounds = GetBounds(level, gridID, grid);
 
 	RayHit_t hit = DoesRayIntersectBox(r, bounds);
 
@@ -202,7 +211,7 @@ void SortByT(std::vector<RayHit_t>& hits)
 
 RayHit_t GetColorForRay(const Ray& r, VoxelGrid* grid, int level, int voxelIndex)
 {
-	if (grid->IsLeaf(level))
+	if (level == 8)
 	{
 		return GetRayHitInfo(r, grid, level, voxelIndex);
 	}
@@ -342,7 +351,7 @@ void ThreadWork_Draw(void* params)
 		{
 			Vector3 colorValues = Vector3::ZERO;
 
-			int numSamples = 1;
+			int numSamples = 10;
 			for (int sampleNumber = 0; sampleNumber < numSamples; ++sampleNumber)
 			{
 				float u = ((float)x + GetRandomFloatZeroToOne()) / 1920.f;
@@ -369,11 +378,11 @@ void RayTraceRenderer::Draw(VoxelGrid* scene)
 	ProfileScoped test("RayTraceRenderer::Draw"); UNUSED(test);
 
 	// Make the camera
-	Vector3 lookFrom = Vector3(-1.f, -1.f, -1.f);
-	Vector3 lookAt = Vector3(256.f, 256.f, 256.f);
+	Vector3 lookFrom = Vector3(128.f, 300.f, -20.f);
+	Vector3 lookAt = Vector3(128.f, 256.f, 32.f);
 	float focusDistance = (lookAt - lookFrom).GetLength();
 
-	RayTraceCamera camera(lookFrom, lookAt, Vector3::DIRECTION_UP, 90.f, ((float) m_pixelDimensions.x / (float) m_pixelDimensions.y), 0.2f, focusDistance);
+	RayTraceCamera camera(lookFrom, lookAt, Vector3::DIRECTION_UP, 75.f, ((float) m_pixelDimensions.x / (float) m_pixelDimensions.y), 0.1f, focusDistance);
 
 	// Make a few spheres
 	//Hitable *hitables[4];
@@ -396,42 +405,42 @@ void RayTraceRenderer::Draw(VoxelGrid* scene)
 	// Positions of the sphere and camera in camera space, so origin should always be (0,0,0)
 	//Vector3 spherePosition = (camera->GetViewMatrix() * Vector4(0.f, 0.f, 0.f, 1.f)).xyz();
 // 
-// 	DrawParams params[10];
+	DrawParams params[10];
+
+	for (int i = 0; i < 10; ++i)
+	{
+		params[i].camera = &camera;
+		params[i].colorData = m_colorData;
+		params[i].scene = scene;
+		params[i].minY = i * (1080 / 10);
+		params[i].rowsToRender = (1080 / 10);
+	}
 // 
-// 	for (int i = 0; i < 10; ++i)
-// 	{
-// 		params[i].camera = &camera;
-// 		params[i].colorData = m_colorData;
-// 		params[i].scene = scene;
-// 		params[i].minY = i * (1080 / 10);
-// 		params[i].rowsToRender = (1080 / 10);
-// 	}
-
-	 	DrawParams params;
-
-
-		params.camera = &camera;
-		params.colorData = m_colorData;
-		params.scene = scene;
-		params.minY = 0;
-		params.rowsToRender = 1080;
-
-		ThreadWork_Draw(&params);
-	
-		ConsolePrintf("done");
+// 	 	DrawParams params;
+// 
+// 
+// 		params.camera = &camera;
+// 		params.colorData = m_colorData;
+// 		params.scene = scene;
+// 		params.minY = 0;
+// 		params.rowsToRender = 1080;
+// 
+// 		ThreadWork_Draw(&params);
+// 	
+// 		ConsolePrintf("done");
 	// Spin up threads
-// 	ThreadHandle_t threads[10];
-// 	for (int i = 0; i < 10; ++i)
-// 	{
-// 		threads[i] = Thread::Create(ThreadWork_Draw, &params[i]);
-// 	}
+	ThreadHandle_t threads[10];
+	for (int i = 0; i < 10; ++i)
+	{
+		threads[i] = Thread::Create(ThreadWork_Draw, &params[i]);
+	}
 // 
-// 	// Wait for threads to finish
-// 	for (int i = 0; i < 10; ++i)
-// 	{
-// 		threads[i]->join();
-// 		ConsolePrintf(Rgba::GREEN, "Thread %i joined", i);
-// 	}
+	// Wait for threads to finish
+	for (int i = 0; i < 10; ++i)
+	{
+		threads[i]->join();
+		ConsolePrintf(Rgba::GREEN, "Thread %i joined", i);
+	}
 
 
 	// Pixels are drawn from top left to bottom right, but (0,0) is the bottom left

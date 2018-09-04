@@ -7,9 +7,7 @@ void VoxelGrid::Initialize()
 	ProfileScoped("VoxelGrid::Initialize()");
 	for (int i = 0; i < VOXEL_COUNT; ++i)
 	{
-		
-
-		Rgba color = (i % 2 == 0 ? Rgba::RED : Rgba::BLUE);
+		Rgba color = Rgba::GetRandomColor();
 
 		float red, green, blue, alpha;
 		color.GetAsFloats(red, green, blue, alpha);

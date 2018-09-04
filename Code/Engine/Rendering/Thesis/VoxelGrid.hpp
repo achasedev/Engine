@@ -20,7 +20,7 @@ public:
 
 	void Initialize();
 
-	bool IsLeaf(int level) { return Pow(2.0f, (float)level) == 256.f; }
+	bool IsLeaf(int level) { return Pow(2.0f, (float)level) == (float)m_dimensions.x * 0.5f; }
 
 public:
 
