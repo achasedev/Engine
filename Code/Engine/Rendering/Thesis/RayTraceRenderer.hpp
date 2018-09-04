@@ -1,9 +1,15 @@
+/************************************************************************/
+/* File: RayTraceRenderer.hpp
+/* Author: Andrew Chase
+/* Date: September 4th, 2018
+/* Description: Class to represent a ray tracing renderer interface
+/************************************************************************/
 #pragma once
 #include "Engine/Math/IntVector2.hpp"
 
 class Rgba;
 class Camera;
-class VoxelGrid;
+class OctreeGrid;
 
 class RayTraceRenderer
 {
@@ -11,18 +17,22 @@ class RayTraceRenderer
 public:
 	//-----Public Methods-----
 
-	void Draw(VoxelGrid* scene);
-	void WriteToFile(const char* filename);
+	// Startup/Shutdown
+	static void					Initialize();
+	static void					ShutDown();
 
-	static void Initialize();
-	static void ShutDown();
+	// Drawing
+	void						Draw(OctreeGrid* scene);
+	void						WriteToFile(const char* filename);
 
-	static RayTraceRenderer* GetInstance();
+	// Accessors
+	static RayTraceRenderer*	GetInstance();
 
 
 private:
 	//-----Private Methods-----
 
+	// Singleton class, so hide constructors
 	RayTraceRenderer();
 	~RayTraceRenderer();
 	RayTraceRenderer(const RayTraceRenderer& copy) = delete;
@@ -33,9 +43,9 @@ private:
 private:
 	//-----Private Data-----
 
-	IntVector2 m_pixelDimensions;
-	Rgba* m_colorData;
+	IntVector2	m_pixelDimensions;			// Pixel dimensions to render to (dimensions of the color buffer)
+	Rgba*		m_colorData;				// Output "Framebuffer"
 
-	static RayTraceRenderer* s_instance;
+	static RayTraceRenderer* s_instance;	// Singleton instance
 
 };

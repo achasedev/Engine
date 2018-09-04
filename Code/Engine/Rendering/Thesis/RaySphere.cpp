@@ -1,13 +1,27 @@
+/************************************************************************/
+/* File: RaySphere.cpp
+/* Author: Andrew Chase
+/* Date: September 4th, 2018
+/* Description: Implementation of the RaySphere class
+/************************************************************************/
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Rendering/Thesis/Ray.hpp"
 #include "Engine/Rendering/Thesis/RaySphere.hpp"
 
+
+//-----------------------------------------------------------------------------------------------
+// Default Constructor
+//
 RaySphere::RaySphere()
 	: m_center(Vector3::ZERO)
 	, m_radius(1.f)
 {
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Constructor from data values
+//
 RaySphere::RaySphere(const Vector3& center, float radius, RayMaterial* rayMaterial)
 	: m_center(center)
 	, m_radius(radius)
@@ -15,6 +29,10 @@ RaySphere::RaySphere(const Vector3& center, float radius, RayMaterial* rayMateri
 {
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Checks if the sphere was hit, returning a record for details
+//
 bool RaySphere::Hit(const Ray& ray, float tMin, float tMax, HitRecord_t& out_record)
 {
 	// From ray origin to sphere center
@@ -53,4 +71,3 @@ bool RaySphere::Hit(const Ray& ray, float tMin, float tMax, HitRecord_t& out_rec
 	}
 	return false;
 }
-

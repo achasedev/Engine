@@ -372,14 +372,13 @@
     <ClCompile Include="Rendering\Buffers\UniformBuffer.cpp" />
     <ClCompile Include="Rendering\Core\Vertex.cpp" />
     <ClCompile Include="Rendering\Buffers\VertexBuffer.cpp" />
-    <ClCompile Include="Rendering\Thesis\Hitable.cpp" />
     <ClCompile Include="Rendering\Thesis\HitableList.cpp" />
     <ClCompile Include="Rendering\Thesis\Ray.cpp" />
     <ClCompile Include="Rendering\Thesis\RayMaterial.cpp" />
     <ClCompile Include="Rendering\Thesis\RaySphere.cpp" />
     <ClCompile Include="Rendering\Thesis\RayTraceCamera.cpp" />
     <ClCompile Include="Rendering\Thesis\RayTraceRenderer.cpp" />
-    <ClCompile Include="Rendering\Thesis\VoxelGrid.cpp" />
+    <ClCompile Include="Rendering\Thesis\OctreeGrid.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ThirdParty\fmod\fmod.h" />
@@ -520,7 +519,7 @@
     <ClInclude Include="Rendering\Thesis\RaySphere.hpp" />
     <ClInclude Include="Rendering\Thesis\RayTraceCamera.hpp" />
     <ClInclude Include="Rendering\Thesis\RayTraceRenderer.hpp" />
-    <ClInclude Include="Rendering\Thesis\VoxelGrid.hpp" />
+    <ClInclude Include="Rendering\Thesis\OctreeGrid.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

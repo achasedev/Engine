@@ -1,3 +1,9 @@
+/************************************************************************/
+/* File: HitableList.hpp
+/* Author: Andrew Chase
+/* Date: September 4th, 2018
+/* Description: Class to represent a collection of hitable objects
+/************************************************************************/
 #pragma once
 #include "Engine/Rendering/Thesis/Hitable.hpp"
 
@@ -16,4 +22,5 @@ private:
 
 	Hitable** m_list = nullptr;
 	int m_size;
+
 };

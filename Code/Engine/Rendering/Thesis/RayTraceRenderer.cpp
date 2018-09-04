@@ -1,3 +1,9 @@
+/************************************************************************/
+/* File: RayTraceRenderer.cpp
+/* Author: Andrew Chase
+/* Date: September 4th, 2018
+/* Description: Implementation of the RayTraceRenderer class
+/************************************************************************/
 #include "Engine/Core/Rgba.hpp"
 #include "Engine/Math/Vector3.hpp"
 #include "Engine/Math/MathUtils.hpp"
@@ -12,7 +18,7 @@
 #include "Engine/Rendering/Thesis/RayTraceRenderer.hpp"
 #include "Engine/Core/Threading/Threading.hpp"
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
-#include "Engine/Rendering/Thesis/VoxelGrid.hpp"
+#include "Engine/Rendering/Thesis/OctreeGrid.hpp"
 #include "Engine/Math/AABB3.hpp"
 
 #include "ThirdParty/stb/stb_image_write.h"
@@ -151,7 +157,7 @@ RayHit_t DoesRayIntersectBox(const Ray& ray, const AABB3& box)
 	return hit;
 }
 
-AABB3 GetBounds(int level, int gridID, VoxelGrid* grid)
+AABB3 GetBounds(int level, int gridID, OctreeGrid* grid)
 {
 	if (level == 0)
 	{
@@ -177,7 +183,7 @@ AABB3 GetBounds(int level, int gridID, VoxelGrid* grid)
 	return AABB3(bottomLeft, bottomLeft + dimensions);
 }
 
-RayHit_t GetRayHitInfo(const Ray& r, VoxelGrid* grid, int level, int gridID)
+RayHit_t GetRayHitInfo(const Ray& r, OctreeGrid* grid, int level, int gridID)
 {
 	AABB3 bounds = GetBounds(level, gridID, grid);
 
@@ -209,7 +215,7 @@ void SortByT(std::vector<RayHit_t>& hits)
 	}
 }
 
-RayHit_t GetColorForRay(const Ray& r, VoxelGrid* grid, int level, int voxelIndex)
+RayHit_t GetColorForRay(const Ray& r, OctreeGrid* grid, int level, int voxelIndex)
 {
 	if (level == 8)
 	{
@@ -335,7 +341,7 @@ Hitable* GenerateRandomScene()
 struct DrawParams
 {
 	RayTraceCamera* camera;
-	VoxelGrid* scene;
+	OctreeGrid* scene;
 	Rgba* colorData;
 	int minY;
 	int rowsToRender;
@@ -373,7 +379,7 @@ void ThreadWork_Draw(void* params)
 
 }
 
-void RayTraceRenderer::Draw(VoxelGrid* scene)
+void RayTraceRenderer::Draw(OctreeGrid* scene)
 {
 	ProfileScoped test("RayTraceRenderer::Draw"); UNUSED(test);
 

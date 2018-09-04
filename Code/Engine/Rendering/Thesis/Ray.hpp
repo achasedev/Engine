@@ -1,5 +1,10 @@
+/************************************************************************/
+/* File: Ray.hpp
+/* Author: Andrew Chase
+/* Date: September 4th, 2018
+/* Description: Class to represent a ray used for raytracing
+/************************************************************************/
 #pragma once
-
 #include "Engine/Math/Vector3.hpp"
 
 class Ray
