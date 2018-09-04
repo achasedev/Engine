@@ -18,7 +18,7 @@ void RemoteCommandService::Initialize()
 
 bool RemoteCommandService::Host()
 {
-
+	return false;
 }
 
 bool RemoteCommandService::Join(const char* portAddress)

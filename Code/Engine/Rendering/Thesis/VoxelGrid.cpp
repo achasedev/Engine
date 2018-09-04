@@ -3,10 +3,18 @@
 
 void VoxelGrid::Initialize()
 {
+	m_dimensions = IntVector3(256, 256, 256);
 	ProfileScoped("VoxelGrid::Initialize()");
 	for (int i = 0; i < VOXEL_COUNT; ++i)
 	{
-		voxels[i].color = Rgba::GetRandomColor();
+		
+
+		Rgba color = (i % 2 == 0 ? Rgba::RED : Rgba::BLUE);
+
+		float red, green, blue, alpha;
+		color.GetAsFloats(red, green, blue, alpha);
+		voxels[i].color = Vector3(red, green, blue);
+		voxels[i].solidFlags = 0xFF;
 	}
 }
 

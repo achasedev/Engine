@@ -3,6 +3,7 @@
 
 class Rgba;
 class Camera;
+class VoxelGrid;
 
 class RayTraceRenderer
 {
@@ -10,7 +11,7 @@ class RayTraceRenderer
 public:
 	//-----Public Methods-----
 
-	void Draw();
+	void Draw(VoxelGrid* scene);
 	void WriteToFile(const char* filename);
 
 	static void Initialize();

@@ -12,6 +12,8 @@
 #include "Engine/Rendering/Thesis/RayTraceRenderer.hpp"
 #include "Engine/Core/Threading/Threading.hpp"
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
+#include "Engine/Rendering/Thesis/VoxelGrid.hpp"
+#include "Engine/Math/AABB3.hpp"
 
 #include "ThirdParty/stb/stb_image_write.h"
 #include <cstdlib>
@@ -58,35 +60,200 @@ float HitSphere(const Vector3& center, float radius, const Ray& r)
 	}
 }
 
-Vector3 GetColorForRay(const Ray& r, Hitable* hitable, int depth)
+struct RayHit_t
 {
-	HitRecord_t record;
-	if (hitable->Hit(r, 0.001f, 100000.f, record))
+	Vector3 position;
+	Vector3 normal;
+	float t;
+	Vector3 color;
+	bool hit;
+	bool isFinal;
+	int gridID;
+};
+
+Vector3 dimensionKeys[8] =
+{
+	Vector3(0.f, 0.f, 0.f),
+	Vector3(0.f, 0.f, 1.f),
+	Vector3(0.f, 1.f, 0.f),
+	Vector3(0.f, 1.f, 1.f),
+	Vector3(1.f, 0.f, 0.f),
+	Vector3(1.f, 0.f, 1.f),
+	Vector3(1.f, 1.f, 0.f),
+	Vector3(1.f, 1.f, 1.f),
+};
+
+RayHit_t DoesRayIntersectBox(const Ray& ray, const AABB3& box)
+{
+	float tmin = (box.mins.x - ray.GetPosition().x) / ray.GetDirection().x;
+	float tmax = (box.maxs.x - ray.GetPosition().x) / ray.GetDirection().x;
+
+	if (tmin > tmax)
 	{
-		Ray scatteredRay;
-		Vector3 attentuation;
+		float temp = tmin;
+		tmin = tmax;
+		tmax = temp;
+	}
 
-		if (depth < MAX_BOUNCES && record.rayMaterial->Scatter(r, record, attentuation, scatteredRay))
-		{
-			Vector3 recursiveColor = GetColorForRay(scatteredRay, hitable, depth + 1);
-			Vector3 finalResult;
-			finalResult.x = attentuation.x * recursiveColor.x;
-			finalResult.y = attentuation.y * recursiveColor.y;
-			finalResult.z = attentuation.z * recursiveColor.z;
+	float tymin = (box.mins.y - ray.GetPosition().y) / ray.GetDirection().y;
+	float tymax = (box.maxs.y - ray.GetPosition().y) / ray.GetDirection().y;
 
-			return finalResult;
-		}
+	if (tymin > tymax)
+	{
+		float temp = tymin;
+		tymin = tymax;
+		tymax = temp;
+	}
+
+	if ((tmin > tymax) || (tymin > tmax))
+	{
+		RayHit_t hit;
+		hit.hit = false;
+		return hit;
+	}
+
+	if (tymin > tmin)
+		tmin = tymin;
+
+	if (tymax < tmax)
+		tmax = tymax;
+
+	float tzmin = (box.mins.z - ray.GetPosition().z) / ray.GetDirection().z;
+	float tzmax = (box.maxs.z - ray.GetPosition().z) / ray.GetDirection().z;
+
+	if (tzmin > tzmax)
+	{
+		float temp = tzmin;
+		tzmin = tzmax;
+		tzmax = temp;
+	}
+
+	if ((tmin > tzmax) || (tzmin > tmax))
+	{
+		RayHit_t hit;
+		hit.hit = false;
+		return hit;
+	}
+
+	if (tzmin > tmin)
+		tmin = tzmin;
+
+	if (tzmax < tmax)
+		tmax = tzmax;
+
+	RayHit_t hit;
+	hit.t = tmin;
+	hit.hit = true;
+	
+	// Find the normal and the position
+
+	return hit;
+}
+
+RayHit_t GetRayHitInfo(const Ray& r, VoxelGrid* grid, int level, int gridID)
+{
+	AABB3 bounds;
+
+	float divisor = Pow(2.0f, (float)level);
+
+	Vector3 dimensions = Vector3((float) grid->m_dimensions.x / divisor, (float)grid->m_dimensions.y / divisor, (float)grid->m_dimensions.z / divisor);
+
+	int parentIndex = (gridID - 1) / 8;
+	int childIndex = gridID - (8 * parentIndex + 1);
+
+	Vector3 dimensionKey = dimensionKeys[childIndex];
+
+	Vector3 bottomLeft;
+	bottomLeft.x = dimensionKey.x * dimensions.x;
+	bottomLeft.y = dimensionKey.y * dimensions.y;
+	bottomLeft.z = dimensionKey.z * dimensions.z;
+
+	bounds.mins = bottomLeft;
+	bounds.maxs = bottomLeft + dimensions;
+
+
+	RayHit_t hit = DoesRayIntersectBox(r, bounds);
+
+	if (hit.hit)
+	{
+		hit.color = grid->voxels[gridID].color;
+		hit.isFinal = (level == 8);
+		hit.gridID = gridID;
+	}
+
+	return hit;
+}
+
+void SortByT(std::vector<RayHit_t>& hits)
+{
+	for (int i = 0; i < hits.size() - 1; ++i)
+	{
+		for (int j = i + 1; j < hits.size(); ++j)
 		{
-			return Vector3::ZERO;
+			if (hits[j].t < hits[i].t)
+			{
+				RayHit_t temp = hits[j];
+				hits[j] = hits[i];
+				hits[i] = temp;
+			}
 		}
+	}
+}
+
+RayHit_t GetColorForRay(const Ray& r, VoxelGrid* grid, int level, int voxelIndex)
+{
+	if (grid->IsLeaf(level))
+	{
+		return GetRayHitInfo(r, grid, level, voxelIndex);
 	}
 	else
 	{
-		// For now just return a color between blue and white
-		Vector3 unitDirection = r.GetDirection().GetNormalized();
+		std::vector<RayHit_t> childHits;
 
-		float blend = RangeMapFloat(unitDirection.y, -1.f, 1.0f, 0.f, 1.f);
-		return Interpolate(Vector3::ONES, Vector3(0.5f, 0.7f, 1.f) , blend);
+		for (int i = 0; i < 8; ++i)
+		{
+			int childVoxelIndex = 8 * voxelIndex + 1 + i;
+			if (AreBitsSet(grid->voxels[voxelIndex + 1].solidFlags, 1 << i))
+			{
+				RayHit_t hit = GetRayHitInfo(r, grid, level + 1, childVoxelIndex);
+
+				if (hit.hit)
+				{
+					childHits.push_back(hit);
+				}
+			}
+		}
+
+		// Sort
+		if (childHits.size() > 0)
+		{
+			SortByT(childHits);
+
+			for (int i = 0; i < childHits.size(); ++i)
+			{
+				if (childHits[i].isFinal)
+				{
+					return childHits[i];
+				}
+				else
+				{
+					return GetColorForRay(r, grid, level + 1, childHits[i].gridID);	
+				}
+			}
+		}
+		else
+		{
+			RayHit_t hit;
+			hit.hit = false;
+
+			// For now just return a color between blue and white
+			Vector3 unitDirection = r.GetDirection().GetNormalized();
+
+			float blend = RangeMapFloat(unitDirection.y, -1.f, 1.0f, 0.f, 1.f);
+			//hit.color = Interpolate(Vector3::ONES, Vector3(0.5f, 0.7f, 1.f), blend);
+			hit.color = Vector3::ZERO;
+			return hit;
+		}
 	}
 }
 
@@ -159,7 +326,7 @@ Hitable* GenerateRandomScene()
 struct DrawParams
 {
 	RayTraceCamera* camera;
-	Hitable* scene;
+	VoxelGrid* scene;
 	Rgba* colorData;
 	int minY;
 	int rowsToRender;
@@ -183,7 +350,7 @@ void ThreadWork_Draw(void* params)
 
 				//Ray ray = GetRayForUV(u, v, camera);
 				Ray ray = data->camera->GetRay(u, v);
-				colorValues += GetColorForRay(ray, data->scene, 0);
+				colorValues += GetColorForRay(ray, data->scene, 0, 0).color;
 			}
 
 			colorValues /= (float)numSamples;
@@ -197,13 +364,13 @@ void ThreadWork_Draw(void* params)
 
 }
 
-void RayTraceRenderer::Draw()
+void RayTraceRenderer::Draw(VoxelGrid* scene)
 {
 	ProfileScoped test("RayTraceRenderer::Draw"); UNUSED(test);
 
 	// Make the camera
-	Vector3 lookFrom = Vector3(3.f, 3.f, -5.f);
-	Vector3 lookAt = Vector3(0.f, 1.f, 0.f);
+	Vector3 lookFrom = Vector3(-1.f, -1.f, -1.f);
+	Vector3 lookAt = Vector3(256.f, 256.f, 256.f);
 	float focusDistance = (lookAt - lookFrom).GetLength();
 
 	RayTraceCamera camera(lookFrom, lookAt, Vector3::DIRECTION_UP, 90.f, ((float) m_pixelDimensions.x / (float) m_pixelDimensions.y), 0.2f, focusDistance);
@@ -224,36 +391,47 @@ void RayTraceRenderer::Draw()
 	//hitables[3] = new RaySphere(Vector3(-1.f, 0.f, 5.f), 0.5f, new RayMaterial_Dielectric(1.5f));
 
 	//Hitable* collection = new HitableList(hitables, 4);
-	Hitable* scene = GenerateRandomScene();
+	//Hitable* scene = GenerateRandomScene();
 
 	// Positions of the sphere and camera in camera space, so origin should always be (0,0,0)
 	//Vector3 spherePosition = (camera->GetViewMatrix() * Vector4(0.f, 0.f, 0.f, 1.f)).xyz();
+// 
+// 	DrawParams params[10];
+// 
+// 	for (int i = 0; i < 10; ++i)
+// 	{
+// 		params[i].camera = &camera;
+// 		params[i].colorData = m_colorData;
+// 		params[i].scene = scene;
+// 		params[i].minY = i * (1080 / 10);
+// 		params[i].rowsToRender = (1080 / 10);
+// 	}
 
-	DrawParams params[10];
-
-	for (int i = 0; i < 10; ++i)
-	{
-		params[i].camera = &camera;
-		params[i].colorData = m_colorData;
-		params[i].scene = scene;
-		params[i].minY = i * (1080 / 10);
-		params[i].rowsToRender = (1080 / 10);
-	}
+	 	DrawParams params;
 
 
+		params.camera = &camera;
+		params.colorData = m_colorData;
+		params.scene = scene;
+		params.minY = 0;
+		params.rowsToRender = 1080;
+
+		ThreadWork_Draw(&params);
+	
+		ConsolePrintf("done");
 	// Spin up threads
-	ThreadHandle_t threads[10];
-	for (int i = 0; i < 10; ++i)
-	{
-		threads[i] = Thread::Create(ThreadWork_Draw, &params[i]);
-	}
-
-	// Wait for threads to finish
-	for (int i = 0; i < 10; ++i)
-	{
-		threads[i]->join();
-		ConsolePrintf(Rgba::GREEN, "Thread %i joined", i);
-	}
+// 	ThreadHandle_t threads[10];
+// 	for (int i = 0; i < 10; ++i)
+// 	{
+// 		threads[i] = Thread::Create(ThreadWork_Draw, &params[i]);
+// 	}
+// 
+// 	// Wait for threads to finish
+// 	for (int i = 0; i < 10; ++i)
+// 	{
+// 		threads[i]->join();
+// 		ConsolePrintf(Rgba::GREEN, "Thread %i joined", i);
+// 	}
 
 
 	// Pixels are drawn from top left to bottom right, but (0,0) is the bottom left

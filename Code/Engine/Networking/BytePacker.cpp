@@ -39,6 +39,7 @@ void BytePacker::SetEndianness(eEndianness endianness)
 bool BytePacker::SetReadableByteCount(size_t byteCount)
 {
 	m_remainingReadableByteCount = byteCount;
+	return true;
 }
 
 bool BytePacker::WriteBytes(size_t byteCount, void const *data)
@@ -57,6 +58,8 @@ bool BytePacker::WriteBytes(size_t byteCount, void const *data)
 
 	// Advance the write head
 	m_writeHead += byteCount;
+
+	return true;
 }
 
 size_t BytePacker::ReadBytes(void *out_data, size_t maxByteCount)
@@ -78,7 +81,7 @@ size_t BytePacker::ReadBytes(void *out_data, size_t maxByteCount)
 
 size_t BytePacker::WriteSize(size_t size)
 {
-	size_t bytesWritten;
+	size_t bytesWritten = 0;
 	size_t remainingValue = size;
 	do 
 	{
@@ -106,7 +109,7 @@ size_t BytePacker::WriteSize(size_t size)
 
 size_t BytePacker::ReadSize(size_t *out_size)
 {
-	size_t bytesRead;
+	size_t bytesRead = 0;
 	size_t total = 0;
 	uint8_t valueRead;
 
