@@ -15,6 +15,7 @@ enum eServiceState
 };
 
 class Stopwatch;
+class BytePacker;
 
 class RemoteCommandService
 {
@@ -48,15 +49,20 @@ private:
 		void ProcessMessage();
 	void CleanUpClosedConnections();
 
+	BytePacker* GetSocketBuffer(TCPSocket* socket);
+
+
 private:
 	//-----Private Data-----
 
-	eServiceState			m_state;
-	TCPSocket				m_hostListenSocket;
-	std::vector<TCPSocket>	m_connections;
+	eServiceState				m_state;
+	TCPSocket					m_hostListenSocket;
 
-	Stopwatch*				m_delayTimer = nullptr;
-	std::string				m_joinRequestAddress;
+	std::vector<TCPSocket>		m_connections;
+	std::vector<BytePacker*>	m_buffers;
+
+	Stopwatch*					m_delayTimer = nullptr;
+	std::string					m_joinRequestAddress;
 
 	static RemoteCommandService* s_instance;
 

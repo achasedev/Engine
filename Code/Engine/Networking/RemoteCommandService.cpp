@@ -1,7 +1,8 @@
-#include "Engine/Core/Utility/StringUtils.hpp"
-#include "Engine/Networking/RemoteCommandService.hpp"
-#include "Engine/Core/Threading/Threading.hpp"
 #include "Engine/Core/Time/Stopwatch.hpp"
+#include "Engine/Networking/BytePacker.hpp"
+#include "Engine/Core/Utility/StringUtils.hpp"
+#include "Engine/Core/Threading/Threading.hpp"
+#include "Engine/Networking/RemoteCommandService.hpp"
 
 #define SERVICE_PORT 29283
 #define MAX_CLIENTS 32
@@ -164,11 +165,12 @@ void RemoteCommandService::ProcessAllConnections()
 
 void RemoteCommandService::ProcessConnection(TCPSocket* connection)
 {
-	BytePacker *buffer = GetSocketBuffer(tcp);
+	BytePacker *buffer = GetSocketBuffer(connection);
 
+	// Need to get the message length still
 	if (buffer->GetWrittenByteCount() < 2)
 	{
-		tcp->receive(buffer->GetWriteHead(), 2 - buffer->GetWrittenByteCount());
+		connection->Receive(buffer->GetWriteHead(), 2 - buffer->GetWrittenByteCount());
 		buffer->AdvanceWriteHead(read);
 	}
 
@@ -198,4 +200,17 @@ void RemoteCommandService::ProcessConnection(TCPSocket* connection)
 		ProcessMessage(tcp, buffer);
 		buffer->ResetWrite();
 	}
+}
+
+BytePacker* RemoteCommandService::GetSocketBuffer(TCPSocket* socket)
+{
+	for (int i = 0; i < m_connections.size(); ++i)
+	{
+		if (&m_connections[i] == socket)
+		{
+			return m_buffers[i];
+		}
+	}
+
+	return nullptr;
 }
