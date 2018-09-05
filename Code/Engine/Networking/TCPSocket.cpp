@@ -241,7 +241,15 @@ bool TCPSocket::Connect(const NetAddress_t& netAddress)
 		}
 	}
 
-	LogTaggedPrintf("NET", "Connected to %s", netAddress.ToString().c_str());
+	if (m_isBlocking)
+	{
+		LogTaggedPrintf("NET", "Connected to %s", netAddress.ToString().c_str());
+	}
+	else
+	{
+		LogTaggedPrintf("NET", "Non-blocking socket connecting to %s...", netAddress.ToString().c_str());
+	}
+
 	m_address = netAddress;
 	return true;
 }

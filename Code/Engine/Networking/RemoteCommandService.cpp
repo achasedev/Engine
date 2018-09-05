@@ -37,7 +37,7 @@ RemoteCommandService::RemoteCommandService()
 {
 	m_hostListenSocket.SetBlocking(false);
 
-	m_delayTimer = new Stopwatch();
+	m_delayTimer = new Stopwatch(nullptr);
 }
 
 void RemoteCommandService::Update_Initial()
@@ -75,7 +75,7 @@ void RemoteCommandService::Update_TryToJoinLocal()
 		return;
 	}
 
-	TCPSocket joinSocket;
+	TCPSocket joinSocket(false);
 	bool connected = joinSocket.Connect(localAddress);
 
 	if (!connected)
@@ -93,7 +93,7 @@ void RemoteCommandService::Update_TryToJoinAddress()
 {
 	NetAddress_t netAddress(m_joinRequestAddress.c_str());
 
-	TCPSocket joinSocket;
+	TCPSocket joinSocket(false);
 	bool connected = joinSocket.Connect(netAddress);
 
 	if (!connected)
@@ -133,17 +133,69 @@ void RemoteCommandService::Update_Delay()
 void RemoteCommandService::Update_Host()
 {
 	CheckForNewConnections();
-	ProcessConnections();
+	ProcessAllConnections();
 	CleanUpClosedConnections();
 }
 
 void RemoteCommandService::Update_Client()
 {
-	ProcessConnections();
+	ProcessAllConnections();
 	CleanUpClosedConnections();
 }
 
 void RemoteCommandService::CheckForNewConnections()
 {
 	TCPSocket* socket = m_hostListenSocket.Accept();
+
+	if (socket != nullptr)
+	{
+		m_connections.push_back(*socket);
+		delete socket;
+	}
+}
+
+void RemoteCommandService::ProcessAllConnections()
+{
+	for (int i = 0; i < (int)m_connections.size(); ++i)
+	{
+		ProcessConnection(&m_connections[i]);
+	}
+}
+
+void RemoteCommandService::ProcessConnection(TCPSocket* connection)
+{
+	BytePacker *buffer = GetSocketBuffer(tcp);
+
+	if (buffer->GetWrittenByteCount() < 2)
+	{
+		tcp->receive(buffer->GetWriteHead(), 2 - buffer->GetWrittenByteCount());
+		buffer->AdvanceWriteHead(read);
+	}
+
+
+	bool isReadyToProcess = false;
+	if (buffer->GetWrittenByteCount() >= 2)
+	{
+		uint16_t len;
+		buffer->Peak(&len);
+
+		uint bytesNeeded = len + 2U - buffer->GetWrittenByteCount();
+
+		if (bytesNeeded > 0)
+		{
+			size_t read = tcp->Receive(buffer->GetWriteHead(), bytesNeeded);
+			tcp->AdvanceWriteHead(read);
+
+			bytesNeeded -= read;
+		}
+
+		isReadyToProcess = (bytesNeeded == 0);
+	}
+
+	if (isReadyToProcess)
+	{
+		buffer->AdvanceReadHead(2U);
+		ProcessMessage(tcp, buffer);
+		buffer->ResetWrite();
+	}
 }

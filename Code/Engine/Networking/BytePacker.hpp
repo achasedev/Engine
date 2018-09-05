@@ -16,7 +16,6 @@ public:
 
 	// sets how much of the buffer is readable; 
 	void			SetEndianness(eEndianness);
-	bool			SetReadableByteCount(size_t byteCount);
 
 	// tries to write data to the end of the buffer;  Returns success
 	bool			WriteBytes(size_t byteCount, void const *data);
@@ -42,18 +41,17 @@ public:
 	size_t			GetRemainingWritableByteCount() const;		// how much more can I write to this buffer (if growble, this returns UINFINITY)
 	size_t			GetRemainingReadableByteCount() const;		// how much more data can I read;
 
+	bool			ExpandBuffer(size_t requestedAddition);
+
 
 private:
 	//-----Private Data----
 	
-	void* m_buffer = nullptr;
-	size_t m_bufferSize;
+	uint8_t* m_buffer = nullptr;
+	size_t m_bufferCapacity;
 
-	uint8_t* m_readHead = nullptr;
-	uint8_t* m_writeHead = nullptr;
-
-	size_t m_remainingReadableByteCount;
-	size_t m_remainingWritableByteCount;
+	size_t m_readHead;
+	size_t m_writeHead;
 
 	eEndianness m_endianness;
 

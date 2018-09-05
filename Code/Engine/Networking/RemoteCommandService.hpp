@@ -43,7 +43,8 @@ private:
 	void Update_Client();
 
 	void CheckForNewConnections();
-	void ProcessConnections();
+	void ProcessAllConnections();
+		void ProcessConnection(TCPSocket* connection);
 		void ProcessMessage();
 	void CleanUpClosedConnections();
 

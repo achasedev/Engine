@@ -8,17 +8,17 @@ BytePacker::BytePacker(eEndianness endianness /*= LITTLE_ENDIAN*/)
 {
 }
 
-BytePacker::BytePacker(size_t bufferSize, eEndianness endianness /*= LITTLE_ENDIAN*/)
+BytePacker::BytePacker(size_t initialSize, eEndianness endianness /*= LITTLE_ENDIAN*/)
 	: m_endianness(endianness)
-	, m_bufferSize(bufferSize)
+	, m_bufferCapacity(initialSize)
 {
-	m_buffer = malloc(bufferSize);
+	m_buffer = (uint8_t*)malloc(initialSize);
 }
 
-BytePacker::BytePacker(size_t bufferSize, void *buffer, eEndianness endianness /*= LITTLE_ENDIAN*/)
-	: m_bufferSize(bufferSize)
+BytePacker::BytePacker(size_t initialSize, void *buffer, eEndianness endianness /*= LITTLE_ENDIAN*/)
+	: m_bufferCapacity(initialSize)
 	, m_endianness(endianness)
-	, m_buffer(buffer)
+	, m_buffer((uint8_t*)buffer)
 {
 }
 
@@ -36,25 +36,20 @@ void BytePacker::SetEndianness(eEndianness endianness)
 	m_endianness = endianness;
 }
 
-bool BytePacker::SetReadableByteCount(size_t byteCount)
-{
-	m_remainingReadableByteCount = byteCount;
-	return true;
-}
 
 bool BytePacker::WriteBytes(size_t byteCount, void const *data)
 {
-	// Not enough room in the buffer
+	// Not enough room in the buffer, so keep expanding
 	if (GetRemainingWritableByteCount() < byteCount)
 	{
-		return false;
+		ExpandBuffer(byteCount);
 	}
 
 	// Copy the data into the buffer
-	memcpy((void*)m_writeHead, data, byteCount);
+	memcpy((void*)(m_buffer + m_writeHead), data, byteCount);
 
 	// Convert the new data to the endianness of the buffer
-	ToEndianness(byteCount, (void*)m_writeHead, m_endianness);
+	ToEndianness(byteCount, (void*)(m_buffer + m_writeHead), m_endianness);
 
 	// Advance the write head
 	m_writeHead += byteCount;
@@ -65,10 +60,11 @@ bool BytePacker::WriteBytes(size_t byteCount, void const *data)
 size_t BytePacker::ReadBytes(void *out_data, size_t maxByteCount)
 {
 	// Read as much as we can - amount requested or the rest of the readable buffer
-	size_t amountToRead = (maxByteCount < m_remainingReadableByteCount ? maxByteCount : m_remainingReadableByteCount);
+	size_t remainingReadableBytes = GetRemainingReadableByteCount();
+	size_t amountToRead = (maxByteCount < remainingReadableBytes ? maxByteCount : remainingReadableBytes);
 
 	// Copy the data out
-	memcpy(out_data, (void*)m_readHead, amountToRead);
+	memcpy(out_data, (void*)(m_buffer + m_readHead), amountToRead);
 
 	// Check the endianness
 	FromEndianness(amountToRead, out_data, m_endianness);
@@ -97,7 +93,7 @@ size_t BytePacker::WriteSize(size_t size)
 
 		if (!success)
 		{
-			ERROR_AND_DIE("Error: BytePacker::WriteSize exceeded buffer size.");
+			ERROR_AND_DIE("Error: BytePacker::WriteSize() exceeded max BytePacker size.");
 		}
 
 		bytesWritten += 1;
@@ -128,16 +124,18 @@ size_t BytePacker::ReadSize(size_t *out_size)
 bool BytePacker::WriteString(char const *str)
 {
 	int characterCount = GetStringLength(str);
+
+	// Will ERROR_AND_DIE if we run out of size
 	WriteSize(characterCount);
 
-	// Not enough room in the buffer
+	// Make sure the buffer has enough room
 	if (GetRemainingWritableByteCount() < characterCount)
 	{
-		return false;
+		ExpandBuffer(characterCount);
 	}
 
 	// Copy the data into the buffer
-	memcpy((void*)m_writeHead, str, characterCount);
+	memcpy((void*)(m_buffer + m_writeHead), str, characterCount);
 
 	// Advance the write head
 	m_writeHead += characterCount;
@@ -150,26 +148,41 @@ size_t BytePacker::ReadString(char *out_str, size_t maxByteSize)
 	size_t stringLength;
 	ReadSize(&stringLength);
 
-	size_t countToRead = (stringLength < maxByteSize - 1 ? stringLength : maxByteSize - 1);
+	size_t numberToRead;
+	
+	if (out_str == nullptr)
+	{
+		// No buffer given, so I can read all that I need to
+		out_str = (char*)malloc(stringLength + 1);
+		numberToRead = stringLength;
+	}
+	else
+	{
+		// They gave me a buffer to use, so I need to use the size they gave
+		numberToRead = (stringLength < maxByteSize - 1 ? stringLength : maxByteSize - 1);
+	}
 
 	// Copy the data out
-	memcpy(out_str, (void*)m_readHead, countToRead);
+	memcpy(out_str, (void*)(m_buffer + m_readHead), numberToRead);
 
-	// Advance the read head passed the full string
+	// Null terminate it
+	out_str[numberToRead] = '\0';
+
+	// Advance the read head passed the full string to prevent errors
 	m_readHead += stringLength;
 
-	return countToRead;
+	return numberToRead;
 }
 
 void BytePacker::ResetWrite()
 {
-	m_writeHead = (uint8_t*)m_buffer;
+	m_writeHead = 0;
 	ResetRead();
 }
 
 void BytePacker::ResetRead()
 {
-	m_readHead = (uint8_t*)m_buffer;
+	m_readHead = 0;
 }
 
 eEndianness BytePacker::GetEndianness() const
@@ -179,16 +192,30 @@ eEndianness BytePacker::GetEndianness() const
 
 size_t BytePacker::GetWrittenByteCount() const
 {
-	return (m_writeHead - (uint8_t*)m_buffer);
+	return m_writeHead;
 }
 
 size_t BytePacker::GetRemainingWritableByteCount() const
 {
-	return (m_bufferSize - GetWrittenByteCount());
+	return (m_bufferCapacity - m_writeHead);
 }
 
 size_t BytePacker::GetRemainingReadableByteCount() const
 {
-	return (m_readHead - (uint8_t*)m_buffer);
+	return (m_writeHead - m_readHead);
 }
 
+bool BytePacker::ExpandBuffer(size_t requestedAddition)
+{	
+	size_t amountToAdd = (requestedAddition > m_bufferCapacity ? requestedAddition : m_bufferCapacity);
+
+	void* newBuffer = malloc(m_bufferCapacity + amountToAdd);
+
+	memcpy(newBuffer, m_buffer, m_bufferCapacity);
+
+	free(m_buffer);
+	m_buffer = (uint8_t*)newBuffer;
+	m_bufferCapacity += amountToAdd;
+
+	return true;
+}
