@@ -3,6 +3,8 @@
 #include "Engine/Core/Utility/StringUtils.hpp"
 #include "Engine/Core/Threading/Threading.hpp"
 #include "Engine/Networking/RemoteCommandService.hpp"
+#include "Engine/Core/DeveloperConsole/Command.hpp"
+#include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 
 #define SERVICE_PORT 29283
 #define MAX_CLIENTS 32
@@ -142,6 +144,12 @@ void RemoteCommandService::Update_Client()
 {
 	ProcessAllConnections();
 	CleanUpClosedConnections();
+
+	// No longer connected to the host, so we try to
+	if (m_connections.size() == 0)
+	{
+
+	}
 }
 
 void RemoteCommandService::CheckForNewConnections()
@@ -166,27 +174,31 @@ void RemoteCommandService::ProcessAllConnections()
 void RemoteCommandService::ProcessConnection(TCPSocket* connection)
 {
 	BytePacker *buffer = GetSocketBuffer(connection);
+	buffer->Reserve(2);
 
 	// Need to get the message length still
 	if (buffer->GetWrittenByteCount() < 2)
 	{
-		connection->Receive(buffer->GetWriteHead(), 2 - buffer->GetWrittenByteCount());
-		buffer->AdvanceWriteHead(read);
+		int amountReceived = connection->Receive(buffer->GetWriteHead(), 2 - buffer->GetWrittenByteCount());
+		buffer->AdvanceWriteHead(amountReceived);
 	}
-
 
 	bool isReadyToProcess = false;
 	if (buffer->GetWrittenByteCount() >= 2)
 	{
 		uint16_t len;
-		buffer->Peak(&len);
+		buffer->Peek(&len, sizeof(len));
 
-		uint bytesNeeded = len + 2U - buffer->GetWrittenByteCount();
+		// Reserve enough for the size 
+		buffer->Reserve(len + 2U);
 
+		uint32_t bytesNeeded = len + 2U - buffer->GetWrittenByteCount();
+
+		// If we still need more of the message
 		if (bytesNeeded > 0)
 		{
-			size_t read = tcp->Receive(buffer->GetWriteHead(), bytesNeeded);
-			tcp->AdvanceWriteHead(read);
+			size_t read = connection->Receive(buffer->GetWriteHead(), bytesNeeded);
+			buffer->AdvanceWriteHead(read);
 
 			bytesNeeded -= read;
 		}
@@ -197,8 +209,47 @@ void RemoteCommandService::ProcessConnection(TCPSocket* connection)
 	if (isReadyToProcess)
 	{
 		buffer->AdvanceReadHead(2U);
-		ProcessMessage(tcp, buffer);
+		ProcessMessage(connection, buffer);
+
+		// Clean up to be used
 		buffer->ResetWrite();
+	}
+}
+
+void RemoteCommandService::ProcessMessage(TCPSocket* connection, BytePacker* buffer)
+{
+	bool isEcho;
+	buffer->ReadBytes(&isEcho, 1);;
+
+	std::string str;
+	if (buffer->ReadString(str))
+	{
+		// Succeeded in getting a command string
+		if (isEcho)
+		{
+			// Print to console, with info
+			NetAddress_t address = connection->GetNetAddress();
+			ConsolePrintf("[%s]: %s", address.ToString().c_str(), str.c_str());
+		}
+		else
+		{
+			Command::Run(str);
+		}
+	}
+}
+
+void RemoteCommandService::CleanUpClosedConnections()
+{
+	for (int i = (int) m_connections.size(); i >= 0; --i)
+	{
+		if (m_connections[i].IsClosed())
+		{
+			m_connections.erase(m_connections.begin() + i);
+			
+			// Free up the byte packer for this connection
+			delete m_buffers[i];
+			m_buffers.erase(m_buffers.begin() + i);
+		}
 	}
 }
 

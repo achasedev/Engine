@@ -57,7 +57,28 @@ bool BytePacker::WriteBytes(size_t byteCount, void const *data)
 	return true;
 }
 
+void* BytePacker::GetWriteHead()
+{
+	return (void*)(m_buffer + m_writeHead);
+}
+
+void BytePacker::AdvanceWriteHead(size_t byteCountToMove)
+{
+	m_writeHead += byteCountToMove;
+}
+
 size_t BytePacker::ReadBytes(void *out_data, size_t maxByteCount)
+{
+	// Get the data at the right head
+	size_t amountRead = Peek(out_data, maxByteCount);
+
+	// Advance the read head
+	m_readHead += amountRead;
+
+	return amountRead;
+}
+
+size_t BytePacker::Peek(void* out_data, size_t maxByteCount)
 {
 	// Read as much as we can - amount requested or the rest of the readable buffer
 	size_t remainingReadableBytes = GetRemainingReadableByteCount();
@@ -69,10 +90,15 @@ size_t BytePacker::ReadBytes(void *out_data, size_t maxByteCount)
 	// Check the endianness
 	FromEndianness(amountToRead, out_data, m_endianness);
 
-	// Advance the read head
-	m_readHead += amountToRead;
-
 	return amountToRead;
+}
+
+void BytePacker::AdvanceReadHead(size_t maxByteCount)
+{
+	int remainingReadableBytes = GetRemainingReadableByteCount();
+	int amountToMove = (remainingReadableBytes < maxByteCount ? remainingReadableBytes : maxByteCount);
+
+	m_readHead += amountToMove;
 }
 
 size_t BytePacker::WriteSize(size_t size)
@@ -143,35 +169,19 @@ bool BytePacker::WriteString(char const *str)
 	return true;
 }
 
-size_t BytePacker::ReadString(char *out_str, size_t maxByteSize)
+
+size_t BytePacker::ReadString(std::string& out_string)
 {
 	size_t stringLength;
 	ReadSize(&stringLength);
 
-	size_t numberToRead;
-	
-	if (out_str == nullptr)
-	{
-		// No buffer given, so I can read all that I need to
-		out_str = (char*)malloc(stringLength + 1);
-		numberToRead = stringLength;
-	}
-	else
-	{
-		// They gave me a buffer to use, so I need to use the size they gave
-		numberToRead = (stringLength < maxByteSize - 1 ? stringLength : maxByteSize - 1);
-	}
-
 	// Copy the data out
-	memcpy(out_str, (void*)(m_buffer + m_readHead), numberToRead);
-
-	// Null terminate it
-	out_str[numberToRead] = '\0';
+	out_string = std::string((char*)(m_buffer + m_readHead), stringLength);
 
 	// Advance the read head passed the full string to prevent errors
 	m_readHead += stringLength;
 
-	return numberToRead;
+	return stringLength;
 }
 
 void BytePacker::ResetWrite()
@@ -203,6 +213,16 @@ size_t BytePacker::GetRemainingWritableByteCount() const
 size_t BytePacker::GetRemainingReadableByteCount() const
 {
 	return (m_writeHead - m_readHead);
+}
+
+bool BytePacker::Reserve(size_t requestedSize)
+{
+	if (m_bufferCapacity >= requestedSize)
+	{
+		return false;
+	}
+
+	return ExpandBuffer(requestedSize - m_bufferCapacity);
 }
 
 bool BytePacker::ExpandBuffer(size_t requestedAddition)

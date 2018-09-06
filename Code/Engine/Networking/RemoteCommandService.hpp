@@ -46,7 +46,7 @@ private:
 	void CheckForNewConnections();
 	void ProcessAllConnections();
 		void ProcessConnection(TCPSocket* connection);
-		void ProcessMessage();
+		void ProcessMessage(TCPSocket* connection, BytePacker* buffer);
 	void CleanUpClosedConnections();
 
 	BytePacker* GetSocketBuffer(TCPSocket* socket);

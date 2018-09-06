@@ -10,13 +10,6 @@
 // For type safety without including Windows.h
 class Socket_t;
 
-// enum eSocketState
-// {
-// 	SOCKET_STATE_CLOSED,
-// 	SOCKET_STATE_
-// };
-
-
 class TCPSocket
 {
 public:
@@ -24,7 +17,7 @@ public:
 
 	TCPSocket();
 	TCPSocket(bool shouldBlock);
-	TCPSocket(Socket_t* socketHandle, NetAddress_t& netAddress, bool isListening = false);
+	TCPSocket(Socket_t* socketHandle, NetAddress_t& netAddress, bool isListening = false, bool isBlocking = true);
 	~TCPSocket();
 
 
@@ -41,6 +34,8 @@ public:
 	bool				IsBlocking() const;
 
 	void				SetBlocking(bool blockingState);
+
+	NetAddress_t		GetNetAddress() const;
 
 
 private:

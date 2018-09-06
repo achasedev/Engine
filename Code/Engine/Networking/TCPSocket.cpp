@@ -5,6 +5,7 @@
 /* Description: Implementation of the TCPSocket class
 /************************************************************************/
 #include "Engine/Core/LogSystem.hpp"
+#include "Engine/Math/MathUtils.hpp"
 #include "Engine/Networking/TCPSocket.hpp"
 #include "Engine/Networking/NetAddress.hpp"
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
@@ -43,10 +44,11 @@ TCPSocket::TCPSocket()
 //-----------------------------------------------------------------------------------------------
 // Constructor from member values, used for client sockets from an accept
 //
-TCPSocket::TCPSocket(Socket_t* socketHandle, NetAddress_t& netAddress, bool isListening /*= false*/)
+TCPSocket::TCPSocket(Socket_t* socketHandle, NetAddress_t& netAddress, bool isListening /*= false*/, bool isBlocking /*= true*/)
 	: m_socketHandle(socketHandle)
 	, m_address(netAddress)
 	, m_isListening(isListening)
+	, m_isBlocking(isBlocking)
 {
 }
 
@@ -163,7 +165,7 @@ TCPSocket* TCPSocket::Accept()
 
 	// Client successfully accepted
 	NetAddress_t clientNetAddress = NetAddress_t((const sockaddr*)&clientAddr);
-	TCPSocket* clientSocket = new TCPSocket((Socket_t*)clientSocketHandle, clientNetAddress, false);
+	TCPSocket* clientSocket = new TCPSocket((Socket_t*)clientSocketHandle, clientNetAddress, false, m_isBlocking); // Flag as non-blocking if accepted socked was non-blocking
 	
 	return clientSocket;
 }
@@ -191,10 +193,12 @@ int TCPSocket::Receive(void *buffer, size_t const maxByteSize)
 		{
 			LogTaggedPrintf("NET", "Error: TCPSocket::Receive() failed unexpectantly, error code %i.", errorCode);
 			Close();
+			return sizeReceived;
 		}
 	}
 
-	return sizeReceived;
+	// If it was less than 0 but not an error, just return 0
+	return ClampInt(sizeReceived, 0, maxByteSize);
 }
 
 
@@ -343,6 +347,15 @@ void TCPSocket::SetBlocking(bool blockingState)
 	::ioctlsocket((SOCKET)m_socketHandle, FIONBIO, &state);
 
 	m_isBlocking = blockingState;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the NetAddress currently being used by this TCPSocket
+//
+NetAddress_t TCPSocket::GetNetAddress() const
+{
+	return m_address;
 }
 
 
