@@ -22,11 +22,12 @@ class RemoteCommandService
 public:
 	//-----Public Methods-----
 
-	void Initialize();
-	void Update();
-	void Render() const;
+	static void Initialize();
+	static void Shutdown();
+	void BeginFrame();
 
-	static bool IsHosting();
+	static RemoteCommandService* GetInstance();
+	static bool Send(const std::string& command, int connectionIndex);
 
 private:
 	//-----Private Methods-----
@@ -34,6 +35,8 @@ private:
 	RemoteCommandService();
 	~RemoteCommandService();
 	RemoteCommandService(const RemoteCommandService& copy) = delete;
+
+	static void InitializeConsoleCommands();
 
 	void Update_Initial();
 	void Update_TryToJoinLocal();
@@ -58,7 +61,7 @@ private:
 	eServiceState				m_state;
 	TCPSocket					m_hostListenSocket;
 
-	std::vector<TCPSocket>		m_connections;
+	std::vector<TCPSocket*>		m_connections;
 	std::vector<BytePacker*>	m_buffers;
 
 	Stopwatch*					m_delayTimer = nullptr;

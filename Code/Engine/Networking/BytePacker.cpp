@@ -95,8 +95,8 @@ size_t BytePacker::Peek(void* out_data, size_t maxByteCount)
 
 void BytePacker::AdvanceReadHead(size_t maxByteCount)
 {
-	int remainingReadableBytes = GetRemainingReadableByteCount();
-	int amountToMove = (remainingReadableBytes < maxByteCount ? remainingReadableBytes : maxByteCount);
+	size_t remainingReadableBytes = GetRemainingReadableByteCount();
+	size_t amountToMove = (remainingReadableBytes < maxByteCount ? remainingReadableBytes : maxByteCount);
 
 	m_readHead += amountToMove;
 }
@@ -135,11 +135,14 @@ size_t BytePacker::ReadSize(size_t *out_size)
 	size_t total = 0;
 	uint8_t valueRead;
 
+	int iterationCount = 0;
 	do
 	{
 		bytesRead += ReadBytes(&valueRead, 1);
 
-		total += (valueRead & 0x7F);
+		size_t addition = (valueRead & 0x7F);
+		total |= addition << (7 * iterationCount);
+		iterationCount++;
 
 	} while ((valueRead & 0x80) != 0);
 
@@ -150,8 +153,6 @@ size_t BytePacker::ReadSize(size_t *out_size)
 bool BytePacker::WriteString(char const *str)
 {
 	int characterCount = GetStringLength(str);
-
-	// Will ERROR_AND_DIE if we run out of size
 	WriteSize(characterCount);
 
 	// Make sure the buffer has enough room

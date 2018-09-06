@@ -50,6 +50,7 @@ TCPSocket::TCPSocket(Socket_t* socketHandle, NetAddress_t& netAddress, bool isLi
 	, m_isListening(isListening)
 	, m_isBlocking(isBlocking)
 {
+	SetBlocking(isBlocking);
 }
 
 
@@ -59,6 +60,7 @@ TCPSocket::TCPSocket(Socket_t* socketHandle, NetAddress_t& netAddress, bool isLi
 TCPSocket::TCPSocket(bool shouldBlock)
 	: m_isBlocking(shouldBlock)
 {
+	SetBlocking(shouldBlock);
 }
 
 
@@ -95,6 +97,9 @@ bool TCPSocket::Listen(unsigned short port, unsigned int maxQueued)
 	// Now we have a bindable address, we can try to bind it; 
 	// First, we create a socket like we did before; 
 	m_socketHandle = (Socket_t*) ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+	// Ensure the socket is non-blocking if flagged as non-blocking
+	SetBlocking(m_isBlocking);
 
 	// Next, we bind it - which means we assign an address to it; 
 	sockaddr_storage saddr;
@@ -198,7 +203,7 @@ int TCPSocket::Receive(void *buffer, size_t const maxByteSize)
 	}
 
 	// If it was less than 0 but not an error, just return 0
-	return ClampInt(sizeReceived, 0, maxByteSize);
+	return ClampInt(sizeReceived, 0, (int)maxByteSize);
 }
 
 
@@ -299,6 +304,7 @@ int TCPSocket::Send(const void* data, const size_t byteSize)
 		{
 			LogTaggedPrintf("NET", "Error: TCPSocket::Send() couldn't send, error %i", errorCode);
 			Close();
+			return 0;
 		}
 	}
 
@@ -343,7 +349,7 @@ void TCPSocket::SetBlocking(bool blockingState)
 		return;
 	}
 
-	u_long state = (blockingState ? 0 : 1);
+	u_long state = (blockingState ? 1 : 0);
 	::ioctlsocket((SOCKET)m_socketHandle, FIONBIO, &state);
 
 	m_isBlocking = blockingState;
@@ -390,14 +396,14 @@ bool TCPSocket::IsStillConnecting()
 		return false;
 	}
 
-	if (fd.revents & POLLHUP != 0)
+	if ((fd.revents & POLLHUP) != 0)
 	{
 		// Socket was [H]ung-[U]p
 		Close();
 		return false;
 	}
 
-	if (fd.revents & POLLWRNORM != 0)
+	if ((fd.revents & POLLWRNORM) != 0)
 	{
 		// Socket can read/write, i.e. is connected
 		return false;

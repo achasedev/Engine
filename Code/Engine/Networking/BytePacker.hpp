@@ -1,5 +1,6 @@
 #pragma once
 #include "Engine/Networking/Endianness.hpp"
+#include <string>
 #include <stdint.h>
 
 class BytePacker
