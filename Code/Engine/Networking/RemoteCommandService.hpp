@@ -26,8 +26,11 @@ public:
 	static void Shutdown();
 	void BeginFrame();
 
-	static RemoteCommandService* GetInstance();
 	static bool Send(const std::string& command, int connectionIndex);
+	static void Join(const std::string& address);
+	static void Host(unsigned short port);
+
+	static RemoteCommandService* GetInstance();
 	static int	GetConnectionCount();
 
 private:
@@ -53,6 +56,8 @@ private:
 		void ProcessMessage(TCPSocket* connection, BytePacker* buffer);
 	void CleanUpClosedConnections();
 
+	void CloseAllConnections();
+
 	BytePacker* GetSocketBuffer(TCPSocket* socket);
 	
 
@@ -61,6 +66,7 @@ private:
 
 	eServiceState				m_state;
 	TCPSocket					m_hostListenSocket;
+	unsigned short				m_hostListenPort;
 
 	std::vector<TCPSocket*>		m_connections;
 	std::vector<BytePacker*>	m_buffers;

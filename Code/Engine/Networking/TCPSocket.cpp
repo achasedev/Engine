@@ -236,7 +236,7 @@ bool TCPSocket::Connect(const NetAddress_t& netAddress)
 	netAddress.ToSockAddr((sockaddr*)&saddr, &addrlen);
 
 	// Set the blocking state
-	SetBlocking(true);
+	SetBlocking(m_isBlocking);
 
 	int result = ::connect((SOCKET)m_socketHandle, (sockaddr*)&saddr, (int)addrlen);
 	if (result == SOCKET_ERROR)

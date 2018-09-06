@@ -7,19 +7,21 @@
 #include "Engine/Core/DeveloperConsole/Command.hpp"
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 
-#define SERVICE_PORT 29283
+#define DEFAULT_SERVICE_PORT 29283
 #define MAX_CLIENTS 32
 #define DELAY_TIME 5
 
 void Command_RemoteCommand(Command& cmd);
 void Command_RemoteCommandBroadcast(Command& cmd);
+void Command_RemoteCommandAll(Command& cmd);
+void Command_RemoteJoin(Command& cmd);
+void Command_RemoteHost(Command& cmd);
 
 RemoteCommandService* RemoteCommandService::s_instance = nullptr;
 
 void RemoteCommandService::Initialize()
 {
 	s_instance = new RemoteCommandService();
-
 	InitializeConsoleCommands();
 }
 
@@ -87,6 +89,24 @@ bool RemoteCommandService::Send(const std::string& command, int connectionIndex)
 	return (amountSent > 0);
 }
 
+void RemoteCommandService::Join(const std::string& address)
+{
+	s_instance->m_joinRequestAddress = address;
+}
+
+void RemoteCommandService::Host(unsigned short port)
+{
+	// Reset all state
+	s_instance->CloseAllConnections();
+	s_instance->m_joinRequestAddress.clear();
+
+	// Set the listen port
+	s_instance->m_hostListenPort = port;
+
+	// Go into try to host state next
+	s_instance->m_state = STATE_TRYTOHOST;
+}
+
 int RemoteCommandService::GetConnectionCount()
 {
 	return (int)s_instance->m_connections.size();
@@ -94,6 +114,7 @@ int RemoteCommandService::GetConnectionCount()
 
 RemoteCommandService::RemoteCommandService()
 	: m_state(STATE_INITIAL)
+	, m_hostListenPort(DEFAULT_SERVICE_PORT)
 {
 	m_hostListenSocket.SetBlocking(false);
 	m_delayTimer = new Stopwatch(nullptr);
@@ -106,6 +127,10 @@ void RemoteCommandService::InitializeConsoleCommands()
 {
 	Command::Register("rc", "Sends a command to a remote connection to execute.", Command_RemoteCommand);
 	Command::Register("rcb", "Broadcasts a command to all remote connections.", Command_RemoteCommandBroadcast);
+	Command::Register("rca", "Sends a command to all remote connections AND executes it locally.", Command_RemoteCommandAll);
+
+	Command::Register("rc_join", "Tells the RCS to connect to the host at the supplied address.", Command_RemoteJoin);
+	Command::Register("rc_host", "Tries to host an RCS with the given port.", Command_RemoteHost);
 }
 
 RemoteCommandService::~RemoteCommandService()
@@ -128,18 +153,7 @@ RemoteCommandService::~RemoteCommandService()
 
 void RemoteCommandService::Update_Initial()
 {
-	// Ensure we're no longer hosting
-	m_hostListenSocket.Close();
-
-	// Close all existing connections
-	for (int index = 0; index < (int)m_connections.size(); ++index)
-	{
-		m_connections[index]->Close();
-		delete m_connections[index];
-	}
-
-	m_connections.clear();
-
+	CloseAllConnections();
 
 	if (m_joinRequestAddress.size() > 0)
 	{
@@ -158,7 +172,7 @@ void RemoteCommandService::Update_Initial()
 void RemoteCommandService::Update_TryToJoinLocal()
 {
 	NetAddress_t localAddress;
-	bool localAddressFound = NetAddress_t::GetLocalAddress(&localAddress, SERVICE_PORT, false);
+	bool localAddressFound = NetAddress_t::GetLocalAddress(&localAddress, DEFAULT_SERVICE_PORT, false);
 
 	if (!localAddressFound)
 	{
@@ -204,6 +218,9 @@ void RemoteCommandService::Update_TryToJoinAddress()
 		m_state = STATE_INITIAL;
 		ConsolePrintf("RCS re-entered initial state");
 		LogTaggedPrintf("RCS", "Entered Initial State");
+
+		m_joinRequestAddress.clear();
+
 		return;
 	}
 
@@ -220,12 +237,13 @@ void RemoteCommandService::Update_TryToJoinAddress()
 
 void RemoteCommandService::Update_TryToHost()
 {
-	bool isListening = m_hostListenSocket.Listen(SERVICE_PORT, MAX_CLIENTS);
+	bool isListening = m_hostListenSocket.Listen(m_hostListenPort, MAX_CLIENTS);
 
 	if (!isListening)
 	{
 		m_delayTimer->SetInterval(DELAY_TIME);
 		m_state = STATE_DELAY;
+		ConsolePrintf("Failed to host, moving to delay state");
 		LogTaggedPrintf("RCS", "Entered Delay State");
 	}
 	else
@@ -280,8 +298,8 @@ void RemoteCommandService::Update_Client()
 	if (m_connections.size() == 0)
 	{
 		m_state = STATE_INITIAL;
-		ConsolePrintf("RCS re-entered initial state");
-		LogTaggedPrintf("RCS", "Entered Initial State");
+		ConsolePrintf("RCS lost connection to host, re-entering initial state");
+		LogTaggedPrintf("RCS", "RCS lost connection to host, re-entering initial state");
 	}
 }
 
@@ -387,6 +405,25 @@ void RemoteCommandService::CleanUpClosedConnections()
 	}
 }
 
+void RemoteCommandService::CloseAllConnections()
+{
+	// Ensure we're no longer hosting
+	m_hostListenSocket.Close();
+
+	// Close all existing connections
+	for (int index = 0; index < (int)m_connections.size(); ++index)
+	{
+		m_connections[index]->Close();
+		delete m_connections[index];
+
+		// Clear the buffers too
+		delete m_buffers[index];
+	}
+
+	m_connections.clear();
+	m_buffers.clear();
+}
+
 BytePacker* RemoteCommandService::GetSocketBuffer(TCPSocket* socket)
 {
 	for (int i = 0; i < m_connections.size(); ++i)
@@ -451,4 +488,43 @@ void Command_RemoteCommandBroadcast(Command& cmd)
 			ConsoleErrorf("Couldn't sent command %s to connection %i", commandToExecute.c_str(), connectionIndex);
 		}
 	}
+}
+
+void Command_RemoteCommandAll(Command& cmd)
+{
+	Command_RemoteCommandBroadcast(cmd);
+
+	std::string commandToExecute;
+	cmd.GetParam("c", commandToExecute);
+
+	if (commandToExecute.size() == 0)
+	{
+		ConsoleErrorf("No command specified for remote command");
+		return;
+	}
+
+	Command::Run(commandToExecute);
+}
+
+void Command_RemoteJoin(Command& cmd)
+{
+	std::string address;
+	cmd.GetParam("a", address);
+
+	if (address.size() == 0)
+	{
+		ConsoleErrorf("No address specified");
+	}
+
+	ConsolePrintf("Attempting to join address %s...", address.c_str());
+	RemoteCommandService::Join(address);
+}
+
+
+void Command_RemoteHost(Command& cmd)
+{
+	uint16_t port = DEFAULT_SERVICE_PORT;
+	cmd.GetParam("p", port, &port);
+
+	RemoteCommandService::Host(port);
 }
