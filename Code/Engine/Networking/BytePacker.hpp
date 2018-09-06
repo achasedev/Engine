@@ -33,7 +33,7 @@ public:
 	size_t			ReadSize(size_t *out_size); // returns how many bytes read, fills out_size
 
 	// See notes on encoding!
-	bool			WriteString(char const *str);
+	bool			WriteString(const std::string& string);
 	size_t			ReadString(std::string& out_string); // max_str_size should be enough to contain the null terminator as well; 
 
 	// HELPERS
@@ -45,6 +45,8 @@ public:
 	size_t			GetWrittenByteCount() const;				// how much have I written to this buffer
 	size_t			GetRemainingWritableByteCount() const;		// how much more can I write to this buffer (if growble, this returns UINFINITY)
 	size_t			GetRemainingReadableByteCount() const;		// how much more data can I read;
+
+	void*			GetBuffer();
 
 	bool			Reserve(size_t requestedSize);
 	bool			ExpandBuffer(size_t requestedAddition);

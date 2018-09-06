@@ -19,11 +19,11 @@
 //-----------------------------------------------------------------------------------------------
 // For error checking against non-fatal errors with non-blocking sockets
 //
-bool WasLastErrorFatal(int* errorCode = nullptr)
+bool WasLastErrorFatal(int& errorCode)
 {
-	*errorCode = ::WSAGetLastError();
+	errorCode = ::WSAGetLastError();
 
-	if (*errorCode == WSAEWOULDBLOCK || *errorCode == WSAEMSGSIZE || *errorCode == WSAECONNRESET)
+	if (errorCode == WSAEWOULDBLOCK || errorCode == WSAEMSGSIZE || errorCode == WSAECONNRESET)
 	{
 		return false;
 	}
@@ -160,7 +160,7 @@ TCPSocket* TCPSocket::Accept()
 	if (clientSocketHandle == SOCKET_ERROR)
 	{
 		int errorCode;
-		if (WasLastErrorFatal(&errorCode))
+		if (WasLastErrorFatal(errorCode))
 		{
 			LogTaggedPrintf("NET", "Error: TCPSocket::Accept() couldn't accept client connection, error code %i.", errorCode);
 		}
@@ -191,10 +191,10 @@ int TCPSocket::Receive(void *buffer, size_t const maxByteSize)
 	// if the host disconnected, or if we're non-blocking and no data is there. 
 	int sizeReceived = ::recv((SOCKET)m_socketHandle, (char*) buffer, (int) maxByteSize, 0);
 
-	if (sizeReceived < 0)
+	if (sizeReceived == SOCKET_ERROR)
 	{
 		int errorCode;
-		if (WasLastErrorFatal(&errorCode))
+		if (WasLastErrorFatal(errorCode))
 		{
 			LogTaggedPrintf("NET", "Error: TCPSocket::Receive() failed unexpectantly, error code %i.", errorCode);
 			Close();
@@ -235,14 +235,14 @@ bool TCPSocket::Connect(const NetAddress_t& netAddress)
 	size_t addrlen;         
 	netAddress.ToSockAddr((sockaddr*)&saddr, &addrlen);
 
-	// Check if we should block before connecting
-	SetBlocking(m_isBlocking);
+	// Set the blocking state
+	SetBlocking(true);
 
 	int result = ::connect((SOCKET)m_socketHandle, (sockaddr*)&saddr, (int)addrlen);
 	if (result == SOCKET_ERROR)
 	{
 		int errorCode;
-		if (WasLastErrorFatal(&errorCode))
+		if (WasLastErrorFatal(errorCode))
 		{
 			LogTaggedPrintf("NET", "TCPSocket::Connect() couldn't connect to socket address %s", netAddress.ToString().c_str());
 			Close();
@@ -297,10 +297,10 @@ int TCPSocket::Send(const void* data, const size_t byteSize)
 
 	int amountSent = ::send((SOCKET)m_socketHandle, (const char*)data, (int)byteSize, 0);
 
-	if (amountSent < 0)
+	if (amountSent == SOCKET_ERROR)
 	{
 		int errorCode;
-		if (WasLastErrorFatal(&errorCode))
+		if (WasLastErrorFatal(errorCode))
 		{
 			LogTaggedPrintf("NET", "Error: TCPSocket::Send() couldn't send, error %i", errorCode);
 			Close();
@@ -344,12 +344,8 @@ bool TCPSocket::IsBlocking() const
 //
 void TCPSocket::SetBlocking(bool blockingState)
 {
-	if (blockingState == m_isBlocking)
-	{
-		return;
-	}
-
-	u_long state = (blockingState ? 1 : 0);
+	// 0 is blocking, 1 is non-blocking
+	u_long state = (blockingState ? 0 : 1);
 	::ioctlsocket((SOCKET)m_socketHandle, FIONBIO, &state);
 
 	m_isBlocking = blockingState;

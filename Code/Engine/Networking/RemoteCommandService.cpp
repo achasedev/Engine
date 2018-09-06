@@ -12,6 +12,7 @@
 #define DELAY_TIME 5
 
 void Command_RemoteCommand(Command& cmd);
+void Command_RemoteCommandBroadcast(Command& cmd);
 
 RemoteCommandService* RemoteCommandService::s_instance = nullptr;
 
@@ -54,12 +55,25 @@ RemoteCommandService* RemoteCommandService::GetInstance()
 
 bool RemoteCommandService::Send(const std::string& command, int connectionIndex)
 {
-	if (connectionIndex >= (int)s_instance->m_connections.size())
+	if (connectionIndex >= (int)s_instance->m_connections.size() || command.size() == 0)
 	{
 		return false;
 	}
 
-	int amountSent = s_instance->m_connections[connectionIndex]->Send(command.c_str(), command.size());
+	// Make the message
+	BytePacker sendPack(BIG_ENDIAN);
+
+
+	bool isEcho = false;
+	sendPack.WriteBytes(1, &isEcho);
+	sendPack.WriteString(command);
+
+	uint16_t messageLength = sendPack.GetWrittenByteCount();
+	uint16_t msgBigEndian = messageLength;
+	ToEndianness(2, &msgBigEndian, BIG_ENDIAN);
+
+	s_instance->m_connections[connectionIndex]->Send(&msgBigEndian, 2);
+	int amountSent = s_instance->m_connections[connectionIndex]->Send(sendPack.GetBuffer(), messageLength);
 
 	if (amountSent > 0)
 	{
@@ -73,18 +87,25 @@ bool RemoteCommandService::Send(const std::string& command, int connectionIndex)
 	return (amountSent > 0);
 }
 
+int RemoteCommandService::GetConnectionCount()
+{
+	return (int)s_instance->m_connections.size();
+}
+
 RemoteCommandService::RemoteCommandService()
 	: m_state(STATE_INITIAL)
 {
 	m_hostListenSocket.SetBlocking(false);
 	m_delayTimer = new Stopwatch(nullptr);
 
+	ConsolePrintf("RCS re-entered initial state");
 	LogTaggedPrintf("RCS", "Entered Initial State");
 }
 
 void RemoteCommandService::InitializeConsoleCommands()
 {
-	Command::Register("rc", "Sends a command to a remote connection to execute", Command_RemoteCommand);
+	Command::Register("rc", "Sends a command to a remote connection to execute.", Command_RemoteCommand);
+	Command::Register("rcb", "Broadcasts a command to all remote connections.", Command_RemoteCommandBroadcast);
 }
 
 RemoteCommandService::~RemoteCommandService()
@@ -122,11 +143,13 @@ void RemoteCommandService::Update_Initial()
 
 	if (m_joinRequestAddress.size() > 0)
 	{
+		ConsolePrintf("RCS is trying to join address %s...", m_joinRequestAddress.c_str());
 		LogTaggedPrintf("RCS", "Entered TryToJoinAddress State");
 		m_state = STATE_TRYTOJOINADDRESS;
 	}
 	else
 	{
+		ConsolePrintf("RCS is trying to join local...");
 		LogTaggedPrintf("RCS", "Entered TryToJoinLocal State");
 		m_state = STATE_TRYTOJOINLOCAL;
 	}
@@ -140,42 +163,55 @@ void RemoteCommandService::Update_TryToJoinLocal()
 	if (!localAddressFound)
 	{
 		m_state = STATE_INITIAL;
+		ConsolePrintf("RCS re-entered initial state");
 		LogTaggedPrintf("RCS", "Entered Initial State");
 		return;
 	}
 
-	TCPSocket* joinSocket = new TCPSocket(false);
+	TCPSocket* joinSocket = new TCPSocket();
+	joinSocket->SetBlocking(true);
+
 	bool connected = joinSocket->Connect(localAddress);
 
 	if (!connected)
 	{
 		m_state = STATE_TRYTOHOST;
+		ConsolePrintf("RCS failed to join local, trying to host...");
 		LogTaggedPrintf("RCS", "Entered TryToHost State");
 		return;
 	}
 
 	// Connected successfully, store off socket and go to client state
+	joinSocket->SetBlocking(false);
 	m_connections.push_back(joinSocket);
+	m_buffers.push_back(new BytePacker(BIG_ENDIAN));
 	m_state = STATE_CLIENT;
 	LogTaggedPrintf("RCS", "Entered Client State");
+	ConsolePrintf(Rgba::GREEN, "RCS is a client.");
 }
 
 void RemoteCommandService::Update_TryToJoinAddress()
 {
 	NetAddress_t netAddress(m_joinRequestAddress.c_str());
 
-	TCPSocket* joinSocket = new TCPSocket(false);
+	TCPSocket* joinSocket = new TCPSocket();
+	joinSocket->SetBlocking(true);
 	bool connected = joinSocket->Connect(netAddress);
 
 	if (!connected)
 	{
+		delete joinSocket;
 		m_state = STATE_INITIAL;
+		ConsolePrintf("RCS re-entered initial state");
 		LogTaggedPrintf("RCS", "Entered Initial State");
 		return;
 	}
 
+	joinSocket->SetBlocking(false);
 	m_connections.push_back(joinSocket);
+	m_buffers.push_back(new BytePacker(BIG_ENDIAN));
 	m_state = STATE_CLIENT;
+	ConsolePrintf(Rgba::GREEN, "RCS successfully joined address %s", m_joinRequestAddress.c_str());
 	LogTaggedPrintf("RCS", "Entered Client State");
 
 	// Always clear the join request
@@ -195,6 +231,7 @@ void RemoteCommandService::Update_TryToHost()
 	else
 	{
 		m_state = STATE_HOST;
+		ConsolePrintf(Rgba::GREEN, "RCS is now hosting.");
 		LogTaggedPrintf("RCS", "Entered Host State");
 	}
 }
@@ -205,6 +242,7 @@ void RemoteCommandService::Update_Delay()
 	{
 		m_delayTimer->Reset();
 		m_state = STATE_INITIAL;
+		ConsolePrintf("RCS re-entered initial state");
 		LogTaggedPrintf("RCS", "Entered Initial State");
 	}
 }
@@ -212,9 +250,10 @@ void RemoteCommandService::Update_Delay()
 void RemoteCommandService::Update_Host()
 {
 	// Check if a join request is available
-	if (m_joinRequestAddress.size() == 0)
+	if (m_joinRequestAddress.size() > 0)
 	{
 		m_state = STATE_INITIAL;
+		ConsolePrintf("RCS re-entered initial state");
 		LogTaggedPrintf("RCS", "Entered Initial State");
 	}
 
@@ -226,10 +265,12 @@ void RemoteCommandService::Update_Host()
 void RemoteCommandService::Update_Client()
 {
 	// Check if a join request is available
-	if (m_joinRequestAddress.size() == 0)
+	if (m_joinRequestAddress.size() > 0)
 	{
 		m_state = STATE_INITIAL;
+		ConsolePrintf("RCS re-entered initial state");
 		LogTaggedPrintf("RCS", "Entered Initial State");
+		return;
 	}
 
 	ProcessAllConnections();
@@ -239,6 +280,7 @@ void RemoteCommandService::Update_Client()
 	if (m_connections.size() == 0)
 	{
 		m_state = STATE_INITIAL;
+		ConsolePrintf("RCS re-entered initial state");
 		LogTaggedPrintf("RCS", "Entered Initial State");
 	}
 }
@@ -332,7 +374,7 @@ void RemoteCommandService::ProcessMessage(TCPSocket* connection, BytePacker* buf
 
 void RemoteCommandService::CleanUpClosedConnections()
 {
-	for (int i = (int) m_connections.size(); i >= 0; --i)
+	for (int i = (int) m_connections.size() - 1; i >= 0; --i)
 	{
 		if (m_connections[i]->IsClosed())
 		{
@@ -366,6 +408,7 @@ void Command_RemoteCommand(Command& cmd)
 	if (commandToExecute.size() == 0)
 	{
 		ConsoleErrorf("No command specified for remote command");
+		return;
 	}
 
 	int connectionIndex = 0;
@@ -380,5 +423,32 @@ void Command_RemoteCommand(Command& cmd)
 	else
 	{
 		ConsoleErrorf("Couldn't sent command %s to connection %i", commandToExecute.c_str(), connectionIndex);
+	}
+}
+
+void Command_RemoteCommandBroadcast(Command& cmd)
+{
+	std::string commandToExecute;
+	cmd.GetParam("c", commandToExecute);
+
+	if (commandToExecute.size() == 0)
+	{
+		ConsoleErrorf("No command specified for remote command");
+		return;
+	}
+
+	int connectionCount = RemoteCommandService::GetConnectionCount();
+	for (int connectionIndex = 0; connectionIndex < connectionCount; ++connectionIndex)
+	{
+		bool sent = RemoteCommandService::Send(commandToExecute, connectionIndex);
+
+		if (sent)
+		{
+			ConsolePrintf(Rgba::GREEN, "Command \"%s\" sent to connection %i", commandToExecute.c_str(), connectionIndex);
+		}
+		else
+		{
+			ConsoleErrorf("Couldn't sent command %s to connection %i", commandToExecute.c_str(), connectionIndex);
+		}
 	}
 }

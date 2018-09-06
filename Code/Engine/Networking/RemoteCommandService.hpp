@@ -28,6 +28,7 @@ public:
 
 	static RemoteCommandService* GetInstance();
 	static bool Send(const std::string& command, int connectionIndex);
+	static int	GetConnectionCount();
 
 private:
 	//-----Private Methods-----
@@ -53,7 +54,7 @@ private:
 	void CleanUpClosedConnections();
 
 	BytePacker* GetSocketBuffer(TCPSocket* socket);
-
+	
 
 private:
 	//-----Private Data-----

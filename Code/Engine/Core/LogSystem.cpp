@@ -60,10 +60,12 @@ void LogSystem::Initialize()
 	bool success = s_latestLogFile->Open(latestName.c_str(), "w+");
 
 	// If we can't open the latest log file, that means this is a client, so open a different log file
-	if (!success)
+	int clientCount = 0;
+	while (!success)
 	{
-		latestName = "Data/Logs/SystemLog_Client.txt";
-		s_latestLogFile->Open(latestName.c_str(), "w+");
+		clientCount++;
+		latestName = Stringf("Data/Logs/SystemLog_Client_%i.txt", clientCount);
+		success = s_latestLogFile->Open(latestName.c_str(), "w+");
 	}
 
 	// Make a file writer for the latest log file

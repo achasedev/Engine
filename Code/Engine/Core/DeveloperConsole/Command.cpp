@@ -13,7 +13,7 @@
 
 //-----Commands-----
  void Command_Help(Command &cmd);
-
+ 
 //--------------------Registration Class----------------------
 // Class to represent a stored command in the registry, holds meta data
 class CommandRegistration
@@ -226,6 +226,28 @@ size_t Command::ParseSingleArgument(const std::string& commandLine, size_t dashI
 
 	// Get the parameter value
 	size_t paramValueStart = commandLine.find_first_not_of(' ', flagNameEnd + 1);
+
+	// Check if the param value is in quotes
+	if (commandLine[paramValueStart] == '\"')
+	{
+		size_t paramValueEnd = commandLine.find('\"', paramValueStart + 1);
+
+		// No end quote, so just return after it
+		if (paramValueEnd == std::string::npos)
+		{
+			return paramValueStart + 1;
+		}
+
+		// Make sure there is something between the quotes
+		if (paramValueStart + 1 == paramValueEnd)
+		{
+			return paramValueEnd + 1;
+		}
+
+		paramValue = std::string(commandLine, paramValueStart + 1, paramValueEnd - paramValueStart - 1);
+		AddArgumentToMap(flagName, paramValue);
+		return paramValueEnd + 1;
+	}
 
 	// No param value specified for the flag, and no other data is associated afterward so exit
 	if (paramValueStart == std::string::npos)

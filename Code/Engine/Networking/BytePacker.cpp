@@ -150,9 +150,9 @@ size_t BytePacker::ReadSize(size_t *out_size)
 	return bytesRead;
 }
 
-bool BytePacker::WriteString(char const *str)
+bool BytePacker::WriteString(const std::string& string)
 {
-	int characterCount = GetStringLength(str);
+	int characterCount = (int)string.size();
 	WriteSize(characterCount);
 
 	// Make sure the buffer has enough room
@@ -162,7 +162,7 @@ bool BytePacker::WriteString(char const *str)
 	}
 
 	// Copy the data into the buffer
-	memcpy((void*)(m_buffer + m_writeHead), str, characterCount);
+	memcpy((void*)(m_buffer + m_writeHead), string.c_str(), characterCount);
 
 	// Advance the write head
 	m_writeHead += characterCount;
@@ -214,6 +214,11 @@ size_t BytePacker::GetRemainingWritableByteCount() const
 size_t BytePacker::GetRemainingReadableByteCount() const
 {
 	return (m_writeHead - m_readHead);
+}
+
+void* BytePacker::GetBuffer()
+{
+	return m_buffer;
 }
 
 bool BytePacker::Reserve(size_t requestedSize)
