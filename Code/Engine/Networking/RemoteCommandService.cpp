@@ -1,10 +1,13 @@
 #include "Engine/Core/LogSystem.hpp"
+#include "Engine/Assets/AssetDB.hpp"
 #include "Engine/Core/Time/Stopwatch.hpp"
 #include "Engine/Networking/BytePacker.hpp"
+#include "Engine/Rendering/Core/Renderer.hpp"
 #include "Engine/Core/Utility/StringUtils.hpp"
 #include "Engine/Core/Threading/Threading.hpp"
-#include "Engine/Networking/RemoteCommandService.hpp"
+#include "Engine/Rendering/Materials/Material.hpp"
 #include "Engine/Core/DeveloperConsole/Command.hpp"
+#include "Engine/Networking/RemoteCommandService.hpp"
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 
 #define DEFAULT_SERVICE_PORT 29283
@@ -58,6 +61,85 @@ void RemoteCommandService::BeginFrame()
 	}
 }
 
+
+void RemoteCommandService::Render()
+{
+	// Render the box and border
+	Material* material = AssetDB::GetSharedMaterial("UI");
+	Renderer* renderer = Renderer::GetInstance();
+
+	std::string headingText = Stringf("Remote Connection - [");
+	std::string stateText;
+
+	switch (m_state)
+	{
+	case STATE_INITIAL:
+		stateText = "INITIAL]";
+		break;
+	case STATE_TRYTOJOINLOCAL:
+		stateText = "JOINING LOCAL]";
+		break;
+	case STATE_TRYTOJOINADDRESS:
+		stateText = "JOINING ADDRESS]";
+		break;
+	case STATE_TRYTOHOST:
+		stateText = "TRYING TO HOST]";
+		break;
+	case STATE_DELAY:
+		stateText = "DELAY]";
+		break;
+	case STATE_HOST:
+		stateText = "HOST]";
+		break;
+	case STATE_CLIENT:
+		stateText = "CLIENT]";
+		break;
+	default:
+		break;
+	}
+
+	Vector2 alignment = Vector2(1.0f, 0.f);
+	headingText += stateText;
+	BitmapFont* font = AssetDB::GetBitmapFont("Data/Images/Fonts/ConsoleFont.png");
+	AABB2 drawBounds = m_bounds;
+	renderer->DrawTextInBox2D(headingText, drawBounds, alignment, m_textHeight, TEXT_DRAW_SHRINK_TO_FIT, font);
+	drawBounds.Translate(Vector2(0.f, -m_textHeight));
+
+	std::string hostAddress;
+	if (m_state == STATE_CLIENT)
+	{
+		hostAddress = m_connections[0]->GetNetAddress().ToString();
+	}
+	else if (m_state == STATE_HOST)
+	{
+		hostAddress = m_hostListenSocket.GetNetAddress().ToString();
+	}
+
+	renderer->DrawTextInBox2D(Stringf("Host Address: %s", hostAddress.c_str()), drawBounds, alignment, m_textHeight, TEXT_DRAW_SHRINK_TO_FIT, font);
+	drawBounds.Translate(Vector2(0.f, -m_textHeight));
+
+	// Connections
+	int connectionCount = (int)m_connections.size();
+
+	if (connectionCount > 0)
+	{
+		renderer->DrawTextInBox2D(Stringf("Connections: %i", connectionCount), drawBounds, alignment, m_textHeight, TEXT_DRAW_SHRINK_TO_FIT, font, Rgba::DARK_GREEN);
+		drawBounds.Translate(Vector2(0.f, -m_textHeight));
+
+		for (int i = 0; i < connectionCount; ++i)
+		{
+			std::string address = m_connections[i]->GetNetAddress().ToString();
+			std::string toPrint = Stringf("[%i]: %s", i, address.c_str());
+
+			renderer->DrawTextInBox2D(toPrint, drawBounds, alignment, m_textHeight, TEXT_DRAW_SHRINK_TO_FIT, font);
+			drawBounds.Translate(Vector2(0.f, -m_textHeight));
+		}
+	}
+	else
+	{
+		renderer->DrawTextInBox2D("No connections", drawBounds, alignment, m_textHeight, TEXT_DRAW_SHRINK_TO_FIT, font, Rgba::RED);
+	}
+}
 
 RemoteCommandService* RemoteCommandService::GetInstance()
 {
@@ -127,8 +209,21 @@ RemoteCommandService::RemoteCommandService()
 	m_hostListenSocket.SetBlocking(false);
 	m_delayTimer = new Stopwatch(nullptr);
 
+	InitializeUILayout();
+
 	ConsolePrintf("RCS re-entered initial state");
 	LogTaggedPrintf("RCS", "Entered Initial State");
+}
+
+void RemoteCommandService::InitializeUILayout()
+{
+	m_borderThickness = 10.f;
+	m_textHeight = 20.f;
+	m_textPadding = 3.f;
+
+	AABB2 uiBounds = Renderer::GetUIBounds();
+	m_bounds = AABB2(Vector2(0.65f * uiBounds.maxs.x, 0.f), uiBounds.maxs - Vector2(0.f, m_textHeight));
+	m_bounds.AddPaddingToSides(-m_textPadding, -m_textPadding);
 }
 
 void RemoteCommandService::InitializeConsoleCommands()

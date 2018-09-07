@@ -17,6 +17,7 @@
 #include "Engine/Core/Time/ProfileScoped.hpp"
 #include "Engine/Core/DeveloperConsole/Command.hpp"
 #include "Engine/Rendering/Animation/SpriteAnim.hpp"
+#include "Engine/Networking/RemoteCommandService.hpp"
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 #include "Engine/Rendering/Animation/SpriteAnimDef.hpp"
 #include "Engine/Rendering/Animation/SpriteAnimSet.hpp"
@@ -568,6 +569,12 @@ void DevConsole::Render() const
 	}
 
 	RenderInputField(renderer, font);
+
+	// Render the RCS widget
+	if (RemoteCommandService::GetInstance() != nullptr)
+	{
+		RemoteCommandService::GetInstance()->Render();
+	}
 
 	RenderFPS();
 }

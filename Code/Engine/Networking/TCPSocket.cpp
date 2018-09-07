@@ -129,6 +129,7 @@ bool TCPSocket::Listen(unsigned short port, unsigned int maxQueued)
 	}
 
 	// Successfully listening
+	m_address = addr;
 	m_isListening = true;
 	return m_isListening;
 }

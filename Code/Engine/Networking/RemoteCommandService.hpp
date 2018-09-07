@@ -25,6 +25,7 @@ public:
 	static void Initialize();
 	static void Shutdown();
 	void BeginFrame();
+	void Render();
 
 	static bool Send(const std::string& message, int connectionIndex, bool isEcho);
 	static void Join(const std::string& address);
@@ -41,6 +42,7 @@ private:
 	~RemoteCommandService();
 	RemoteCommandService(const RemoteCommandService& copy) = delete;
 
+	void InitializeUILayout();
 	static void InitializeConsoleCommands();
 
 	void Update_Initial();
@@ -72,6 +74,13 @@ private:
 
 	Stopwatch*					m_delayTimer = nullptr;
 	std::string					m_joinRequestAddress;
+
+	// UI
+	AABB2 m_bounds;
+
+	float m_borderThickness;
+	float m_textHeight;
+	float m_textPadding;
 
 	static RemoteCommandService* s_instance;
 
