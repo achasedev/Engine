@@ -11,11 +11,21 @@
 #define MAX_CLIENTS 32
 #define DELAY_TIME 5
 
+// For checking thread ID's
+#if defined( _WIN32 )
+#define PLATFORM_WINDOWS
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif
+
 void Command_RemoteCommand(Command& cmd);
 void Command_RemoteCommandBroadcast(Command& cmd);
 void Command_RemoteCommandAll(Command& cmd);
 void Command_RemoteJoin(Command& cmd);
 void Command_RemoteHost(Command& cmd);
+
+// For sending echo responses
+void SendEchoResponse(ConsoleOutputText text, void* args);
 
 RemoteCommandService* RemoteCommandService::s_instance = nullptr;
 
@@ -55,9 +65,9 @@ RemoteCommandService* RemoteCommandService::GetInstance()
 }
 
 
-bool RemoteCommandService::Send(const std::string& command, int connectionIndex)
+bool RemoteCommandService::Send(const std::string& message, int connectionIndex, bool isEcho)
 {
-	if (connectionIndex >= (int)s_instance->m_connections.size() || command.size() == 0)
+	if (connectionIndex >= (int)s_instance->m_connections.size() || message.size() == 0)
 	{
 		return false;
 	}
@@ -65,10 +75,8 @@ bool RemoteCommandService::Send(const std::string& command, int connectionIndex)
 	// Make the message
 	BytePacker sendPack(BIG_ENDIAN);
 
-
-	bool isEcho = false;
 	sendPack.WriteBytes(1, &isEcho);
-	sendPack.WriteString(command);
+	sendPack.WriteString(message);
 
 	uint16_t messageLength = sendPack.GetWrittenByteCount();
 	uint16_t msgBigEndian = messageLength;
@@ -79,11 +87,11 @@ bool RemoteCommandService::Send(const std::string& command, int connectionIndex)
 
 	if (amountSent > 0)
 	{
-		LogTaggedPrintf("RCS", "Sent command %s to connection index %i", command.c_str(), connectionIndex);
+		LogTaggedPrintf("RCS", "Sent message \"%s\" to connection index %i", message.c_str(), connectionIndex);
 	}
 	else
 	{
-		LogTaggedPrintf("RCS", "Failed to send command %s to connection index %i", command.c_str(), connectionIndex);
+		LogTaggedPrintf("RCS", "Failed to send message \"%s\" to connection index %i", message.c_str(), connectionIndex);
 	}
 
 	return (amountSent > 0);
@@ -317,15 +325,17 @@ void RemoteCommandService::CheckForNewConnections()
 
 void RemoteCommandService::ProcessAllConnections()
 {
-	for (int i = 0; i < (int)m_connections.size(); ++i)
+	for (int connectionIndex = 0; connectionIndex < (int)m_connections.size(); ++connectionIndex)
 	{
-		ProcessConnection(m_connections[i]);
+		ProcessConnection(connectionIndex);
 	}
 }
 
-void RemoteCommandService::ProcessConnection(TCPSocket* connection)
+void RemoteCommandService::ProcessConnection(int connectionIndex)
 {
-	BytePacker *buffer = GetSocketBuffer(connection);
+	TCPSocket* connection = m_connections[connectionIndex];
+	BytePacker *buffer = m_buffers[connectionIndex];
+
 	buffer->Reserve(2);
 
 	// Need to get the message length still
@@ -361,15 +371,18 @@ void RemoteCommandService::ProcessConnection(TCPSocket* connection)
 	if (isReadyToProcess)
 	{
 		buffer->AdvanceReadHead(2U);
-		ProcessMessage(connection, buffer);
+		ProcessMessage(connectionIndex);
 
 		// Clean up to be used
 		buffer->ResetWrite();
 	}
 }
 
-void RemoteCommandService::ProcessMessage(TCPSocket* connection, BytePacker* buffer)
+void RemoteCommandService::ProcessMessage(int connectionIndex)
 {
+	TCPSocket* connection = m_connections[connectionIndex];
+	BytePacker *buffer = m_buffers[connectionIndex];
+
 	bool isEcho;
 	buffer->ReadBytes(&isEcho, 1);;
 
@@ -385,7 +398,10 @@ void RemoteCommandService::ProcessMessage(TCPSocket* connection, BytePacker* buf
 		}
 		else
 		{
+			// Run the command, sending back the echo response
+			DevConsole::AddConsoleHook(SendEchoResponse, &connectionIndex);
 			Command::Run(str);
+			DevConsole::RemoveConsoleHook(SendEchoResponse);
 		}
 	}
 }
@@ -424,18 +440,6 @@ void RemoteCommandService::CloseAllConnections()
 	m_buffers.clear();
 }
 
-BytePacker* RemoteCommandService::GetSocketBuffer(TCPSocket* socket)
-{
-	for (int i = 0; i < m_connections.size(); ++i)
-	{
-		if (m_connections[i] == socket)
-		{
-			return m_buffers[i];
-		}
-	}
-
-	return nullptr;
-}
 
 void Command_RemoteCommand(Command& cmd)
 {
@@ -451,7 +455,7 @@ void Command_RemoteCommand(Command& cmd)
 	int connectionIndex = 0;
 	cmd.GetParam("i", connectionIndex, &connectionIndex);
 
-	bool sent = RemoteCommandService::Send(commandToExecute, connectionIndex);
+	bool sent = RemoteCommandService::Send(commandToExecute, connectionIndex, false);
 
 	if (sent)
 	{
@@ -477,7 +481,7 @@ void Command_RemoteCommandBroadcast(Command& cmd)
 	int connectionCount = RemoteCommandService::GetConnectionCount();
 	for (int connectionIndex = 0; connectionIndex < connectionCount; ++connectionIndex)
 	{
-		bool sent = RemoteCommandService::Send(commandToExecute, connectionIndex);
+		bool sent = RemoteCommandService::Send(commandToExecute, connectionIndex, false);
 
 		if (sent)
 		{
@@ -527,4 +531,19 @@ void Command_RemoteHost(Command& cmd)
 	cmd.GetParam("p", port, &port);
 
 	RemoteCommandService::Host(port);
+}
+
+void SendEchoResponse(ConsoleOutputText text, void* args)
+{
+	int connectionIndex = *((int*)args);
+
+	// Check first if the text was from this thread (main thread)
+	int currentThreadID = ::GetCurrentThreadId();
+
+	if (text.m_threadID != currentThreadID)
+	{
+		return;
+	}
+
+	RemoteCommandService::Send(text.m_text, connectionIndex, true);
 }

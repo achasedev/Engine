@@ -144,6 +144,9 @@ bool Command::Run(const std::string& commandLine)
 	// Run the command
 	s_commandRegistry[cmd->GetName()]->m_callBack(*cmd);
 	
+	// Flush the DevConsole command queue, for RCS
+	DevConsole::GetInstance()->FlushOutputQueue();
+
 	// Clean up and return
 	delete cmd;
 	return true;

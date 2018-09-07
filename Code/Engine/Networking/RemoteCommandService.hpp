@@ -26,12 +26,13 @@ public:
 	static void Shutdown();
 	void BeginFrame();
 
-	static bool Send(const std::string& command, int connectionIndex);
+	static bool Send(const std::string& message, int connectionIndex, bool isEcho);
 	static void Join(const std::string& address);
 	static void Host(unsigned short port);
 
-	static RemoteCommandService* GetInstance();
-	static int	GetConnectionCount();
+	static RemoteCommandService*	GetInstance();
+	static int						GetConnectionCount();
+
 
 private:
 	//-----Private Methods-----
@@ -52,14 +53,12 @@ private:
 
 	void CheckForNewConnections();
 	void ProcessAllConnections();
-		void ProcessConnection(TCPSocket* connection);
-		void ProcessMessage(TCPSocket* connection, BytePacker* buffer);
+		void ProcessConnection(int connectionIndex);
+		void ProcessMessage(int connectionIndex);
 	void CleanUpClosedConnections();
 
 	void CloseAllConnections();
 
-	BytePacker* GetSocketBuffer(TCPSocket* socket);
-	
 
 private:
 	//-----Private Data-----

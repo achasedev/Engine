@@ -69,6 +69,7 @@ void ConsolePrintv(const Rgba& color, char const* format, va_list args)
 	ConsoleOutputText colorText;
 	colorText.m_text	= std::string(textLiteral);
 	colorText.m_color	= color;
+	colorText.m_threadID = ::GetCurrentThreadId();
 
 	DevConsole* console = DevConsole::GetInstance();
 	GUARANTEE_OR_DIE(console != nullptr, "Error: ConsolePrintf called with no DevConsole initialized.");
@@ -105,9 +106,10 @@ void ConsolePrintf(const Rgba &color, char const *format, ...)
 
 	// Add it to the console log
 	ConsoleOutputText colorText;
-	colorText.m_text	= std::string(textLiteral);
-	colorText.m_color	= color;
-	
+	colorText.m_text		= std::string(textLiteral);
+	colorText.m_color		= color;
+	colorText.m_threadID	= ::GetCurrentThreadId();
+
 	DevConsole* console = DevConsole::GetInstance();
 	GUARANTEE_OR_DIE(console != nullptr, "Error: ConsolePrintf called with no DevConsole initialized.");
 
@@ -545,12 +547,7 @@ void DevConsole::Update()
 	}
 	m_FLChanAnimations->Update(deltaTime);
 
-	// Update the message logs with messages in the queue
-	ConsoleOutputText text;
-	while(m_messageQueue.Dequeue(text)) // returns false when empty
-	{
-		m_consoleOutputLog.push_back(text);
-	}
+	FlushOutputQueue();
 }
 
 
@@ -820,6 +817,51 @@ void DevConsole::ToggleConsole()
 void DevConsole::ShowLogWindow()
 {
 	s_instance->m_showLog = true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Adds a console callback for other systems to receive text printed to the console
+//
+void DevConsole::AddConsoleHook(DevConsole_cb callback, void* args/*= nullptr*/)
+{
+	s_instance->m_consoleHooks.push_back(DevConsoleHook_t(callback, args));
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Removes the given callback from the list of DevConsole hooks
+//
+void DevConsole::RemoveConsoleHook(DevConsole_cb callback)
+{
+	for (int i = 0; i < (int)s_instance->m_consoleHooks.size(); ++i)
+	{
+		if (s_instance->m_consoleHooks[i].callback == callback)
+		{
+			s_instance->m_consoleHooks.erase(s_instance->m_consoleHooks.begin() + i);
+			break;
+		}
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Flushes the command queue immediately, for commands that need their response now
+//
+void DevConsole::FlushOutputQueue()
+{
+	ConsoleOutputText text;
+	while (m_messageQueue.Dequeue(text)) // returns false when empty
+	{
+		// Call the callbacks on the text
+		for (int i = 0; i < (int)m_consoleHooks.size(); ++i)
+		{
+			m_consoleHooks[i].callback(text, m_consoleHooks[i].args);
+		}
+
+		// Push the text to the output log
+		m_consoleOutputLog.push_back(text);
+	}
 }
 
 
