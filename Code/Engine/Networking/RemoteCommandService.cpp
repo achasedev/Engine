@@ -1,5 +1,6 @@
 #include "Engine/Core/LogSystem.hpp"
 #include "Engine/Assets/AssetDB.hpp"
+#include "Engine/Core/Time/Time.hpp"
 #include "Engine/Core/Time/Stopwatch.hpp"
 #include "Engine/Networking/BytePacker.hpp"
 #include "Engine/Rendering/Core/Renderer.hpp"
@@ -17,7 +18,9 @@
 // For checking thread ID's
 #if defined( _WIN32 )
 #define PLATFORM_WINDOWS
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <Windows.h>
 #endif
 
@@ -26,6 +29,7 @@ void Command_RemoteCommandBroadcast(Command& cmd);
 void Command_RemoteCommandAll(Command& cmd);
 void Command_RemoteJoin(Command& cmd);
 void Command_RemoteHost(Command& cmd);
+void Command_CloneProcess(Command& cmd);
 
 // For sending echo responses
 void SendEchoResponse(ConsoleOutputText text, void* args);
@@ -65,7 +69,6 @@ void RemoteCommandService::BeginFrame()
 void RemoteCommandService::Render()
 {
 	// Render the box and border
-	Material* material = AssetDB::GetSharedMaterial("UI");
 	Renderer* renderer = Renderer::GetInstance();
 
 	std::string headingText = Stringf("Remote Connection - [");
@@ -160,7 +163,7 @@ bool RemoteCommandService::Send(const std::string& message, int connectionIndex,
 	sendPack.WriteBytes(1, &isEcho);
 	sendPack.WriteString(message);
 
-	uint16_t messageLength = sendPack.GetWrittenByteCount();
+	uint16_t messageLength = (uint16_t)sendPack.GetWrittenByteCount();
 	uint16_t msgBigEndian = messageLength;
 	ToEndianness(2, &msgBigEndian, BIG_ENDIAN);
 
@@ -234,6 +237,7 @@ void RemoteCommandService::InitializeConsoleCommands()
 
 	Command::Register("rc_join", "Tells the RCS to connect to the host at the supplied address.", Command_RemoteJoin);
 	Command::Register("rc_host", "Tries to host an RCS with the given port.", Command_RemoteHost);
+	Command::Register("clone_process", "Clones the current process up to the number specified", Command_CloneProcess);
 }
 
 RemoteCommandService::~RemoteCommandService()
@@ -602,6 +606,10 @@ void Command_RemoteCommandAll(Command& cmd)
 		return;
 	}
 
+	int64_t startHpc = GetPerformanceCounter();
+	while (TimeSystem::PerformanceCountToSeconds(GetPerformanceCounter() - startHpc) < 1.0f)
+	{}
+
 	Command::Run(commandToExecute);
 }
 
@@ -626,6 +634,59 @@ void Command_RemoteHost(Command& cmd)
 	cmd.GetParam("p", port, &port);
 
 	RemoteCommandService::Host(port);
+}
+
+void Command_CloneProcess(Command& cmd)
+{
+	// Get the executable path
+	char path[1024];
+
+	::GetModuleFileName(NULL, (LPWSTR) path, 1024);
+
+	int numClones = 1;
+	cmd.GetParam("c", numClones, &numClones);
+
+	int createdCount = 0;
+	for (int i = 0; i < numClones; ++i)
+	{
+		STARTUPINFO si;
+		PROCESS_INFORMATION pi;
+
+		memset(&pi, 0, sizeof(pi));
+		memset(&si, 0, sizeof(si));
+		si.cb = sizeof(si);
+
+		bool success = ::CreateProcess(
+			NULL,			// No module name (use command line)
+			(LPWSTR)path,	// Command line
+			NULL,			// Process handle not inheritable
+			NULL,			// Thread handle not inheritable
+			FALSE,			// Set handle inheritance to FALSE
+			0,				// No creation flags
+			NULL,			// Use parent's environment block
+			NULL,			// Use parent's starting directory 
+			&si,			// Pointer to STARTUPINFO structure
+			&pi				// Pointer to PROCESS_INFORMATION structure
+		);
+
+		if (success)
+		{
+			createdCount++;
+		}
+	}
+
+	if (createdCount == numClones)
+	{
+		ConsolePrintf(Rgba::GREEN, "Created %i clones.", createdCount);
+	}
+	else if (createdCount > 0)
+	{
+		ConsoleWarningf("Could only create %i clones.", createdCount);
+	}
+	else
+	{
+		ConsoleErrorf("Couldn't create any clones.");
+	}
 }
 
 void SendEchoResponse(ConsoleOutputText text, void* args)

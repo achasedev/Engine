@@ -4,7 +4,9 @@
 /* Date: January 30th, 2017
 /* Description: Class to represent a Windows window
 /************************************************************************/
-#define WIN32_LEAN_AND_MEAN		// Always #define this before #including <windows.h>
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif	// Always #define this before #including <windows.h>
 #include <windows.h>			// #include this (massive, platform-specific) header in very few places
 #include "Engine/Math/Vector2.hpp"
 #include "Engine/Core/Window.hpp"

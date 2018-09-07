@@ -265,8 +265,7 @@ RayHit_t GetColorForRay(const Ray& r, OctreeGrid* grid, int level, int voxelInde
 			Vector3 unitDirection = r.GetDirection().GetNormalized();
 
 			float blend = RangeMapFloat(unitDirection.y, -1.f, 1.0f, 0.f, 1.f);
-			//hit.color = Interpolate(Vector3::ONES, Vector3(0.5f, 0.7f, 1.f), blend);
-			hit.color = Vector3::ZERO;
+			hit.color = Interpolate(Vector3::ONES, Vector3(0.5f, 0.7f, 1.f), blend);
 			return hit;
 		}
 	}
