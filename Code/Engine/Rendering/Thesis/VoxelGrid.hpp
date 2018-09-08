@@ -10,6 +10,7 @@
 #include "Engine/Core/Rgba.hpp"
 #include "Engine/Math/IntVector3.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Rendering/Buffers/ShaderStorageBuffer.hpp"
 
 // Size of the tree to encapsulate all voxels + parents for a 256^3 grid
 #define VOXEL_COUNT 19173961
@@ -17,21 +18,33 @@
 // Struct to represent a single tree node
 struct OctreeNode_t
 {
-	uint8_t solidFlags;	// Flags if any children are non-empty
 	Vector3 color;		// The color of the voxel
+	float paddingf;
 };
 
+struct OctreeStructure
+{
+	IntVector3		m_dimensions;
+	int padding;
+	OctreeNode_t	voxels[VOXEL_COUNT];
+};
 
-class OctreeGrid
+class VoxelGrid
 {
 public:
 	//-----Public Methods-----
 	void Initialize();
-	bool IsLeaf(int level) { return Pow(2.0f, (float)level) == (float)m_dimensions.x; }
+
+	void SetupForDraw();
+
+private:
+	//-----Private Methods-----
+
+
 
 public:
 
-	IntVector3		m_dimensions;
-	OctreeNode_t	voxels[VOXEL_COUNT];
+	OctreeStructure m_octree;
+	ShaderStorageBuffer m_gpuBuffer;
 
 };

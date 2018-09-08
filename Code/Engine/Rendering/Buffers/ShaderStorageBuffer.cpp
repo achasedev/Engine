@@ -60,8 +60,7 @@ bool ShaderStorageBuffer::CopyToGPU(size_t const byte_count, void const *data)
 	}
 
 	// Bind the buffer to a slot, and copy memory
-	// GL_DYNAMIC_DRAW means the memory is likely going to change a lot (we'll get
-	// during the second project)
+	// GL_DYNAMIC_DRAW means the memory is likely going to change a lot
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_handle);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, byte_count, data, GL_DYNAMIC_DRAW);
 
@@ -71,6 +70,15 @@ bool ShaderStorageBuffer::CopyToGPU(size_t const byte_count, void const *data)
 	// convenience
 	m_bufferSize = byte_count;
 	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Binds the given buffer to the slot indicated
+//
+void ShaderStorageBuffer::Bind(int bindSlot)
+{
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, (GLuint)bindSlot, (GLuint)m_handle);
 }
 
 

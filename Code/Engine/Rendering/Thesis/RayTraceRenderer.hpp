@@ -9,7 +9,7 @@
 
 class Rgba;
 class Camera;
-class OctreeGrid;
+class VoxelGrid;
 class ComputeShader;
 
 class RayTraceRenderer
@@ -23,7 +23,7 @@ public:
 	static void					ShutDown();
 
 	// Drawing
-	void						Draw(OctreeGrid* scene);
+	void						Draw(VoxelGrid* scene);
 	void						WriteToFile(const char* filename);
 
 	// Accessors

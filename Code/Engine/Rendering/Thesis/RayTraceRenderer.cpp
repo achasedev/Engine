@@ -18,7 +18,7 @@
 #include "Engine/Rendering/Thesis/RayTraceRenderer.hpp"
 #include "Engine/Core/Threading/Threading.hpp"
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
-#include "Engine/Rendering/Thesis/OctreeGrid.hpp"
+#include "Engine/Rendering/Thesis/VoxelGrid.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Rendering/OpenGL/glFunctions.hpp"
 #include "Engine/Rendering/Resources/Texture.hpp"
@@ -164,7 +164,7 @@ RayHit_t DoesRayIntersectBox(const Ray& ray, const AABB3& box)
 	return hit;
 }
 
-AABB3 GetBounds(int level, int gridID, OctreeGrid* grid)
+AABB3 GetBounds(int level, int gridID, VoxelGrid* grid)
 {
 	if (level == 0)
 	{
@@ -174,7 +174,7 @@ AABB3 GetBounds(int level, int gridID, OctreeGrid* grid)
 	int parentIndex = (gridID - 1) / 8;
 	float divisor = Pow(2.0f, (float)level);
 
-	Vector3 dimensions = Vector3((float)grid->m_dimensions.x / divisor, (float)grid->m_dimensions.y / divisor, (float)grid->m_dimensions.z / divisor);
+	Vector3 dimensions = Vector3((float)grid->m_octree.m_dimensions.x / divisor, (float)grid->m_octree.m_dimensions.y / divisor, (float)grid->m_octree.m_dimensions.z / divisor);
 
 	AABB3 parentBounds = GetBounds(level - 1, parentIndex, grid);
 
@@ -190,7 +190,7 @@ AABB3 GetBounds(int level, int gridID, OctreeGrid* grid)
 	return AABB3(bottomLeft, bottomLeft + dimensions);
 }
 
-RayHit_t GetRayHitInfo(const Ray& r, OctreeGrid* grid, int level, int gridID)
+RayHit_t GetRayHitInfo(const Ray& r, VoxelGrid* grid, int level, int gridID)
 {
 	AABB3 bounds = GetBounds(level, gridID, grid);
 
@@ -198,7 +198,7 @@ RayHit_t GetRayHitInfo(const Ray& r, OctreeGrid* grid, int level, int gridID)
 
 	if (hit.hit)
 	{
-		hit.color = grid->voxels[gridID].color;
+		hit.color = grid->m_octree.voxels[gridID].color;
 		hit.isFinal = (level == 8);
 		hit.gridID = gridID;
 	}
@@ -222,7 +222,7 @@ void SortByT(std::vector<RayHit_t>& hits)
 	}
 }
 
-RayHit_t GetColorForRay(const Ray& r, OctreeGrid* grid, int level, int voxelIndex)
+RayHit_t GetColorForRay(const Ray& r, VoxelGrid* grid, int level, int voxelIndex)
 {
 	if (level == 8)
 	{
@@ -235,15 +235,15 @@ RayHit_t GetColorForRay(const Ray& r, OctreeGrid* grid, int level, int voxelInde
 		for (int i = 0; i < 8; ++i)
 		{
 			int childVoxelIndex = 8 * voxelIndex + 1 + i;
-			if (AreBitsSet(grid->voxels[voxelIndex + 1].solidFlags, 1 << i))
-			{
+			//if (AreBitsSet(grid->m_octree.voxels[voxelIndex + 1].solidFlags, 1 << i))
+			//{
 				RayHit_t hit = GetRayHitInfo(r, grid, level + 1, childVoxelIndex);
 
 				if (hit.hit)
 				{
 					childHits.push_back(hit);
 				}
-			}
+			//}
 		}
 
 		// Sort
@@ -347,7 +347,7 @@ Hitable* GenerateRandomScene()
 struct DrawParams
 {
 	RayTraceCamera* camera;
-	OctreeGrid* scene;
+	VoxelGrid* scene;
 	Rgba* colorData;
 	int minY;
 	int rowsToRender;
@@ -385,8 +385,11 @@ void ThreadWork_Draw(void* params)
 
 }
 
-void RayTraceRenderer::Draw(OctreeGrid* scene)
+void RayTraceRenderer::Draw(VoxelGrid* scene)
 {
+	// Bind the grid buffer
+	scene->SetupForDraw();
+
 	IntVector2 dimensions = m_outputTexture->GetDimensions();
 	m_computeShader->Execute(dimensions.x, dimensions.y, 1);
 
