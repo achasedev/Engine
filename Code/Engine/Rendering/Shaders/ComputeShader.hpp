@@ -8,12 +8,13 @@ public:
 	ComputeShader();
 	~ComputeShader();
 
-	void Initialize(const char* filename);
+	bool Initialize(const char* filename);
 
-	void Execute()
+	void Execute(int totalXItems, int totalYItems, int totalZItems);
 
 private:
 	//-----Private Data-----
 
+	unsigned int m_programHandle = 0;
 
 };

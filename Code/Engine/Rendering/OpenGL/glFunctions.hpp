@@ -84,6 +84,9 @@ extern PFNGLDELETEPROGRAMPROC		glDeleteProgram;
 extern PFNGLDETACHSHADERPROC		glDetachShader;
 extern PFNGLGETPROGRAMINFOLOGPROC	glGetProgramInfoLog;
 
+extern PFNGLDISPATCHCOMPUTEPROC		glDispatchCompute;
+extern PFNGLMEMORYBARRIERPROC		glMemoryBarrier;
+
 // For Vertex Array Objects
 extern PFNGLGENVERTEXARRAYSPROC		glGenVertexArrays;
 extern PFNGLBINDVERTEXARRAYPROC		glBindVertexArray;

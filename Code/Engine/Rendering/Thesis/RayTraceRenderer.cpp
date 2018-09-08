@@ -23,6 +23,10 @@
 #include "Engine/Rendering/OpenGL/glFunctions.hpp"
 #include "Engine/Rendering/Resources/Texture.hpp"
 #include "Engine/Core/Window.hpp"
+#include "Engine/Rendering/Shaders/ComputeShader.hpp"
+#include "Engine/Assets/AssetDB.hpp"
+#include "Engine/Rendering/Core/Renderer.hpp"
+#include "Engine/Rendering/Materials/Material.hpp"
 
 #include "ThirdParty/stb/stb_image_write.h"
 #include <cstdlib>
@@ -383,38 +387,51 @@ void ThreadWork_Draw(void* params)
 
 void RayTraceRenderer::Draw(OctreeGrid* scene)
 {
-	ProfileScoped test("RayTraceRenderer::Draw"); UNUSED(test);
+	IntVector2 dimensions = m_outputTexture->GetDimensions();
+	m_computeShader->Execute(dimensions.x, dimensions.y, 1);
 
-	// Make the camera
-	Vector3 lookFrom = Vector3(128.f, 300.f, -20.f);
-	Vector3 lookAt = Vector3(128.f, 256.f, 32.f);
-	float focusDistance = (lookAt - lookFrom).GetLength();
+	// Make sure writing is done before reading
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-	RayTraceCamera camera(lookFrom, lookAt, Vector3::DIRECTION_UP, 75.f, ((float) m_pixelDimensions.x / (float) m_pixelDimensions.y), 0.1f, focusDistance);
-	DrawParams params[10];
+	// Draw the result to the back buffer
+	Material* material = AssetDB::CreateOrGetSharedMaterial("Data/Materials/Copy.material");
+	material->SetDiffuse(m_outputTexture);
 
-	for (int i = 0; i < 10; ++i)
-	{
-		params[i].camera = &camera;
-		params[i].colorData = m_colorData;
-		params[i].scene = scene;
-		params[i].minY = i * (1080 / 10);
-		params[i].rowsToRender = (1080 / 10);
-	}
+	Renderer* renderer = Renderer::GetInstance();
+	renderer->Draw2DQuad(AABB2(Vector2(-1.f), Vector2(1.f)), AABB2::UNIT_SQUARE_OFFCENTER, Rgba::WHITE, material);
 
-	// Spin up threads
-	ThreadHandle_t threads[10];
-	for (int i = 0; i < 10; ++i)
-	{
-		threads[i] = Thread::Create(ThreadWork_Draw, &params[i]);
-	}
+// 	ProfileScoped test("RayTraceRenderer::Draw"); UNUSED(test);
 // 
-	// Wait for threads to finish
-	for (int i = 0; i < 10; ++i)
-	{
-		threads[i]->join();
-		ConsolePrintf(Rgba::GREEN, "Thread %i joined", i);
-	}
+// 	// Make the camera
+// 	Vector3 lookFrom = Vector3(128.f, 300.f, -20.f);
+// 	Vector3 lookAt = Vector3(128.f, 256.f, 32.f);
+// 	float focusDistance = (lookAt - lookFrom).GetLength();
+// 
+// 	RayTraceCamera camera(lookFrom, lookAt, Vector3::DIRECTION_UP, 75.f, ((float) m_pixelDimensions.x / (float) m_pixelDimensions.y), 0.1f, focusDistance);
+// 	DrawParams params[10];
+// 
+// 	for (int i = 0; i < 10; ++i)
+// 	{
+// 		params[i].camera = &camera;
+// 		params[i].colorData = m_colorData;
+// 		params[i].scene = scene;
+// 		params[i].minY = i * (1080 / 10);
+// 		params[i].rowsToRender = (1080 / 10);
+// 	}
+// 
+// 	// Spin up threads
+// 	ThreadHandle_t threads[10];
+// 	for (int i = 0; i < 10; ++i)
+// 	{
+// 		threads[i] = Thread::Create(ThreadWork_Draw, &params[i]);
+// 	}
+// // 
+// 	// Wait for threads to finish
+// 	for (int i = 0; i < 10; ++i)
+// 	{
+// 		threads[i]->join();
+// 		ConsolePrintf(Rgba::GREEN, "Thread %i joined", i);
+// 	}
 }
 
 void RayTraceRenderer::WriteToFile(const char* filename)
@@ -432,6 +449,9 @@ void RayTraceRenderer::Initialize()
 	// Initialize the output texture
 	s_instance->m_outputTexture = new Texture();
 	s_instance->m_outputTexture->InitializeAsImageTexture(Window::GetInstance()->GetDimensions());
+
+	s_instance->m_computeShader = new ComputeShader();
+	s_instance->m_computeShader->Initialize("Data/ComputeShaders/VoxelRender.cs");
 }
 
 void RayTraceRenderer::ShutDown()
