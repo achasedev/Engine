@@ -10,7 +10,9 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Input/InputSystem.hpp"
-#define WIN32_LEAN_AND_MEAN			// Always #define this before #including <windows.h>
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif		// Always #define this before #including <windows.h>
 #include <windows.h>
 
 // Singleton instance

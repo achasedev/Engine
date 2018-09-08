@@ -4,7 +4,9 @@
 /* Date: March 27th, 2017
 /* Description: Implementation of the Mouse class
 /************************************************************************/
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <Windows.h>
 #include "Engine/Core/Window.hpp"
 #include "Engine/Input/Mouse.hpp"

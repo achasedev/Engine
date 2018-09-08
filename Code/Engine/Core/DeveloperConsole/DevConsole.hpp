@@ -23,6 +23,20 @@ struct ConsoleOutputText
 {
 	std::string m_text;
 	Rgba m_color;
+	int m_threadID; // Thread that called "ConsolePrintf"
+};
+
+// For the RemoteCommandService, and any other system that wants to listen
+// to ConsolePrintf messages
+typedef void(*DevConsole_cb)(ConsoleOutputText text, void* args);
+
+struct DevConsoleHook_t
+{
+	DevConsoleHook_t(DevConsole_cb callbackP, void* argsP)
+		: callback(callbackP), args(argsP) {}
+
+	DevConsole_cb callback;
+	void* args;
 };
 
 class DevConsole 
@@ -58,6 +72,12 @@ public:
 	static void			ToggleConsole();
 	static void			HideLogWindow();
 	static void			ShowLogWindow();
+
+	static void			AddConsoleHook(DevConsole_cb callback, void* args = nullptr);
+	static void			RemoveConsoleHook(DevConsole_cb callback);
+
+	void				FlushOutputQueue();
+
 
 private:
 	//-----Private Methods-----
@@ -120,6 +140,8 @@ private:
 
 	SpriteAnimSet*	m_FLChanAnimations;
 	float			m_FLChanSecondsPerDance;
+
+	std::vector<DevConsoleHook_t> m_consoleHooks;	// Callbacks to be called when a message is printed to the log
 
 	// Constants
 	static const Rgba INPUT_BOX_COLOR;

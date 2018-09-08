@@ -8,7 +8,9 @@
 /************************************************************************/
 #include "Engine/Input/XboxController.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <Windows.h>
 #include <Xinput.h>
 #pragma comment( lib, "xinput9_1_0" ) // Link in the xinput.lib static library // #Eiserloh: Xinput 1_4 doesn't work in Windows 7; use 9_1_0 explicitly for broadest compatibility

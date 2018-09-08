@@ -6,7 +6,9 @@
 /* Bugs: None
 /* Description: Implementation of the Texture Class
 /************************************************************************/
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <Windows.h>
 #include "Engine/Core/Image.hpp"
 #include "Engine/Assets/AssetDB.hpp"

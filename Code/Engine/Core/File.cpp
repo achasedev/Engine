@@ -11,7 +11,9 @@
 #include <cstdlib>
 
 // For Windows directory functions
-#define WIN32_LEAN_AND_MEAN		// Always #define this before #including <windows.h>
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>			// #include this (massive, platform-specific) header in very few places
 
 TODO("Safety checks, if file is open already or not, if file is loaded into memory or not");
