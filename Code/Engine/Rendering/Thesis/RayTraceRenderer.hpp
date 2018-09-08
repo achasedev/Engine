@@ -10,6 +10,7 @@
 class Rgba;
 class Camera;
 class OctreeGrid;
+class ComputeShader;
 
 class RayTraceRenderer
 {
@@ -27,6 +28,10 @@ public:
 
 	// Accessors
 	static RayTraceRenderer*	GetInstance();
+
+	IntVector3	GetGlobalMaxItemDimensions();
+	IntVector3	GetSingleGroupMaxItemDimensions();
+	int			GetWorkGroupMaxItemCount();
 
 
 private:
@@ -48,4 +53,6 @@ private:
 
 	static RayTraceRenderer* s_instance;	// Singleton instance
 
+	Texture* m_outputTexture = nullptr;
+	ComputeShader* m_computeShader = nullptr;
 };

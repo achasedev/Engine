@@ -20,6 +20,9 @@
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 #include "Engine/Rendering/Thesis/OctreeGrid.hpp"
 #include "Engine/Math/AABB3.hpp"
+#include "Engine/Rendering/OpenGL/glFunctions.hpp"
+#include "Engine/Rendering/Resources/Texture.hpp"
+#include "Engine/Core/Window.hpp"
 
 #include "ThirdParty/stb/stb_image_write.h"
 #include <cstdlib>
@@ -389,28 +392,6 @@ void RayTraceRenderer::Draw(OctreeGrid* scene)
 	float focusDistance = (lookAt - lookFrom).GetLength();
 
 	RayTraceCamera camera(lookFrom, lookAt, Vector3::DIRECTION_UP, 75.f, ((float) m_pixelDimensions.x / (float) m_pixelDimensions.y), 0.1f, focusDistance);
-
-	// Make a few spheres
-	//Hitable *hitables[4];
-
-	// Mine
-	//hitables[0] = new RaySphere(Vector3(-10.f, 0.f, 50.f), 5.f, new RayMaterial_Diffuse(Vector3(0.f, 0.f, 1.f)));
-	//hitables[1] = new RaySphere(Vector3(10.f, 0.f, 50.f), 2.f, new RayMaterial_Diffuse(Vector3(1.f, 0.f, 0.f)));
-	//hitables[2] = new RaySphere(Vector3(0.f, 0.f, 100.f), 20.f, new RayMaterial_Metal(Vector3(0.8f, 0.8f, 0.8f)));
-	//hitables[3] = new RaySphere(Vector3(0.f, -100.f, 50.f), 84.5f, new RayMaterial_Diffuse(Vector3(0.f, 1.f, 0.f)));
-
-	// His
-	//hitables[0] = new RaySphere(Vector3(0.f, 0.f, 5.f), 0.5f, new RayMaterial_Diffuse(Vector3(0.8f, 0.3f, 0.3f)));
-	//hitables[1] = new RaySphere(Vector3(0.f, -100.5f, 5.f), 100.f, new RayMaterial_Diffuse(Vector3(0.8f, 0.8f, 0.f)));
-	//hitables[2] = new RaySphere(Vector3(1.f, 0.f, 5.f), 0.5f, new RayMaterial_Metal(Vector3(0.8f, 0.6f, 0.2f)));
-	//hitables[3] = new RaySphere(Vector3(-1.f, 0.f, 5.f), 0.5f, new RayMaterial_Dielectric(1.5f));
-
-	//Hitable* collection = new HitableList(hitables, 4);
-	//Hitable* scene = GenerateRandomScene();
-
-	// Positions of the sphere and camera in camera space, so origin should always be (0,0,0)
-	//Vector3 spherePosition = (camera->GetViewMatrix() * Vector4(0.f, 0.f, 0.f, 1.f)).xyz();
-// 
 	DrawParams params[10];
 
 	for (int i = 0; i < 10; ++i)
@@ -421,19 +402,7 @@ void RayTraceRenderer::Draw(OctreeGrid* scene)
 		params[i].minY = i * (1080 / 10);
 		params[i].rowsToRender = (1080 / 10);
 	}
-// 
-// 	 	DrawParams params;
-// 
-// 
-// 		params.camera = &camera;
-// 		params.colorData = m_colorData;
-// 		params.scene = scene;
-// 		params.minY = 0;
-// 		params.rowsToRender = 1080;
-// 
-// 		ThreadWork_Draw(&params);
-// 	
-// 		ConsolePrintf("done");
+
 	// Spin up threads
 	ThreadHandle_t threads[10];
 	for (int i = 0; i < 10; ++i)
@@ -447,34 +416,6 @@ void RayTraceRenderer::Draw(OctreeGrid* scene)
 		threads[i]->join();
 		ConsolePrintf(Rgba::GREEN, "Thread %i joined", i);
 	}
-
-
-	// Pixels are drawn from top left to bottom right, but (0,0) is the bottom left
-	//for (int y = m_pixelDimensions.y - 1; y >= 0; --y)
-	//{
-	//	for (int x = 0; x < m_pixelDimensions.x; ++x)
-	//	{
-	//		Vector3 colorValues = Vector3::ZERO;
-	//
-	//		int numSamples = 100;
-	//		for (int sampleNumber = 0; sampleNumber < numSamples; ++sampleNumber)
-	//		{
-	//			float u = ((float)x + GetRandomFloatZeroToOne()) / (float)m_pixelDimensions.x;
-	//			float v = ((float)y + GetRandomFloatZeroToOne()) / (float)m_pixelDimensions.y;
-	//
-	//			//Ray ray = GetRayForUV(u, v, camera);
-	//			Ray ray = camera.GetRay(u, v);
-	//			colorValues += GetColorForRay(ray, scene, 0);
-	//		}
-	//
-	//		colorValues /= numSamples;
-	//		colorValues = Vector3(Sqrt(colorValues.x), Sqrt(colorValues.y), Sqrt(colorValues.z));
-	//		Rgba finalColor(colorValues.x, colorValues.y, colorValues.z, 1.0f);
-	//
-	//		int index = y * m_pixelDimensions.x + x;
-	//		m_colorData[index] = finalColor;
-	//	}
-	//}
 }
 
 void RayTraceRenderer::WriteToFile(const char* filename)
@@ -488,6 +429,10 @@ void RayTraceRenderer::Initialize()
 {
 	s_instance = new RayTraceRenderer();
 	RegisterConsoleCommands();
+
+	// Initialize the output texture
+	s_instance->m_outputTexture = new Texture();
+	s_instance->m_outputTexture->InitializeAsImageTexture(Window::GetInstance()->GetDimensions());
 }
 
 void RayTraceRenderer::ShutDown()
@@ -499,4 +444,41 @@ void RayTraceRenderer::ShutDown()
 RayTraceRenderer* RayTraceRenderer::GetInstance()
 {
 	return s_instance;
+}
+
+IntVector3 RayTraceRenderer::GetGlobalMaxItemDimensions()
+{
+	IntVector3 workGroupTotalDimensions;
+
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &workGroupTotalDimensions.x);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &workGroupTotalDimensions.y);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &workGroupTotalDimensions.z);
+
+	GL_CHECK_ERROR();
+
+	return workGroupTotalDimensions;
+}
+
+IntVector3 RayTraceRenderer::GetSingleGroupMaxItemDimensions()
+{
+	IntVector3 workGroupDimensions;
+
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &workGroupDimensions.x);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &workGroupDimensions.y);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &workGroupDimensions.z);
+
+	GL_CHECK_ERROR();
+
+	return workGroupDimensions;
+}
+
+int RayTraceRenderer::GetWorkGroupMaxItemCount()
+{
+	int maxWorkGroupUnitCount;
+
+	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &maxWorkGroupUnitCount);
+
+	GL_CHECK_ERROR();
+
+	return maxWorkGroupUnitCount;
 }

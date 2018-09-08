@@ -318,6 +318,7 @@
     <ClCompile Include="Rendering\Animation\Animator.cpp" />
     <ClCompile Include="Rendering\Animation\Pose.cpp" />
     <ClCompile Include="Rendering\Animation\Skeleton.cpp" />
+    <ClCompile Include="Rendering\Buffers\ShaderStorageBuffer.cpp" />
     <ClCompile Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.cpp" />
     <ClCompile Include="Rendering\Resources\BitmapFont.cpp" />
     <ClCompile Include="Rendering\Core\Camera.cpp" />
@@ -349,6 +350,7 @@
     <ClCompile Include="Rendering\Core\OrbitCamera.cpp" />
     <ClCompile Include="Rendering\Particles\Particle.cpp" />
     <ClCompile Include="Rendering\Particles\ParticleEmitter.cpp" />
+    <ClCompile Include="Rendering\Shaders\ComputeShader.cpp" />
     <ClCompile Include="Rendering\Shaders\PropertyBlockDescription.cpp" />
     <ClCompile Include="Rendering\Shaders\PropertyDescription.cpp" />
     <ClCompile Include="Rendering\Core\Renderable.cpp" />
@@ -458,6 +460,7 @@
     <ClInclude Include="Rendering\Animation\Animator.hpp" />
     <ClInclude Include="Rendering\Animation\Pose.hpp" />
     <ClInclude Include="Rendering\Animation\Skeleton.hpp" />
+    <ClInclude Include="Rendering\Buffers\ShaderStorageBuffer.hpp" />
     <ClInclude Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.hpp" />
     <ClInclude Include="Rendering\Resources\BitmapFont.hpp" />
     <ClInclude Include="Rendering\Core\Camera.hpp" />
@@ -489,6 +492,7 @@
     <ClInclude Include="Rendering\Core\OrbitCamera.hpp" />
     <ClInclude Include="Rendering\Particles\Particle.hpp" />
     <ClInclude Include="Rendering\Particles\ParticleEmitter.hpp" />
+    <ClInclude Include="Rendering\Shaders\ComputeShader.hpp" />
     <ClInclude Include="Rendering\Shaders\PropertyBlockDescription.hpp" />
     <ClInclude Include="Rendering\Shaders\PropertyDescription.hpp" />
     <ClInclude Include="Rendering\Core\Renderable.hpp" />

@@ -96,6 +96,7 @@ extern PFNGLBINDBUFFERPROC			glBindBuffer;
 extern PFNGLBINDBUFFERBASEPROC		glBindBufferBase;
 extern PFNGLBUFFERDATAPROC			glBufferData;
 extern PFNGLDELETEBUFFERSPROC       glDeleteBuffers;
+extern PFNGLMAPBUFFERPROC			glMapBuffer;
 
 // FrameBuffer
 extern PFNGLGENFRAMEBUFFERSPROC			glGenFramebuffers;
@@ -122,6 +123,7 @@ extern PFNGLTEXSTORAGE2DPROC		glTexStorage2D;
 extern PFNGLTEXSUBIMAGE2DPROC		glTexSubImage2D;
 extern PFNGLDELETETEXTURESPROC		glDeleteTextures;	
 extern PFNGLGENERATEMIPMAPPROC		glGenerateMipmap;
+extern PFNGLBINDIMAGETEXTUREPROC	glBindImageTexture;
 
 // Generating samplers
 extern PFNGLGENSAMPLERSPROC			glGenSamplers;
@@ -133,7 +135,8 @@ extern PFNGLSAMPLERPARAMETERFVPROC	glSamplerParameterfv;
 // Misc
 extern PFNGLGETERRORPROC			glGetError;
 extern PFNGLREADPIXELSPROC			glReadPixels;
-
+extern PFNGLGETINTEGERI_VPROC		glGetIntegeri_v;
+extern PFNGLGETINTEGERVPROC			glGetIntegerv;
 
 // For binding GL functions through macro
 // Use this to deduce type of the pointer so we can cast; 

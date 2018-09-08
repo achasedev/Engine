@@ -149,6 +149,36 @@ void Texture::CreateFromRawData(const IntVector2& dimensions, unsigned int numCo
 
 
 //-----------------------------------------------------------------------------------------------
+// Creates a texture to be used as an ouput image target when ray tracing
+//
+void Texture::InitializeAsImageTexture(const IntVector2& dimensions)
+{
+	if (m_textureHandle != NULL)
+	{
+		glDeleteTextures(1, &m_textureHandle);
+	}
+
+	m_textureFormat = TEXTURE_FORMAT_RGBA8;
+	m_dimensions = dimensions;
+
+	glGenTextures(1, &m_textureHandle);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_textureHandle);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, ToGLInternalFormat(m_textureFormat), dimensions.x, dimensions.y, 0, GL_RGBA, GL_FLOAT, NULL);
+	GL_CHECK_ERROR();
+
+	glBindImageTexture(0, m_textureHandle, 0, GL_FALSE, 0, GL_WRITE_ONLY, ToGLInternalFormat(m_textureFormat));
+	GL_CHECK_ERROR();
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the dimensions of the texture
 //
 IntVector2 Texture::GetDimensions() const

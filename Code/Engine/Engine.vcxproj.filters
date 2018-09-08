@@ -377,6 +377,8 @@
     <ClCompile Include="Rendering\Thesis\RayTraceCamera.cpp" />
     <ClCompile Include="Networking\RemoteCommandService.cpp" />
     <ClCompile Include="Rendering\Thesis\OctreeGrid.cpp" />
+    <ClCompile Include="Rendering\Buffers\ShaderStorageBuffer.cpp" />
+    <ClCompile Include="Rendering\Shaders\ComputeShader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -730,5 +732,7 @@
     <ClInclude Include="Rendering\Thesis\RayTraceCamera.hpp" />
     <ClInclude Include="Networking\RemoteCommandService.hpp" />
     <ClInclude Include="Rendering\Thesis\OctreeGrid.hpp" />
+    <ClInclude Include="Rendering\Buffers\ShaderStorageBuffer.hpp" />
+    <ClInclude Include="Rendering\Shaders\ComputeShader.hpp" />
   </ItemGroup>
 </Project>

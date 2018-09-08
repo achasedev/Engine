@@ -28,6 +28,8 @@ public:
 	virtual void CreateFromImage(const Image* image, bool useMipMaps = false);
 	virtual void CreateFromRawData(const IntVector2& dimensions, unsigned int numComponents, const unsigned char* imageData, bool useMipMaps);
 	
+	void InitializeAsImageTexture(const IntVector2& dimensions);
+
 	IntVector2		GetDimensions() const;
 	unsigned int	GetHandle() const;
 	TextureType		GetTextureType() const;

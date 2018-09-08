@@ -85,6 +85,8 @@ PFNGLBINDBUFFERPROC			glBindBuffer = nullptr;
 PFNGLBINDBUFFERBASEPROC		glBindBufferBase = nullptr;
 PFNGLBUFFERDATAPROC			glBufferData = nullptr;
 PFNGLDELETEBUFFERSPROC      glDeleteBuffers = nullptr;
+PFNGLMAPBUFFERPROC			glMapBuffer = nullptr;
+
 
 //----------Frame Buffer----------
 PFNGLGENFRAMEBUFFERSPROC			glGenFramebuffers = nullptr;
@@ -115,6 +117,8 @@ PFNGLTEXSUBIMAGE2DPROC		glTexSubImage2D = nullptr;
 PFNGLDELETETEXTURESPROC		glDeleteTextures = nullptr;	
 PFNGLGENERATEMIPMAPPROC		glGenerateMipmap = nullptr;
 
+PFNGLBINDIMAGETEXTUREPROC	glBindImageTexture = nullptr;
+
 
 //-----Samplers-----
 PFNGLGENSAMPLERSPROC		glGenSamplers = nullptr;
@@ -127,6 +131,8 @@ PFNGLSAMPLERPARAMETERFVPROC	glSamplerParameterfv = nullptr;
 //-----Misc-----
 PFNGLGETERRORPROC			glGetError = nullptr;
 PFNGLREADPIXELSPROC			glReadPixels = nullptr;
+PFNGLGETINTEGERI_VPROC		glGetIntegeri_v = nullptr;
+PFNGLGETINTEGERVPROC		glGetIntegerv = nullptr;
 
 //-----------------------------------------------------------------------------------------------
 //----------------------------------------Local Functions----------------------------------------
@@ -338,6 +344,7 @@ void BindGLFunctions()
 	GL_BIND_FUNCTION(glBindBufferBase);
 	GL_BIND_FUNCTION(glBufferData);
 	GL_BIND_FUNCTION(glDeleteBuffers);
+	GL_BIND_FUNCTION(glMapBuffer);
 
 	// Frame Buffer
 	GL_BIND_FUNCTION(glGenFramebuffers);
@@ -365,6 +372,7 @@ void BindGLFunctions()
 	GL_BIND_FUNCTION(glTexSubImage2D);
 	GL_BIND_FUNCTION(glDeleteTextures);	
 	GL_BIND_FUNCTION(glGenerateMipmap);
+	GL_BIND_FUNCTION(glBindImageTexture);
 
 	// Sampler generation
 	GL_BIND_FUNCTION(glGenSamplers);
@@ -376,6 +384,8 @@ void BindGLFunctions()
 	// Misc
 	GL_BIND_FUNCTION(glGetError);
 	GL_BIND_FUNCTION(glReadPixels);
+	GL_BIND_FUNCTION(glGetIntegeri_v);
+	GL_BIND_FUNCTION(glGetIntegerv);
 }
 
 
