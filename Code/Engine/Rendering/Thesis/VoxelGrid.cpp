@@ -18,16 +18,22 @@ void VoxelGrid::Initialize()
 	for (int i = 0; i < VOXEL_COUNT; ++i)
 	{
 		Rgba color = Rgba::GetRandomColor();
+ 		//Rgba color = Rgba::RED;
+// 
+// 		if (i % 2 == 0)
+// 		{
+// 			color = Rgba::BLUE;
+// 		}
 
 		float red, green, blue, alpha;
 		color.GetAsFloats(red, green, blue, alpha);
 		m_octree.voxels[i].color = Vector3(red, green, blue);
 
 		// Set all flags to solid
-		for (int childIndex = 0; childIndex < 8; ++childIndex)
-		{
-			m_octree.voxels[i].solidFlags[childIndex] = true;
-		}
+// 		for (int childIndex = 0; childIndex < 8; ++childIndex)
+// 		{
+// 			m_octree.voxels[i].solidFlags[childIndex] = true;
+// 		}
 
 		if (i == 0)
 		{
@@ -38,6 +44,11 @@ void VoxelGrid::Initialize()
 
 void VoxelGrid::SetupForDraw()
 {
-	m_gpuBuffer.CopyToGPU(sizeof(OctreeStructure), &m_octree);
-	//m_gpuBuffer.Bind(10);
+	static bool test = true;
+	if (test)
+	{
+		m_gpuBuffer.Bind(10);
+		m_gpuBuffer.CopyToGPU(sizeof(OctreeStructure), &m_octree);
+		test = false;
+	}
 }

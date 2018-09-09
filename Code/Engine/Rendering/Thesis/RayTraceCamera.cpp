@@ -7,18 +7,7 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Rendering/Thesis/RayTraceCamera.hpp"
 
-struct RayTraceCameraData
-{
-	Vector3 m_origin;					// Where the camera is positioned
-	Vector3 m_lowerLeftCorner;			// The lower left corner in camera space of the view plane
-	Vector3 m_horizontalDirection;		// The "right" direction in screen space, NOT normalized
-	Vector3 m_verticalDirection;		// The "up" direction in screen space, NOT normalized
-	Vector3 u;							// Camera basis vectors
-	Vector3 v;
-	Vector3 w;							
 
-	float m_lensRadius;					// For depth of field effects
-};
 
 //-----------------------------------------------------------------------------------------------
 // Constructor
@@ -41,7 +30,7 @@ RayTraceCamera::RayTraceCamera(Vector3 lookFrom, Vector3 lookAt, Vector3 up, flo
 	data.m_horizontalDirection = 2.f * halfWidth * focusDistance * data.u;
 	data.m_verticalDirection = 2.f * halfHeight * focusDistance * data.v;
 
-	m_gpuBuffer.SetCPUData(data);
+	m_gpuBuffer.SetCPUAndGPUData(sizeof(data), &data);
 }
 
 
@@ -65,4 +54,9 @@ unsigned int RayTraceCamera::GetUniformBufferHandle()
 void RayTraceCamera::UpdateGPUBuffer()
 {
 	m_gpuBuffer.CheckAndUpdateGPUData();
+}
+
+RayTraceCameraData RayTraceCamera::GetData()
+{
+	return *(m_gpuBuffer.GetCPUBufferAsType<RayTraceCameraData>());
 }

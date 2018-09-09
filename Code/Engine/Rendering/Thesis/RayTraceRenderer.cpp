@@ -41,17 +41,21 @@ RayTraceRenderer::RayTraceRenderer()
 	m_outputTexture = new Texture();
 	m_outputTexture->InitializeAsImageTexture(Window::GetInstance()->GetDimensions());
 
+	IntVector2 dimensions = Window::GetInstance()->GetDimensions();
+	m_testColorData = (Rgba*)malloc(sizeof(Rgba) * dimensions.x * dimensions.y);
+
 	// Compute Shader
 	m_computeShader = new ComputeShader();
 	m_computeShader->Initialize("Data/ComputeShaders/VoxelRender.cs");
 
 	// Camera
 	Vector3 lookFrom = Vector3(128.f, 300.f, -20.f);
-	Vector3 lookAt = Vector3(128.f, 256.f, 32.f);
+	Vector3 lookAt = Vector3(128.f, 256.f, 64.f);
 	float focusDistance = (lookAt - lookFrom).GetLength();
 
-	IntVector2 dimensions = m_outputTexture->GetDimensions();
-	m_camera = new RayTraceCamera(lookFrom, lookAt, Vector3::DIRECTION_UP, 75.f, ((float)dimensions.x / (float)dimensions.y), 0.1f, focusDistance);
+	m_camera = new RayTraceCamera(lookFrom, lookAt, Vector3::DIRECTION_UP, 90.f, ((float)dimensions.x / (float)dimensions.y), 0.1f, focusDistance);
+	GLuint cameraHandle = m_camera->GetUniformBufferHandle();
+	glBindBufferBase(GL_UNIFORM_BUFFER, 11, cameraHandle);
 }
 
 void RayTraceRenderer::RegisterConsoleCommands()
@@ -400,10 +404,8 @@ void ThreadWork_Draw(void* params)
 
 void RayTraceRenderer::Draw(VoxelGrid* scene)
 {
-	// Bind the camera
+	// Camera UBO
 	m_camera->UpdateGPUBuffer();
-	GLuint cameraHandle = m_camera->GetUniformBufferHandle();
-	//glBindBufferBase(GL_UNIFORM_BUFFER, 11, cameraHandle);
 
 	// Bind the grid buffer
 	scene->SetupForDraw();
@@ -503,3 +505,380 @@ int RayTraceRenderer::GetWorkGroupMaxItemCount()
 
 	return maxWorkGroupUnitCount;
 }
+
+
+/////fdhsjkfdjklasdfjk;ldsafklj;dafskjl;dafskj;ladf;kljfdsak;ljfasd;kljdfas;jlkadfs;jkla;ljkasdf;ljkasd;jfklsadfjklaf;akljfddfsjklfasdj;klsafdjlk;fasd;ljkfasdjkls;afdasjdf;lkfasdjklafsd;ljfads;kjl
+
+//-------------------------------------BUFFER DATA--------------------------------------------
+
+
+//-------------------------------------STRUCTS DATA--------------------------------------------
+
+struct RayHit
+{
+	Vector3 position;
+	Vector3 normal;
+	float t;
+	Vector3 color;
+	bool hit;
+	bool isFinal;
+	int gridID;
+	int level;
+};
+
+struct aabb3
+{
+	Vector3 mins;
+	Vector3 maxs;
+};
+
+struct PendingHit
+{
+	int gridID;
+	int level;
+};
+
+//-------------------------------------FUNCTIONS--------------------------------------------
+
+/*void AddHitsToStack(RayHit hits[8], int hitCount)
+{
+	for (int i = hitCount - 1; i >= 0; --i)
+	{
+		PendingHit pHit;
+		pHit.gridID = hits[i].gridID;
+		pHit.level = hits[i].level;
+
+		g_hitStack[g_pendingHitCount] = pHit;
+		g_pendingHitCount++;
+	}
+}
+
+PendingHit GetNextPendingHit()
+{
+	g_pendingHitCount--;
+	return g_hitStack[g_pendingHitCount];
+}*/
+
+#include "Engine/Core/Time/Clock.hpp"
+#include "Engine/Core/Time/Time.hpp"
+
+// Utility Functions
+float GetRandomFloatZeroToOneTest()
+{
+	float time = (float) TimeSystem::PerformanceCountToSeconds(Clock::GetMasterTotalTime());
+	Vector2 seed = Vector2(time);
+
+	float test = SinDegrees(DotProduct(seed, Vector2(12.9898f, 78.233f))) * 43758.5453f;
+	return test - (int)test;
+}
+
+Vector2 GetRandomPointWithinCircleTest()
+{
+	return Vector2(GetRandomFloatZeroToOneTest());
+}
+
+Ray GetRay(float s, float t)
+{
+	RayTraceCameraData data = RayTraceRenderer::GetInstance()->GetCamera()->GetData();
+	Vector2 randomDirection = data.m_lensRadius * GetRandomPointWithinCircleTest();
+	Vector3 randomOffset = data.u * randomDirection.x + data.v * randomDirection.y;
+
+	Vector3 origin = data.m_origin + randomOffset;
+	Vector3 direction = data.m_lowerLeftCorner + s * data.m_horizontalDirection + t * data.m_verticalDirection - data.m_origin - randomOffset;
+	return Ray(origin, direction);
+}
+
+Vector3 GetPointAtPosition(Ray ray, float t)
+{
+	return ray.m_position + t * ray.m_direction;
+}
+
+
+aabb3 GetBounds(int level, int gridID)
+{
+	if (level == 0)
+	{
+		aabb3 result;
+		result.mins = Vector3(0.0f);
+		result.maxs = Vector3(256.0);
+		return result;
+	}
+
+	int ancestry[9];
+	ancestry[level] = gridID;
+
+	for (int i = level - 1; i >= 0; i--)
+	{
+		int childIndex = ancestry[i + 1];
+		int parentIndex = (childIndex - 1) / 8;
+		ancestry[i] = parentIndex;
+	}
+
+	aabb3 workingBounds;
+	workingBounds.mins = Vector3(0.0);
+	workingBounds.maxs = Vector3(256.0);
+
+	for (int i = 1; i <= level; ++i)
+	{
+		int localOffset = ancestry[i] - (8 * ancestry[i - 1] + 1);
+		Vector3 dimensionKey = dimensionKeys[localOffset];
+
+		float divisor = pow(2.0f, i);
+		Vector3 dimensions = Vector3(256.f / divisor, 256.f / divisor, 256.f / divisor);
+
+		Vector3 bottomLeft = workingBounds.mins;
+		bottomLeft.x += dimensionKey.x * dimensions.x;
+		bottomLeft.y += dimensionKey.y * dimensions.y;
+		bottomLeft.z += dimensionKey.z * dimensions.z;
+
+		workingBounds.mins = bottomLeft;
+		workingBounds.maxs = bottomLeft + dimensions;
+	}
+
+	return workingBounds;
+
+
+
+	/*int parentIndex = (gridID - 1) / 8;
+	float divisor = pow(2.0f, level);
+
+	vec3 dimensions = vec3(GRID_DIMENSIONS.x / divisor, GRID_DIMENSIONS.y / divisor, GRID_DIMENSIONS.z / divisor);
+
+	aabb3 parentBounds = GetBounds(level - 1, parentIndex);
+
+	int childIndex = gridID - (8 * parentIndex + 1);
+	vec3 dimensionKey = dimensionKeys[childIndex];
+
+
+	vec3 bottomLeft = parentBounds.mins;
+	bottomLeft.x += dimensionKey.x * dimensions.x;
+	bottomLeft.y += dimensionKey.y * dimensions.y;
+	bottomLeft.z += dimensionKey.z * dimensions.z;
+
+	aabb3 result;
+	result.mins = bottomLeft;
+	result.maxs = bottomLeft + dimensions;
+
+	return result;*/
+}
+
+RayHit DoesRayIntersectBox(Ray ray, aabb3 box)
+{
+	float tmin = (box.mins.x - ray.m_position.x) / ray.m_direction.x;
+	float tmax = (box.maxs.x - ray.m_position.x) / ray.m_direction.x;
+
+	if (tmin > tmax)
+	{
+		float temp = tmin;
+		tmin = tmax;
+		tmax = temp;
+	}
+
+	float tymin = (box.mins.y - ray.m_position.y) / ray.m_direction.y;
+	float tymax = (box.maxs.y - ray.m_position.y) / ray.m_direction.y;
+
+	if (tymin > tymax)
+	{
+		float temp = tymin;
+		tymin = tymax;
+		tymax = temp;
+	}
+
+	if ((tmin > tymax) || (tymin > tmax))
+	{
+		RayHit hit;
+		hit.hit = false;
+		return hit;
+	}
+
+	if (tymin > tmin)
+		tmin = tymin;
+
+	if (tymax < tmax)
+		tmax = tymax;
+
+	float tzmin = (box.mins.z - ray.m_position.z) / ray.m_direction.z;
+	float tzmax = (box.maxs.z - ray.m_position.z) / ray.m_direction.z;
+
+	if (tzmin > tzmax)
+	{
+		float temp = tzmin;
+		tzmin = tzmax;
+		tzmax = temp;
+	}
+
+	if ((tmin > tzmax) || (tzmin > tmax))
+	{
+		RayHit hit;
+		hit.hit = false;
+		return hit;
+	}
+
+	if (tzmin > tmin)
+		tmin = tzmin;
+
+	if (tzmax < tmax)
+		tmax = tzmax;
+
+	RayHit hit;
+	hit.t = tmin;
+	hit.hit = true;
+
+	// Find the normal and the position
+
+	return hit;
+}
+
+RayHit GetRayHitInfo(Ray r, int level, int gridID, VoxelGrid* grid)
+{
+	aabb3 bounds = GetBounds(level, gridID);
+
+	RayHit hit = DoesRayIntersectBox(r, bounds);
+
+	if (hit.hit)
+	{
+		hit.color = grid->m_octree.voxels[gridID].color;
+		hit.isFinal = (level == 8);
+		hit.gridID = gridID;
+		hit.level = level;
+	}
+
+	return hit;
+}
+
+void GetColorForRay(Ray r, int level, int voxelIndex, RayHit* hits, int& totalHits, VoxelGrid* grid)
+{
+	totalHits = 0;
+
+	if (level == 8)
+	{
+		RayHit hit = GetRayHitInfo(r, level, voxelIndex, grid);
+
+		if (hit.hit)
+		{
+			hits[0] = hit;
+			totalHits = 1;
+			return;
+		}
+	}
+	else
+	{
+		for (int i = 0; i < 8; ++i)
+		{
+			int childVoxelIndex = 8 * voxelIndex + 1 + i;
+			//if (grid->m_octree.voxels[voxelIndex].solidFlags[i])
+			//{
+				RayHit hit = GetRayHitInfo(r, level + 1, childVoxelIndex, grid);
+
+				if (hit.hit)
+				{
+					hits[totalHits] = hit;
+					totalHits++;
+				}
+			//}
+		}
+
+		if (totalHits > 0)
+		{
+			// Sort
+			for (int i = 0; i < totalHits - 1; ++i)
+			{
+				for (int j = i + 1; j < totalHits; ++j)
+				{
+					if (hits[j].t < hits[i].t)
+					{
+						RayHit temp = hits[j];
+						hits[j] = hits[i];
+						hits[i] = temp;
+					}
+				}
+			}
+		}
+	}
+}
+
+
+
+void RayTraceRenderer::OfflineTest(VoxelGrid* grid)
+{
+	// Get the index in the global work group
+	for (int x = 0; x < m_outputTexture->GetDimensions().x; ++x)
+	{
+		for (int y = 0; y < m_outputTexture->GetDimensions().y; ++y)
+		{
+			IntVector2 pixel_coords = IntVector2(x, y);
+			IntVector2 imageDimensions = m_outputTexture->GetDimensions();
+
+			// Do the pixel work here
+			Vector3 finalColor = Vector3::ZERO;
+
+			int numSamples = 1;
+			for (int sampleNumber = 0; sampleNumber < numSamples; ++sampleNumber)
+			{
+				float u = (pixel_coords.x) / imageDimensions.x;
+				float v = (pixel_coords.y) / imageDimensions.y;
+
+				Ray ray = GetRay(u, v);
+
+				RayHit hits[8];
+				int totalHits = 0;
+
+				bool hitFinal = false;
+				int pendingHitCount = 1;
+				PendingHit hitStack[64];
+				hitStack[0].gridID = 0;
+				hitStack[0].level = 0;
+
+				while (pendingHitCount > 0)
+				{
+					pendingHitCount--;
+					PendingHit pHit = hitStack[pendingHitCount];
+					GetColorForRay(ray, pHit.level, pHit.gridID, hits, totalHits, grid);
+
+					// Check for early termination
+					if (totalHits > 0 && hits[0].isFinal)
+					{
+						hitFinal = true;
+						break;
+					}
+
+					for (int i = totalHits - 1; i >= 0; --i)
+					{
+						PendingHit pHitNew;
+						pHitNew.gridID = hits[i].gridID;
+						pHitNew.level = hits[i].level;
+
+						hitStack[pendingHitCount] = pHitNew;
+						pendingHitCount++;
+					}
+				}
+
+				if (hitFinal)
+				{
+					finalColor += hits[0].color;
+					break;
+				}
+			}
+
+			finalColor /= (float) numSamples;
+			finalColor = Vector3(Sqrt(finalColor.x), Sqrt(finalColor.y), Sqrt(finalColor.z));
+
+			// Output the color to the image
+			int index = pixel_coords.x * pixel_coords.y;
+			
+			Rgba colorFinal = Rgba(finalColor.x, finalColor.y, finalColor.z, 1.0f);
+			m_testColorData[index] = colorFinal;
+		}
+	}
+
+
+	stbi_flip_vertically_on_write(1);
+	stbi_write_png("Data/Images/SOS.png", m_outputTexture->GetDimensions().x, m_outputTexture->GetDimensions().y, 4, m_testColorData, 0);
+	ConsolePrintf(Rgba::GREEN, "All done");
+}
+
+RayTraceCamera* RayTraceRenderer::GetCamera()
+{
+	return m_camera;
+}
+

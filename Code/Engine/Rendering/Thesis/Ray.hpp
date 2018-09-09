@@ -19,8 +19,8 @@ public:
 	Vector3 GetDirection() const;
 	Vector3 GetPointAtParameter(float t) const;
 
-private:
-	//-----Private Data-----
+public:
+	//-----Public Data-----
 
 	Vector3 m_position;
 	Vector3 m_direction;

@@ -33,6 +33,9 @@ public:
 	IntVector3	GetSingleGroupMaxItemDimensions();
 	int			GetWorkGroupMaxItemCount();
 
+	void OfflineTest(VoxelGrid* grid);
+	
+	RayTraceCamera* GetCamera();
 
 private:
 	//-----Private Methods-----
@@ -53,4 +56,6 @@ private:
 	Texture* m_outputTexture = nullptr;
 	ComputeShader* m_computeShader = nullptr;
 	RayTraceCamera* m_camera = nullptr;
+
+	Rgba* m_testColorData = nullptr;
 };
