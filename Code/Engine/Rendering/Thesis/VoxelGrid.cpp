@@ -22,7 +22,12 @@ void VoxelGrid::Initialize()
 		float red, green, blue, alpha;
 		color.GetAsFloats(red, green, blue, alpha);
 		m_octree.voxels[i].color = Vector3(red, green, blue);
-		//m_octree.voxels[i].solidFlags = 0xFF;
+
+		// Set all flags to solid
+		for (int childIndex = 0; childIndex < 8; ++childIndex)
+		{
+			m_octree.voxels[i].solidFlags[childIndex] = true;
+		}
 
 		if (i == 0)
 		{
@@ -34,5 +39,5 @@ void VoxelGrid::Initialize()
 void VoxelGrid::SetupForDraw()
 {
 	m_gpuBuffer.CopyToGPU(sizeof(OctreeStructure), &m_octree);
-	m_gpuBuffer.Bind(0);
+	//m_gpuBuffer.Bind(10);
 }

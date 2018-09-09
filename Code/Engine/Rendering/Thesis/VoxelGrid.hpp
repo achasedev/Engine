@@ -18,6 +18,7 @@
 // Struct to represent a single tree node
 struct OctreeNode_t
 {
+	bool solidFlags[8];
 	Vector3 color;		// The color of the voxel
 	float paddingf;
 };

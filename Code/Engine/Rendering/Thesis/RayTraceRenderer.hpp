@@ -11,6 +11,7 @@ class Rgba;
 class Camera;
 class VoxelGrid;
 class ComputeShader;
+class RayTraceCamera;
 
 class RayTraceRenderer
 {
@@ -24,7 +25,6 @@ public:
 
 	// Drawing
 	void						Draw(VoxelGrid* scene);
-	void						WriteToFile(const char* filename);
 
 	// Accessors
 	static RayTraceRenderer*	GetInstance();
@@ -48,11 +48,9 @@ private:
 private:
 	//-----Private Data-----
 
-	IntVector2	m_pixelDimensions;			// Pixel dimensions to render to (dimensions of the color buffer)
-	Rgba*		m_colorData;				// Output "Framebuffer"
-
 	static RayTraceRenderer* s_instance;	// Singleton instance
 
 	Texture* m_outputTexture = nullptr;
 	ComputeShader* m_computeShader = nullptr;
+	RayTraceCamera* m_camera = nullptr;
 };

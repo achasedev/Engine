@@ -7,6 +7,7 @@
 #pragma once
 #include "Engine/Math/Vector3.hpp"
 #include "Engine/Rendering/Thesis/Ray.hpp"
+#include "Engine/Rendering/Buffers/UniformBuffer.hpp"
 
 class RayTraceCamera
 {
@@ -19,15 +20,14 @@ public:
 	Ray GetRay(float s, float t);
 
 
+	unsigned int GetUniformBufferHandle();
+
+	void UpdateGPUBuffer();
+
+
 private:
 	//-----Private Data-----
 
-	Vector3 m_origin;					// Where the camera is positioned
-	Vector3 m_lowerLeftCorner;			// The lower left corner in camera space of the view plane
-	Vector3 m_horizontalDirection;		// The "right" direction in screen space, NOT normalized
-	Vector3 m_verticalDirection;		// The "up" direction in screen space, NOT normalized
-	Vector3 u, v, w;					// Camera basis vectors
-	
-	float m_lensRadius;					// For depth of field effects
+	UniformBuffer m_gpuBuffer;
 
 };

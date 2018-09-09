@@ -36,9 +36,22 @@
 RayTraceRenderer* RayTraceRenderer::s_instance = nullptr;
 
 RayTraceRenderer::RayTraceRenderer()
-	: m_pixelDimensions(1920, 1080)
 {
-	m_colorData = (Rgba*)malloc(sizeof(Rgba) * 1920 * 1080);
+	// Initialize the output texture
+	m_outputTexture = new Texture();
+	m_outputTexture->InitializeAsImageTexture(Window::GetInstance()->GetDimensions());
+
+	// Compute Shader
+	m_computeShader = new ComputeShader();
+	m_computeShader->Initialize("Data/ComputeShaders/VoxelRender.cs");
+
+	// Camera
+	Vector3 lookFrom = Vector3(128.f, 300.f, -20.f);
+	Vector3 lookAt = Vector3(128.f, 256.f, 32.f);
+	float focusDistance = (lookAt - lookFrom).GetLength();
+
+	IntVector2 dimensions = m_outputTexture->GetDimensions();
+	m_camera = new RayTraceCamera(lookFrom, lookAt, Vector3::DIRECTION_UP, 75.f, ((float)dimensions.x / (float)dimensions.y), 0.1f, focusDistance);
 }
 
 void RayTraceRenderer::RegisterConsoleCommands()
@@ -387,9 +400,15 @@ void ThreadWork_Draw(void* params)
 
 void RayTraceRenderer::Draw(VoxelGrid* scene)
 {
+	// Bind the camera
+	m_camera->UpdateGPUBuffer();
+	GLuint cameraHandle = m_camera->GetUniformBufferHandle();
+	//glBindBufferBase(GL_UNIFORM_BUFFER, 11, cameraHandle);
+
 	// Bind the grid buffer
 	scene->SetupForDraw();
 
+	// Execute the ray trace
 	IntVector2 dimensions = m_outputTexture->GetDimensions();
 	m_computeShader->Execute(dimensions.x, dimensions.y, 1);
 
@@ -405,13 +424,7 @@ void RayTraceRenderer::Draw(VoxelGrid* scene)
 
 // 	ProfileScoped test("RayTraceRenderer::Draw"); UNUSED(test);
 // 
-// 	// Make the camera
-// 	Vector3 lookFrom = Vector3(128.f, 300.f, -20.f);
-// 	Vector3 lookAt = Vector3(128.f, 256.f, 32.f);
-// 	float focusDistance = (lookAt - lookFrom).GetLength();
-// 
-// 	RayTraceCamera camera(lookFrom, lookAt, Vector3::DIRECTION_UP, 75.f, ((float) m_pixelDimensions.x / (float) m_pixelDimensions.y), 0.1f, focusDistance);
-// 	DrawParams params[10];
+//DrawParams params[10];
 // 
 // 	for (int i = 0; i < 10; ++i)
 // 	{
@@ -437,24 +450,10 @@ void RayTraceRenderer::Draw(VoxelGrid* scene)
 // 	}
 }
 
-void RayTraceRenderer::WriteToFile(const char* filename)
-{
-	ProfileScoped test("RayTraceRenderer::WriteToFile"); UNUSED(test);
-	stbi_flip_vertically_on_write(1);
-	stbi_write_png(filename, m_pixelDimensions.x, m_pixelDimensions.y, 4, m_colorData, 0);
-}
-
 void RayTraceRenderer::Initialize()
 {
 	s_instance = new RayTraceRenderer();
 	RegisterConsoleCommands();
-
-	// Initialize the output texture
-	s_instance->m_outputTexture = new Texture();
-	s_instance->m_outputTexture->InitializeAsImageTexture(Window::GetInstance()->GetDimensions());
-
-	s_instance->m_computeShader = new ComputeShader();
-	s_instance->m_computeShader->Initialize("Data/ComputeShaders/VoxelRender.cs");
 }
 
 void RayTraceRenderer::ShutDown()
