@@ -49,8 +49,8 @@ RayTraceRenderer::RayTraceRenderer()
 	m_computeShader->Initialize("Data/ComputeShaders/VoxelRender.cs");
 
 	// Camera
-	Vector3 lookFrom = Vector3(128.f, 300.f, -20.f);
-	Vector3 lookAt = Vector3(128.f, 256.f, 64.f);
+	Vector3 lookFrom = Vector3(128.f, 300.f, -50.f);
+	Vector3 lookAt = Vector3(128.f, 128, 128.f);
 	float focusDistance = (lookAt - lookFrom).GetLength();
 
 	m_camera = new RayTraceCamera(lookFrom, lookAt, Vector3::DIRECTION_UP, 90.f, ((float)dimensions.x / (float)dimensions.y), 0.1f, focusDistance);

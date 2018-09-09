@@ -28,18 +28,18 @@ void VoxelGrid::Initialize()
 		float red, green, blue, alpha;
 		color.GetAsFloats(red, green, blue, alpha);
 		m_octree.voxels[i].color = Vector3(red, green, blue);
-
-		// Set all flags to solid
-// 		for (int childIndex = 0; childIndex < 8; ++childIndex)
-// 		{
-// 			m_octree.voxels[i].solidFlags[childIndex] = true;
-// 		}
-
-		if (i == 0)
-		{
-			ConsolePrintf("Color of first voxel is (%f,%f,%f)", red, green, blue);
-		}
 	}
+
+	m_octree.voxels[0].flags = 1;
+	// Set some to not be rendered
+	ZeroOut(1, 2);
+	ZeroOut(1, 3);
+	ZeroOut(1, 4);
+
+	ZeroOut(1, 5);
+	ZeroOut(1, 6);
+	ZeroOut(1, 7);
+	ZeroOut(1, 8);
 }
 
 void VoxelGrid::SetupForDraw()
@@ -48,7 +48,24 @@ void VoxelGrid::SetupForDraw()
 	if (test)
 	{
 		m_gpuBuffer.Bind(10);
+		size_t size = sizeof(OctreeStructure);
 		m_gpuBuffer.CopyToGPU(sizeof(OctreeStructure), &m_octree);
 		test = false;
+	}
+}
+
+void VoxelGrid::ZeroOut(int level, int parentIndex)
+{
+	m_octree.voxels[parentIndex].flags = 0;
+
+	if (level >= 8)
+	{
+		return;
+	}
+
+	for (int childOffset = 0; childOffset < 8; ++childOffset)
+	{
+		int childIndex = 8 * parentIndex + 1 + childOffset;
+		ZeroOut(level + 1, childIndex);
 	}
 }

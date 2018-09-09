@@ -19,8 +19,7 @@
 struct OctreeNode_t
 {
 	Vector3 color;		// The color of the voxel
-	float paddingf;
-	//bool solidFlags[8];
+	int flags  = 255;
 };
 
 struct OctreeStructure
@@ -41,7 +40,7 @@ public:
 private:
 	//-----Private Methods-----
 
-
+	void ZeroOut(int level, int parentIndex);
 
 public:
 
