@@ -379,6 +379,7 @@
     <ClCompile Include="Rendering\Buffers\ShaderStorageBuffer.cpp" />
     <ClCompile Include="Rendering\Shaders\ComputeShader.cpp" />
     <ClCompile Include="Rendering\Thesis\VoxelGrid.cpp" />
+    <ClCompile Include="Networking\Socket.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -734,5 +735,6 @@
     <ClInclude Include="Rendering\Buffers\ShaderStorageBuffer.hpp" />
     <ClInclude Include="Rendering\Shaders\ComputeShader.hpp" />
     <ClInclude Include="Rendering\Thesis\VoxelGrid.hpp" />
+    <ClInclude Include="Networking\Socket.hpp" />
   </ItemGroup>
 </Project>
