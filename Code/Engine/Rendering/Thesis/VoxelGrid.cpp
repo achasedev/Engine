@@ -13,7 +13,7 @@
 //
 void VoxelGrid::Initialize()
 {
-	m_octree.m_dimensions = IntVector3(256, 256, 256);
+	m_octree.m_dimensions = IntVector3(128, 128, 128);
 	ProfileScoped("VoxelGrid::Initialize()");
 	for (int i = 0; i < VOXEL_COUNT; ++i)
 	{
@@ -30,28 +30,27 @@ void VoxelGrid::Initialize()
 		m_octree.voxels[i].color = Vector3(red, green, blue);
 	}
 
-	m_octree.voxels[0].flags = 1;
+	m_octree.voxels[0].flags = 51;
 	// Set some to not be rendered
-	ZeroOut(1, 2);
 	ZeroOut(1, 3);
 	ZeroOut(1, 4);
-
-	ZeroOut(1, 5);
-	ZeroOut(1, 6);
 	ZeroOut(1, 7);
 	ZeroOut(1, 8);
+
+	m_gpuBuffer.Bind(10);
+	m_gpuBuffer.CopyToGPU(sizeof(OctreeStructure), &m_octree);
 }
 
 void VoxelGrid::SetupForDraw()
 {
-	static bool test = true;
-	if (test)
-	{
-		m_gpuBuffer.Bind(10);
-		size_t size = sizeof(OctreeStructure);
-		m_gpuBuffer.CopyToGPU(sizeof(OctreeStructure), &m_octree);
-		test = false;
-	}
+// 	static bool test = true;
+// 	if (test)
+// 	{
+// 		m_gpuBuffer.Bind(10);
+// 		size_t size = sizeof(OctreeStructure);
+// 		m_gpuBuffer.CopyToGPU(sizeof(OctreeStructure), &m_octree);
+// 		test = false;
+// 	}
 }
 
 void VoxelGrid::ZeroOut(int level, int parentIndex)

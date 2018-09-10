@@ -39,9 +39,11 @@ RayTraceRenderer::RayTraceRenderer()
 {
 	// Initialize the output texture
 	m_outputTexture = new Texture();
-	m_outputTexture->InitializeAsImageTexture(Window::GetInstance()->GetDimensions());
-
 	IntVector2 dimensions = Window::GetInstance()->GetDimensions();
+// 	dimensions.x /= 4;
+// 	dimensions.y /= 4;
+	//m_outputTexture->InitializeAsImageTexture(Window::GetInstance()->GetDimensions());
+	m_outputTexture->InitializeAsImageTexture(dimensions);
 	m_testColorData = (Rgba*)malloc(sizeof(Rgba) * dimensions.x * dimensions.y);
 
 	// Compute Shader
@@ -49,8 +51,8 @@ RayTraceRenderer::RayTraceRenderer()
 	m_computeShader->Initialize("Data/ComputeShaders/VoxelRender.cs");
 
 	// Camera
-	Vector3 lookFrom = Vector3(128.f, 300.f, -50.f);
-	Vector3 lookAt = Vector3(128.f, 128, 128.f);
+	Vector3 lookFrom = Vector3(64.f, 80.f, -20.f);
+	Vector3 lookAt = Vector3(64.f, 64.f, 16.f);
 	float focusDistance = (lookAt - lookFrom).GetLength();
 
 	m_camera = new RayTraceCamera(lookFrom, lookAt, Vector3::DIRECTION_UP, 90.f, ((float)dimensions.x / (float)dimensions.y), 0.1f, focusDistance);
@@ -412,7 +414,7 @@ void RayTraceRenderer::Draw(VoxelGrid* scene)
 
 	// Execute the ray trace
 	IntVector2 dimensions = m_outputTexture->GetDimensions();
-	m_computeShader->Execute(dimensions.x, dimensions.y, 1);
+	m_computeShader->Execute(dimensions.x / 16, dimensions.y / 16, 1);
 
 	// Make sure writing is done before reading
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);

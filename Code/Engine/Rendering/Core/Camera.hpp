@@ -23,51 +23,51 @@ public:
 	~Camera() {}
 
 	// Movement
-	void TranslateWorld(const Vector3& worldTranslation);
-	void TranslateLocal(const Vector3& localTranslation);
+	void					TranslateWorld(const Vector3& worldTranslation);
+	void					TranslateLocal(const Vector3& localTranslation);
 
-	void Rotate(const Vector3& rotation);
+	void					Rotate(const Vector3& rotation);
 
-	void SetTransform(const Transform& transform);
+	void					SetTransform(const Transform& transform);
 
-	void SetColorTarget(Texture* color_target);
-	void SetDepthTarget(Texture* depth_target);
+	void					SetColorTarget(Texture* color_target);
+	void					SetDepthTarget(Texture* depth_target);
 
 	// Buffers
-	void FinalizeFrameBuffer();	// Finalizes the frame buffer
-	void	FinalizeUniformBuffer();
-	GLuint	GetUniformBufferHandle() const;
+	void					FinalizeFrameBuffer();
+	void					FinalizeUniformBuffer();
+	GLuint					GetUniformBufferHandle() const;
 
 	// Model setters
-	void LookAt(const Vector3& position, const Vector3& target, const Vector3& up = Vector3::DIRECTION_UP); 
-	void SetCameraMatrix(const Matrix44& cameraMatrix);
-	void SetViewMatrix(const Matrix44& viewMatrix);
+	void					LookAt(const Vector3& position, const Vector3& target, const Vector3& up = Vector3::DIRECTION_UP);
+	void					SetCameraMatrix(const Matrix44& cameraMatrix);
+	void					SetViewMatrix(const Matrix44& viewMatrix);
 
 	// Projection settings
-	void SetProjection(const Matrix44& projection); 
-	void SetProjectionOrtho(float width, float height, float nearZ, float farZ); 
-	void SetProjectionPerspective(float fovDegrees, float nearZ, float farZ);
+	void					SetProjection(const Matrix44& projection); 
+	void					SetProjectionOrtho(float width, float height, float nearZ, float farZ); 
+	void					SetProjectionPerspective(float fovDegrees, float nearZ, float farZ);
 
 	// Other setters
-	void SetOrthoSize(float newSize);
-	void AdjustOrthoSize(float additiveModifier);
-	void SetOrthoSizeLimits(float min, float max);
+	void					SetOrthoSize(float newSize);
+	void					AdjustOrthoSize(float additiveModifier);
+	void					SetOrthoSizeLimits(float min, float max);
 	
-	void SetDrawOrder(unsigned int order);
+	void					SetDrawOrder(unsigned int order);
 
-	Matrix44 GetCameraMatrix() const;
-	Matrix44 GetViewMatrix() const;
-	Matrix44 GetProjectionMatrix() const;
+	Matrix44				GetCameraMatrix() const;
+	Matrix44				GetViewMatrix() const;
+	Matrix44				GetProjectionMatrix() const;
 
-	Vector3 GetPosition() const;
-	Vector3 GetRotation() const;
+	Vector3					GetPosition() const;
+	Vector3					GetRotation() const;
 
-	Vector3 GetForwardVector() const;
-	Vector3 GetRightVector() const;
-	Vector3 GetUpVector() const;
+	Vector3					GetForwardVector() const;
+	Vector3					GetRightVector() const;
+	Vector3					GetUpVector() const;
 
-	unsigned int GetFrameBufferHandle() const;
-	unsigned int GetDrawOrder() const;
+	unsigned int			GetFrameBufferHandle() const;
+	unsigned int			GetDrawOrder() const;
 
 
 private:
