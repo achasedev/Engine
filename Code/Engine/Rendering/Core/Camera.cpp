@@ -25,6 +25,8 @@ struct CameraBufferData
 	float	m_padding2;
 	Vector3 m_cameraPosition;
 	float	m_padding3;
+
+	Matrix44 m_inverseViewProjection;
 };
 
 //-----------------------------------------------------------------------------------------------
@@ -246,6 +248,8 @@ void Camera::FinalizeUniformBuffer()
 	bufferData.m_cameraForward	= GetForwardVector();
 	bufferData.m_cameraPosition = m_transform.position;
 
+	bufferData.m_inverseViewProjection = Matrix44::GetInverse(m_viewMatrix) * Matrix44::GetInverse(m_projectionMatrix);
+	
 	m_uniformBuffer.SetCPUAndGPUData(sizeof(CameraBufferData), &bufferData);
 }
 

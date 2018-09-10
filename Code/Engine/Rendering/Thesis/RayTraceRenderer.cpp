@@ -407,7 +407,7 @@ void ThreadWork_Draw(void* params)
 void RayTraceRenderer::Draw(VoxelGrid* scene)
 {
 	// Camera UBO
-	m_camera->UpdateGPUBuffer();
+	//m_camera->UpdateGPUBuffer();
 
 	// Bind the grid buffer
 	scene->SetupForDraw();

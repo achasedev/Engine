@@ -69,7 +69,6 @@ public:
 	unsigned int			GetFrameBufferHandle() const;
 	unsigned int			GetDrawOrder() const;
 
-
 private:
 	//-----Private Methods-----
 
