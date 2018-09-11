@@ -40,8 +40,8 @@ RayTraceRenderer::RayTraceRenderer()
 	// Initialize the output texture
 	m_outputTexture = new Texture();
 	IntVector2 dimensions = Window::GetInstance()->GetDimensions();
-	//dimensions.x /= 2;
- 	//dimensions.y /= 2;
+	dimensions.x /= 2;
+ 	dimensions.y /= 2;
 	//m_outputTexture->InitializeAsImageTexture(Window::GetInstance()->GetDimensions());
 	m_outputTexture->InitializeAsImageTexture(dimensions);
 	m_testColorData = (Rgba*)malloc(sizeof(Rgba) * dimensions.x * dimensions.y);
