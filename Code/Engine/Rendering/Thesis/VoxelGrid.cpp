@@ -30,12 +30,12 @@ void VoxelGrid::Initialize()
 		m_octree.voxels[i].color = Vector3(red, green, blue);
 	}
 
-	m_octree.voxels[0].flags = 51;
+/*	m_octree.voxels[0].flags = 51;*/
 	// Set some to not be rendered
-	ZeroOut(1, 3);
-	ZeroOut(1, 4);
-	ZeroOut(1, 7);
-	ZeroOut(1, 8);
+// 	ZeroOut(1, 3);
+// 	ZeroOut(1, 4);
+// 	ZeroOut(1, 7);
+// 	ZeroOut(1, 8);
 
 	m_gpuBuffer.Bind(10);
 	m_gpuBuffer.CopyToGPU(sizeof(OctreeStructure), &m_octree);
