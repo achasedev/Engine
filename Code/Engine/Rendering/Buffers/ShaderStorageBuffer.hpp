@@ -23,7 +23,8 @@ public:
 
 	void Bind(int bindSlot);
 
-	void* GetBufferData();
+	void* MapBufferData();
+	void UnmapBufferData();
 
 
 protected:

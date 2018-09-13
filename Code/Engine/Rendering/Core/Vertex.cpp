@@ -49,6 +49,17 @@ const VertexAttribute VertexSkinned::ATTRIBUTES[] =
 
 const unsigned int VertexSkinned::NUM_ATTRIBUTES = (sizeof(ATTRIBUTES) / sizeof(VertexAttribute));
 const VertexLayout VertexSkinned::LAYOUT = VertexLayout(sizeof(VertexSkinned), NUM_ATTRIBUTES, VertexSkinned::ATTRIBUTES);
+
+//-----VertexVoxel (position, color)-----
+const VertexAttribute VertexVoxel::ATTRIBUTES[] =
+{
+	VertexAttribute("POSITION", RDT_FLOAT,			3, false,	offsetof(VertexVoxel, m_position)),
+	VertexAttribute("COLOR",	RDT_UNSIGNED_BYTE,	4, true,	offsetof(VertexVoxel, m_color)),
+};
+
+const unsigned int VertexVoxel::NUM_ATTRIBUTES = (sizeof(ATTRIBUTES) / sizeof(VertexAttribute));
+const VertexLayout VertexVoxel::LAYOUT = VertexLayout(sizeof(VertexVoxel), NUM_ATTRIBUTES, VertexVoxel::ATTRIBUTES);
+
 //--------------------END VERTEX TYPES--------------------
 
 

@@ -85,15 +85,21 @@ void ShaderStorageBuffer::Bind(int bindSlot)
 //-----------------------------------------------------------------------------------------------
 // Returns a pointer to the head of the data on the GPU
 //
-void* ShaderStorageBuffer::GetBufferData()
+void* ShaderStorageBuffer::MapBufferData()
 {
 	// Ensure this buffer is bound
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_handle);
 
-	GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-
-	void* bufferData = glMapBuffer(GL_SHADER_STORAGE_BUFFER, bufMask);
+	void* bufferData = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
 	GL_CHECK_ERROR();
 
 	return bufferData;
+}
+
+void ShaderStorageBuffer::UnmapBufferData()
+{
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_handle);
+
+	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	GL_CHECK_ERROR();
 }

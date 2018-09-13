@@ -158,3 +158,25 @@ struct VertexSkinned
 	static const VertexLayout		LAYOUT;
 	static const unsigned int		NUM_ATTRIBUTES;
 };
+
+
+//-----------------------------------------------------------------------------------------------
+// Byte-aligned voxel vertex
+//
+struct VertexVoxel
+{
+	// Constructors
+	VertexVoxel() {};
+	VertexVoxel(const Vector3& position, const Rgba& color)
+		: m_position(position), m_color(color) {}
+
+	VertexVoxel(const VertexMaster& master)
+		: m_position(master.m_position), m_color(master.m_color) {}
+
+	Vector3 m_position;	// Position of the Vertex
+	Rgba	m_color;	// Color of the Vertex
+
+	static const VertexAttribute	ATTRIBUTES[];
+	static const VertexLayout		LAYOUT;
+	static const unsigned int		NUM_ATTRIBUTES;
+};

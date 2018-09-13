@@ -89,6 +89,7 @@ PFNGLBINDBUFFERBASEPROC		glBindBufferBase = nullptr;
 PFNGLBUFFERDATAPROC			glBufferData = nullptr;
 PFNGLDELETEBUFFERSPROC      glDeleteBuffers = nullptr;
 PFNGLMAPBUFFERPROC			glMapBuffer = nullptr;
+PFNGLUNMAPBUFFERPROC		glUnmapBuffer = nullptr;
 
 
 //----------Frame Buffer----------
@@ -351,6 +352,7 @@ void BindGLFunctions()
 	GL_BIND_FUNCTION(glBufferData);
 	GL_BIND_FUNCTION(glDeleteBuffers);
 	GL_BIND_FUNCTION(glMapBuffer);
+	GL_BIND_FUNCTION(glUnmapBuffer);
 
 	// Frame Buffer
 	GL_BIND_FUNCTION(glGenFramebuffers);

@@ -61,6 +61,8 @@ bool ComputeShader::Initialize(const char* filename)
 	// no longer need the shaders objects, you can detach them if you want
 	// (not necessary)
 	glDetachShader(m_programHandle, shaderID);
+
+	return true;
 }
 
 
@@ -74,6 +76,8 @@ void ComputeShader::Execute(int totalXItems, int totalYItems, int totalZItems)
 
 	glUseProgram(m_programHandle);
 	glDispatchCompute((GLuint)totalXItems, (GLuint)totalYItems, (GLuint)totalZItems);
+
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }
 
 //-----------------------------------------------------------------------------------------------
