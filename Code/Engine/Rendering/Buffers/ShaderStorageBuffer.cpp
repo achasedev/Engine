@@ -48,7 +48,7 @@ GLuint ShaderStorageBuffer::GetHandle() const
 bool ShaderStorageBuffer::CopyToGPU(size_t const byte_count, void const *data)
 {
 	// Don't do anything if there's no data to copy
-	if (data == nullptr || byte_count <= 0)
+	if (byte_count <= 0)
 	{
 		return false;
 	}
@@ -70,6 +70,30 @@ bool ShaderStorageBuffer::CopyToGPU(size_t const byte_count, void const *data)
 	// convenience
 	m_bufferSize = byte_count;
 	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Clears all the data in the buffer to 0's
+//
+bool ShaderStorageBuffer::Clear(size_t const byte_count)
+{
+	// Avoid putting too much on the stack
+	if (byte_count <= (1024 * 16))
+	{
+		void* data = alloca(byte_count);
+		memset(data, 0, byte_count);
+
+		return CopyToGPU(byte_count, data);
+	}
+
+	void* data = malloc(byte_count);
+	memset(data, 0, byte_count);
+
+	bool success = CopyToGPU(byte_count, data);
+	free(data);
+
+	return success;
 }
 
 

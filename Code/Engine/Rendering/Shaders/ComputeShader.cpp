@@ -66,7 +66,7 @@ bool ComputeShader::Initialize(const char* filename)
 }
 
 
-void ComputeShader::Execute(int totalXItems, int totalYItems, int totalZItems)
+void ComputeShader::Execute(int numGroupsX, int numGroupsY, int numGroupsZ)
 {
 	if (m_programHandle == NULL)
 	{
@@ -75,7 +75,21 @@ void ComputeShader::Execute(int totalXItems, int totalYItems, int totalZItems)
 	}
 
 	glUseProgram(m_programHandle);
-	glDispatchCompute((GLuint)totalXItems, (GLuint)totalYItems, (GLuint)totalZItems);
+	glDispatchCompute((GLuint)numGroupsX, (GLuint)numGroupsY, (GLuint)numGroupsZ);
+
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+}
+
+void ComputeShader::Execute(int numGroupsX, int numGroupsY, int numGroupsZ, int groupSizeX, int groupSizeY, int groupSizeZ)
+{
+	if (m_programHandle == NULL)
+	{
+		LogTaggedPrintf("COMPUTE_SHADER", "Error: Execute() called on a compute shader with NULL handle");
+		return;
+	}
+
+	glUseProgram(m_programHandle);
+	glDispatchComputeGroupSize((GLuint)numGroupsX, (GLuint)numGroupsY, (GLuint)numGroupsZ, (GLuint)groupSizeX, (GLuint)groupSizeY, (GLuint)groupSizeZ);
 
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }

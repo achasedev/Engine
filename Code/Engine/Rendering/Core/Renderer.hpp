@@ -27,7 +27,7 @@
 #define LIGHT_BUFFER_BINDING (3)	// Updated one per frame
 #define SKINNING_BONE_BINDING (4)
 
-#define SHADOW_TEXTURE_BINDING (8)	// Slot for the shadow texture
+#define SHADOW_TEXTURE_BINDING (5)	// Slot for the shadow texture
 
 // Class Predeclarations
 class Camera;

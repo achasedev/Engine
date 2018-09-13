@@ -16,15 +16,16 @@ public:
 	ShaderStorageBuffer();
 	~ShaderStorageBuffer();	// Destructor - Deletes it from the GPU
 
-	GLuint GetHandle() const;
+	GLuint	GetHandle() const;
 
 	// Moves data into this render buffer, and sends it to the GPU
-	bool CopyToGPU(size_t const byte_count, void const *data);
+	bool	CopyToGPU(size_t const byte_count, void const *data);
+	bool	Clear(size_t const byte_count);
 
-	void Bind(int bindSlot);
+	void	Bind(int bindSlot);
 
-	void* MapBufferData();
-	void UnmapBufferData();
+	void*	MapBufferData();
+	void	UnmapBufferData();
 
 
 protected:

@@ -73,8 +73,9 @@ PFNGLDELETEPROGRAMPROC		glDeleteProgram = nullptr;
 PFNGLDETACHSHADERPROC		glDetachShader = nullptr;
 PFNGLGETPROGRAMINFOLOGPROC	glGetProgramInfoLog = nullptr;
 
-PFNGLDISPATCHCOMPUTEPROC	glDispatchCompute = nullptr;
-PFNGLMEMORYBARRIERPROC		glMemoryBarrier = nullptr;
+PFNGLDISPATCHCOMPUTEPROC				glDispatchCompute = nullptr;
+PFNGLDISPATCHCOMPUTEGROUPSIZEARBPROC	glDispatchComputeGroupSize = nullptr;
+PFNGLMEMORYBARRIERPROC					glMemoryBarrier = nullptr;
 
 //----------Vertex Array Objects----------
 PFNGLGENVERTEXARRAYSPROC	glGenVertexArrays = nullptr;
@@ -337,6 +338,7 @@ void BindGLFunctions()
 	GL_BIND_FUNCTION(glDeleteProgram);
 
 	GL_BIND_FUNCTION(glDispatchCompute);
+	GL_BIND_FUNCTION(glDispatchComputeGroupSize);
 	GL_BIND_FUNCTION(glMemoryBarrier);
 
 	// VAO
