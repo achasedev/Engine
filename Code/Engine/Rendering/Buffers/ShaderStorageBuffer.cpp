@@ -66,6 +66,8 @@ bool ShaderStorageBuffer::CopyToGPU(size_t const byte_count, void const *data)
 
 	GL_CHECK_ERROR();
 
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, NULL);
+
 	// buffer_size is a size_t member variable I keep around for 
 	// convenience
 	m_bufferSize = byte_count;
@@ -103,6 +105,7 @@ bool ShaderStorageBuffer::Clear(size_t const byte_count)
 void ShaderStorageBuffer::Bind(int bindSlot)
 {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, (GLuint)bindSlot, (GLuint)m_handle);
+	GL_CHECK_ERROR();
 }
 
 

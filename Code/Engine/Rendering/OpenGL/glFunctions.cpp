@@ -74,7 +74,6 @@ PFNGLDETACHSHADERPROC		glDetachShader = nullptr;
 PFNGLGETPROGRAMINFOLOGPROC	glGetProgramInfoLog = nullptr;
 
 PFNGLDISPATCHCOMPUTEPROC				glDispatchCompute = nullptr;
-PFNGLDISPATCHCOMPUTEGROUPSIZEARBPROC	glDispatchComputeGroupSize = nullptr;
 PFNGLMEMORYBARRIERPROC					glMemoryBarrier = nullptr;
 
 //----------Vertex Array Objects----------
@@ -338,7 +337,6 @@ void BindGLFunctions()
 	GL_BIND_FUNCTION(glDeleteProgram);
 
 	GL_BIND_FUNCTION(glDispatchCompute);
-	GL_BIND_FUNCTION(glDispatchComputeGroupSize);
 	GL_BIND_FUNCTION(glMemoryBarrier);
 
 	// VAO
@@ -424,8 +422,8 @@ bool GLStartup()
 	wglMakeCurrent(hdc, temp_context); 
 	BindNewWGLFunctions();  // find the functions we'll need to create the real context; 
 
-	// create the real context, using opengl version 4.2
-	HGLRC real_context = CreateRealRenderContext(hdc, 4, 2); 
+	// create the real context, using opengl version 4.3
+	HGLRC real_context = CreateRealRenderContext(hdc, 4, 3); 
 
 	// Set and cleanup
 	wglMakeCurrent(hdc, real_context); 

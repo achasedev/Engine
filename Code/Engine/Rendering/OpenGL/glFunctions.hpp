@@ -85,7 +85,6 @@ extern PFNGLDETACHSHADERPROC		glDetachShader;
 extern PFNGLGETPROGRAMINFOLOGPROC	glGetProgramInfoLog;
 
 extern PFNGLDISPATCHCOMPUTEPROC				glDispatchCompute;
-extern PFNGLDISPATCHCOMPUTEGROUPSIZEARBPROC	glDispatchComputeGroupSize;
 extern PFNGLMEMORYBARRIERPROC				glMemoryBarrier;
 
 // For Vertex Array Objects
