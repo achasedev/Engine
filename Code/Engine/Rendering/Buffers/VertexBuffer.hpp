@@ -56,13 +56,16 @@ public:
 		return succeeded;
 	}
 
-	unsigned int GetVertexCount() const { return m_vertexCount; }
+	void				SetVertexCount(unsigned int vertexCount);
+
+	unsigned int		GetVertexCount() const { return m_vertexCount; }
+	const VertexLayout* GetVertexLayout() const { return m_vertexLayout; }
 
 
-public:
+private:
 	//-----Private Data-----
 
 	unsigned int m_vertexCount;
-
 	const VertexLayout* m_vertexLayout;
+
 };

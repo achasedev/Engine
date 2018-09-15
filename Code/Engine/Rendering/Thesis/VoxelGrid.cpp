@@ -37,8 +37,8 @@ void VoxelGrid::Initialize()
 // 	ZeroOut(1, 7);
 // 	ZeroOut(1, 8);
 
-	m_gpuBuffer.Bind(10);
-	m_gpuBuffer.CopyToGPU(sizeof(OctreeStructure), &m_octree);
+	//m_gpuBuffer.Bind(10);
+	//m_gpuBuffer.CopyToGPU(sizeof(OctreeStructure), &m_octree);
 }
 
 void VoxelGrid::SetupForDraw()

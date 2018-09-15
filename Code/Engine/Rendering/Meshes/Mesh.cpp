@@ -27,6 +27,16 @@ void Mesh::SetIndicesFromGPUBuffer(unsigned int indexCount, unsigned int sourceB
 
 
 //-----------------------------------------------------------------------------------------------
+// Updates the vertex and index counts of the mesh, without altering the GPU buffer contents
+//
+void Mesh::UpdateCounts(unsigned int vertexCount, unsigned int indexCount)
+{
+	m_vertexBuffer.SetVertexCount(vertexCount);
+	m_indexBuffer.SetIndexCount(indexCount);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Sets this mesh's params for drawing
 //
 void Mesh::SetDrawInstruction(PrimitiveType type, bool useIndices, unsigned int startIndex, unsigned int elementCount)

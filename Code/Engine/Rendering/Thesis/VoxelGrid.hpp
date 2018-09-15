@@ -45,6 +45,6 @@ private:
 public:
 
 	OctreeStructure m_octree;
-	ShaderStorageBuffer m_gpuBuffer;
+	//ShaderStorageBuffer m_gpuBuffer;
 
 };

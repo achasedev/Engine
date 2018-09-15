@@ -51,3 +51,31 @@ bool IndexBuffer::CopyFromGPUBuffer(unsigned int indexCount, unsigned int source
 
 	return succeeded;
 }
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the index count of the buffer to the value specified
+//
+void IndexBuffer::SetIndexCount(unsigned int indexCount)
+{
+	m_indexCount = indexCount;
+	m_bufferSize = indexCount * m_indexStride;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the current number of indices in the buffer
+//
+unsigned int IndexBuffer::GetIndexCount() const
+{
+	return m_indexCount;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the current index stride of the buffer
+//
+unsigned int IndexBuffer::GetIndexStride() const
+{
+	return m_indexStride;
+}

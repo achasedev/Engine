@@ -54,17 +54,31 @@ public:
 		}
 	}
 
+	template <typename VERT_TYPE>
+	void InitializeBuffersForCompute(unsigned int vertexBindSlot, unsigned int initialVertexCount, unsigned int indexBindSlot, unsigned int initialIndexCount)
+	{
+		m_vertexBuffer.Bind(vertexBindSlot);
+		m_vertexBuffer.CopyToGPU<VERT_TYPE>(initialVertexCount, nullptr);
+
+		m_vertexLayout = &VERT_TYPE::LAYOUT;
+
+		m_indexBuffer.Bind(indexBindSlot);
+		m_indexBuffer.CopyToGPU(initialIndexCount, nullptr);
+	}
+
+	void UpdateCounts(unsigned int vertexCount, unsigned int indexCount);
+
 	void SetDrawInstruction(DrawInstruction instruction);
 	void SetDrawInstruction(PrimitiveType type, bool useIndices, unsigned int startIndex, unsigned int elementCount);
 
 	// Accessors
-	const VertexBuffer*	GetVertexBuffer() const;
-	const IndexBuffer*	GetIndexBuffer() const;
-	DrawInstruction	GetDrawInstruction() const;
+	const VertexBuffer*		GetVertexBuffer() const;
+	const IndexBuffer*		GetIndexBuffer() const;
+	DrawInstruction		GetDrawInstruction() const;
 	const VertexLayout*	GetVertexLayout() const;
 
 
-public:
+private:
 	//-----Private Data-----
 
 	VertexBuffer		m_vertexBuffer;

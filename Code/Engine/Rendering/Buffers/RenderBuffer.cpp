@@ -43,12 +43,21 @@ GLuint RenderBuffer::GetHandle() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the current size of the buffer
+//
+size_t RenderBuffer::GetSize() const
+{
+	return m_bufferSize;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Moves the data given by "data" onto the GPU
 //
 bool RenderBuffer::CopyToGPU( size_t const byte_count, void const *data) 
 {
 	// Don't do anything if there's no data to copy
-	if (data == nullptr || byte_count <= 0)
+	if (byte_count <= 0)
 	{
 		return false;
 	}
@@ -95,4 +104,43 @@ bool RenderBuffer::CopyFromGPUBuffer(size_t const byte_count, unsigned int sourc
 	glBindBuffer(GL_COPY_WRITE_BUFFER, NULL);
 
 	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Binds this buffer to the given bind slot
+//
+void RenderBuffer::Bind(unsigned int bindSlot)
+{
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, (GLuint)bindSlot, (GLuint)m_handle);
+	GL_CHECK_ERROR();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns a pointer to the head of the data on the GPU
+//
+void* RenderBuffer::MapBufferData()
+{
+	// Ensure this buffer is bound
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_handle);
+
+	void* bufferData = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
+	GL_CHECK_ERROR();
+
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, NULL);
+
+	return bufferData;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Unmaps the buffer
+//
+void RenderBuffer::UnmapBufferData()
+{
+	glBindBuffer(GL_COPY_WRITE_BUFFER, m_handle);
+
+	glUnmapBuffer(GL_COPY_WRITE_BUFFER);
+	GL_CHECK_ERROR();
 }

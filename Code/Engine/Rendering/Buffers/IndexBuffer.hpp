@@ -20,8 +20,12 @@ public:
 	bool CopyFromGPUBuffer(size_t const byte_count, unsigned int sourceHandle) = delete;
 	bool CopyFromGPUBuffer(unsigned int indexCount, unsigned int sourceHandle);
 
+	void			SetIndexCount(unsigned int indexCount);
+	unsigned int	GetIndexCount() const;
+	unsigned int	GetIndexStride() const;
 
-public:
+
+private:
 	//-----Private Data-----
 
 	unsigned int m_indexCount;

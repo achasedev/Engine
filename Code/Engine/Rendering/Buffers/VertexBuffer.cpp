@@ -14,3 +14,13 @@ VertexBuffer::VertexBuffer()
 	: m_vertexCount(0)
 {
 }
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the number of vertices in the vertex buffer
+//
+void VertexBuffer::SetVertexCount(unsigned int vertexCount)
+{
+	m_vertexCount = vertexCount;
+	m_bufferSize = m_vertexLayout->GetStride() * vertexCount;
+}
