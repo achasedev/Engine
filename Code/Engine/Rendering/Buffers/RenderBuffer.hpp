@@ -21,9 +21,11 @@ public:
 
 	// Moves data into this render buffer, and sends it to the GPU
 	bool CopyToGPU(size_t const byte_count, void const *data);
+	
+	bool CopyFromGPUBuffer(size_t const byte_count, unsigned int sourceHandle);
 
 
-protected:
+public:
 	//-----Protected Data-----
 
 	size_t m_bufferSize;	// Size of this buffer, is updated in CopyToGPU

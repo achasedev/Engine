@@ -101,6 +101,7 @@ extern PFNGLBUFFERDATAPROC			glBufferData;
 extern PFNGLDELETEBUFFERSPROC       glDeleteBuffers;
 extern PFNGLMAPBUFFERPROC			glMapBuffer;
 extern PFNGLUNMAPBUFFERPROC			glUnmapBuffer;
+extern PFNGLCOPYBUFFERSUBDATAPROC	glCopyBufferSubData;
 
 // FrameBuffer
 extern PFNGLGENFRAMEBUFFERSPROC			glGenFramebuffers;

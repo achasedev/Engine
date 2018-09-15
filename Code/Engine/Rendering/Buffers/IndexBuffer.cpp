@@ -33,3 +33,21 @@ bool IndexBuffer::CopyToGPU(int indexCount, const unsigned int* indices)
 
 	return succeeded;
 }
+
+
+//-----------------------------------------------------------------------------------------------
+// Copies the data from the source handle into this index buffer
+//
+bool IndexBuffer::CopyFromGPUBuffer(unsigned int indexCount, unsigned int sourceHandle)
+{
+	size_t byteCount = indexCount * m_indexStride;
+	bool succeeded = RenderBuffer::CopyFromGPUBuffer(byteCount, sourceHandle);
+
+	// Only update if data was copied
+	if (succeeded)
+	{
+		m_indexCount = indexCount;
+	}
+
+	return succeeded;
+}

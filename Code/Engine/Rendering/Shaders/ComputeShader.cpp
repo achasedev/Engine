@@ -68,6 +68,7 @@ bool ComputeShader::Initialize(const char* filename)
 
 void ComputeShader::Execute(int numGroupsX, int numGroupsY, int numGroupsZ)
 {
+	PROFILE_LOG_SCOPE_FUNCTION();
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 	if (m_programHandle == NULL)

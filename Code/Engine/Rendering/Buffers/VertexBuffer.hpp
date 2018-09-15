@@ -36,10 +36,30 @@ public:
 		return succeeded;
 	}
 
+	bool CopyFromGPUBuffer(size_t const byte_count, unsigned int sourceHandle) = delete;
+
+	template<typename VERT_TYPE>
+	bool CopyFromGPUBuffer(unsigned int vertexCount, unsigned int sourceHandle)
+	{
+		const VertexLayout* layout = &VERT_TYPE::LAYOUT;
+
+		size_t byteCount = vertexCount * layout->GetStride();
+		bool succeeded = RenderBuffer::CopyFromGPUBuffer(byteCount, sourceHandle);
+
+		// Only update if data was copied
+		if (succeeded)
+		{
+			m_vertexCount = vertexCount;
+			m_vertexLayout = layout;
+		}
+
+		return succeeded;
+	}
+
 	unsigned int GetVertexCount() const { return m_vertexCount; }
 
 
-private:
+public:
 	//-----Private Data-----
 
 	unsigned int m_vertexCount;

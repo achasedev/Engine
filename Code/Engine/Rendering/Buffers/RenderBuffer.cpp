@@ -72,3 +72,27 @@ bool RenderBuffer::CopyToGPU( size_t const byte_count, void const *data)
 	m_bufferSize = byte_count; 
 	return true; 
 }
+
+
+//-----------------------------------------------------------------------------------------------
+// Copies the data from the buffer at sourceHandle to this buffer
+//
+bool RenderBuffer::CopyFromGPUBuffer(size_t const byte_count, unsigned int sourceHandle)
+{
+	glBindBuffer(GL_COPY_READ_BUFFER, sourceHandle);
+	GL_CHECK_ERROR();
+
+	glBindBuffer(GL_COPY_WRITE_BUFFER, m_handle);
+	GL_CHECK_ERROR();
+
+	glBufferData(GL_COPY_WRITE_BUFFER, byte_count, NULL, GL_DYNAMIC_DRAW);
+	GL_CHECK_ERROR();
+
+	glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, byte_count);
+	GL_CHECK_ERROR();
+
+	glBindBuffer(GL_COPY_READ_BUFFER, NULL);
+	glBindBuffer(GL_COPY_WRITE_BUFFER, NULL);
+
+	return true;
+}

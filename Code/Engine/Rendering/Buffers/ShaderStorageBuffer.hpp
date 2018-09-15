@@ -28,7 +28,7 @@ public:
 	void	UnmapBufferData();
 
 
-protected:
+public:
 	//-----Protected Data-----
 
 	size_t m_bufferSize;	// Size of this buffer, is updated in CopyToGPU

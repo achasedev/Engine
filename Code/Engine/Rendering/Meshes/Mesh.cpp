@@ -18,6 +18,15 @@ void Mesh::SetIndices(unsigned int indexCount, const unsigned int* indices)
 
 
 //-----------------------------------------------------------------------------------------------
+// Sets the index buffer of this mesh from the data provided in the source buffer handle
+//
+void Mesh::SetIndicesFromGPUBuffer(unsigned int indexCount, unsigned int sourceBufferHandle)
+{
+	m_indexBuffer.CopyFromGPUBuffer(indexCount, sourceBufferHandle);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Sets this mesh's params for drawing
 //
 void Mesh::SetDrawInstruction(PrimitiveType type, bool useIndices, unsigned int startIndex, unsigned int elementCount)

@@ -120,6 +120,8 @@ void* ShaderStorageBuffer::MapBufferData()
 	void* bufferData = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
 	GL_CHECK_ERROR();
 
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, NULL);
+
 	return bufferData;
 }
 

@@ -17,8 +17,11 @@ public:
 	bool CopyToGPU(size_t const, void const *, GLenum) = delete;
 	bool CopyToGPU(int indexCount, const unsigned int* indices);
 
+	bool CopyFromGPUBuffer(size_t const byte_count, unsigned int sourceHandle) = delete;
+	bool CopyFromGPUBuffer(unsigned int indexCount, unsigned int sourceHandle);
 
-private:
+
+public:
 	//-----Private Data-----
 
 	unsigned int m_indexCount;

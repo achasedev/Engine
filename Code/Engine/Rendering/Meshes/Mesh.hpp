@@ -41,6 +41,19 @@ public:
 		}
 	}
 
+	void SetIndicesFromGPUBuffer(unsigned int indexCount, unsigned int sourceBufferHandle);
+
+	template <typename VERT_TYPE>
+	void SetVerticesFromGPUBuffer(unsigned int vertexCount, unsigned int sourceBufferHandle)
+	{
+		bool succeeded = m_vertexBuffer.CopyFromGPUBuffer<VERT_TYPE>(vertexCount, sourceBufferHandle);
+
+		if (succeeded)
+		{
+			m_vertexLayout = &VERT_TYPE::LAYOUT;
+		}
+	}
+
 	void SetDrawInstruction(DrawInstruction instruction);
 	void SetDrawInstruction(PrimitiveType type, bool useIndices, unsigned int startIndex, unsigned int elementCount);
 
@@ -51,7 +64,7 @@ public:
 	const VertexLayout*	GetVertexLayout() const;
 
 
-private:
+public:
 	//-----Private Data-----
 
 	VertexBuffer		m_vertexBuffer;
