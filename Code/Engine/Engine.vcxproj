@@ -319,7 +319,6 @@
     <ClCompile Include="Rendering\Animation\Animator.cpp" />
     <ClCompile Include="Rendering\Animation\Pose.cpp" />
     <ClCompile Include="Rendering\Animation\Skeleton.cpp" />
-    <ClCompile Include="Rendering\Buffers\ShaderStorageBuffer.cpp" />
     <ClCompile Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.cpp" />
     <ClCompile Include="Rendering\Resources\BitmapFont.cpp" />
     <ClCompile Include="Rendering\Core\Camera.cpp" />
@@ -375,13 +374,6 @@
     <ClCompile Include="Rendering\Buffers\UniformBuffer.cpp" />
     <ClCompile Include="Rendering\Core\Vertex.cpp" />
     <ClCompile Include="Rendering\Buffers\VertexBuffer.cpp" />
-    <ClCompile Include="Rendering\Thesis\HitableList.cpp" />
-    <ClCompile Include="Rendering\Thesis\Ray.cpp" />
-    <ClCompile Include="Rendering\Thesis\RayMaterial.cpp" />
-    <ClCompile Include="Rendering\Thesis\RaySphere.cpp" />
-    <ClCompile Include="Rendering\Thesis\RayTraceCamera.cpp" />
-    <ClCompile Include="Rendering\Thesis\RayTraceRenderer.cpp" />
-    <ClCompile Include="Rendering\Thesis\VoxelGrid.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ThirdParty\fmod\fmod.h" />
@@ -462,7 +454,6 @@
     <ClInclude Include="Rendering\Animation\Animator.hpp" />
     <ClInclude Include="Rendering\Animation\Pose.hpp" />
     <ClInclude Include="Rendering\Animation\Skeleton.hpp" />
-    <ClInclude Include="Rendering\Buffers\ShaderStorageBuffer.hpp" />
     <ClInclude Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.hpp" />
     <ClInclude Include="Rendering\Resources\BitmapFont.hpp" />
     <ClInclude Include="Rendering\Core\Camera.hpp" />
@@ -518,14 +509,6 @@
     <ClInclude Include="Rendering\Buffers\UniformBuffer.hpp" />
     <ClInclude Include="Rendering\Core\Vertex.hpp" />
     <ClInclude Include="Rendering\Buffers\VertexBuffer.hpp" />
-    <ClInclude Include="Rendering\Thesis\Hitable.hpp" />
-    <ClInclude Include="Rendering\Thesis\HitableList.hpp" />
-    <ClInclude Include="Rendering\Thesis\Ray.hpp" />
-    <ClInclude Include="Rendering\Thesis\RayMaterial.hpp" />
-    <ClInclude Include="Rendering\Thesis\RaySphere.hpp" />
-    <ClInclude Include="Rendering\Thesis\RayTraceCamera.hpp" />
-    <ClInclude Include="Rendering\Thesis\RayTraceRenderer.hpp" />
-    <ClInclude Include="Rendering\Thesis\VoxelGrid.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

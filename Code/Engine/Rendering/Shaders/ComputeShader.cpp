@@ -1,17 +1,31 @@
+/************************************************************************/
+/* File: ComputeShader.cpp
+/* Author: Andrew Chase
+/* Date: September 15th, 2018
+/* Description: Implementation of the ComputeShader class
+/************************************************************************/
 #include "Engine/Rendering/Shaders/ComputeShader.hpp"
 #include "Engine/Rendering/OpenGL/glFunctions.hpp"
 #include "Engine/Core/File.hpp"
 #include "Engine/Core/LogSystem.hpp"
 
+// C functions for error checking
 static void LogShaderError(GLuint shader_id, const char* filename);
 static void FormatAndPrintShaderError(const std::string& errorLog, const std::string& localFilePath);
 static void LogProgramError(GLuint program_id);
 
+
+//-----------------------------------------------------------------------------------------------
+// Default constructor
+//
 ComputeShader::ComputeShader()
 {
-
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Destructor - delete the program from GPU
+//
 ComputeShader::~ComputeShader()
 {
 	if (m_programHandle != NULL)
@@ -21,6 +35,10 @@ ComputeShader::~ComputeShader()
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Loads and compiles the program from the given filename
+//
 bool ComputeShader::Initialize(const char* filename)
 {
 	GLuint shaderID = glCreateShader(GL_COMPUTE_SHADER);
@@ -66,10 +84,12 @@ bool ComputeShader::Initialize(const char* filename)
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Runs the compute shader with the given group layout
+//
 void ComputeShader::Execute(int numGroupsX, int numGroupsY, int numGroupsZ)
 {
 	PROFILE_LOG_SCOPE_FUNCTION();
-	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 	if (m_programHandle == NULL)
 	{
@@ -81,6 +101,7 @@ void ComputeShader::Execute(int numGroupsX, int numGroupsY, int numGroupsZ)
 	glDispatchCompute((GLuint)numGroupsX, (GLuint)numGroupsY, (GLuint)numGroupsZ);
 	GL_CHECK_ERROR();
 
+	// Block all future gl calls until this step finishes
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }
 

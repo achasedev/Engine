@@ -367,18 +367,10 @@
     <ClCompile Include="Networking\Net.cpp" />
     <ClCompile Include="Networking\NetAddress.cpp" />
     <ClCompile Include="Networking\TCPSocket.cpp" />
-    <ClCompile Include="Rendering\Thesis\RayTraceRenderer.cpp" />
-    <ClCompile Include="Rendering\Thesis\Ray.cpp" />
     <ClCompile Include="Networking\Endianness.cpp" />
     <ClCompile Include="Networking\BytePacker.cpp" />
-    <ClCompile Include="Rendering\Thesis\RaySphere.cpp" />
-    <ClCompile Include="Rendering\Thesis\HitableList.cpp" />
-    <ClCompile Include="Rendering\Thesis\RayMaterial.cpp" />
-    <ClCompile Include="Rendering\Thesis\RayTraceCamera.cpp" />
     <ClCompile Include="Networking\RemoteCommandService.cpp" />
-    <ClCompile Include="Rendering\Buffers\ShaderStorageBuffer.cpp" />
     <ClCompile Include="Rendering\Shaders\ComputeShader.cpp" />
-    <ClCompile Include="Rendering\Thesis\VoxelGrid.cpp" />
     <ClCompile Include="Networking\Socket.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -722,19 +714,10 @@
     <ClInclude Include="Networking\Net.hpp" />
     <ClInclude Include="Networking\NetAddress.hpp" />
     <ClInclude Include="Networking\TCPSocket.hpp" />
-    <ClInclude Include="Rendering\Thesis\RayTraceRenderer.hpp" />
-    <ClInclude Include="Rendering\Thesis\Ray.hpp" />
     <ClInclude Include="Networking\Endianness.hpp" />
     <ClInclude Include="Networking\BytePacker.hpp" />
-    <ClInclude Include="Rendering\Thesis\Hitable.hpp" />
-    <ClInclude Include="Rendering\Thesis\RaySphere.hpp" />
-    <ClInclude Include="Rendering\Thesis\HitableList.hpp" />
-    <ClInclude Include="Rendering\Thesis\RayMaterial.hpp" />
-    <ClInclude Include="Rendering\Thesis\RayTraceCamera.hpp" />
     <ClInclude Include="Networking\RemoteCommandService.hpp" />
-    <ClInclude Include="Rendering\Buffers\ShaderStorageBuffer.hpp" />
     <ClInclude Include="Rendering\Shaders\ComputeShader.hpp" />
-    <ClInclude Include="Rendering\Thesis\VoxelGrid.hpp" />
     <ClInclude Include="Networking\Socket.hpp" />
   </ItemGroup>
 </Project>

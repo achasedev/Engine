@@ -21,7 +21,6 @@ const Image Image::IMAGE_DEFAULT_TEXTURE = Image(IntVector2(64, 64), IntVector2(
 //-----------------------------------------------------------------------------------------------
 // Default constructor, just makes a white 2x2 texel image
 //
-//
 Image::Image()
 	: m_dimensions(IntVector2(2,2))
 	, m_numComponentsPerTexel(4)
