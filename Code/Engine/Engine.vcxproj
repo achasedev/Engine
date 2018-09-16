@@ -312,6 +312,9 @@
     <ClCompile Include="Networking\Endianness.cpp" />
     <ClCompile Include="Networking\Net.cpp" />
     <ClCompile Include="Networking\NetAddress.cpp" />
+    <ClCompile Include="Networking\NetConnection.cpp" />
+    <ClCompile Include="Networking\NetMessage.cpp" />
+    <ClCompile Include="Networking\NetSession.cpp" />
     <ClCompile Include="Networking\RemoteCommandService.cpp" />
     <ClCompile Include="Networking\TCPSocket.cpp" />
     <ClCompile Include="Networking\Socket.cpp" />
@@ -447,6 +450,9 @@
     <ClInclude Include="Networking\Endianness.hpp" />
     <ClInclude Include="Networking\Net.hpp" />
     <ClInclude Include="Networking\NetAddress.hpp" />
+    <ClInclude Include="Networking\NetConnection.hpp" />
+    <ClInclude Include="Networking\NetMessage.hpp" />
+    <ClInclude Include="Networking\NetSession.hpp" />
     <ClInclude Include="Networking\RemoteCommandService.hpp" />
     <ClInclude Include="Networking\Socket.hpp" />
     <ClInclude Include="Networking\TCPSocket.hpp" />
