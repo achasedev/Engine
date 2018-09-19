@@ -26,6 +26,7 @@ public:
 	const IntVector3 operator+( const IntVector3& vecToAdd ) const;			// vec2 + vec2
 	const IntVector3 operator-( const IntVector3& vecToSubtract ) const;	// vec2 - vec2
 	const IntVector3 operator*( int uniformScale ) const;					// vec2 * int
+	const IntVector3 operator/(int divisor) const;
 
 	void operator+=( const IntVector3& vecToAdd );							// vec2 += vec2
 	void operator-=( const IntVector3& vecToSubtract );						// vec2 -= vec2

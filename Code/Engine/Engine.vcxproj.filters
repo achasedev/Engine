@@ -372,6 +372,7 @@
     <ClCompile Include="Networking\RemoteCommandService.cpp" />
     <ClCompile Include="Rendering\Shaders\ComputeShader.cpp" />
     <ClCompile Include="Networking\Socket.cpp" />
+    <ClCompile Include="Rendering\Resources\Texture3D.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -719,5 +720,6 @@
     <ClInclude Include="Networking\RemoteCommandService.hpp" />
     <ClInclude Include="Rendering\Shaders\ComputeShader.hpp" />
     <ClInclude Include="Networking\Socket.hpp" />
+    <ClInclude Include="Rendering\Resources\Texture3D.hpp" />
   </ItemGroup>
 </Project>

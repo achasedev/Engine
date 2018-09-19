@@ -194,10 +194,11 @@ bool File::LoadFileToMemory()
 //
 unsigned int File::GetNextLine(std::string& out_string)
 {
-	if (m_data == nullptr || m_offset >= m_size)
+	if (m_data == nullptr || m_offset >= m_size || m_data[m_offset] == NULL)
 	{
 		out_string = "";
-		m_lineNumber;
+		m_isAtEndOfFile = true;
+		return m_lineNumber;
 	}
 
 	unsigned int endIndex = m_offset;
@@ -223,4 +224,20 @@ unsigned int File::GetNextLine(std::string& out_string)
 bool File::IsAtEndOfFile() const
 {
 	return m_isAtEndOfFile;
+}
+
+//-----------------------------------------------------------------------------------------------
+// Returns the size of the file
+//
+size_t File::GetSize() const
+{
+	return m_size;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the data loaded into memory of the current file
+const char* File::GetData() const
+{
+	return m_data;
 }

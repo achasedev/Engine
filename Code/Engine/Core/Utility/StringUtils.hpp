@@ -6,6 +6,7 @@
 class Vector2;
 class Vector3;
 class Vector4;
+class IntVector3;
 class Rgba;
 
 //-----------------------------------------------------------------------------------------------
@@ -32,7 +33,7 @@ bool SetFromText(const std::string& text, Rgba& out_value);
 bool SetFromText(const std::string& text, Vector2& out_value);
 bool SetFromText(const std::string& text, Vector3& out_value);
 bool SetFromText(const std::string& text, std::string& out_value);
-
+bool SetFromText(const std::string& text, IntVector3& out_value);
 
 std::string ToString(float value);
 std::string ToString(int value);

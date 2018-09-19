@@ -64,10 +64,7 @@ Rgba::Rgba(float red, float green, float blue, float alpha)
 //
 Rgba::Rgba(int red, int green, int blue, int alpha)
 {
-	r = (unsigned char)red;
-	g = (unsigned char)green;
-	b = (unsigned char)blue;
-	a = (unsigned char)alpha;
+	SetAsInts(red, green, blue, alpha);
 }
 
 
@@ -99,6 +96,18 @@ void Rgba::SetAsFloats(float normalizedRed, float normalizedGreen, float normali
 
 	float clampedAlpha = ClampFloat((normalizedAlpha * 255.f), 0.f, 255.f);
 	a = static_cast<unsigned char>(clampedAlpha);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the values of the rgba to the int values corresponding to the ones given
+//
+void Rgba::SetAsInts(int red, int green, int blue, int alpha)
+{
+	r = (unsigned char)red;
+	g = (unsigned char)green;
+	b = (unsigned char)blue;
+	a = (unsigned char)alpha;
 }
 
 
@@ -145,42 +154,111 @@ void Rgba::ScaleAlpha(float alphaScale)
 
 
 //-----------------------------------------------------------------------------------------------
-// Sets the values for RGB(and optionally A) to the ones specified in the passed text
+// Set from text, private function used to handle different cases
 //
-bool Rgba::SetFromText(const char* text)
+bool Rgba::SetFromText(const char* text, bool areInts, unsigned char delimiter)
 {
-	std::string stringText = std::string(text);
+	std::string stringText(text);
 
-	// Red
-	size_t firstComma = stringText.find(",");
-	if (firstComma == std::string::npos) { return false; }
-	std::string redText = std::string(stringText, 0, firstComma);
-	r = static_cast<unsigned char>(atoi(redText.c_str()));
-
-	// Green
-	size_t secondComma = stringText.find(",", firstComma + 1);
-	if (secondComma == std::string::npos) { return false; }
-	std::string greenText = std::string(stringText, firstComma + 1, secondComma - firstComma - 1);
-	g = static_cast<unsigned char>(atoi(greenText.c_str()));
-
-	// Blue and Alpha, if alpha is present
-	size_t thirdComma = stringText.find(",", secondComma + 1);
-	if (thirdComma == std::string::npos)
+	if (areInts)
 	{
-		std::string blueText = std::string(stringText, secondComma + 1);
-		b = static_cast<unsigned char>(atoi(blueText.c_str()));
-		a = 255;
+		size_t firstDelim = stringText.find(delimiter);
+		if (firstDelim == std::string::npos) { return false; }
+		std::string redText = std::string(stringText, 0, firstDelim);
+		int red = atoi(redText.c_str());
+
+		// Green
+		size_t secondDelim = stringText.find(delimiter, firstDelim + 1);
+		if (secondDelim == std::string::npos) { return false; }
+		std::string greenText = std::string(stringText, firstDelim + 1, secondDelim - firstDelim - 1);
+		int green = atoi(greenText.c_str());
+
+		// Blue and Alpha, if alpha is present
+		int blue, alpha;
+		size_t thirdDelim = stringText.find(delimiter, secondDelim + 1);
+		if (thirdDelim == std::string::npos)
+		{
+			std::string blueText = std::string(stringText, secondDelim + 1);
+			blue = atoi(blueText.c_str());
+			alpha = 255;
+		}
+		else
+		{
+			std::string blueText = std::string(stringText, secondDelim + 1, thirdDelim - secondDelim - 1);
+			blue = static_cast<unsigned char>(atoi(blueText.c_str()));
+
+			std::string alphaText = std::string(stringText, thirdDelim + 1);
+			alpha = static_cast<unsigned char>(atoi(alphaText.c_str()));
+		}
+
+		SetAsInts(red, green, blue, alpha);
 	}
 	else
 	{
-		std::string blueText = std::string(stringText, secondComma + 1, thirdComma - secondComma - 1);
-		b = static_cast<unsigned char>(atoi(blueText.c_str()));
+		// Red
+		size_t firstDelim = stringText.find(delimiter);
+		if (firstDelim == std::string::npos) { return false; }
+		std::string redText = std::string(stringText, 0, firstDelim);
+		float red = atof(redText.c_str());
 
-		std::string alphaText = std::string(stringText, thirdComma + 1);
-		a = static_cast<unsigned char>(atoi(alphaText.c_str()));
+		// Green
+		size_t secondDelim = stringText.find(delimiter, firstDelim + 1);
+		if (secondDelim == std::string::npos) { return false; }
+		std::string greenText = std::string(stringText, firstDelim + 1, secondDelim - firstDelim - 1);
+		float green = atof(greenText.c_str());
+
+		// Blue and Alpha, if alpha is present
+		float blue, alpha;
+		size_t thirdDelim = stringText.find(delimiter, secondDelim + 1);
+		if (thirdDelim == std::string::npos)
+		{
+			std::string blueText = std::string(stringText, secondDelim + 1);
+			blue = atof(blueText.c_str());
+			alpha = 255;
+		}
+		else
+		{
+			std::string blueText = std::string(stringText, secondDelim + 1, thirdDelim - secondDelim - 1);
+			blue = atoi(blueText.c_str());
+
+			std::string alphaText = std::string(stringText, thirdDelim + 1);
+			alpha = atoi(alphaText.c_str());
+		}
+
+		SetAsFloats(red, green, blue, alpha);
 	}
 
 	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the rgba from the text given
+//
+bool Rgba::SetFromText(const char* text)
+{
+	std::string stringText(text);
+
+	bool containsCommas = stringText.find(',') != std::string::npos;
+	bool containsSpaces = stringText.find(' ') != std::string::npos;
+	bool areInts = stringText.find('.') == std::string::npos;
+
+	unsigned char delimiter;
+	if (containsCommas)
+	{
+		delimiter = ',';
+	}
+	else if (containsSpaces)
+	{
+		delimiter = ' ';
+	}
+	else
+	{
+		// No delimiter specifed, so just return
+		return false;
+	}
+
+	return SetFromText(text, areInts, delimiter);
 }
 
 

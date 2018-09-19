@@ -7,6 +7,8 @@
 #include "Engine/Math/Vector2.hpp"
 #include "Engine/Math/Vector3.hpp"
 #include "Engine/Math/Vector4.hpp"
+#include "Engine/Math/IntVector3.hpp"
+
 //-----------------------------------------------------------------------------------------------
 const int STRINGF_STACK_LOCAL_TEMP_LENGTH = 2048;
 
@@ -284,6 +286,26 @@ bool SetFromText(const std::string& text, std::string& out_value)
 bool SetFromText(const std::string& text, unsigned short& out_value)
 {
 	out_value = (unsigned short) atoi(text.c_str());
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the string out_value to the value represented in the text passed (for use with templates)
+//
+bool SetFromText(const std::string& text, IntVector3& out_value)
+{
+	std::vector<std::string> tokens = Tokenize(text, ' ');
+
+	if (tokens.size() != 3)
+	{
+		return false;
+	}
+
+	out_value.x = StringToInt(tokens[0]);
+	out_value.y = StringToInt(tokens[1]);
+	out_value.z = StringToInt(tokens[2]);
+
 	return true;
 }
 

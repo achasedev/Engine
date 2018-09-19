@@ -76,6 +76,13 @@ const IntVector3 IntVector3::operator*( int uniformScale ) const
 
 
 //-----------------------------------------------------------------------------------------------
+const IntVector3 IntVector3::operator/(int divisor) const
+{
+	return IntVector3(x / divisor, y / divisor, z / divisor);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 void IntVector3::operator+=( const IntVector3& vecToAdd )
 {
 	x += vecToAdd.x;

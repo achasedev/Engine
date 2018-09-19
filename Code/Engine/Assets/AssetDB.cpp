@@ -14,6 +14,7 @@
 #include "Engine/Rendering/Resources/Skybox.hpp"
 #include "Engine/Rendering/Resources/Texture.hpp"
 #include "Engine/Rendering/Meshes/MeshBuilder.hpp"
+#include "Engine/Rendering/Resources/Texture3D.hpp"
 #include "Engine/Rendering/Shaders/ShaderSource.hpp"
 #include "Engine/Rendering/Resources/BitmapFont.hpp"
 #include "Engine/Rendering/Resources/TextureCube.hpp"
@@ -23,7 +24,6 @@
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 #include "Engine/Rendering/Meshes/MeshGroupBuilder.hpp"
 #include "Engine/Rendering/Materials/MaterialInstance.hpp"
-
 
 //-----------------------------------------------------------------------------------------------
 // Constructs all the built-in assets for the Engine, called at start up
@@ -602,4 +602,47 @@ Material* AssetDB::CreateOrGetSharedMaterial(const std::string& materialPath)
 	}
 
 	return material;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns a copy of the 3D texture provided
+//
+Texture3D* AssetDB::Get3DTextureInstance(const std::string& name)
+{
+	Texture3D* texture = AssetCollection<Texture3D>::GetAsset(name);
+
+	if (texture != nullptr)
+	{
+		Texture3D* newTexture = texture->Copy();
+		return newTexture;
+	}
+
+	return nullptr;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns a copy of the 3D texture provided, attempting to create it if it doesn't exist
+//
+Texture3D* AssetDB::CreateOrGet3DVoxelTextureInstance(const std::string& name)
+{
+	Texture3D* texture = AssetCollection<Texture3D>::GetAsset(name);
+
+	if (texture == nullptr)
+	{
+		texture = new Texture3D();
+		bool success = texture->CreateFromFile(name.c_str());
+
+		if (!success)
+		{
+			delete texture;
+			return nullptr;
+		}
+
+		AssetCollection<Texture3D>::AddAsset(name, texture);
+	}
+
+	Texture3D* newTexture = texture->Copy();
+	return newTexture;
 }

@@ -30,6 +30,9 @@ public:
 	// Sets all values by float
 	void SetAsFloats(float normalizedRed, float normalizedGreen, float normalizedBlue, float normalizedAlpha=1.0f);
 
+	// Sets all values by int
+	void SetAsInts(int red, int green, int blue, int alpha);
+
 	// Returns the values of the rgba as four floats
 	void GetAsFloats(float& out_normalizedRed, float& out_normalizedGreen, float& out_normalizedBlue, float& out_normalizedAlpha) const;
 
@@ -41,11 +44,16 @@ public:
 
 	// Sets the values for RGB(and optionally A) to the ones specified in the passed text
 	bool SetFromText(const char* text);
-
+	
 	// Operators
 	bool	operator==(const Rgba& other) const;
 
 	static Rgba GetRandomColor();
+
+
+private:
+
+	bool SetFromText(const char* text, bool areInts, unsigned char delimiter);
 
 
 public:

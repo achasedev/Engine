@@ -46,6 +46,8 @@ public:
 	unsigned int	GetNextLine(std::string& out_string);
 	bool			IsAtEndOfFile() const;
 
+	size_t			GetSize() const;
+	const char*		GetData() const;
 
 private:
 	//-----Private Data-----
