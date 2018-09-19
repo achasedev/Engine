@@ -373,6 +373,9 @@
     <ClCompile Include="Rendering\Shaders\ComputeShader.cpp" />
     <ClCompile Include="Networking\Socket.cpp" />
     <ClCompile Include="Rendering\Resources\Texture3D.cpp" />
+    <ClCompile Include="Networking\NetSession.cpp" />
+    <ClCompile Include="Networking\NetMessage.cpp" />
+    <ClCompile Include="Networking\NetConnection.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -721,5 +724,8 @@
     <ClInclude Include="Rendering\Shaders\ComputeShader.hpp" />
     <ClInclude Include="Networking\Socket.hpp" />
     <ClInclude Include="Rendering\Resources\Texture3D.hpp" />
+    <ClInclude Include="Networking\NetSession.hpp" />
+    <ClInclude Include="Networking\NetMessage.hpp" />
+    <ClInclude Include="Networking\NetConnection.hpp" />
   </ItemGroup>
 </Project>
