@@ -46,6 +46,7 @@ float	Atan2Degrees(float ratio);												// Calculates arctan of the side rat
 float	GetNearestCardinalAngle(float angle);									// Returns the nearest cardinal direction to the given angle
 float	GetNearestInterCardinalAngle(float angle);								// Returns the nearest inter-cardinal direction to the given angle
 Vector2	GetNearestCardinalDirection(const Vector2& direction);					// Returns the nearest cardinal direction to the one given
+Vector2 GetNearestCardinalDirection(float angle);
 float	GetAngleBetweenZeroThreeSixty(float angleDegrees);						// Returns an angle coterminal to angleDegrees between 0 and 360
 
 // Random functions

@@ -66,7 +66,7 @@ bool NetSession::AddConnection(unsigned int bindingIndex, NetAddress_t targetAdd
 	if (bindingIndex >= (unsigned int)m_bindings.size())
 	{
 		ConsoleErrorf("Error: NetSession::AddConnection() received bindingIndex out of range, %i", bindingIndex);
-		return;
+		return false;
 	}
 
 	NetConnection* newConnection = new NetConnection(m_bindings[bindingIndex], targetAddress);

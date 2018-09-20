@@ -261,6 +261,16 @@ Vector2 GetNearestCardinalDirection(const Vector2& direction)
 
 
 //-----------------------------------------------------------------------------------------------
+//  Returns the nearest cardinal direction to the one corresponding with angle
+//
+Vector2 GetNearestCardinalDirection(float angle)
+{
+	Vector2 direction = Vector2::MakeDirectionAtDegrees(angle);
+	return GetNearestCardinalDirection(direction);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the angle coterminal to angle between 0 and 360 degrees
 //
 float GetAngleBetweenZeroThreeSixty(float angleDegrees)

@@ -131,3 +131,8 @@ IntVector3 Texture3D::GetDimensions() const
 {
 	return m_dimensions;
 }
+
+unsigned int Texture3D::GetVoxelCount() const
+{
+	return m_dimensions.x * m_dimensions.y * m_dimensions.z;
+}

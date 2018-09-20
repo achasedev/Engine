@@ -15,10 +15,10 @@ public:
 	Texture3D*	Copy() const;
 
 	// Accessors
-	Rgba*		GetColorData() const;
-	Rgba		GetColorAtCoords(const IntVector3& coords) const;
-	IntVector3	GetDimensions() const;
-
+	Rgba*			GetColorData() const;
+	Rgba			GetColorAtCoords(const IntVector3& coords) const;
+	IntVector3		GetDimensions() const;
+	unsigned int	GetVoxelCount() const;
 
 private:
 	//-----Private Data-----
