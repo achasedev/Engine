@@ -1,13 +1,15 @@
-// NetMessage.hpp
-
+/************************************************************************/
+/* File: NetMessage.hpp
+/* Author: Andrew Chase
+/* Date: September 20th, 2018
+/* Description: Class to represent a single message from a NetSession
+/************************************************************************/
 #pragma once
 #include <string>
 #include <vector>
 
 class BytePacker;
 
-// Really just a renamed BytePacker, with the added functionality of 
-// writing a string to the buffer upon construction for tagging it
 class NetMessage
 {
 public:

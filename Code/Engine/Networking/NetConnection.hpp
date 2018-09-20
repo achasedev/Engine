@@ -1,3 +1,9 @@
+/************************************************************************/
+/* File: NetConnection.hpp
+/* Author: Andrew Chase
+/* Date: September 20th, 2018
+/* Description: Class to represent a single connection in a NetSession
+/************************************************************************/
 #pragma once
 #include "Engine/Networking/NetAddress.hpp"
 

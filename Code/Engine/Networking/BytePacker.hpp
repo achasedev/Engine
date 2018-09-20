@@ -1,3 +1,9 @@
+/************************************************************************/
+/* File: BytePacker.hpp
+/* Author: Andrew Chase
+/* Date: September 20th, 2018
+/* Description: Class to represent a byte packed buffer
+/************************************************************************/
 #pragma once
 #include "Engine/Networking/Endianness.hpp"
 #include <string>

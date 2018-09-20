@@ -1,5 +1,9 @@
-// NetMessage.cpp
-
+/************************************************************************/
+/* File: NetMessage.cpp
+/* Author: Andrew Chase
+/* Date: September 20th, 2018
+/* Description: Implementation of the NetMessage class
+/************************************************************************/
 #include "Engine/Networking/NetMessage.hpp"
 #include "Engine/Networking/BytePacker.hpp"
 

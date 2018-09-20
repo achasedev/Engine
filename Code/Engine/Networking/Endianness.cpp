@@ -1,10 +1,19 @@
+/************************************************************************/
+/* File: Endianness.cpp
+/* Author: Andrew Chase
+/* Date: September 20th, 2018
+/* Description: Implementation of the Endianness utility functions
+/************************************************************************/
 #include "Engine/Networking/Endianness.hpp"
 #include <stdint.h>
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the native endianness of this machine
+//
 eEndianness GetPlatformEndianness()
 {
 	int test = 1;
-
 	uint8_t* buffer = (uint8_t*)(&test);
 
 	if (buffer[0] == 0x01)
@@ -17,6 +26,11 @@ eEndianness GetPlatformEndianness()
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Converts the given data to the endianness specified
+// *assumes the passed data is already in LITTLE_ENDIAN*
+//
 void ToEndianness(const size_t byteSize, void* data, eEndianness endianness)
 {
 	if (endianness == GetPlatformEndianness())
@@ -40,6 +54,10 @@ void ToEndianness(const size_t byteSize, void* data, eEndianness endianness)
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Converts the data from the given endianness to the platform endianness
+//
 void FromEndianness(const size_t byteSize, void* data, eEndianness endianness)
 {
 	if (endianness == GetPlatformEndianness())

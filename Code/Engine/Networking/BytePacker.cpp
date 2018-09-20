@@ -1,13 +1,26 @@
+/************************************************************************/
+/* File: BytePacker.cpp
+/* Author: Andrew Chase
+/* Date: September 20th, 2018
+/* Description: Implementation of the BytePacker class
+/************************************************************************/
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Networking/BytePacker.hpp"
 #include <stdlib.h>
 #include <cstring>
 
+//-----------------------------------------------------------------------------------------------
+// Constructor
+//
 BytePacker::BytePacker(eEndianness endianness /*= LITTLE_ENDIAN*/)
 	: m_endianness(endianness)
 {
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Constructor that initializes the buffer to the given size
+//
 BytePacker::BytePacker(size_t initialSize, eEndianness endianness /*= LITTLE_ENDIAN*/)
 	: m_endianness(endianness)
 	, m_bufferCapacity(initialSize)
@@ -15,6 +28,10 @@ BytePacker::BytePacker(size_t initialSize, eEndianness endianness /*= LITTLE_END
 	m_buffer = (uint8_t*)malloc(initialSize);
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Constructor, from a given buffer
+//
 BytePacker::BytePacker(size_t initialSize, void *buffer, eEndianness endianness /*= LITTLE_ENDIAN*/)
 	: m_bufferCapacity(initialSize)
 	, m_endianness(endianness)
@@ -22,6 +39,10 @@ BytePacker::BytePacker(size_t initialSize, void *buffer, eEndianness endianness 
 {
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Destructor
+//
 BytePacker::~BytePacker()
 {
 	if (m_buffer != nullptr)
@@ -31,12 +52,19 @@ BytePacker::~BytePacker()
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Sets the endianness of the bytepacker for future reads and writes
+//
 void BytePacker::SetEndianness(eEndianness endianness)
 {
 	m_endianness = endianness;
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Writes the given data to the buffer, checking for endianness switching
+//
 bool BytePacker::WriteBytes(size_t byteCount, void const *data)
 {
 	// Not enough room in the buffer, so keep expanding
@@ -57,16 +85,29 @@ bool BytePacker::WriteBytes(size_t byteCount, void const *data)
 	return true;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns a pointer to the write location of the buffer
+//
 void* BytePacker::GetWriteHead()
 {
 	return (void*)(m_buffer + m_writeHead);
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Moves the writehead forward by byteCountToMove
+//
 void BytePacker::AdvanceWriteHead(size_t byteCountToMove)
 {
 	m_writeHead += byteCountToMove;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Reads the bytes from the buffer at the read head and returns it in out_data
+// Advances the readhead by the amount read
+//
 size_t BytePacker::ReadBytes(void *out_data, size_t maxByteCount)
 {
 	// Get the data at the right head
@@ -78,6 +119,10 @@ size_t BytePacker::ReadBytes(void *out_data, size_t maxByteCount)
 	return amountRead;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Reads the bytes from the buffer at the read head and returns it in out_data
+//
 size_t BytePacker::Peek(void* out_data, size_t maxByteCount)
 {
 	// Read as much as we can - amount requested or the rest of the readable buffer
@@ -93,6 +138,10 @@ size_t BytePacker::Peek(void* out_data, size_t maxByteCount)
 	return amountToRead;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Moves the read head forward by maxByteCount, clamping to the write head
+//
 void BytePacker::AdvanceReadHead(size_t maxByteCount)
 {
 	size_t remainingReadableBytes = GetRemainingReadableByteCount();
@@ -101,6 +150,10 @@ void BytePacker::AdvanceReadHead(size_t maxByteCount)
 	m_readHead += amountToMove;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Writes an encoded size to the buffer at the write head location
+//
 size_t BytePacker::WriteSize(size_t size)
 {
 	size_t bytesWritten = 0;
@@ -129,6 +182,10 @@ size_t BytePacker::WriteSize(size_t size)
 	return bytesWritten;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Reads an encoded size into out_size, at the location of the read head
+//
 size_t BytePacker::ReadSize(size_t *out_size)
 {
 	size_t bytesRead = 0;
@@ -150,6 +207,10 @@ size_t BytePacker::ReadSize(size_t *out_size)
 	return bytesRead;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Writes the given string to the buffer, returning true if it writes successfully
+//
 bool BytePacker::WriteString(const std::string& string)
 {
 	int characterCount = (int)string.size();
@@ -171,6 +232,9 @@ bool BytePacker::WriteString(const std::string& string)
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Reads a string located at the read head into out_string
+//
 size_t BytePacker::ReadString(std::string& out_string)
 {
 	size_t stringLength;
@@ -185,42 +249,74 @@ size_t BytePacker::ReadString(std::string& out_string)
 	return stringLength;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Resets the write (and read) head to the start of the buffer
+//
 void BytePacker::ResetWrite()
 {
 	m_writeHead = 0;
 	ResetRead();
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Resets the read head only to the start of the buffer
+//
 void BytePacker::ResetRead()
 {
 	m_readHead = 0;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the endianness of the buffer
+//
 eEndianness BytePacker::GetEndianness() const
 {
 	return m_endianness;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the number of bytes currently written to the buffer
+//
 size_t BytePacker::GetWrittenByteCount() const
 {
 	return m_writeHead;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the number of bytes that can be written to the buffer still (without expanding)
+//
 size_t BytePacker::GetRemainingWritableByteCount() const
 {
 	return (m_bufferCapacity - m_writeHead);
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the number of bytes still readable in the buffer
+//
 size_t BytePacker::GetRemainingReadableByteCount() const
 {
 	return (m_writeHead - m_readHead);
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the pointer to the buffer
+//
 void* BytePacker::GetBuffer()
 {
 	return m_buffer;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Expands the buffer to fit the requestedSize at minimum (may expand to larget size)
+//
 bool BytePacker::Reserve(size_t requestedSize)
 {
 	if (m_bufferCapacity >= requestedSize)
@@ -231,8 +327,13 @@ bool BytePacker::Reserve(size_t requestedSize)
 	return ExpandBuffer(requestedSize - m_bufferCapacity);
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Expands the current buffer to hold the additional size passed
+//
 bool BytePacker::ExpandBuffer(size_t requestedAddition)
 {	
+	// Double the buffer size or expand to hold the addition, whichever is greater
 	size_t amountToAdd = (requestedAddition > m_bufferCapacity ? requestedAddition : m_bufferCapacity);
 
 	void* newBuffer = malloc(m_bufferCapacity + amountToAdd);

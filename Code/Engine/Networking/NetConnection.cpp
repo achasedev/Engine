@@ -1,8 +1,12 @@
-// NetConnection.cpp
-
-#include "Engine/Networking/Socket.hpp"
+/************************************************************************/
+/* File: NetConnection.cpp
+/* Author: Andrew Chase
+/* Date: September 20th, 2018
+/* Description: Implementation of the NetConnection class
+/************************************************************************/
 #include "Engine/Networking/NetMessage.hpp"
 #include "Engine/Networking/NetConnection.hpp"
+#include "Engine/Networking/UDPSocket.hpp"
 
 
 //-----------------------------------------------------------------------------------------------
@@ -30,7 +34,7 @@ int NetConnection::Send(NetMessage* msg)
 {
 	size_t dataSize = msg->GetSize();
 	void* data = msg->GetData();
-	int amountSent = m_boundSocket->send_to(m_targetAddress, data, dataSize);
+	int amountSent = m_boundSocket->SendTo(m_targetAddress, data, dataSize);
 
 	return amountSent;
 }
@@ -43,7 +47,7 @@ int NetConnection::Send(NetMessage* msg)
 int NetConnection::Receive(NetMessage* out_msg, size_t maxSize)
 {
 	void* buffer = malloc(maxSize);
-	int amountReceived = m_boundSocket->receive_from(&m_targetAddress, buffer, maxSize);
+	int amountReceived = m_boundSocket->ReceiveFrom(&m_targetAddress, buffer, maxSize);
 
 	// Create the message
 	out_msg = new NetMessage(amountReceived, buffer);

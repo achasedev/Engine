@@ -376,6 +376,7 @@
     <ClCompile Include="Networking\NetSession.cpp" />
     <ClCompile Include="Networking\NetMessage.cpp" />
     <ClCompile Include="Networking\NetConnection.cpp" />
+    <ClCompile Include="Networking\UDPSocket.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -727,5 +728,6 @@
     <ClInclude Include="Networking\NetSession.hpp" />
     <ClInclude Include="Networking\NetMessage.hpp" />
     <ClInclude Include="Networking\NetConnection.hpp" />
+    <ClInclude Include="Networking\UDPSocket.hpp" />
   </ItemGroup>
 </Project>

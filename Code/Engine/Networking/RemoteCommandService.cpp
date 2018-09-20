@@ -1,4 +1,10 @@
 #include "Engine/Core/LogSystem.hpp"
+/************************************************************************/
+/* File: RemoteCommandService.cpp
+/* Author: Andrew Chase
+/* Date: September 20th, 2018
+/* Description: Implementation of the RemoteCommandService class
+/************************************************************************/
 #include "Engine/Assets/AssetDB.hpp"
 #include "Engine/Core/Time/Time.hpp"
 #include "Engine/Core/Time/Stopwatch.hpp"
@@ -24,6 +30,7 @@
 #include <Windows.h>
 #endif
 
+// Commands for the RCS
 void Command_RemoteCommand(Command& cmd);
 void Command_RemoteCommandBroadcast(Command& cmd);
 void Command_RemoteCommandAll(Command& cmd);
@@ -34,8 +41,13 @@ void Command_CloneProcess(Command& cmd);
 // For sending echo responses
 void SendEchoResponse(ConsoleOutputText text, void* args);
 
+// Singleton instance
 RemoteCommandService* RemoteCommandService::s_instance = nullptr;
 
+
+//-----------------------------------------------------------------------------------------------
+// Starts up the RCS
+//
 void RemoteCommandService::Initialize()
 {
 	s_instance = new RemoteCommandService();
@@ -43,12 +55,19 @@ void RemoteCommandService::Initialize()
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Shuts down and deletes the RCS
+//
 void RemoteCommandService::Shutdown()
 {
 	delete s_instance;
 	s_instance = nullptr;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Update loop
+//
 void RemoteCommandService::BeginFrame()
 {
 	switch (m_state)
@@ -66,6 +85,10 @@ void RemoteCommandService::BeginFrame()
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Renders the RCS widget to the screen
+// *Should only be called by DevConsole::Render()
+//
 void RemoteCommandService::Render()
 {
 	// Render the box and border
@@ -144,12 +167,19 @@ void RemoteCommandService::Render()
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the singleton instance
+//
 RemoteCommandService* RemoteCommandService::GetInstance()
 {
 	return s_instance;
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Sends the given message to the connection at index, flagging if it is an echo string
+//
 bool RemoteCommandService::Send(const std::string& message, int connectionIndex, bool isEcho)
 {
 	if (connectionIndex >= (int)s_instance->m_connections.size() || message.size() == 0)
@@ -182,11 +212,19 @@ bool RemoteCommandService::Send(const std::string& message, int connectionIndex,
 	return (amountSent > 0);
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Sets the join request address to signal if the RCS should join an address
+//
 void RemoteCommandService::Join(const std::string& address)
 {
 	s_instance->m_joinRequestAddress = address;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Attempts to start an RCS session using the given port
+//
 void RemoteCommandService::Host(unsigned short port)
 {
 	// Reset all state
@@ -200,11 +238,19 @@ void RemoteCommandService::Host(unsigned short port)
 	s_instance->m_state = STATE_TRYTOHOST;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the number of active connections in this RCS instance
+//
 int RemoteCommandService::GetConnectionCount()
 {
 	return (int)s_instance->m_connections.size();
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Constructor
+//
 RemoteCommandService::RemoteCommandService()
 	: m_state(STATE_INITIAL)
 	, m_hostListenPort(DEFAULT_SERVICE_PORT)
@@ -218,6 +264,10 @@ RemoteCommandService::RemoteCommandService()
 	LogTaggedPrintf("RCS", "Entered Initial State");
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Initializes the UI Layout of the RCS widget on the DevConsole
+//
 void RemoteCommandService::InitializeUILayout()
 {
 	m_borderThickness = 10.f;
@@ -229,6 +279,10 @@ void RemoteCommandService::InitializeUILayout()
 	m_bounds.AddPaddingToSides(-m_textPadding, -m_textPadding);
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Registers the console commands for the RCS into the command system
+//
 void RemoteCommandService::InitializeConsoleCommands()
 {
 	Command::Register("rc", "Sends a command to a remote connection to execute.", Command_RemoteCommand);
@@ -240,6 +294,10 @@ void RemoteCommandService::InitializeConsoleCommands()
 	Command::Register("clone_process", "Clones the current process up to the number specified", Command_CloneProcess);
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Destructor
+//
 RemoteCommandService::~RemoteCommandService()
 {
 	for (int i = 0; i < (int)m_connections.size(); ++i)
@@ -258,6 +316,10 @@ RemoteCommandService::~RemoteCommandService()
 	m_buffers.clear();
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Update, for the initial state
+//
 void RemoteCommandService::Update_Initial()
 {
 	CloseAllConnections();
@@ -276,6 +338,10 @@ void RemoteCommandService::Update_Initial()
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Update, for the Join Attempt state
+//
 void RemoteCommandService::Update_TryToJoinLocal()
 {
 	NetAddress_t localAddress;
@@ -311,6 +377,10 @@ void RemoteCommandService::Update_TryToJoinLocal()
 	ConsolePrintf(Rgba::GREEN, "RCS is a client.");
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Update, for the Join Address state
+//
 void RemoteCommandService::Update_TryToJoinAddress()
 {
 	NetAddress_t netAddress(m_joinRequestAddress.c_str());
@@ -342,6 +412,10 @@ void RemoteCommandService::Update_TryToJoinAddress()
 	m_joinRequestAddress.clear();
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Update, for the Try to Host state
+//
 void RemoteCommandService::Update_TryToHost()
 {
 	bool isListening = m_hostListenSocket.Listen(m_hostListenPort, MAX_CLIENTS);
@@ -361,6 +435,10 @@ void RemoteCommandService::Update_TryToHost()
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Update, for the Delay state
+//
 void RemoteCommandService::Update_Delay()
 {
 	if (m_delayTimer->HasIntervalElapsed())
@@ -372,6 +450,10 @@ void RemoteCommandService::Update_Delay()
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Update, for the Host state
+//
 void RemoteCommandService::Update_Host()
 {
 	// Check if a join request is available
@@ -387,6 +469,10 @@ void RemoteCommandService::Update_Host()
 	CleanUpClosedConnections();
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Update, for the Client state
+//
 void RemoteCommandService::Update_Client()
 {
 	// Check if a join request is available
@@ -410,6 +496,10 @@ void RemoteCommandService::Update_Client()
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Checks if there are any new connections connecting to the listen socket
+//
 void RemoteCommandService::CheckForNewConnections()
 {
 	m_hostListenSocket.SetBlocking(false);
@@ -422,6 +512,10 @@ void RemoteCommandService::CheckForNewConnections()
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Processes all connections, used in the update loop for Clients and Hosts
+//
 void RemoteCommandService::ProcessAllConnections()
 {
 	for (int connectionIndex = 0; connectionIndex < (int)m_connections.size(); ++connectionIndex)
@@ -430,6 +524,10 @@ void RemoteCommandService::ProcessAllConnections()
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Processes the given connection by calling receive on the socket
+//
 void RemoteCommandService::ProcessConnection(int connectionIndex)
 {
 	TCPSocket* connection = m_connections[connectionIndex];
@@ -477,6 +575,10 @@ void RemoteCommandService::ProcessConnection(int connectionIndex)
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Processes the message fully received on the given connection index
+//
 void RemoteCommandService::ProcessMessage(int connectionIndex)
 {
 	TCPSocket* connection = m_connections[connectionIndex];
@@ -505,6 +607,10 @@ void RemoteCommandService::ProcessMessage(int connectionIndex)
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Checks for closed connections and removes them from the list
+//
 void RemoteCommandService::CleanUpClosedConnections()
 {
 	for (int i = (int) m_connections.size() - 1; i >= 0; --i)
@@ -520,6 +626,10 @@ void RemoteCommandService::CleanUpClosedConnections()
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Closes all connections on the RCS
+//
 void RemoteCommandService::CloseAllConnections()
 {
 	// Ensure we're no longer hosting
@@ -540,6 +650,14 @@ void RemoteCommandService::CloseAllConnections()
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// CONSOLE COMMANDS
+//-----------------------------------------------------------------------------------------------
+
+
+//-----------------------------------------------------------------------------------------------
+// Command for sending a command to another RCS process
+//
 void Command_RemoteCommand(Command& cmd)
 {
 	std::string commandToExecute;
@@ -566,6 +684,10 @@ void Command_RemoteCommand(Command& cmd)
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Command for broadcasting another console command to all different RCS processes
+//
 void Command_RemoteCommandBroadcast(Command& cmd)
 {
 	std::string commandToExecute;
@@ -593,6 +715,10 @@ void Command_RemoteCommandBroadcast(Command& cmd)
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Command for broadcasting another console command to all RCS processes, including this one
+//
 void Command_RemoteCommandAll(Command& cmd)
 {
 	Command_RemoteCommandBroadcast(cmd);
@@ -606,13 +732,19 @@ void Command_RemoteCommandAll(Command& cmd)
 		return;
 	}
 
+	// Stall, to ensure all other requests are fully sent (non-blocking sends)
 	int64_t startHpc = GetPerformanceCounter();
 	while (TimeSystem::PerformanceCountToSeconds(GetPerformanceCounter() - startHpc) < 1.0f)
 	{}
 
+	// Run the command on this program
 	Command::Run(commandToExecute);
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Command to have the current RCS join another RCS process
+//
 void Command_RemoteJoin(Command& cmd)
 {
 	std::string address;
@@ -628,6 +760,9 @@ void Command_RemoteJoin(Command& cmd)
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Command to have the current RCS host a session
+//
 void Command_RemoteHost(Command& cmd)
 {
 	uint16_t port = DEFAULT_SERVICE_PORT;
@@ -636,6 +771,10 @@ void Command_RemoteHost(Command& cmd)
 	RemoteCommandService::Host(port);
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Clones the given process (actual game instance)
+//
 void Command_CloneProcess(Command& cmd)
 {
 	// Get the executable path
@@ -689,6 +828,10 @@ void Command_CloneProcess(Command& cmd)
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Echo callback for sending an echo response after running a command
+//
 void SendEchoResponse(ConsoleOutputText text, void* args)
 {
 	int connectionIndex = *((int*)args);

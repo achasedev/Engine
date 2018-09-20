@@ -17,22 +17,6 @@
 
 
 //-----------------------------------------------------------------------------------------------
-// For error checking against non-fatal errors with non-blocking sockets
-//
-bool WasLastErrorFatal(int& errorCode)
-{
-	errorCode = ::WSAGetLastError();
-
-	if (errorCode == WSAEWOULDBLOCK || errorCode == WSAEMSGSIZE || errorCode == WSAECONNRESET)
-	{
-		return false;
-	}
-
-	return true;
-}
-
-
-//-----------------------------------------------------------------------------------------------
 // Constructor
 //
 TCPSocket::TCPSocket()
@@ -45,22 +29,13 @@ TCPSocket::TCPSocket()
 // Constructor from member values, used for client sockets from an accept
 //
 TCPSocket::TCPSocket(Socket_t* socketHandle, NetAddress_t& netAddress, bool isListening /*= false*/, bool isBlocking /*= true*/)
-	: m_socketHandle(socketHandle)
-	, m_address(netAddress)
-	, m_isListening(isListening)
-	, m_isBlocking(isBlocking)
+	: m_isListening(isListening)
 {
+	m_socketHandle = socketHandle;
+	m_address = netAddress;
+	m_isListening = m_isListening;
+
 	SetBlocking(isBlocking);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Constructor to create non-blocking sockets, used for RemoteCommandService
-//
-TCPSocket::TCPSocket(bool shouldBlock)
-	: m_isBlocking(shouldBlock)
-{
-	SetBlocking(shouldBlock);
 }
 
 
@@ -99,7 +74,7 @@ bool TCPSocket::Listen(unsigned short port, unsigned int maxQueued)
 	m_socketHandle = (Socket_t*) ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 	// Ensure the socket is non-blocking if flagged as non-blocking
-	SetBlocking(m_isBlocking);
+	SetBlocking(IsBlocking());
 
 	// Next, we bind it - which means we assign an address to it; 
 	sockaddr_storage saddr;
@@ -171,7 +146,7 @@ TCPSocket* TCPSocket::Accept()
 
 	// Client successfully accepted
 	NetAddress_t clientNetAddress = NetAddress_t((const sockaddr*)&clientAddr);
-	TCPSocket* clientSocket = new TCPSocket((Socket_t*)clientSocketHandle, clientNetAddress, false, m_isBlocking); // Flag as non-blocking if accepted socked was non-blocking
+	TCPSocket* clientSocket = new TCPSocket((Socket_t*)clientSocketHandle, clientNetAddress, false, IsBlocking()); // Flag as non-blocking if accepted socked was non-blocking
 	
 	return clientSocket;
 }
@@ -237,7 +212,7 @@ bool TCPSocket::Connect(const NetAddress_t& netAddress)
 	netAddress.ToSockAddr((sockaddr*)&saddr, &addrlen);
 
 	// Set the blocking state
-	SetBlocking(m_isBlocking);
+	SetBlocking(IsBlocking());
 
 	int result = ::connect((SOCKET)m_socketHandle, (sockaddr*)&saddr, (int)addrlen);
 	if (result == SOCKET_ERROR)
@@ -251,7 +226,7 @@ bool TCPSocket::Connect(const NetAddress_t& netAddress)
 		}
 	}
 
-	if (m_isBlocking)
+	if (IsBlocking())
 	{
 		LogTaggedPrintf("NET", "Connected to %s", netAddress.ToString().c_str());
 	}
@@ -262,26 +237,6 @@ bool TCPSocket::Connect(const NetAddress_t& netAddress)
 
 	m_address = netAddress;
 	return true;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Closes the current connection on this socket
-//
-void TCPSocket::Close()
-{
-	if (IsClosed())
-	{
-		return;
-	}
-
-	// Close it
-	::closesocket((SOCKET)m_socketHandle);
-
-	// Clear the member variables
-	m_address = NetAddress_t();
-	m_socketHandle = (Socket_t*)INVALID_SOCKET;
-	m_isListening = false;
 }
 
 
@@ -314,15 +269,6 @@ int TCPSocket::Send(const void* data, const size_t byteSize)
 
 
 //-----------------------------------------------------------------------------------------------
-// Returns true if this socket's connection is currently closed
-//
-bool TCPSocket::IsClosed() const
-{
-	return m_socketHandle == (Socket_t*)INVALID_SOCKET;
-}
-
-
-//-----------------------------------------------------------------------------------------------
 // Returns true if the TCPSocket is currently bound to an address and is listening for connections
 //
 bool TCPSocket::IsListening() const
@@ -332,43 +278,12 @@ bool TCPSocket::IsListening() const
 
 
 //-----------------------------------------------------------------------------------------------
-// Returns whether this socket is blocking or not
-//
-bool TCPSocket::IsBlocking() const
-{
-	return m_isBlocking;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Sets whether or not this socket will block on receives, accepts, etc
-//
-void TCPSocket::SetBlocking(bool blockingState)
-{
-	// 0 is blocking, 1 is non-blocking
-	u_long state = (blockingState ? 0 : 1);
-	::ioctlsocket((SOCKET)m_socketHandle, FIONBIO, &state);
-
-	m_isBlocking = blockingState;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Returns the NetAddress currently being used by this TCPSocket
-//
-NetAddress_t TCPSocket::GetNetAddress() const
-{
-	return m_address;
-}
-
-
-//-----------------------------------------------------------------------------------------------
 // Returns whether this socket is active and still connecting to a connection
 //
 bool TCPSocket::IsStillConnecting()
 {
 	// Blocking sockets won't have this check
-	if (m_isBlocking)
+	if (IsBlocking())
 	{
 		return false;
 	}

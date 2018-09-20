@@ -1,9 +1,14 @@
-// NetSession.cpp
-
+/************************************************************************/
+/* File: NetSession.cpp
+/* Author: Andrew Chase
+/* Date: September 20th, 2018
+/* Description: Implementation of the NetSession class
+/************************************************************************/
 #include "Engine/Networking/NetSession.hpp"
-#include "Engine/Networking/Socket.hpp"
+#include "Engine/Networking/UDPSocket.hpp"
 #include "Engine/Networking/NetMessage.hpp"
 #include "Engine/Networking/NetConnection.hpp"
+
 
 //-----------------------------------------------------------------------------------------------
 // Constructor - sets the max message size only
@@ -42,7 +47,7 @@ bool NetSession::AddBinding(unsigned short port)
 		return false;
 	}
 
-	bool bound = newSocket->bind(localAddress);
+	bool bound = newSocket->Bind(localAddress);
 
 	if (bound)
 	{
