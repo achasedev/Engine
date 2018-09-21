@@ -37,6 +37,6 @@ private:
 private:
 	//-----Private Data-----
 
-	bool			m_isListening = false;
+	bool				m_isListening = false;
 
 };

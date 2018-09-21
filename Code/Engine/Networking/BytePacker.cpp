@@ -308,7 +308,7 @@ size_t BytePacker::GetRemainingReadableByteCount() const
 //-----------------------------------------------------------------------------------------------
 // Returns the pointer to the buffer
 //
-void* BytePacker::GetBuffer()
+const void* BytePacker::GetBuffer() const
 {
 	return m_buffer;
 }

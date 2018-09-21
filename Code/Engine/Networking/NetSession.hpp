@@ -5,6 +5,7 @@
 /* Description: Class to represent a single collection of network connections
 /************************************************************************/
 #include "Engine/Networking/NetAddress.hpp"
+#include "Engine/Networking/NetMessage.hpp"
 #include <vector>
 #include <map>
 
@@ -13,9 +14,6 @@ class NetMessage;
 class BytePacker;
 class NetConnection;
 struct NetSender_t;
-
-// Callback for the NetSession
-typedef bool(*NetSession_cb)(NetMessage* msg, NetConnection* sender);
 
 // For deferred sending of messages
 struct PendingMessage_t
@@ -33,7 +31,7 @@ public:
 
 	// Registers a callback given from the game to be called on messages of a given tag
 	// **This is where we differentiate between message types, and can perform different tasks based on the type**
-	void RegisterMessageCallback(const char* tag, NetSession_cb callback);
+	void RegisterMessageCallback(const char* tag, NetMessage_cb callback);
 	
 	// Adds a binding to this session to send and receive out of (not sure of the
 	// use for multiple bindings, though this might have an effect on client vs. host
@@ -70,7 +68,7 @@ private:
 
 	// Callbacks for processing messages
 	// The game can hook whichever callbacks it likes to this list, that listens to a give tag
-	std::map<std::string, NetSession_cb> m_messageCallbacks;
+	std::map<std::string, NetMessage_cb> m_messageCallbacks;
 
 	// We queue up messages during the frame, and send them out after the update step
 	std::vector<PendingMessage_t> m_pendingOutgoingMessages;

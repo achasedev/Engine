@@ -5,36 +5,25 @@
 /* Description: Implementation of the NetMessage class
 /************************************************************************/
 #include "Engine/Networking/NetMessage.hpp"
-#include "Engine/Networking/BytePacker.hpp"
-
-
-//-----------------------------------------------------------------------------------------------
-// Constructor - writes the tag to the buffer
-//
-NetMessage::NetMessage(const std::string& tag)
-{
-	m_buffer = new BytePacker(LITTLE_ENDIAN);
-
-	// Write the tag to the start of the buffer
-	m_buffer->WriteString(tag);
-}
-
 
 //-----------------------------------------------------------------------------------------------
 // Default constructor
 //
 NetMessage::NetMessage()
+	: BytePacker(MESSAGE_MTU, m_payload, LITTLE_ENDIAN)
 {
-	m_buffer = new BytePacker(LITTLE_ENDIAN);
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Constructor - for receiving off of a connection
+// Constructor - for reconstructing messages from a received payload
 //
-NetMessage::NetMessage(size_t size, void* data)
+NetMessage::NetMessage(uint8_t definitionIndex, void* payload, const int16_t& payloadSize)
+	: BytePacker(MESSAGE_MTU, m_payload, LITTLE_ENDIAN)
+	, m_definitionIndex(definitionIndex)
 {
-	m_buffer = new BytePacker(size, data, LITTLE_ENDIAN);
+	// Put the payload contents in
+	memcpy(m_payload, payload, payloadSize);
 }
 
 
@@ -53,45 +42,9 @@ NetMessage::~NetMessage()
 
 
 //-----------------------------------------------------------------------------------------------
-// Reads the next byteCount bytes from the BytePacker, returning the amount written
+// Returns the index in the NetSession for this message definition
 //
-size_t NetMessage::Read(size_t const byteCount, void* out_data)
+uint8_t NetMessage::GetDefinitionIndex() const
 {
-	return m_buffer->ReadBytes(out_data, byteCount);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Writes the data to the BytePacker
-//
-void NetMessage::Write(const size_t byteCount, void* data)
-{
-	m_buffer->WriteBytes(byteCount, data);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Reads a string from the BytePacker
-//
-void NetMessage::ReadString(std::string& out_string)
-{
-	m_buffer->ReadString(out_string);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Returns the current working size of the message (written byte count on the packer)
-//
-size_t NetMessage::GetSize() const
-{
-	return m_buffer->GetWrittenByteCount();
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Returns a pointer to the BytePacker data
-//
-void* NetMessage::GetData() const
-{
-	return m_buffer->GetBuffer();
+	return m_definitionIndex;
 }

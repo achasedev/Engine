@@ -5,46 +5,45 @@
 /* Description: Class to represent a single message from a NetSession
 /************************************************************************/
 #pragma once
+#include "Engine/Networking/BytePacker.hpp"
 #include <string>
-#include <vector>
+
+// Limit messages to 1KB
+#define MESSAGE_MTU 1024
 
 class BytePacker;
+class NetConnection;
+class NetMessage;
 
-class NetMessage
+// Callback for the NetSession
+typedef bool(*NetMessage_cb)(NetMessage* msg, NetConnection* sender);
+
+struct NetMessageDefinition_t
+{
+	std::string name;
+	NetMessage_cb callback;
+};
+
+
+class NetMessage : public BytePacker
 {
 public:
 	//-----Public Methods-----
 
 	NetMessage();
-	NetMessage(const std::string& tag);
-	NetMessage(size_t size, void* data);
-
+	NetMessage(uint8_t definitionIndex, void* payload, const int16_t& payloadSize);
 	~NetMessage();
 
-	// Reading and writing to the byte packer
-	template <typename T>
-	void Write(const T& data)
-	{
-		Write(sizeof(data), &data)
-	}
-
-	template <typename T>
-	size_t Read(T& out_data)
-	{
-		return Read(sizeof(out_data), &out_data);
-	}
-
-	void			Write(const size_t byteCount, void* data);
-	size_t			Read(size_t const byteCount, void* out_data);
-	void			ReadString(std::string& out_string);
-
 	// Accessors
-	size_t			GetSize() const;
-	void*			GetData() const;
+	uint8_t							GetDefinitionIndex() const;
+
 
 private:
 	//-----Private Data-----
 
-	BytePacker* m_buffer = nullptr;
+	uint8_t							m_payload[MESSAGE_MTU];
+	std::string						m_definitionName;
+	uint8_t							m_definitionIndex;
+	const NetMessageDefinition_t*	m_definition;
 
 };

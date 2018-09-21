@@ -29,12 +29,25 @@ public:
 	void*			GetWriteHead();
 	void			AdvanceWriteHead(size_t byteCountToMove);
 
+	template <typename T>
+	bool Write(const T& data)
+	{
+		return WriteBytes(sizeof(T), &data);
+	}
+
 	// Tries to read into out_data.  Returns how much
 	// ended up being read; 
 	size_t			ReadBytes(void *out_data, size_t maxByteCount);
 	size_t			Peek(void* out_data, size_t maxByteCount);
 	void			AdvanceReadHead(size_t maxByteCount);
 
+	template <typename T>
+	bool Read(T& out_data)
+	{
+		return Read(&out_data, sizeof(T));
+	}
+
+	// Size encoding
 	size_t			WriteSize(size_t size); // returns how many bytes used
 	size_t			ReadSize(size_t *out_size); // returns how many bytes read, fills out_size
 
@@ -52,14 +65,14 @@ public:
 	size_t			GetRemainingWritableByteCount() const;		// how much more can I write to this buffer (if growble, this returns UINFINITY)
 	size_t			GetRemainingReadableByteCount() const;		// how much more data can I read;
 
-	void*			GetBuffer();
+	const void*		GetBuffer() const;
 
 	bool			Reserve(size_t requestedSize);
 	bool			ExpandBuffer(size_t requestedAddition);
 
 
-private:
-	//-----Private Data----
+protected:
+	//-----Protected Data----
 	
 	uint8_t* m_buffer = nullptr;
 	size_t m_bufferCapacity;

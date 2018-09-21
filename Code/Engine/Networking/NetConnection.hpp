@@ -20,8 +20,8 @@ public:
 	~NetConnection();
 
 	// Send and receive out of the bound socket for this connection
-	int Send(NetMessage* msg);
-	int Receive(NetMessage* out_msg, size_t maxSize);
+	size_t Send(NetMessage* msg);
+	size_t Receive(NetMessage* out_msg, size_t maxSize);
 
 	// Returns the target address this connection is associated with
 	NetAddress_t GetTargetAddress();

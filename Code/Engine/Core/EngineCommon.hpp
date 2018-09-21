@@ -21,7 +21,11 @@ extern Blackboard* g_gameConfigBlackboard;
 #define QUOTE(x) _QUOTE(x)
 #define __FILE__LINE__ __FILE__ "(" QUOTE(__LINE__) ") : "
 #define PRAGMA(p)  __pragma( p )
-#define NOTE( x )  //PRAGMA( message(x) )
+
+#ifndef NOTE
+#define NOTE( x )  PRAGMA( message(x) )
+#endif
+
 #define FILE_LINE  NOTE( __FILE__LINE__ )
 
 #define TODO( x )  NOTE( __FILE__LINE__"\n"           \

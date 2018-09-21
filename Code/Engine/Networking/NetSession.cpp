@@ -22,7 +22,7 @@ NetSession::NetSession(size_t maxMessageSize)
 //-----------------------------------------------------------------------------------------------
 // Adds a call back for message handling
 //
-void NetSession::RegisterMessageCallback(const char* tag, NetSession_cb callback)
+void NetSession::RegisterMessageCallback(const char* tag, NetMessage_cb callback)
 {
 	// Should replace the existing callback, or add it
 	std::string key(tag);
