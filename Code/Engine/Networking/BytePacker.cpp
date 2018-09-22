@@ -4,6 +4,7 @@
 /* Date: September 20th, 2018
 /* Description: Implementation of the BytePacker class
 /************************************************************************/
+#include "Engine/Core/LogSystem.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Networking/BytePacker.hpp"
 #include <stdlib.h>
@@ -21,9 +22,10 @@ BytePacker::BytePacker(eEndianness endianness /*= LITTLE_ENDIAN*/)
 //-----------------------------------------------------------------------------------------------
 // Constructor that initializes the buffer to the given size
 //
-BytePacker::BytePacker(size_t initialSize, eEndianness endianness /*= LITTLE_ENDIAN*/)
+BytePacker::BytePacker(size_t initialSize, bool ownsMemory, eEndianness endianness /*= LITTLE_ENDIAN*/)
 	: m_endianness(endianness)
 	, m_bufferCapacity(initialSize)
+	, m_ownsMemory(ownsMemory)
 {
 	m_buffer = (uint8_t*)malloc(initialSize);
 }
@@ -32,10 +34,11 @@ BytePacker::BytePacker(size_t initialSize, eEndianness endianness /*= LITTLE_END
 //-----------------------------------------------------------------------------------------------
 // Constructor, from a given buffer
 //
-BytePacker::BytePacker(size_t initialSize, void *buffer, eEndianness endianness /*= LITTLE_ENDIAN*/)
+BytePacker::BytePacker(size_t initialSize, void *buffer, bool ownsMemory, eEndianness endianness /*= LITTLE_ENDIAN*/)
 	: m_bufferCapacity(initialSize)
 	, m_endianness(endianness)
 	, m_buffer((uint8_t*)buffer)
+	, m_ownsMemory(ownsMemory)
 {
 }
 
@@ -45,7 +48,7 @@ BytePacker::BytePacker(size_t initialSize, void *buffer, eEndianness endianness 
 //
 BytePacker::~BytePacker()
 {
-	if (m_buffer != nullptr)
+	if (m_ownsMemory)
 	{
 		free(m_buffer);
 		m_buffer = nullptr;
@@ -70,7 +73,12 @@ bool BytePacker::WriteBytes(size_t byteCount, void const *data)
 	// Not enough room in the buffer, so keep expanding
 	if (GetRemainingWritableByteCount() < byteCount)
 	{
-		ExpandBuffer(byteCount);
+		bool expanded = ExpandBuffer(byteCount);
+
+		if (!expanded)
+		{
+			return false;
+		}
 	}
 
 	// Copy the data into the buffer
@@ -219,7 +227,12 @@ bool BytePacker::WriteString(const std::string& string)
 	// Make sure the buffer has enough room
 	if (GetRemainingWritableByteCount() < characterCount)
 	{
-		ExpandBuffer(characterCount);
+		bool expanded = ExpandBuffer(characterCount);
+
+		if (!expanded)
+		{
+			return false;
+		}
 	}
 
 	// Copy the data into the buffer
@@ -333,6 +346,12 @@ bool BytePacker::Reserve(size_t requestedSize)
 //
 bool BytePacker::ExpandBuffer(size_t requestedAddition)
 {	
+	if (!m_ownsMemory)
+	{
+		LogTaggedPrintf("NET", "Error: BytePacker::ExpandBuffer() called on a non-expanding packer");
+		return false;
+	}
+
 	// Double the buffer size or expand to hold the addition, whichever is greater
 	size_t amountToAdd = (requestedAddition > m_bufferCapacity ? requestedAddition : m_bufferCapacity);
 

@@ -10,7 +10,7 @@
 // Default constructor
 //
 NetMessage::NetMessage()
-	: BytePacker(MESSAGE_MTU, m_payload, LITTLE_ENDIAN)
+	: BytePacker(MESSAGE_MTU, m_payload, false, LITTLE_ENDIAN)
 {
 }
 
@@ -18,9 +18,9 @@ NetMessage::NetMessage()
 //-----------------------------------------------------------------------------------------------
 // Constructor - for reconstructing messages from a received payload
 //
-NetMessage::NetMessage(uint8_t definitionIndex, void* payload, const int16_t& payloadSize)
-	: BytePacker(MESSAGE_MTU, m_payload, LITTLE_ENDIAN)
-	, m_definitionIndex(definitionIndex)
+NetMessage::NetMessage(const NetMessageDefinition_t* definition, void* payload, const int16_t& payloadSize)
+	: BytePacker(MESSAGE_MTU, m_payload, false, LITTLE_ENDIAN)
+	, m_definition(definition)
 {
 	// Put the payload contents in
 	memcpy(m_payload, payload, payloadSize);
@@ -28,16 +28,10 @@ NetMessage::NetMessage(uint8_t definitionIndex, void* payload, const int16_t& pa
 
 
 //-----------------------------------------------------------------------------------------------
-// Destructor - for cleaning up the BytePacker (which is why we pass NetMessages by pointer all the time,
-// to avoid accidental deletion of this buffer)
+// Destructor - for cleaning up the BytePacker
 //
 NetMessage::~NetMessage()
 {
-	if (m_buffer != nullptr)
-	{
-		delete m_buffer;
-		m_buffer = nullptr;
-	}
 }
 
 
@@ -46,5 +40,14 @@ NetMessage::~NetMessage()
 //
 uint8_t NetMessage::GetDefinitionIndex() const
 {
-	return m_definitionIndex;
+	return m_definition->sessionIndex;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the definition members
+//
+void NetMessage::SetDefinition(const NetMessageDefinition_t* definition)
+{
+	m_definition = definition;
 }

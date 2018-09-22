@@ -2,13 +2,24 @@
 #include "Engine/Networking/NetMessage.hpp"
 
 NetPacket::NetPacket()
-	: BytePacker(PACKET_MTU, m_localBuffer, LITTLE_ENDIAN)
+	: BytePacker(PACKET_MTU, m_localBuffer, false, LITTLE_ENDIAN)
 {
 }
 
 void NetPacket::WriteHeader(const PacketHeader_t& header)
 {
-	WriteBytes(sizeof(PacketHeader_t), &header);
+	size_t writtenBytes = GetWrittenByteCount();
+
+	// Set the write head back to the beginning to write
+	ResetWrite();
+	size_t headerSize = sizeof(PacketHeader_t);
+	WriteBytes(headerSize, &header);
+
+	// Move write head back to where it was
+	if (writtenBytes > headerSize)
+	{
+		AdvanceWriteHead(writtenBytes - headerSize);
+	}
 }
 
 bool NetPacket::ReadHeader(PacketHeader_t& out_header)
@@ -17,12 +28,12 @@ bool NetPacket::ReadHeader(PacketHeader_t& out_header)
 	return success;
 }
 
-bool NetPacket::WriteMessage(const NetMessage& message)
+bool NetPacket::WriteMessage(const NetMessage* message)
 {
 	bool success;
 
 	// Write the header + message payload size
-	int16_t msgSize = (int16_t) message.GetWrittenByteCount();
+	int16_t msgSize = (int16_t) message->GetWrittenByteCount();
 	uint16_t msgAndHeaderSize = msgSize + 1;
 	success = WriteBytes(2, &msgAndHeaderSize);
 
@@ -32,7 +43,7 @@ bool NetPacket::WriteMessage(const NetMessage& message)
 	}
 
 	// Write the message index
-	uint8_t msgIndex = message.GetDefinitionIndex();
+	uint8_t msgIndex = message->GetDefinitionIndex();
 	success = WriteBytes(sizeof(int8_t), &msgIndex);
 
 	if (!success)
@@ -41,12 +52,12 @@ bool NetPacket::WriteMessage(const NetMessage& message)
 	}
 
 	// Write the message payload
-	success = WriteBytes(msgSize, message.GetBuffer());
+	success = WriteBytes(msgSize, message->GetBuffer());
 
 	return success;
 }
 
-bool NetPacket::ReadMessage(NetMessage& out_message)
+bool NetPacket::ReadMessage(NetMessage* out_message)
 {
 	// Read the header + message payload size
 	int8_t headerSize = sizeof(int8_t);
@@ -78,8 +89,13 @@ bool NetPacket::ReadMessage(NetMessage& out_message)
 	}
 
 	// Construct the message
-	out_message = NetMessage(msgIndex, &payload, msgSize);
+	*out_message = NetMessage(msgIndex, &payload, msgSize);
 
 	return true;
+}
+
+uint8_t NetPacket::GetConnectionIndex() const
+{
+	return m_sendReceiveIndex;
 }
 

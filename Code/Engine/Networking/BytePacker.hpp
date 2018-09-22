@@ -16,9 +16,9 @@ public:
 	//-----Public Methods-----
 
 	BytePacker(eEndianness endianness = LITTLE_ENDIAN);
-	BytePacker(size_t bufferSize, eEndianness endianness = LITTLE_ENDIAN);
-	BytePacker(size_t bufferSize, void *buffer, eEndianness endianness = LITTLE_ENDIAN);
-	~BytePacker();
+	BytePacker(size_t bufferSize, bool ownsMemory, eEndianness endianness = LITTLE_ENDIAN);
+	BytePacker(size_t bufferSize, void *buffer, bool ownsMemory, eEndianness endianness = LITTLE_ENDIAN);
+	virtual ~BytePacker();
 
 
 	// sets how much of the buffer is readable; 
@@ -56,7 +56,6 @@ public:
 	size_t			ReadString(std::string& out_string); // max_str_size should be enough to contain the null terminator as well; 
 
 	// HELPERS
-	// suggested method names for commonly needed information; 
 	void			ResetWrite();  // resets writing to the beginning of the buffer.  Make sure read head stays valid (<= write_head)
 	void			ResetRead();   // resets reading to the beginning of the buffer
 
@@ -74,12 +73,13 @@ public:
 protected:
 	//-----Protected Data----
 	
-	uint8_t* m_buffer = nullptr;
-	size_t m_bufferCapacity;
+	uint8_t*		m_buffer = nullptr;
+	size_t			m_bufferCapacity;
+	bool			m_ownsMemory = true;
 
-	size_t m_readHead;
-	size_t m_writeHead;
+	size_t			m_readHead;
+	size_t			m_writeHead;
 
-	eEndianness m_endianness;
+	eEndianness		m_endianness;
 
 };

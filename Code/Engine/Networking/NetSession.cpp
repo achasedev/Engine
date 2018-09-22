@@ -4,17 +4,18 @@
 /* Date: September 20th, 2018
 /* Description: Implementation of the NetSession class
 /************************************************************************/
-#include "Engine/Networking/NetSession.hpp"
 #include "Engine/Networking/UDPSocket.hpp"
+#include "Engine/Networking/NetPacket.hpp"
+#include "Engine/Networking/NetSession.hpp"
 #include "Engine/Networking/NetMessage.hpp"
 #include "Engine/Networking/NetConnection.hpp"
+#include "Engine/Core/LogSystem.hpp"
 
 
 //-----------------------------------------------------------------------------------------------
-// Constructor - sets the max message size only
+// Constructor
 //
-NetSession::NetSession(size_t maxMessageSize)
-	: m_maxMessageSize(maxMessageSize)
+NetSession::NetSession()
 {
 }
 
@@ -22,19 +23,29 @@ NetSession::NetSession(size_t maxMessageSize)
 //-----------------------------------------------------------------------------------------------
 // Adds a call back for message handling
 //
-void NetSession::RegisterMessageCallback(const char* tag, NetMessage_cb callback)
+void NetSession::RegisterMessageDefinition(const std::string& name, NetMessage_cb callback)
 {
-	// Should replace the existing callback, or add it
-	std::string key(tag);
+	// Check for duplicates
+	for (int index = 0; index < (int) m_messageDefinitions.size(); ++index)
+	{
+		if (m_messageDefinitions[index]->name == name)
+		{
+			LogTaggedPrintf("NET", "Warning - NetSession::RegisterMessageDefinition() registered duplicate definition name \"%s\"", name.c_str());
 
-	m_messageCallbacks[key] = callback;
+			delete m_messageDefinitions[index];
+			m_messageDefinitions.erase(m_messageDefinitions.begin() + index);
+			break;
+		}
+	}
+
+	m_messageDefinitions.push_back(new NetMessageDefinition_t(name, callback));
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Adds a socket binding for sending and listening to connections
 //
-bool NetSession::AddBinding(unsigned short port)
+bool NetSession::Bind(unsigned short port)
 {
 	UDPSocket* newSocket = new UDPSocket();
 
@@ -51,46 +62,102 @@ bool NetSession::AddBinding(unsigned short port)
 
 	if (bound)
 	{
-		m_bindings.push_back(newSocket);
-		ConsolePrintf(Rgba::GREEN, "NetSession bound to port %u", port);
+		m_boundSocket = newSocket;
+		LogTaggedPrintf("NET", "NetSession bound to address %s", localAddress.ToString().c_str());
 	}
 	else
 	{
-		ConsoleErrorf("Error: NetSession couldn't bind to port %u", port);
+		delete newSocket;
+		LogTaggedPrintf("NET", "Error: NetSession::Bind() couldn't bind to address %s", localAddress.ToString().c_str());
 	}
+
+	// We're bound, so now we're available for connections
+	// Now is a good time to sort the definition vector
+	SortDefinitions();
 
 	return bound;
 }
 
 
 //-----------------------------------------------------------------------------------------------
+// Sends the packet out of the bound socket
+//
+bool NetSession::SendPacket(const NetPacket* packet)
+{
+	NetConnection* connection = m_connections[packet->GetConnectionIndex()];
+	NetAddress_t address = connection->GetAddress();
+
+	size_t amountSent = m_boundSocket->SendTo(address, packet->GetBuffer(), packet->GetWrittenByteCount());
+
+	return amountSent > 0;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the definition given by name
+//
+const NetMessageDefinition_t* NetSession::GetMessageDefinition(const std::string& name)
+{
+	for (int index = 0; index < (int)m_messageDefinitions.size(); ++index)
+	{
+		if (m_messageDefinitions[index]->name == name)
+		{
+			return m_messageDefinitions[index];
+		}
+	}
+
+	LogTaggedPrintf("NET", "Error - NetSession::GetMessageDefinition() couldn't find definition for name %s", name.c_str());
+	return nullptr;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the definition at the given index
+//
+const NetMessageDefinition_t* NetSession::GetMessageDefinition(const uint8_t index)
+{
+	if (index > (uint8_t)m_messageDefinitions.size())
+	{
+		LogTaggedPrintf("NET", "Error - NetSession::GetMessageDefinition() received index out of range, index was %i", index);
+		return nullptr;
+	}
+
+	return m_messageDefinitions[index];
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Create and add a new connection
 //
-bool NetSession::AddConnection(unsigned int bindingIndex, NetAddress_t targetAddress)
+bool NetSession::AddConnection(unsigned int bindingIndex, NetAddress_t address)
 {
-	if (bindingIndex >= (unsigned int)m_bindings.size())
+	// Keep it in range of the vector
+	m_connections.resize(bindingIndex + 1);
+
+	if (m_connections[bindingIndex] != nullptr)
 	{
-		ConsoleErrorf("Error: NetSession::AddConnection() received bindingIndex out of range, %i", bindingIndex);
+		LogTaggedPrintf("NET", "Warning: NetSession::AddConnection() tried to add a connection to an already existing connection index, index was %i", bindingIndex);
 		return false;
 	}
 
-	NetConnection* newConnection = new NetConnection(m_bindings[bindingIndex], targetAddress);
-	m_connections.push_back(newConnection);
+	NetConnection* newConnection = new NetConnection(address, this, bindingIndex);
+	m_connections[bindingIndex] = newConnection;
 
 	return true;
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Queues a message to be sent at the end of the update step
+// Closes all connections in the session
 //
-void NetSession::QueueMessage(NetConnection* connection, NetMessage* msg)
+void NetSession::CloseAllConnections()
 {
-	PendingMessage_t pendingMessage;
-	pendingMessage.message = msg;
-	pendingMessage.connection = connection;
+	for (int index = 0; index < (int)m_messageDefinitions.size(); ++index)
+	{
+		delete m_connections[index];
+	}
 
-	m_pendingOutgoingMessages.push_back(pendingMessage);
+	m_connections.clear();
 }
 
 
@@ -99,32 +166,22 @@ void NetSession::QueueMessage(NetConnection* connection, NetMessage* msg)
 //
 void NetSession::ProcessIncoming()
 {
-	// Receive on each connection, calling the callbacks based on tag
-	for (int connectionIndex = 0; connectionIndex < (int) m_connections.size(); ++connectionIndex)
+	bool done = false;
+	while (!done)
 	{
-		NetMessage* message = new NetMessage();
-		int amountReceived = m_connections[connectionIndex]->Receive(message, m_maxMessageSize);
+		NetPacket packet;
+		NetAddress_t senderAddress;
+
+		int amountReceived = m_boundSocket->ReceiveFrom(&senderAddress, packet.GetWriteHead(), PACKET_MTU);
 
 		if (amountReceived > 0)
 		{
-			// Check the tag to see what we should do with it
-			std::string tag;
-			message->ReadString(tag); // Messages always start off with a string for their tag
-
-			if (tag.size() > 0)
-			{
-				// Check if the tag has a callback
-				bool tagHasCallback = m_messageCallbacks.find(tag) != m_messageCallbacks.end();
-
-				if (tagHasCallback)
-				{
-					m_messageCallbacks[tag](message, m_connections[connectionIndex]);
-				}
-			}
+			ProcessReceivedPacket(&packet);
 		}
-
-		// Done with the message
-		delete message;
+		else
+		{
+			done = true;
+		}
 	}
 }
 
@@ -134,16 +191,58 @@ void NetSession::ProcessIncoming()
 //
 void NetSession::ProcessOutgoing()
 {
-	// Send all pending messages out
-
-	for (int i = (int) m_pendingOutgoingMessages.size() - 1; i >= 0; ++i)
+	// Flush each connection
+	for (int index = 0; index < m_connections.size(); ++index)
 	{
-		PendingMessage_t currMessage = m_pendingOutgoingMessages[i];
-		currMessage.connection->Send(currMessage.message);
-
-		// Done with the message
-		delete currMessage.message;
+		m_connections[index]->FlushMessages();
 	}
+}
 
-	m_pendingOutgoingMessages.clear();
+
+//-----------------------------------------------------------------------------------------------
+// Sorts the NetMessageDefinition collection to validate the indices
+//
+void NetSession::SortDefinitions()
+{
+	for (int i = 0; i < (int)m_messageDefinitions.size() - 1; ++i)
+	{
+		for (int j = i + 1; j < (int)m_messageDefinitions.size(); ++j)
+		{
+			if (m_messageDefinitions[j]->name < m_messageDefinitions[i]->name)
+			{
+				const NetMessageDefinition_t* temp = m_messageDefinitions[i];
+				m_messageDefinitions[i] = m_messageDefinitions[j];
+				m_messageDefinitions[j] = temp;
+			}
+		}
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Processes the received packet by calling all message callbacks for messages within the packet
+//
+void NetSession::ProcessReceivedPacket(NetPacket* packet)
+{
+	// Get the messages out
+	PacketHeader_t header;
+	packet->ReadHeader(header);
+	packet->m_sendReceiveIndex = header.senderConnectionIndex;
+
+	NetConnection* senderConnection = m_connections[header.senderConnectionIndex];
+	uint8_t messageCount = header.unreliableMessageCount;
+
+	for (int i = 0; i < messageCount; ++i)
+	{
+		NetMessage message;
+		packet->ReadMessage(&message);
+
+		uint8_t defIndex = message.GetDefinitionIndex();
+		const NetMessageDefinition_t* definition = m_messageDefinitions[defIndex];
+
+		message.SetDefinition(defIndex, definition);
+
+		// Call the callback
+		definition->callback(&message, senderConnection);
+	}
 }

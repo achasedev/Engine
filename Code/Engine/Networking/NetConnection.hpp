@@ -6,9 +6,11 @@
 /************************************************************************/
 #pragma once
 #include "Engine/Networking/NetAddress.hpp"
+#include <vector>
 
 class UDPSocket;
 class BytePacker;
+class NetSession;
 class NetMessage;
 
 class NetConnection
@@ -16,21 +18,26 @@ class NetConnection
 public:
 	//-----Public Methods-----
 
-	NetConnection(UDPSocket* boundSocket, NetAddress_t& targetAddress);
+	NetConnection(NetAddress_t& address, NetSession* session, uint8_t connectionIndex);
 	~NetConnection();
 
-	// Send and receive out of the bound socket for this connection
-	size_t Send(NetMessage* msg);
-	size_t Receive(NetMessage* out_msg, size_t maxSize);
+
+	// Queues the message to be processed later
+	void						Send(NetMessage* msg);
+	void						FlushMessages();
+
 
 	// Returns the target address this connection is associated with
-	NetAddress_t GetTargetAddress();
+	NetAddress_t				GetAddress();
 
 
 private:
 	//-----Private Data-----
 
-	UDPSocket*		m_boundSocket = nullptr; // For now, only UDP supported, though could be generalized (?) to both UDP and TCP
-	NetAddress_t	m_targetAddress;
+	std::vector<NetMessage*>	m_outboundUnreliables;
+	NetAddress_t				m_address;
+
+	NetSession*					m_owningSession = nullptr;
+	uint8_t						m_indexInSession;
 
 };

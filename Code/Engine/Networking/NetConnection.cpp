@@ -7,15 +7,18 @@
 #include "Engine/Networking/NetMessage.hpp"
 #include "Engine/Networking/NetConnection.hpp"
 #include "Engine/Networking/UDPSocket.hpp"
+#include "Engine/Networking/NetPacket.hpp"
+#include "Engine/Networking/NetSession.hpp"
 
 
 //-----------------------------------------------------------------------------------------------
 // Constructor
 //
-NetConnection::NetConnection(UDPSocket* boundSocket, NetAddress_t& targetAddress)
+NetConnection::NetConnection(NetAddress_t& address, NetSession* session, uint8_t connectionIndex)
+	: m_address(address)
+	, m_owningSession(session)
+	, m_indexInSession(connectionIndex)
 {
-	m_boundSocket = boundSocket;
-	m_targetAddress = targetAddress;
 }
 
 
@@ -24,43 +27,80 @@ NetConnection::NetConnection(UDPSocket* boundSocket, NetAddress_t& targetAddress
 //
 NetConnection::~NetConnection()
 {
+	// Check for any pending messages that didn't get sent
+	for (int i = 0; i < (int)m_outboundUnreliables.size(); ++i)
+	{
+		delete m_outboundUnreliables[i];
+	}
+
+	m_outboundUnreliables.clear();
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Sends the given message out of the bound socket to the target address
-// Returns the number of bytes sent
+// Queues the message to be sent during a flush
 //
-size_t NetConnection::Send(NetMessage* msg)
+void NetConnection::Send(NetMessage* msg)
 {
-	size_t dataSize = msg->GetWrittenByteCount();
-	const void* data = msg->GetBuffer();
-	size_t amountSent = m_boundSocket->SendTo(m_targetAddress, data, dataSize);
-
-	return amountSent;
+	m_outboundUnreliables.push_back(msg);
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Receives on the bound socket up to maxSize amount, and returns the size read
-// Outputs the read data in out_msg
+// Sends all pending messages out of the socket
 //
-size_t NetConnection::Receive(NetMessage* out_msg, size_t maxSize)
+void NetConnection::FlushMessages()
 {
-	void* buffer = malloc(maxSize);
-	size_t amountReceived = m_boundSocket->ReceiveFrom(&m_targetAddress, buffer, maxSize);
+	// Package them all into one NetPacket
+	NetPacket* packet = new NetPacket();
+	packet->AdvanceWriteHead(2); // Advance the write head now, and write the header later
+	unsigned int messagesWritten = 0;
 
-	// Create the message
-	//out_msg = new NetMessage(amountReceived, buffer);
+	for (int msgIndex = 0; msgIndex < m_outboundUnreliables.size(); ++msgIndex)
+	{
+		NetMessage* msg = m_outboundUnreliables[msgIndex];
 
-	return amountReceived;
+		// Check if the message will fit
+		// 2 bytes for the header and message size, 1 byte for message definition index,
+		// and then the payload
+		uint16_t totalSize = 2 + 1 + msg->GetWrittenByteCount();
+		if (packet->GetRemainingWritableByteCount() >= totalSize)
+		{
+			packet->WriteMessage(msg);
+			messagesWritten++;
+		}
+		else
+		{
+			PacketHeader_t header(m_indexInSession, messagesWritten);
+			packet->WriteHeader(header);
+
+			// Send the current packet and start again
+			m_owningSession->SendPacket(packet);
+
+			// Reset
+			packet->ResetWrite();
+			packet->AdvanceWriteHead(2);
+
+			packet->WriteMessage(msg);
+			messagesWritten = 1;
+		}
+
+		delete msg;
+	}
+	
+	PacketHeader_t header(m_indexInSession, messagesWritten);
+	packet->WriteHeader(header);
+
+	m_owningSession->SendPacket(packet);
+
+	m_outboundUnreliables.clear();
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Returns the target address for this connection
 //
-NetAddress_t NetConnection::GetTargetAddress()
+NetAddress_t NetConnection::GetAddress()
 {
-	return m_targetAddress;
+	return m_address;
 }

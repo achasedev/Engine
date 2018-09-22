@@ -20,8 +20,12 @@ typedef bool(*NetMessage_cb)(NetMessage* msg, NetConnection* sender);
 
 struct NetMessageDefinition_t
 {
-	std::string name;
-	NetMessage_cb callback;
+	NetMessageDefinition_t(const std::string& _name, uint8_t _sessionIndex, NetMessage_cb _callback)
+		: name(_name), sessionIndex(_sessionIndex), callback(_callback) {}
+
+	std::string		name;
+	uint8_t			sessionIndex;
+	NetMessage_cb	callback;
 };
 
 
@@ -31,19 +35,21 @@ public:
 	//-----Public Methods-----
 
 	NetMessage();
-	NetMessage(uint8_t definitionIndex, void* payload, const int16_t& payloadSize);
+	NetMessage(const NetMessageDefinition_t* definition, void* payload, const int16_t& payloadSize);
 	~NetMessage();
 
 	// Accessors
 	uint8_t							GetDefinitionIndex() const;
+
+	// Mutators
+	void							SetDefinition(const NetMessageDefinition_t* definition);
 
 
 private:
 	//-----Private Data-----
 
 	uint8_t							m_payload[MESSAGE_MTU];
-	std::string						m_definitionName;
-	uint8_t							m_definitionIndex;
+
 	const NetMessageDefinition_t*	m_definition;
 
 };
