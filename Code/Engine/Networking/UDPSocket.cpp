@@ -72,7 +72,7 @@ size_t UDPSocket::SendTo(NetAddress_t const &netAddr, void const *data, size_t c
 		(int)byte_count, 		// byte count to send
 		0, 						// unused flags
 		(sockaddr*)&addr, 		// Address we're sending to
-		addr_len);				// Length of addr we're sending to
+		(int) addr_len);		// Length of addr we're sending to
 
 	if (sent > 0)
 	{
@@ -90,6 +90,7 @@ size_t UDPSocket::SendTo(NetAddress_t const &netAddr, void const *data, size_t c
 		}
 	}
 
+	return 0;
 }
 
 
@@ -119,7 +120,7 @@ size_t UDPSocket::ReceiveFrom(NetAddress_t *out_addr, void *buffer, size_t const
 
 	if (received > 0)
 	{
-		NetAddress_t((sockaddr*)&fromAddr);
+		*out_addr = NetAddress_t((sockaddr*)&fromAddr);
 		return received;
 	}
 	else
@@ -129,7 +130,7 @@ size_t UDPSocket::ReceiveFrom(NetAddress_t *out_addr, void *buffer, size_t const
 		{
 			Close();
 		}
-
-		return 0;
 	}
+
+	return 0;
 }

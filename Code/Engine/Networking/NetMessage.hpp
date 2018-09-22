@@ -20,8 +20,8 @@ typedef bool(*NetMessage_cb)(NetMessage* msg, NetConnection* sender);
 
 struct NetMessageDefinition_t
 {
-	NetMessageDefinition_t(const std::string& _name, uint8_t _sessionIndex, NetMessage_cb _callback)
-		: name(_name), sessionIndex(_sessionIndex), callback(_callback) {}
+	NetMessageDefinition_t(const std::string& _name, NetMessage_cb _callback)
+		: name(_name), callback(_callback) {}
 
 	std::string		name;
 	uint8_t			sessionIndex;

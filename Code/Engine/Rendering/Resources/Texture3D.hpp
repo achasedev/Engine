@@ -14,16 +14,20 @@ public:
 	bool		CreateFromFile(const char* filename);
 	Texture3D*	Copy() const;
 
+	// Mutators
+	void			SetColorAtCoords(const IntVector3& coords, const Rgba& color);
+	void			SetColorAtIndex(unsigned int index, const Rgba& color);
+
 	// Accessors
-	Rgba*			GetColorData() const;
 	Rgba			GetColorAtCoords(const IntVector3& coords) const;
+	Rgba			GetColorAtIndex(unsigned int index) const;
 	IntVector3		GetDimensions() const;
 	unsigned int	GetVoxelCount() const;
 
 private:
 	//-----Private Data-----
 
-	Rgba* m_colorData;
-	IntVector3 m_dimensions;
+	Rgba*		m_colorData;
+	IntVector3	m_dimensions;
 
 };

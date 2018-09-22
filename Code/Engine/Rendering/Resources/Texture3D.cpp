@@ -22,7 +22,7 @@ bool Texture3D::CreateFromFile(const char* filename)
 
 	file->LoadFileToMemory();
 
-	FileWriteFromBuffer("Data/test.qef", file->GetData(), file->GetSize());
+	FileWriteFromBuffer("Data/test.qef", file->GetData(), (int) file->GetSize());
 
 	std::string currLine;
 
@@ -78,7 +78,7 @@ bool Texture3D::CreateFromFile(const char* filename)
 	// Now get all the voxel colors
 	while (!file->IsAtEndOfFile())
 	{
-		int lineNumber = file->GetNextLine(currLine);
+		file->GetNextLine(currLine);
 
 		if (currLine.size() == 0)
 		{
@@ -89,6 +89,10 @@ bool Texture3D::CreateFromFile(const char* filename)
 
 		// Get the voxel coords
 		int xCoord = StringToInt(voxelTokens[0]);
+
+		// *Flip from right handed to left handed basis
+		xCoord = m_dimensions.x - xCoord - 1;
+
 		int yCoord = StringToInt(voxelTokens[1]);
 		int zCoord = StringToInt(voxelTokens[2]);
 
@@ -101,6 +105,8 @@ bool Texture3D::CreateFromFile(const char* filename)
 
 	// Done!
 	free(colorPallette);
+
+	return true;
 }
 
 Texture3D* Texture3D::Copy() const
@@ -116,14 +122,19 @@ Texture3D* Texture3D::Copy() const
 	return newTexture;
 }
 
-Rgba* Texture3D::GetColorData() const
+void Texture3D::SetColorAtIndex(unsigned int index, const Rgba& color)
 {
-	return m_colorData;
+	m_colorData[index] = color;
 }
 
 Rgba Texture3D::GetColorAtCoords(const IntVector3& coords) const
 {
 	int index = coords.y * (m_dimensions.x * m_dimensions.z) + coords.z * m_dimensions.x + coords.x;
+	return m_colorData[index];
+}
+
+Rgba Texture3D::GetColorAtIndex(unsigned int index) const
+{
 	return m_colorData[index];
 }
 

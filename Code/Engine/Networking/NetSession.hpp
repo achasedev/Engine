@@ -37,7 +37,7 @@ public:
 
 
 	// Connections
-	bool AddConnection(unsigned int bindingIndex, NetAddress_t targetAddress);
+	bool AddConnection(uint8_t connectionIndex, NetAddress_t targetAddress);
 	void CloseAllConnections();
 
 

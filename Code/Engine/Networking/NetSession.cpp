@@ -129,19 +129,19 @@ const NetMessageDefinition_t* NetSession::GetMessageDefinition(const uint8_t ind
 //-----------------------------------------------------------------------------------------------
 // Create and add a new connection
 //
-bool NetSession::AddConnection(unsigned int bindingIndex, NetAddress_t address)
+bool NetSession::AddConnection(uint8_t connectionIndex, NetAddress_t address)
 {
 	// Keep it in range of the vector
-	m_connections.resize(bindingIndex + 1);
+	m_connections.resize(connectionIndex + 1);
 
-	if (m_connections[bindingIndex] != nullptr)
+	if (m_connections[connectionIndex] != nullptr)
 	{
-		LogTaggedPrintf("NET", "Warning: NetSession::AddConnection() tried to add a connection to an already existing connection index, index was %i", bindingIndex);
+		LogTaggedPrintf("NET", "Warning: NetSession::AddConnection() tried to add a connection to an already existing connection index, index was %i", connectionIndex);
 		return false;
 	}
 
-	NetConnection* newConnection = new NetConnection(address, this, bindingIndex);
-	m_connections[bindingIndex] = newConnection;
+	NetConnection* newConnection = new NetConnection(address, this, connectionIndex);
+	m_connections[connectionIndex] = newConnection;
 
 	return true;
 }
@@ -172,7 +172,7 @@ void NetSession::ProcessIncoming()
 		NetPacket packet;
 		NetAddress_t senderAddress;
 
-		int amountReceived = m_boundSocket->ReceiveFrom(&senderAddress, packet.GetWriteHead(), PACKET_MTU);
+		size_t amountReceived = m_boundSocket->ReceiveFrom(&senderAddress, packet.GetWriteHead(), PACKET_MTU);
 
 		if (amountReceived > 0)
 		{
@@ -240,7 +240,7 @@ void NetSession::ProcessReceivedPacket(NetPacket* packet)
 		uint8_t defIndex = message.GetDefinitionIndex();
 		const NetMessageDefinition_t* definition = m_messageDefinitions[defIndex];
 
-		message.SetDefinition(defIndex, definition);
+		message.SetDefinition(definition);
 
 		// Call the callback
 		definition->callback(&message, senderConnection);

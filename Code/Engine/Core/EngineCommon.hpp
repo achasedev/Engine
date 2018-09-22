@@ -23,7 +23,7 @@ extern Blackboard* g_gameConfigBlackboard;
 #define PRAGMA(p)  __pragma( p )
 
 #ifndef NOTE
-#define NOTE( x )  PRAGMA( message(x) )
+#define NOTE( x )  //PRAGMA( message(x) )
 #endif
 
 #define FILE_LINE  NOTE( __FILE__LINE__ )

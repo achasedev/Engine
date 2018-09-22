@@ -58,7 +58,7 @@ void LogSystem::Initialize()
 
 	// Get the paths, and open the files
 	std::string logFileName = Stringf(LOG_FILE_NAME_FORMAT, ::GetCurrentThreadId(), GetFormattedSystemDateAndTime().c_str());
-	bool success = s_logfile->Open(logFileName.c_str(), "w+");
+	s_logfile->Open(logFileName.c_str(), "w+");
 
 	// Make a file writer for the latest log file
 	LogCallBack_t writerCallback;

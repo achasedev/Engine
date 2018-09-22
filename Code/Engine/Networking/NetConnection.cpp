@@ -54,7 +54,7 @@ void NetConnection::FlushMessages()
 	// Package them all into one NetPacket
 	NetPacket* packet = new NetPacket();
 	packet->AdvanceWriteHead(2); // Advance the write head now, and write the header later
-	unsigned int messagesWritten = 0;
+	uint8_t messagesWritten = 0;
 
 	for (int msgIndex = 0; msgIndex < m_outboundUnreliables.size(); ++msgIndex)
 	{
@@ -63,7 +63,7 @@ void NetConnection::FlushMessages()
 		// Check if the message will fit
 		// 2 bytes for the header and message size, 1 byte for message definition index,
 		// and then the payload
-		uint16_t totalSize = 2 + 1 + msg->GetWrittenByteCount();
+		uint16_t totalSize = (uint16_t) (2 + 1 + msg->GetWrittenByteCount());
 		if (packet->GetRemainingWritableByteCount() >= totalSize)
 		{
 			packet->WriteMessage(msg);
