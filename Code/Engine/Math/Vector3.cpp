@@ -191,12 +191,16 @@ float Vector3::GetLengthSquared() const
 //
 float Vector3::NormalizeAndGetLength()
 {
-	float length = this->GetLength();
-	float oneOverLength = (1.f / length);
+	float length = GetLength();
 
-	x = (x * oneOverLength);
-	y = (y * oneOverLength);
-	z = (z * oneOverLength);
+	if (length > 0.f)
+	{
+		float oneOverLength = (1.f / length);
+
+		x = (x * oneOverLength);
+		y = (y * oneOverLength);
+		z = (z * oneOverLength);
+	}
 
 	return length;
 }
