@@ -18,12 +18,22 @@ NetMessage::NetMessage()
 //-----------------------------------------------------------------------------------------------
 // Constructor - for reconstructing messages from a received payload
 //
-NetMessage::NetMessage(const NetMessageDefinition_t* definition, void* payload, const int16_t& payloadSize)
+NetMessage::NetMessage(uint8_t definitionIndex, void* payload, const int16_t& payloadSize)
 	: BytePacker(MESSAGE_MTU, m_payload, false, LITTLE_ENDIAN)
-	, m_definition(definition)
+	, m_definitionIndex(definitionIndex)
 {
 	// Put the payload contents in
 	memcpy(m_payload, payload, payloadSize);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Constructor for a NetMessage with a definition
+//
+NetMessage::NetMessage(uint8_t definitionIndex)
+	: BytePacker(MESSAGE_MTU, m_payload, false, LITTLE_ENDIAN)
+	, m_definitionIndex(definitionIndex)
+{
 }
 
 
@@ -40,14 +50,14 @@ NetMessage::~NetMessage()
 //
 uint8_t NetMessage::GetDefinitionIndex() const
 {
-	return m_definition->sessionIndex;
+	return m_definitionIndex;
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Sets the definition members
 //
-void NetMessage::SetDefinition(const NetMessageDefinition_t* definition)
+void NetMessage::SetDefinitionIndex(uint8_t definitionIndex)
 {
-	m_definition = definition;
+	m_definitionIndex = definitionIndex;
 }

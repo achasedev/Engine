@@ -23,9 +23,9 @@ struct NetMessageDefinition_t
 	NetMessageDefinition_t(const std::string& _name, NetMessage_cb _callback)
 		: name(_name), callback(_callback) {}
 
-	std::string		name;
-	uint8_t			sessionIndex;
-	NetMessage_cb	callback;
+	std::string		name = "";
+	uint8_t			sessionIndex = 0;
+	NetMessage_cb	callback = nullptr;
 };
 
 
@@ -35,14 +35,15 @@ public:
 	//-----Public Methods-----
 
 	NetMessage();
-	NetMessage(const NetMessageDefinition_t* definition, void* payload, const int16_t& payloadSize);
+	NetMessage(uint8_t definitionIndex);
+	NetMessage(uint8_t definitionIndex, void* payload, const int16_t& payloadSize);
 	~NetMessage();
 
 	// Accessors
 	uint8_t							GetDefinitionIndex() const;
 
 	// Mutators
-	void							SetDefinition(const NetMessageDefinition_t* definition);
+	void							SetDefinitionIndex(uint8_t definitionIndex);
 
 
 private:
@@ -50,6 +51,7 @@ private:
 
 	uint8_t							m_payload[MESSAGE_MTU];
 
-	const NetMessageDefinition_t*	m_definition;
+	uint8_t							m_definitionIndex = 0;
+	// const NetMessageDefinition_t*	m_definition = nullptr;
 
 };

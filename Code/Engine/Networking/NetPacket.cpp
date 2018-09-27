@@ -89,7 +89,9 @@ bool NetPacket::ReadMessage(NetMessage* out_message)
 	}
 
 	// Construct the message
-	//*out_message = NetMessage(msgIndex, &payload, msgSize);
+	*out_message = NetMessage(msgIndex, &payload, msgSize);
+	out_message->AdvanceWriteHead(msgSize);
+	out_message->AdvanceReadHead(1);
 
 	return true;
 }

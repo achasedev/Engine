@@ -26,7 +26,7 @@ public:
 
 
 	// Binding and Sending
-	bool		Bind(unsigned short port);
+	bool		Bind(unsigned short port, uint16_t portRange);
 	bool		SendPacket(const NetPacket* packet);
 
 
@@ -34,23 +34,23 @@ public:
 	void							RegisterMessageDefinition(const std::string& name, NetMessage_cb callback);
 	const NetMessageDefinition_t*	GetMessageDefinition(const std::string& name);
 	const NetMessageDefinition_t*	GetMessageDefinition(const uint8_t index);
-
+	bool							GetMessageDefinitionIndex(const std::string& name, uint8_t& out_index);
 
 	// Connections
-	bool AddConnection(uint8_t connectionIndex, NetAddress_t targetAddress);
-	void CloseAllConnections();
-
+	bool							AddConnection(unsigned int bindingIndex, NetAddress_t targetAddress);
+	void							CloseAllConnections();
+	NetConnection*					GetConnection(unsigned int connectionIndex) const;
 
 	// General message processing
-	void ProcessIncoming();
-	void ProcessOutgoing();
+	void							ProcessIncoming();
+	void							ProcessOutgoing();
 
 
 private:
 	//-----Private Methods-----
 
-	void SortDefinitions();
-	void ProcessReceivedPacket(NetPacket* packet);
+	void							SortDefinitions();
+	void							ProcessReceivedPacket(NetPacket* packet);
 
 
 private:

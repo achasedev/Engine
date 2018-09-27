@@ -42,9 +42,9 @@ public:
 	void			AdvanceReadHead(size_t maxByteCount);
 
 	template <typename T>
-	bool Read(T& out_data)
+	size_t Read(T& out_data)
 	{
-		return Read(&out_data, sizeof(T));
+		return ReadBytes(&out_data, sizeof(T));
 	}
 
 	// Size encoding

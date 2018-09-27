@@ -35,16 +35,25 @@ bool UDPSocket::Bind(NetAddress_t const &addr, uint16_t port_range /*= 0U*/)
 	// Shown - just trying one; 
 	sockaddr_storage sock_addr;
 	size_t sock_addr_len;
-	addr.ToSockAddr((sockaddr*)&sock_addr, &sock_addr_len);
 
 	// try to bind - if it succeeds - great.  If not, try the next port in the range.
-	int result = ::bind(my_socket, (sockaddr*)&sock_addr, (int)sock_addr_len);
-	if (0 == result) {
-		m_socketHandle = (Socket_t*)my_socket;
-		m_address = addr;
-		return true;
+	NetAddress_t addrToBind = addr;
+	for (int i = 0; i <= port_range; ++i)
+	{
+		addrToBind.ToSockAddr((sockaddr*)&sock_addr, &sock_addr_len);
+		int result = ::bind(my_socket, (sockaddr*)&sock_addr, (int)sock_addr_len);
+		if (0 == result) {
+			m_socketHandle = (Socket_t*)my_socket;
+			m_address = addrToBind;
+
+			SetBlocking(false);
+			return true;
+		}
+
+		addrToBind.port++;
 	}
 
+	// Couldn't bind to a single port
 	return false;
 }
 
@@ -74,12 +83,7 @@ size_t UDPSocket::SendTo(NetAddress_t const &netAddr, void const *data, size_t c
 		(sockaddr*)&addr, 		// Address we're sending to
 		(int) addr_len);		// Length of addr we're sending to
 
-	if (sent > 0)
-	{
-		ASSERT_RECOVERABLE(sent == byte_count, "UDPSocket::SendTo() couldn't sent all the bytes.");
-		return (size_t)sent;
-	}
-	else
+	if (sent <= 0)
 	{
 		int errorCode;
 		if (WasLastErrorFatal(errorCode))
@@ -90,7 +94,8 @@ size_t UDPSocket::SendTo(NetAddress_t const &netAddr, void const *data, size_t c
 		}
 	}
 
-	return 0;
+	ASSERT_RECOVERABLE(sent == byte_count, "UDPSocket::SendTo() couldn't sent all the bytes.");
+	return (size_t)sent;
 }
 
 

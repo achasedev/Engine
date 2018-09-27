@@ -51,6 +51,11 @@ void NetConnection::Send(NetMessage* msg)
 //
 void NetConnection::FlushMessages()
 {
+	if (m_outboundUnreliables.size() == 0)
+	{
+		return;
+	}
+
 	// Package them all into one NetPacket
 	NetPacket* packet = new NetPacket();
 	packet->AdvanceWriteHead(2); // Advance the write head now, and write the header later
