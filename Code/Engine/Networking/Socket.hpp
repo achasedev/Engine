@@ -9,8 +9,6 @@
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 #include <stdint.h>
 
-#define GAME_PORT 10084
-
 // IPv4 Header Size: 20B
 // IPv6 Header Size: 40B
 // TCP Header Size: 20B-60B

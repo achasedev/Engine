@@ -45,7 +45,7 @@ void NetSession::RegisterMessageDefinition(const std::string& name, NetMessage_c
 //-----------------------------------------------------------------------------------------------
 // Adds a socket binding for sending and listening to connections
 //
-bool NetSession::Bind(unsigned short port)
+bool NetSession::Bind(unsigned short port, uint16_t portRange)
 {
 	UDPSocket* newSocket = new UDPSocket();
 
@@ -58,16 +58,18 @@ bool NetSession::Bind(unsigned short port)
 		return false;
 	}
 
-	bool bound = newSocket->Bind(localAddress);
+	bool bound = newSocket->Bind(localAddress, portRange);
 
 	if (bound)
 	{
 		m_boundSocket = newSocket;
+		ConsolePrintf(Rgba::GREEN, "Net Session bound to address %s", localAddress.ToString().c_str());
 		LogTaggedPrintf("NET", "NetSession bound to address %s", localAddress.ToString().c_str());
 	}
 	else
 	{
 		delete newSocket;
+		ConsoleErrorf("Net Session could not bind to address %s", localAddress.ToString().c_str());
 		LogTaggedPrintf("NET", "Error: NetSession::Bind() couldn't bind to address %s", localAddress.ToString().c_str());
 	}
 
@@ -127,6 +129,25 @@ const NetMessageDefinition_t* NetSession::GetMessageDefinition(const uint8_t ind
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the index of the message definition given by name
+//
+bool NetSession::GetMessageDefinitionIndex(const std::string& name, uint8_t& out_index)
+{
+	for (int index = 0; index < (int)m_messageDefinitions.size(); ++index)
+	{
+		if (m_messageDefinitions[index]->name == name)
+		{
+			out_index = index;
+			return true;
+		}
+	}
+
+	LogTaggedPrintf("NET", "Error - NetSession::GetMessageDefinition() couldn't find definition for name %s", name.c_str());
+	return false;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Create and add a new connection
 //
 bool NetSession::AddConnection(unsigned int bindingIndex, NetAddress_t address)
@@ -162,6 +183,20 @@ void NetSession::CloseAllConnections()
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the NetConnection at the given index, nullptr if out of range
+//
+NetConnection* NetSession::GetConnection(unsigned int index) const
+{
+	if (index >= m_connections.size())
+	{
+		return nullptr;
+	}
+
+	return m_connections[index];
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Receives on all current connections, calling callbacks on all receiving messages depending on their tag
 //
 void NetSession::ProcessIncoming()
@@ -176,6 +211,7 @@ void NetSession::ProcessIncoming()
 
 		if (amountReceived > 0)
 		{
+			packet.AdvanceWriteHead(amountReceived);
 			ProcessReceivedPacket(&packet);
 		}
 		else
@@ -194,7 +230,10 @@ void NetSession::ProcessOutgoing()
 	// Flush each connection
 	for (int index = 0; index < m_connections.size(); ++index)
 	{
-		m_connections[index]->FlushMessages();
+		if (m_connections[index] != nullptr)
+		{
+			m_connections[index]->FlushMessages();
+		}
 	}
 }
 
@@ -240,7 +279,7 @@ void NetSession::ProcessReceivedPacket(NetPacket* packet)
 		uint8_t defIndex = message.GetDefinitionIndex();
 		const NetMessageDefinition_t* definition = m_messageDefinitions[defIndex];
 
-		message.SetDefinition(defIndex, definition);
+		message.SetDefinitionIndex(defIndex);
 
 		// Call the callback
 		definition->callback(&message, senderConnection);

@@ -39,6 +39,8 @@ BytePacker::BytePacker(size_t initialSize, void *buffer, bool ownsMemory, eEndia
 	, m_endianness(endianness)
 	, m_buffer((uint8_t*)buffer)
 	, m_ownsMemory(ownsMemory)
+	, m_readHead(0)
+	, m_writeHead(0)
 {
 }
 
