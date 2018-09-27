@@ -89,15 +89,29 @@ bool NetPacket::ReadMessage(NetMessage* out_message)
 	}
 
 	// Construct the message
-	*out_message = NetMessage(msgIndex, &payload, msgSize);
+	*out_message = NetMessage(msgIndex, payload, msgSize);
 	out_message->AdvanceWriteHead(msgSize);
-	out_message->AdvanceReadHead(1);
 
 	return true;
 }
 
-uint8_t NetPacket::GetConnectionIndex() const
+void NetPacket::SetSenderConnectionIndex(uint8_t index)
 {
-	return m_sendReceiveIndex;
+	m_senderIndex = index;
+}
+
+void NetPacket::SetReceiverConnectionIndex(uint8_t index)
+{
+	m_receiverIndex = index;
+}
+
+uint8_t NetPacket::GetSenderConnectionIndex() const
+{
+	return m_senderIndex;
+}
+
+uint8_t NetPacket::GetReceiverConnectionIndex() const
+{
+	return m_receiverIndex;
 }
 

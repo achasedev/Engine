@@ -4,12 +4,12 @@
 /* Date: September 20th, 2018
 /* Description: Implementation of the NetConnection class
 /************************************************************************/
-#include "Engine/Networking/NetMessage.hpp"
-#include "Engine/Networking/NetConnection.hpp"
+#include "Engine/Core/LogSystem.hpp"
 #include "Engine/Networking/UDPSocket.hpp"
 #include "Engine/Networking/NetPacket.hpp"
+#include "Engine/Networking/NetMessage.hpp"
 #include "Engine/Networking/NetSession.hpp"
-
+#include "Engine/Networking/NetConnection.hpp"
 
 //-----------------------------------------------------------------------------------------------
 // Constructor
@@ -59,6 +59,9 @@ void NetConnection::FlushMessages()
 	// Package them all into one NetPacket
 	NetPacket* packet = new NetPacket();
 	packet->AdvanceWriteHead(2); // Advance the write head now, and write the header later
+	packet->SetSenderConnectionIndex(m_owningSession->GetLocalConnectionIndex());
+	packet->SetReceiverConnectionIndex(m_indexInSession);
+
 	uint8_t messagesWritten = 0;
 
 	for (int msgIndex = 0; msgIndex < m_outboundUnreliables.size(); ++msgIndex)
@@ -76,11 +79,20 @@ void NetConnection::FlushMessages()
 		}
 		else
 		{
-			PacketHeader_t header(m_indexInSession, messagesWritten);
+			PacketHeader_t header(m_owningSession->GetLocalConnectionIndex(), messagesWritten);
 			packet->WriteHeader(header);
 
 			// Send the current packet and start again
-			m_owningSession->SendPacket(packet);
+			bool sent = m_owningSession->SendPacket(packet);
+
+			if (sent)
+			{
+				LogTaggedPrintf("NET", "NetConnection sent packet with %i messages", messagesWritten);
+			}
+			else
+			{
+				LogTaggedPrintf("NET", "NetConnection couldn't send packet for %i messages", messagesWritten);
+			}
 
 			// Reset
 			packet->ResetWrite();
@@ -93,10 +105,20 @@ void NetConnection::FlushMessages()
 		delete msg;
 	}
 	
-	PacketHeader_t header(m_indexInSession, messagesWritten);
+	PacketHeader_t header(m_owningSession->GetLocalConnectionIndex(), messagesWritten);
 	packet->WriteHeader(header);
 
-	m_owningSession->SendPacket(packet);
+	bool sent = m_owningSession->SendPacket(packet);
+
+	if (sent)
+	{
+		LogTaggedPrintf("NET", "NetConnection sent packet with %i messages", messagesWritten);
+	}
+	else
+	{
+		LogTaggedPrintf("NET", "NetConnection couldn't send packet for %i messages", messagesWritten);
+	}
+		
 
 	m_outboundUnreliables.clear();
 }

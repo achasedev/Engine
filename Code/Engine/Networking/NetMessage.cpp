@@ -38,10 +38,51 @@ NetMessage::NetMessage(uint8_t definitionIndex)
 
 
 //-----------------------------------------------------------------------------------------------
+// Move constructor
+//
+NetMessage::NetMessage(NetMessage&& moveFrom)
+	: BytePacker(MESSAGE_MTU, m_payload, false, LITTLE_ENDIAN)
+{
+	m_bufferCapacity = moveFrom.m_bufferCapacity;
+	m_endianness = moveFrom.m_endianness;
+	m_readHead = moveFrom.m_readHead;
+	m_writeHead = moveFrom.m_writeHead;
+	m_ownsMemory = moveFrom.m_ownsMemory;
+
+	m_definitionIndex = moveFrom.m_definitionIndex;
+	memcpy(m_payload, moveFrom.m_payload, MESSAGE_MTU);
+
+	// Invalidate
+	moveFrom.m_buffer = nullptr;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Destructor - for cleaning up the BytePacker
 //
 NetMessage::~NetMessage()
 {
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Move override
+//
+NetMessage& NetMessage::operator=(NetMessage&& moveFrom)
+{
+	m_bufferCapacity = moveFrom.m_bufferCapacity;
+	m_endianness = moveFrom.m_endianness;
+	m_readHead = moveFrom.m_readHead;
+	m_writeHead = moveFrom.m_writeHead;
+	m_ownsMemory = moveFrom.m_ownsMemory;
+
+	m_definitionIndex = moveFrom.m_definitionIndex;
+	memcpy(m_payload, moveFrom.m_payload, m_bufferCapacity);
+
+	// Invalidate
+	moveFrom.m_buffer = nullptr;
+
+	return *this;
 }
 
 

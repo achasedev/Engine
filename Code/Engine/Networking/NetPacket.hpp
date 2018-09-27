@@ -11,6 +11,10 @@
 #define PACKET_MTU (ETHERNET_MTU - 40 - 8) 
 #endif
 
+#ifndef INVALID_CONNECTION_INDEX
+#define INVALID_CONNECTION_INDEX (0xff)
+#endif
+
 // Predeclarations
 class NetMessage;
 
@@ -21,8 +25,8 @@ struct PacketHeader_t
 	PacketHeader_t(uint8_t connectionIndex, uint8_t messageCount)
 		: senderConnectionIndex(connectionIndex), unreliableMessageCount(messageCount) {}
 
-	uint8_t senderConnectionIndex;
-	uint8_t unreliableMessageCount;
+	uint8_t senderConnectionIndex = INVALID_CONNECTION_INDEX;
+	uint8_t unreliableMessageCount = 0;
 };
 
 
@@ -41,14 +45,17 @@ public:
 	bool		WriteMessage(const NetMessage* message);
 	bool		ReadMessage(NetMessage* out_message);
 
-	uint8_t		GetConnectionIndex() const;
+	void		SetSenderConnectionIndex(uint8_t index);
+	void		SetReceiverConnectionIndex(uint8_t index);
 
+	uint8_t		GetSenderConnectionIndex() const;
+	uint8_t		GetReceiverConnectionIndex() const;
 
 private:
 	//-----Private Data-----
 
 	uint8_t		m_localBuffer[PACKET_MTU];
-	uint8_t		m_sendReceiveIndex; // On receive, it was the sender
-									// On send, it is the destination
+	uint8_t		m_senderIndex					= INVALID_CONNECTION_INDEX; 
+	uint8_t		m_receiverIndex			= INVALID_CONNECTION_INDEX;
 
 };

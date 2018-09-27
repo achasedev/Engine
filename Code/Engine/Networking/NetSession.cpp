@@ -4,12 +4,12 @@
 /* Date: September 20th, 2018
 /* Description: Implementation of the NetSession class
 /************************************************************************/
+#include "Engine/Core/LogSystem.hpp"
 #include "Engine/Networking/UDPSocket.hpp"
 #include "Engine/Networking/NetPacket.hpp"
 #include "Engine/Networking/NetSession.hpp"
 #include "Engine/Networking/NetMessage.hpp"
 #include "Engine/Networking/NetConnection.hpp"
-#include "Engine/Core/LogSystem.hpp"
 
 
 //-----------------------------------------------------------------------------------------------
@@ -63,14 +63,14 @@ bool NetSession::Bind(unsigned short port, uint16_t portRange)
 	if (bound)
 	{
 		m_boundSocket = newSocket;
-		ConsolePrintf(Rgba::GREEN, "Net Session bound to address %s", localAddress.ToString().c_str());
-		LogTaggedPrintf("NET", "NetSession bound to address %s", localAddress.ToString().c_str());
+		ConsolePrintf(Rgba::GREEN, "Net Session bound to address %s", newSocket->GetNetAddress().ToString().c_str());
+		LogTaggedPrintf("NET", "NetSession bound to address %s", newSocket->GetNetAddress().ToString().c_str());
 	}
 	else
 	{
 		delete newSocket;
-		ConsoleErrorf("Net Session could not bind to address %s", localAddress.ToString().c_str());
-		LogTaggedPrintf("NET", "Error: NetSession::Bind() couldn't bind to address %s", localAddress.ToString().c_str());
+		ConsoleErrorf("Net Session could not bind to address %s", newSocket->GetNetAddress().ToString().c_str());
+		LogTaggedPrintf("NET", "Error: NetSession::Bind() couldn't bind to address %s", newSocket->GetNetAddress().ToString().c_str());
 	}
 
 	// We're bound, so now we're available for connections
@@ -86,12 +86,34 @@ bool NetSession::Bind(unsigned short port, uint16_t portRange)
 //
 bool NetSession::SendPacket(const NetPacket* packet)
 {
-	NetConnection* connection = m_connections[packet->GetConnectionIndex()];
+	NetConnection* connection = m_connections[packet->GetReceiverConnectionIndex()];
 	NetAddress_t address = connection->GetAddress();
 
 	size_t amountSent = m_boundSocket->SendTo(address, packet->GetBuffer(), packet->GetWrittenByteCount());
 
 	return amountSent > 0;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the definition given by name
+//
+bool NetSession::SendMessageDirect(NetMessage* message, const NetSender_t& sender)
+{
+	NetPacket packet;
+	packet.AdvanceWriteHead(sizeof(PacketHeader_t));
+
+	packet.WriteMessage(message);
+
+	PacketHeader_t header;
+	header.unreliableMessageCount = 1;
+	header.senderConnectionIndex = INVALID_CONNECTION_INDEX;
+
+	packet.WriteHeader(header);
+
+	size_t amountSent = m_boundSocket->SendTo(sender.address, packet.GetBuffer(), packet.GetWrittenByteCount());
+
+	return (amountSent > 0);
 }
 
 
@@ -187,12 +209,21 @@ void NetSession::CloseAllConnections()
 //
 NetConnection* NetSession::GetConnection(unsigned int index) const
 {
-	if (index >= m_connections.size())
+	if (index >= INVALID_CONNECTION_INDEX)
 	{
 		return nullptr;
 	}
 
 	return m_connections[index];
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the index for the connection of this instance
+//
+uint8_t NetSession::GetLocalConnectionIndex() const
+{
+	return m_localConnectionIndex;
 }
 
 
@@ -212,7 +243,11 @@ void NetSession::ProcessIncoming()
 		if (amountReceived > 0)
 		{
 			packet.AdvanceWriteHead(amountReceived);
-			ProcessReceivedPacket(&packet);
+
+			if (VerifyPacket(&packet))
+			{
+				ProcessReceivedPacket(&packet, senderAddress);
+			}
 		}
 		else
 		{
@@ -259,16 +294,58 @@ void NetSession::SortDefinitions()
 
 
 //-----------------------------------------------------------------------------------------------
+// Verifies that the packet is of correct format
+//
+bool NetSession::VerifyPacket(NetPacket* packet)
+{
+	// Enough room for the packet header
+	PacketHeader_t header;
+	if (!packet->ReadHeader(header))
+	{
+		LogTaggedPrintf("NET", "NetSession::VerifyPacket() failed, packet was less than size of header.");
+		return false;
+	}
+
+	// Peek at the header and verify the messages
+	uint8_t messageCount = header.unreliableMessageCount;
+
+	for (int i = 0; i < messageCount; ++i)
+	{
+		uint16_t messageSize;
+		packet->Read(messageSize);
+
+		packet->AdvanceReadHead(messageSize);
+
+		if (packet->GetRemainingReadableByteCount() < 0)
+		{
+			LogTaggedPrintf("NET", "NetSession::VerifyPacket() failed, packet message count and size went over the packet size.");
+			return false;
+		}
+	}
+
+	// Check for under the limit
+	if (packet->GetRemainingReadableByteCount() > 0)
+	{
+		LogTaggedPrintf("NET", "NetSession::VerifyPacket() failed, packet message count and sizes were under the packet size.");
+		return false;
+	}
+	
+	// Reset the read, packet was good
+	packet->ResetRead();
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Processes the received packet by calling all message callbacks for messages within the packet
 //
-void NetSession::ProcessReceivedPacket(NetPacket* packet)
+void NetSession::ProcessReceivedPacket(NetPacket* packet, const NetAddress_t& senderAddress)
 {
 	// Get the messages out
 	PacketHeader_t header;
 	packet->ReadHeader(header);
-	packet->m_sendReceiveIndex = header.senderConnectionIndex;
+	packet->SetSenderConnectionIndex(header.senderConnectionIndex);
 
-	NetConnection* senderConnection = m_connections[header.senderConnectionIndex];
 	uint8_t messageCount = header.unreliableMessageCount;
 
 	for (int i = 0; i < messageCount; ++i)
@@ -281,7 +358,12 @@ void NetSession::ProcessReceivedPacket(NetPacket* packet)
 
 		message.SetDefinitionIndex(defIndex);
 
+		NetSender_t sender;
+		sender.address = senderAddress;
+		sender.netSession = this;
+		sender.connectionIndex = header.senderConnectionIndex;
+
 		// Call the callback
-		definition->callback(&message, senderConnection);
+		definition->callback(&message, sender);
 	}
 }

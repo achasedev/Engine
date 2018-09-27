@@ -15,29 +15,20 @@ class BytePacker;
 class NetConnection;
 class NetMessage;
 
-// Callback for the NetSession
-typedef bool(*NetMessage_cb)(NetMessage* msg, NetConnection* sender);
-
-struct NetMessageDefinition_t
-{
-	NetMessageDefinition_t(const std::string& _name, NetMessage_cb _callback)
-		: name(_name), callback(_callback) {}
-
-	std::string		name = "";
-	uint8_t			sessionIndex = 0;
-	NetMessage_cb	callback = nullptr;
-};
-
-
 class NetMessage : public BytePacker
 {
 public:
 	//-----Public Methods-----
 
 	NetMessage();
+	NetMessage(NetMessage&& moveFrom);
 	NetMessage(uint8_t definitionIndex);
 	NetMessage(uint8_t definitionIndex, void* payload, const int16_t& payloadSize);
+	NetMessage(const NetMessage& copy) = delete;
 	~NetMessage();
+
+	NetMessage& operator=(NetMessage&& moveFrom);
+	NetMessage& operator=(const NetMessage&) = delete;
 
 	// Accessors
 	uint8_t							GetDefinitionIndex() const;
