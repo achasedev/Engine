@@ -43,6 +43,5 @@ private:
 	uint8_t							m_payload[MESSAGE_MTU];
 
 	uint8_t							m_definitionIndex = 0;
-	// const NetMessageDefinition_t*	m_definition = nullptr;
 
 };

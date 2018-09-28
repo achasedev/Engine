@@ -1,11 +1,26 @@
+/************************************************************************/
+/* File: NetPacket.cpp
+/* Author: Andrew Chase
+/* Date: September 28th, 2018
+/* Description: Implementation of the NetPacket class
+/************************************************************************/
 #include "Engine/Networking/NetPacket.hpp"
 #include "Engine/Networking/NetMessage.hpp"
 
+
+//-----------------------------------------------------------------------------------------------
+// Constructor
+//
 NetPacket::NetPacket()
 	: BytePacker(PACKET_MTU, m_localBuffer, false, LITTLE_ENDIAN)
 {
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Writes a packet header to the start of the packet, then sets the write head to the previous
+// position it was in
+//
 void NetPacket::WriteHeader(const PacketHeader_t& header)
 {
 	size_t writtenBytes = GetWrittenByteCount();
@@ -22,12 +37,20 @@ void NetPacket::WriteHeader(const PacketHeader_t& header)
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Reads the header, returning it in out_header
+//
 bool NetPacket::ReadHeader(PacketHeader_t& out_header)
 {
 	bool success = ReadBytes(&out_header, sizeof(PacketHeader_t));
 	return success;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Writes a message to the packet, including its header
+//
 bool NetPacket::WriteMessage(const NetMessage* message)
 {
 	bool success;
@@ -57,6 +80,10 @@ bool NetPacket::WriteMessage(const NetMessage* message)
 	return success;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Reads the message and returns it in out_message
+//
 bool NetPacket::ReadMessage(NetMessage* out_message)
 {
 	// Read the header + message payload size
@@ -95,23 +122,38 @@ bool NetPacket::ReadMessage(NetMessage* out_message)
 	return true;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Sets the sender connection index of the packet to the one provided
+//
 void NetPacket::SetSenderConnectionIndex(uint8_t index)
 {
 	m_senderIndex = index;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Sets the receiver connection index of the packet to the one provided
+//
 void NetPacket::SetReceiverConnectionIndex(uint8_t index)
 {
 	m_receiverIndex = index;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the sender connection index of the packet
+//
 uint8_t NetPacket::GetSenderConnectionIndex() const
 {
 	return m_senderIndex;
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the receiver connection index of the packet
+//
 uint8_t NetPacket::GetReceiverConnectionIndex() const
 {
 	return m_receiverIndex;
 }
-

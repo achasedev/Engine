@@ -19,25 +19,25 @@ public:
 	// Initialization/Destruction
 	Gif();
 	~Gif();
-	bool LoadFromFile(const std::string& filepath);
+	bool					LoadFromFile(const std::string& filepath);
 
 	// Accessors
-	IntVector2	GetDimensions() const;
-	Texture*	GetNextFrame();
+	IntVector2				GetDimensions() const;
+	Texture*				GetNextFrame();
 
 
 private:
 	//-----Private Data-----
 
 	// General image data
-	int m_numFrames;
-	int m_numComponentsPerTexel;
-	IntVector2 m_frameDimensions;
-	unsigned char* m_gifData;
+	int						m_numFrames;
+	int						m_numComponentsPerTexel;
+	IntVector2				m_frameDimensions;
+	unsigned char*			m_gifData;
 
 	// For playback
-	Stopwatch* m_stopwatch;
-	unsigned int m_currFrameIndex;
-	std::vector<Texture*> m_frameTextures;
+	Stopwatch*				m_stopwatch;
+	unsigned int			m_currFrameIndex;
+	std::vector<Texture*>	m_frameTextures;
 
 };

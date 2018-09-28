@@ -37,16 +37,16 @@ bool Net::Initialize()
 	int error = ::WSAStartup(version, &data);
 
 	// Check if it succeeded
-	Command::Register("net_address",	"Returns the IP address for the given host name.",					&Command_GetAddressForHost);
-	Command::Register("net_connect",	"Connects to a remote host and sends a message.",					&Command_Connect);
-	Command::Register("net_host",		"Creates a host session on this device for client connections",		&Command_Host);
-
 	bool success = (error == 0);
 	ASSERT_RECOVERABLE(success, "Error: WSAStartup failed to initialze the sock API");
 
 	if (success)
 	{
 		s_isRunning = true;
+
+		Command::Register("net_address", "Returns the IP address for the given host name.", &Command_GetAddressForHost);
+		Command::Register("net_connect", "Connects to a remote host and sends a message.", &Command_Connect);
+		Command::Register("net_host", "Creates a host session on this device for client connections", &Command_Host);
 	}
 	
 	return success;

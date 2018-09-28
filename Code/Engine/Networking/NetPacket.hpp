@@ -1,3 +1,9 @@
+/************************************************************************/
+/* File: NetPacket.hpp
+/* Author: Andrew Chase
+/* Date: September 28th 2018
+/* Description: Class to represent a packet of NetMessages for a NetSession
+/************************************************************************/
 #pragma once
 #include "Engine/Networking/BytePacker.hpp"
 
@@ -39,23 +45,28 @@ public:
 
 	NetPacket();
 
+	// Header Methods
 	void		WriteHeader(const PacketHeader_t& header);
 	bool		ReadHeader(PacketHeader_t& out_header);
 
+	// Message Methods
 	bool		WriteMessage(const NetMessage* message);
 	bool		ReadMessage(NetMessage* out_message);
 
+	// Mutators
 	void		SetSenderConnectionIndex(uint8_t index);
 	void		SetReceiverConnectionIndex(uint8_t index);
 
+	// Accessors
 	uint8_t		GetSenderConnectionIndex() const;
 	uint8_t		GetReceiverConnectionIndex() const;
+
 
 private:
 	//-----Private Data-----
 
 	uint8_t		m_localBuffer[PACKET_MTU];
-	uint8_t		m_senderIndex					= INVALID_CONNECTION_INDEX; 
-	uint8_t		m_receiverIndex			= INVALID_CONNECTION_INDEX;
+	uint8_t		m_senderIndex = INVALID_CONNECTION_INDEX; 
+	uint8_t		m_receiverIndex	= INVALID_CONNECTION_INDEX;
 
 };

@@ -54,7 +54,8 @@ bool NetSession::Bind(unsigned short port, uint16_t portRange)
 
 	if (!foundLocal)
 	{
-		ConsoleErrorf("Couldn't find local address to bind to");
+		//ConsoleErrorf("Couldn't find local address to bind to");
+		LogTaggedPrintf("NET", "NetSession::Bind() failed to bind to the local address.");
 		return false;
 	}
 
@@ -63,13 +64,13 @@ bool NetSession::Bind(unsigned short port, uint16_t portRange)
 	if (bound)
 	{
 		m_boundSocket = newSocket;
-		ConsolePrintf(Rgba::GREEN, "Net Session bound to address %s", newSocket->GetNetAddress().ToString().c_str());
+		//ConsolePrintf(Rgba::GREEN, "Net Session bound to address %s", newSocket->GetNetAddress().ToString().c_str());
 		LogTaggedPrintf("NET", "NetSession bound to address %s", newSocket->GetNetAddress().ToString().c_str());
 	}
 	else
 	{
 		delete newSocket;
-		ConsoleErrorf("Net Session could not bind to address %s", newSocket->GetNetAddress().ToString().c_str());
+		//ConsoleErrorf("Net Session could not bind to address %s", newSocket->GetNetAddress().ToString().c_str());
 		LogTaggedPrintf("NET", "Error: NetSession::Bind() couldn't bind to address %s", newSocket->GetNetAddress().ToString().c_str());
 	}
 
@@ -250,7 +251,7 @@ void NetSession::ProcessIncoming()
 			}
 			else
 			{
-				ConsoleErrorf("Received a bad packet from address %s, message was %iB", senderAddress.ToString().c_str(), amountReceived);
+				LogTaggedPrintf("NET", "Received a bad packet from address %s, message was %i bytes", senderAddress.ToString().c_str(), amountReceived);
 			}
 		}
 		else

@@ -10,7 +10,9 @@
 #include "Engine/Networking/NetAddress.hpp"
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 
+#ifndef WIN_32_LEAN_AND_MEAN
 #define WIN_32_LEAN_AND_MEAN
+#endif
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <Windows.h>
