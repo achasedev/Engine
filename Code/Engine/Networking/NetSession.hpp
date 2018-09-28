@@ -59,9 +59,9 @@ public:
 	bool							GetMessageDefinitionIndex(const std::string& name, uint8_t& out_index);
 
 	// Connections
-	bool							AddConnection(unsigned int bindingIndex, NetAddress_t targetAddress);
+	bool							AddConnection(uint8_t bindingIndex, NetAddress_t targetAddress);
 	void							CloseAllConnections();
-	NetConnection*					GetConnection(unsigned int connectionIndex) const;
+	NetConnection*					GetConnection(uint8_t connectionIndex) const;
 	uint8_t							GetLocalConnectionIndex() const;
 
 	// General message processing

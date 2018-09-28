@@ -199,13 +199,13 @@ bool Rgba::SetFromText(const char* text, bool areInts, unsigned char delimiter)
 		size_t firstDelim = stringText.find(delimiter);
 		if (firstDelim == std::string::npos) { return false; }
 		std::string redText = std::string(stringText, 0, firstDelim);
-		float red = atof(redText.c_str());
+		float red = (float) atof(redText.c_str());
 
 		// Green
 		size_t secondDelim = stringText.find(delimiter, firstDelim + 1);
 		if (secondDelim == std::string::npos) { return false; }
 		std::string greenText = std::string(stringText, firstDelim + 1, secondDelim - firstDelim - 1);
-		float green = atof(greenText.c_str());
+		float green = (float) atof(greenText.c_str());
 
 		// Blue and Alpha, if alpha is present
 		float blue, alpha;
@@ -213,16 +213,16 @@ bool Rgba::SetFromText(const char* text, bool areInts, unsigned char delimiter)
 		if (thirdDelim == std::string::npos)
 		{
 			std::string blueText = std::string(stringText, secondDelim + 1);
-			blue = atof(blueText.c_str());
+			blue = (float) atof(blueText.c_str());
 			alpha = 255;
 		}
 		else
 		{
 			std::string blueText = std::string(stringText, secondDelim + 1, thirdDelim - secondDelim - 1);
-			blue = atoi(blueText.c_str());
+			blue = (float) atof(blueText.c_str());
 
 			std::string alphaText = std::string(stringText, thirdDelim + 1);
-			alpha = atoi(alphaText.c_str());
+			alpha = (float) atof(alphaText.c_str());
 		}
 
 		SetAsFloats(red, green, blue, alpha);
