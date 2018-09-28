@@ -156,7 +156,7 @@ const NetMessageDefinition_t* NetSession::GetMessageDefinition(const uint8_t ind
 //
 bool NetSession::GetMessageDefinitionIndex(const std::string& name, uint8_t& out_index)
 {
-	for (int index = 0; index < (int)m_messageDefinitions.size(); ++index)
+	for (uint8_t index = 0; index < (uint8_t)m_messageDefinitions.size(); ++index)
 	{
 		if (m_messageDefinitions[index]->name == name)
 		{
@@ -173,7 +173,7 @@ bool NetSession::GetMessageDefinitionIndex(const std::string& name, uint8_t& out
 //-----------------------------------------------------------------------------------------------
 // Create and add a new connection
 //
-bool NetSession::AddConnection(unsigned int connectionIndex, NetAddress_t address)
+bool NetSession::AddConnection(uint8_t connectionIndex, NetAddress_t address)
 {
 	// Keep it in range of the vector
 	m_connections.resize(connectionIndex + 1);
@@ -208,7 +208,7 @@ void NetSession::CloseAllConnections()
 //-----------------------------------------------------------------------------------------------
 // Returns the NetConnection at the given index, nullptr if out of range
 //
-NetConnection* NetSession::GetConnection(unsigned int index) const
+NetConnection* NetSession::GetConnection(uint8_t index) const
 {
 	if (index >= INVALID_CONNECTION_INDEX)
 	{
