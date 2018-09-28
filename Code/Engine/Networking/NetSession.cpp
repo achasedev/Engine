@@ -248,6 +248,10 @@ void NetSession::ProcessIncoming()
 			{
 				ProcessReceivedPacket(&packet, senderAddress);
 			}
+			else
+			{
+				ConsoleErrorf("Received a bad packet from address %s, message was %iB", senderAddress.ToString().c_str(), amountReceived);
+			}
 		}
 		else
 		{
@@ -314,9 +318,9 @@ bool NetSession::VerifyPacket(NetPacket* packet)
 		uint16_t messageSize;
 		packet->Read(messageSize);
 
-		packet->AdvanceReadHead(messageSize);
+		bool couldAdvance = packet->AdvanceReadHead(messageSize);
 
-		if (packet->GetRemainingReadableByteCount() < 0)
+		if (!couldAdvance)
 		{
 			LogTaggedPrintf("NET", "NetSession::VerifyPacket() failed, packet message count and size went over the packet size.");
 			return false;

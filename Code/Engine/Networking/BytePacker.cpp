@@ -151,13 +151,16 @@ size_t BytePacker::Peek(void* out_data, size_t maxByteCount)
 
 //-----------------------------------------------------------------------------------------------
 // Moves the read head forward by maxByteCount, clamping to the write head
+// Returns true if it could advance that far, false otherwise
 //
-void BytePacker::AdvanceReadHead(size_t maxByteCount)
+bool BytePacker::AdvanceReadHead(size_t maxByteCount)
 {
 	size_t remainingReadableBytes = GetRemainingReadableByteCount();
 	size_t amountToMove = (remainingReadableBytes < maxByteCount ? remainingReadableBytes : maxByteCount);
 
 	m_readHead += amountToMove;
+
+	return (remainingReadableBytes >= maxByteCount);
 }
 
 

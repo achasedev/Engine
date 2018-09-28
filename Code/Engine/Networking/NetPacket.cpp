@@ -81,7 +81,7 @@ bool NetPacket::ReadMessage(NetMessage* out_message)
 	// Read the message payload
 	int16_t msgSize = msgAndHeaderSize - headerSize;
 	int8_t payload[MESSAGE_MTU];
-	amountRead = ReadBytes(payload, MESSAGE_MTU);
+	amountRead = ReadBytes(payload, msgSize);
 
 	if (amountRead == 0)
 	{

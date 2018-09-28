@@ -39,7 +39,7 @@ public:
 	// ended up being read; 
 	size_t			ReadBytes(void *out_data, size_t maxByteCount);
 	size_t			Peek(void* out_data, size_t maxByteCount);
-	void			AdvanceReadHead(size_t maxByteCount);
+	bool			AdvanceReadHead(size_t maxByteCount);
 
 	template <typename T>
 	size_t Read(T& out_data)
