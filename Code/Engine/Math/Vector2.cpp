@@ -191,16 +191,15 @@ float Vector2::GetLengthSquared() const
 //
 float Vector2::NormalizeAndGetLength()
 {
-	// Ensure we have a valid vector to normalize
-	ASSERT_OR_DIE((x != 0.f || y != 0.f), Stringf("Error: Vector2::NormalizeAndGetLength called on a (0,0) Vector2."));
+	float length = GetLength();
 
-	float length = this->GetLength();
-
-	x = (x / length);
-	y = (y / length);
+	if (length > 0.f)
+	{
+		x = (x / length);
+		y = (y / length);
+	}
 
 	return length;
-
 }
 
 

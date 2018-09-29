@@ -486,6 +486,21 @@ Vector2 ClampVector2(const Vector2& inValue, const Vector2& minInclusive, const 
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the given vector with all components clamped between min and max inclusive
+//
+Vector3 ClampVector3(const Vector3& inValue, float minInclusive, float maxInclusive)
+{
+	Vector3 result;
+
+	result.x = ClampFloat(inValue.x, minInclusive, maxInclusive);
+	result.y = ClampFloat(inValue.y, minInclusive, maxInclusive);
+	result.z = ClampFloat(inValue.z, minInclusive, maxInclusive);
+
+	return result;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Finds the % (as fraction) of inValue in [rangeStart, rangeEnd]
 //
 float GetFractionInRange(float inValue, float rangeStart, float rangeEnd)
