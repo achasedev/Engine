@@ -52,6 +52,13 @@ IntVector3::IntVector3(float initialX, float initialY, float initialZ)
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Explicit constructor from float vector3
+IntVector3::IntVector3(const Vector3& copyFrom)
+	: IntVector3(copyFrom.x, copyFrom.y, copyFrom.z)
+{
+}
+
 //------------------------------ Operator Overloads ---------------------------------------------
 
 //-----------------------------------------------------------------------------------------------

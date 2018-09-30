@@ -12,6 +12,7 @@ public:
 	~Texture3D();
 
 	bool		CreateFromFile(const char* filename);
+	bool		CreateFromColorStream(const Rgba* colors, const IntVector3& dimensions);
 	Texture3D*	Copy() const;
 
 	// Mutators

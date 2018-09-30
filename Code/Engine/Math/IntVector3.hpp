@@ -7,6 +7,7 @@
 #pragma once
 #include "Engine/Math/IntVector2.hpp"
 
+class Vector3;
 
 //-----------------------------------------------------------------------------------------------
 class IntVector3
@@ -21,7 +22,7 @@ public:
 	IntVector3( const IntVector3& copyFrom );								// copy constructor
 	explicit IntVector3( int initialX, int initialY, int initialZ );		// explicit constructor
 	explicit IntVector3( float initialX, float initialY, float initialZ );	// explicit float constructor
-
+	explicit IntVector3(const Vector3& copyFrom);
 																			// Operators
 	const IntVector3 operator+( const IntVector3& vecToAdd ) const;			// vec2 + vec2
 	const IntVector3 operator-( const IntVector3& vecToSubtract ) const;	// vec2 - vec2

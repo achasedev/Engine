@@ -26,6 +26,17 @@ Stopwatch::Stopwatch(Clock* referenceClock)
 
 
 //-----------------------------------------------------------------------------------------------
+// Default constructor
+//
+Stopwatch::Stopwatch()
+{
+	m_referenceClock = Clock::GetMasterClock();
+
+	Reset();
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Sets the start and interval hpc to the current time, effectively "setting the stopwatch to 0"
 //
 void Stopwatch::Reset()

@@ -14,6 +14,7 @@ class Stopwatch
 public:
 	//-----Public Methods-----
 
+	Stopwatch();
 	Stopwatch(Clock* referenceClock);
 
 	// Mutators

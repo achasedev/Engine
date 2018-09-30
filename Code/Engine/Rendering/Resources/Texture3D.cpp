@@ -109,6 +109,23 @@ bool Texture3D::CreateFromFile(const char* filename)
 	return true;
 }
 
+bool Texture3D::CreateFromColorStream(const Rgba* colors, const IntVector3& dimensions)
+{
+	if (m_colorData != nullptr)
+	{
+		free(m_colorData);
+	}
+
+	int numVoxels = dimensions.x * dimensions.y * dimensions.z;
+
+	m_colorData = (Rgba*)malloc(sizeof(Rgba) * numVoxels);
+	memcpy(m_colorData, colors, numVoxels * sizeof(Rgba));
+
+	m_dimensions = dimensions;
+
+	return true;
+}
+
 Texture3D* Texture3D::Copy() const
 {
 	Texture3D* newTexture = new Texture3D();
