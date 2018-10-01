@@ -110,11 +110,6 @@ bool NetPacket::ReadMessage(NetMessage* out_message)
 	int8_t payload[MESSAGE_MTU];
 	amountRead = ReadBytes(payload, msgSize);
 
-	if (amountRead == 0)
-	{
-		return false;
-	}
-
 	// Construct the message
 	*out_message = NetMessage(msgIndex, payload, msgSize);
 	out_message->AdvanceWriteHead(msgSize);
