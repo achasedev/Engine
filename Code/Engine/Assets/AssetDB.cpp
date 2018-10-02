@@ -552,12 +552,6 @@ void AssetDB::ReloadShaderPrograms()
 Material* AssetDB::GetSharedMaterial(const std::string& name)
 {
 	Material* material = AssetCollection<Material>::GetAsset(name);
-	if (material == nullptr)
-	{
-		int x = 0; 
-		x = x;
-	}
-	
 	return material;
 }
 
@@ -606,26 +600,19 @@ Material* AssetDB::CreateOrGetSharedMaterial(const std::string& materialPath)
 
 
 //-----------------------------------------------------------------------------------------------
-// Returns a copy of the 3D texture provided
+// Returns the voxel texture given by name if it exists, nullptr otherwise
 //
-VoxelTexture* AssetDB::Get3DTextureInstance(const std::string& name)
+VoxelTexture* AssetDB::GetVoxelTexture(const std::string& name)
 {
 	VoxelTexture* texture = AssetCollection<VoxelTexture>::GetAsset(name);
-
-	if (texture != nullptr)
-	{
-		VoxelTexture* newTexture = texture->Clone();
-		return newTexture;
-	}
-
-	return nullptr;
+	return texture;
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Returns a copy of the 3D texture provided, attempting to create it if it doesn't exist
+// Returns the voxel texture given by name, attempting to load it from file if it doesn't exist
 //
-VoxelTexture* AssetDB::CreateOrGet3DVoxelTextureInstance(const std::string& name)
+VoxelTexture* AssetDB::CreateOrGetVoxelTexture(const std::string& name)
 {
 	VoxelTexture* texture = AssetCollection<VoxelTexture>::GetAsset(name);
 
@@ -643,6 +630,22 @@ VoxelTexture* AssetDB::CreateOrGet3DVoxelTextureInstance(const std::string& name
 		AssetCollection<VoxelTexture>::AddAsset(name, texture);
 	}
 
-	VoxelTexture* newTexture = texture->Clone();
-	return newTexture;
+	return texture;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns a copy of the 3D texture provided, attempting to create it if it doesn't exist
+//
+VoxelTexture* AssetDB::CreateVoxelTextureInstance(const std::string& name)
+{
+	VoxelTexture* texture = CreateOrGetVoxelTexture(name);
+
+	if (texture != nullptr)
+	{
+		VoxelTexture* newTexture = texture->Clone();
+		return newTexture;
+	}
+
+	return nullptr;
 }
