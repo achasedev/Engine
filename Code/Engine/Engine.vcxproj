@@ -325,7 +325,7 @@
     <ClCompile Include="Rendering\Animation\Pose.cpp" />
     <ClCompile Include="Rendering\Animation\Skeleton.cpp" />
     <ClCompile Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.cpp" />
-    <ClCompile Include="Rendering\Resources\Texture3D.cpp" />
+    <ClCompile Include="Rendering\Resources\VoxelTexture.cpp" />
     <ClCompile Include="Rendering\Resources\BitmapFont.cpp" />
     <ClCompile Include="Rendering\Core\Camera.cpp" />
     <ClCompile Include="Rendering\DebugRendering\DebugRenderSystem.cpp" />
@@ -496,7 +496,7 @@
     <ClInclude Include="Rendering\Core\OrbitCamera.hpp" />
     <ClInclude Include="Rendering\Particles\Particle.hpp" />
     <ClInclude Include="Rendering\Particles\ParticleEmitter.hpp" />
-    <ClInclude Include="Rendering\Resources\Texture3D.hpp" />
+    <ClInclude Include="Rendering\Resources\VoxelTexture.hpp" />
     <ClInclude Include="Rendering\Shaders\ComputeShader.hpp" />
     <ClInclude Include="Rendering\Shaders\PropertyBlockDescription.hpp" />
     <ClInclude Include="Rendering\Shaders\PropertyDescription.hpp" />

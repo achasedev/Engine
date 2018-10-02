@@ -23,7 +23,7 @@ class TextureCube;
 class Skeleton;
 class ShaderProgram;
 class MaterialInstance;
-class Texture3D;
+class VoxelTexture;
 
 class AssetDB
 {
@@ -81,8 +81,8 @@ public:
 	static Material*			CreateOrGetSharedMaterial(const std::string& name);
 
 	// Voxel QEF Files
-	static Texture3D*	Get3DTextureInstance(const std::string& name);
-	static Texture3D*	CreateOrGet3DVoxelTextureInstance(const std::string& name);
+	static VoxelTexture*	Get3DTextureInstance(const std::string& name);
+	static VoxelTexture*	CreateOrGet3DVoxelTextureInstance(const std::string& name);
 
 
 private:

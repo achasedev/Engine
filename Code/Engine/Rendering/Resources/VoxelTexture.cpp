@@ -1,16 +1,16 @@
-#include "Engine/Rendering/Resources/Texture3D.hpp"
+#include "Engine/Rendering/Resources/VoxelTexture.hpp"
 #include "Engine/Core/File.hpp"
 #include "Engine/Core/Rgba.hpp"
 
-Texture3D::Texture3D()
+VoxelTexture::VoxelTexture()
 {
 }
 
-Texture3D::~Texture3D()
+VoxelTexture::~VoxelTexture()
 {
 }
 
-bool Texture3D::CreateFromFile(const char* filename)
+bool VoxelTexture::CreateFromFile(const char* filename)
 {
 	File* file = new File();
 	bool opened = file->Open(filename, "r");
@@ -31,7 +31,7 @@ bool Texture3D::CreateFromFile(const char* filename)
 
 	if (currLine != "Qubicle Exchange Format")
 	{
-		ERROR_RECOVERABLE(Stringf("Error: Texture3D::CreateFromFile() only supports QEF files"));
+		ERROR_RECOVERABLE(Stringf("Error: VoxelTexture::CreateFromFile() only supports QEF files"));
 		return false;
 	}
 
@@ -46,7 +46,7 @@ bool Texture3D::CreateFromFile(const char* filename)
 	
 	if (!SetFromText(currLine, m_dimensions))
 	{
-		ERROR_RECOVERABLE(Stringf("Error: Texture3D::CreateFromFile() couldn't get the dimensions of the texture."));
+		ERROR_RECOVERABLE(Stringf("Error: VoxelTexture::CreateFromFile() couldn't get the dimensions of the texture."));
 		return false;
 	}
 
@@ -109,7 +109,7 @@ bool Texture3D::CreateFromFile(const char* filename)
 	return true;
 }
 
-bool Texture3D::CreateFromColorStream(const Rgba* colors, const IntVector3& dimensions)
+bool VoxelTexture::CreateFromColorStream(const Rgba* colors, const IntVector3& dimensions)
 {
 	if (m_colorData != nullptr)
 	{
@@ -126,9 +126,9 @@ bool Texture3D::CreateFromColorStream(const Rgba* colors, const IntVector3& dime
 	return true;
 }
 
-Texture3D* Texture3D::Copy() const
+VoxelTexture* VoxelTexture::Clone() const
 {
-	Texture3D* newTexture = new Texture3D();
+	VoxelTexture* newTexture = new VoxelTexture();
 	newTexture->m_dimensions = m_dimensions;
 
 	size_t byteSize = sizeof(Rgba) * m_dimensions.x * m_dimensions.y * m_dimensions.z;
@@ -139,28 +139,28 @@ Texture3D* Texture3D::Copy() const
 	return newTexture;
 }
 
-void Texture3D::SetColorAtIndex(unsigned int index, const Rgba& color)
+void VoxelTexture::SetColorAtIndex(unsigned int index, const Rgba& color)
 {
 	m_colorData[index] = color;
 }
 
-Rgba Texture3D::GetColorAtCoords(const IntVector3& coords) const
+Rgba VoxelTexture::GetColorAtCoords(const IntVector3& coords) const
 {
 	int index = coords.y * (m_dimensions.x * m_dimensions.z) + coords.z * m_dimensions.x + coords.x;
 	return m_colorData[index];
 }
 
-Rgba Texture3D::GetColorAtIndex(unsigned int index) const
+Rgba VoxelTexture::GetColorAtIndex(unsigned int index) const
 {
 	return m_colorData[index];
 }
 
-IntVector3 Texture3D::GetDimensions() const
+IntVector3 VoxelTexture::GetDimensions() const
 {
 	return m_dimensions;
 }
 
-unsigned int Texture3D::GetVoxelCount() const
+unsigned int VoxelTexture::GetVoxelCount() const
 {
 	return m_dimensions.x * m_dimensions.y * m_dimensions.z;
 }

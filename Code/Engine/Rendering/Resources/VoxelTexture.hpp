@@ -3,17 +3,17 @@
 
 class Rgba;
 
-class Texture3D
+class VoxelTexture
 {
 public:
 	//-----Public Methods-----
 
-	Texture3D();
-	~Texture3D();
+	VoxelTexture();
+	~VoxelTexture();
 
 	bool		CreateFromFile(const char* filename);
 	bool		CreateFromColorStream(const Rgba* colors, const IntVector3& dimensions);
-	Texture3D*	Copy() const;
+	VoxelTexture* Clone() const;
 
 	// Mutators
 	void			SetColorAtCoords(const IntVector3& coords, const Rgba& color);
