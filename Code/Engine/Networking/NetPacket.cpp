@@ -18,6 +18,16 @@ NetPacket::NetPacket()
 
 
 //-----------------------------------------------------------------------------------------------
+// Constructor, from a given buffer
+//
+NetPacket::NetPacket(uint8_t* buffer, size_t bufferSize)
+	: BytePacker(PACKET_MTU, m_localBuffer, false, LITTLE_ENDIAN)
+{
+	memcpy(m_localBuffer, buffer, bufferSize);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Writes a packet header to the start of the packet, then sets the write head to the previous
 // position it was in
 //

@@ -429,6 +429,7 @@
     <ClInclude Include="DataStructures\ThreadSafeMap.hpp" />
     <ClInclude Include="DataStructures\ThreadSafeQueue.hpp" />
     <ClInclude Include="DataStructures\ThreadSafeSet.hpp" />
+    <ClInclude Include="DataStructures\ThreadSafeVector.hpp" />
     <ClInclude Include="Input\InputSystem.hpp" />
     <ClInclude Include="Input\KeyButtonState.hpp" />
     <ClInclude Include="Input\Mouse.hpp" />

@@ -5,18 +5,29 @@
 /* Description: Implementation of the NetSession class
 /************************************************************************/
 #include "Engine/Core/LogSystem.hpp"
+#include "Engine/Core/Time/Clock.hpp"
 #include "Engine/Networking/UDPSocket.hpp"
 #include "Engine/Networking/NetPacket.hpp"
 #include "Engine/Networking/NetSession.hpp"
 #include "Engine/Networking/NetMessage.hpp"
 #include "Engine/Networking/NetConnection.hpp"
 
-
 //-----------------------------------------------------------------------------------------------
 // Constructor
 //
 NetSession::NetSession()
 {
+	// Spin up the thread for processing receives
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Destructor
+//
+NetSession::~NetSession()
+{
+	m_isReceiving = false;
+	m_receivingThread.join();
 }
 
 
@@ -64,13 +75,20 @@ bool NetSession::Bind(unsigned short port, uint16_t portRange)
 	if (bound)
 	{
 		m_boundSocket = newSocket;
-		//ConsolePrintf(Rgba::GREEN, "Net Session bound to address %s", newSocket->GetNetAddress().ToString().c_str());
+		m_isReceiving = true;
+		m_receivingThread = std::thread(&NetSession::ReceiveIncoming, this);
 		LogTaggedPrintf("NET", "NetSession bound to address %s", newSocket->GetNetAddress().ToString().c_str());
 	}
 	else
 	{
 		delete newSocket;
-		//ConsoleErrorf("Net Session could not bind to address %s", newSocket->GetNetAddress().ToString().c_str());
+		
+		if (m_isReceiving)
+		{
+			m_isReceiving = false;
+			m_receivingThread.join();
+		}
+
 		LogTaggedPrintf("NET", "Error: NetSession::Bind() couldn't bind to address %s", newSocket->GetNetAddress().ToString().c_str());
 	}
 
@@ -236,28 +254,24 @@ void NetSession::ProcessIncoming()
 	bool done = false;
 	while (!done)
 	{
-		NetPacket packet;
-		NetAddress_t senderAddress;
-
-		size_t amountReceived = m_boundSocket->ReceiveFrom(&senderAddress, packet.GetWriteHead(), PACKET_MTU);
-
-		if (amountReceived > 0)
+		PendingReceive pending;
+		bool packetReceived = GetNextReceive(pending);
+		
+		if (packetReceived)
 		{
-			packet.AdvanceWriteHead(amountReceived);
-
-			if (VerifyPacket(&packet))
+			if (VerifyPacket(pending.packet))
 			{
-				ProcessReceivedPacket(&packet, senderAddress);
+				ProcessReceivedPacket(pending.packet, pending.senderAddress);
 			}
 			else
 			{
-				LogTaggedPrintf("NET", "Received a bad packet from address %s, message was %i bytes", senderAddress.ToString().c_str(), amountReceived);
+				LogTaggedPrintf("NET", "Received a bad packet from address %s, message was %i bytes", pending.senderAddress.ToString().c_str(), pending.packet->GetWrittenByteCount());
 			}
+
+			delete pending.packet;
 		}
-		else
-		{
-			done = true;
-		}
+
+		done = !packetReceived;
 	}
 }
 
@@ -275,6 +289,111 @@ void NetSession::ProcessOutgoing()
 			m_connections[index]->FlushMessages();
 		}
 	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the simulated loss for the NetSession
+//
+void NetSession::SetSimLoss(float lossAmount)
+{
+	m_lossChance = lossAmount;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Adds the given amounts to the min and max latency values, for simulating latency
+//
+void NetSession::SetSimLatency(float minLatency, float maxLatency = 0.f)
+{
+	m_latencyRange = FloatRange(minLatency, maxLatency);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns true if the session is shutting down
+//
+bool NetSession::IsReceiving() const
+{
+	return m_isReceiving;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Receives on the bound sockets, and adds the messages to the queue
+// Runs on a separate thread
+//
+void NetSession::ReceiveIncoming()
+{
+	while (m_isReceiving)
+	{
+		NetAddress_t senderAddress;
+		uint8_t buffer[PACKET_MTU];
+
+		size_t amountReceived = m_boundSocket->ReceiveFrom(&senderAddress, buffer, PACKET_MTU);
+
+		if (amountReceived > 0)
+		{
+			NetPacket* packet = new NetPacket(buffer, PACKET_MTU);
+
+			packet->AdvanceWriteHead(amountReceived);
+
+			PendingReceive pending;
+			pending.packet = packet;
+			pending.senderAddress = senderAddress;
+			pending.timeStamp = Clock::GetMasterClock()->GetTotalSeconds() + m_latencyRange.GetRandomInRange();
+
+			PushNewReceive(pending);
+		}
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Pushes a new receive in the correct location in the location array
+//
+void NetSession::PushNewReceive(PendingReceive& pending)
+{
+	m_receiveLock.lock();
+	bool pushed = false;
+	for (unsigned int i = 0; i < (unsigned int) m_receiveQueue.size(); ++i)
+	{
+		if (m_receiveQueue[i].timeStamp > pending.timeStamp)
+		{
+			m_receiveQueue.insert(m_receiveQueue.begin() + i, pending);
+			pushed = true;
+			break;
+		}
+	}
+
+	if (!pushed)
+	{
+		m_receiveQueue.push_back(pending);
+	}
+
+	m_receiveLock.unlock();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Gets the next packet to receive, returning false if there are no packets to return
+//
+bool NetSession::GetNextReceive(PendingReceive& out_pending)
+{
+	m_receiveLock.lock();
+
+	if (m_receiveQueue.size() == 0)
+	{
+		m_receiveLock.unlock();
+		return false;
+	}
+
+	out_pending = m_receiveQueue[0];
+	m_receiveQueue.erase(m_receiveQueue.begin());
+
+	m_receiveLock.unlock();
+
+	return true;
 }
 
 

@@ -731,5 +731,6 @@
     <ClInclude Include="Networking\UDPSocket.hpp" />
     <ClInclude Include="Networking\NetPacket.hpp" />
     <ClInclude Include="Rendering\Resources\VoxelTexture.hpp" />
+    <ClInclude Include="DataStructures\ThreadSafeVector.hpp" />
   </ItemGroup>
 </Project>

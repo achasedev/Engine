@@ -4,9 +4,12 @@
 /* Date: September 20th, 2018
 /* Description: Class to represent a single collection of network connections
 /************************************************************************/
+#include "Engine/Math/FloatRange.hpp"
 #include "Engine/Networking/NetAddress.hpp"
+#include "Engine/DataStructures/ThreadSafeVector.hpp"
 #include <vector>
 #include <string>
+#include <mutex>
 
 class UDPSocket;
 class NetPacket;
@@ -37,6 +40,13 @@ struct NetMessageDefinition_t
 	NetMessage_cb	callback = nullptr;
 };
 
+struct PendingReceive
+{
+	float			timeStamp = 0;
+	NetPacket*		packet = nullptr;
+	NetAddress_t	senderAddress;
+};
+
 class NetSession
 {
 public:
@@ -44,7 +54,7 @@ public:
 	
 	// Initialization
 	NetSession();
-
+	~NetSession();
 
 	// Binding and Sending
 	bool							Bind(unsigned short port, uint16_t portRange);
@@ -68,9 +78,19 @@ public:
 	void							ProcessIncoming();
 	void							ProcessOutgoing();
 
+	// Network Simulation
+	void							SetSimLoss(float lossAmount);
+	void							SetSimLatency(float minLatency, float maxLatency);
+	bool							IsReceiving() const;
+
 
 private:
 	//-----Private Methods-----
+
+	void							ReceiveIncoming();
+
+	void							PushNewReceive(PendingReceive& pending);
+	bool							GetNextReceive(PendingReceive& out_pending);
 
 	void							SortDefinitions();
 	bool							VerifyPacket(NetPacket* packet);
@@ -86,4 +106,12 @@ private:
 
 	uint8_t										m_localConnectionIndex = 0xff;
 
+	// Net sim, latency in milliseconds
+	float										m_lossChance = 0.f;
+	FloatRange									m_latencyRange;
+
+	std::thread									m_receivingThread;
+	std::mutex									m_receiveLock;
+	std::vector<PendingReceive>					m_receiveQueue;
+	bool										m_isReceiving = false;
 };

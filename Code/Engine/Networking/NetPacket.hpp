@@ -44,6 +44,7 @@ public:
 	//-----Public Methods-----
 
 	NetPacket();
+	NetPacket(uint8_t* buffer, size_t bufferSize);
 
 	// Header Methods
 	void		WriteHeader(const PacketHeader_t& header);
