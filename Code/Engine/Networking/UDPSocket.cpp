@@ -109,7 +109,7 @@ size_t UDPSocket::ReceiveFrom(NetAddress_t *out_addr, void *buffer, size_t const
 		LogTaggedPrintf("NET", "Error: UDPSocket::ReceiveFrom() called on a closed UDPSocket.");
 		return 0;
 	}
-
+	
 	sockaddr_storage fromAddr;
 	int addrLen = sizeof(sockaddr_storage);
 

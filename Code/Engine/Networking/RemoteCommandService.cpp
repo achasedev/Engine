@@ -314,6 +314,8 @@ RemoteCommandService::~RemoteCommandService()
 	}
 
 	m_buffers.clear();
+
+	m_hostListenSocket.Close();
 }
 
 

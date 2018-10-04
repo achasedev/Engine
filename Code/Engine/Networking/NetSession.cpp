@@ -28,6 +28,9 @@ NetSession::~NetSession()
 {
 	m_isReceiving = false;
 	m_receivingThread.join();
+
+	m_boundSocket->Close();
+	delete m_boundSocket;
 }
 
 
@@ -346,6 +349,8 @@ void NetSession::ReceiveIncoming()
 			PushNewReceive(pending);
 		}
 	}
+
+	LogTaggedPrintf("NET", "NetSession Receive thread joined");
 }
 
 
