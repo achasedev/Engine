@@ -5,6 +5,8 @@
 /* Description: Implementation of the NetConnection class
 /************************************************************************/
 #include "Engine/Core/LogSystem.hpp"
+#include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/Time/Stopwatch.hpp"
 #include "Engine/Networking/UDPSocket.hpp"
 #include "Engine/Networking/NetPacket.hpp"
 #include "Engine/Networking/NetMessage.hpp"
@@ -19,6 +21,7 @@ NetConnection::NetConnection(NetAddress_t& address, NetSession* session, uint8_t
 	, m_owningSession(session)
 	, m_indexInSession(connectionIndex)
 {
+	m_sendTimer = new Stopwatch();
 }
 
 
@@ -34,6 +37,12 @@ NetConnection::~NetConnection()
 	}
 
 	m_outboundUnreliables.clear();
+
+	if (m_sendTimer != nullptr)
+	{
+		delete m_sendTimer;
+		m_sendTimer = nullptr;
+	}
 }
 
 
@@ -121,6 +130,9 @@ void NetConnection::FlushMessages()
 		
 
 	m_outboundUnreliables.clear();
+
+	// Reset the send timer
+	m_sendTimer->Reset();
 }
 
 
@@ -130,4 +142,26 @@ void NetConnection::FlushMessages()
 NetAddress_t NetConnection::GetAddress()
 {
 	return m_address;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the net tick rate for the connection to correspond to the provided refresh rate
+//
+void NetConnection::SetNetTickRate(float hertz)
+{
+	m_timeBetweenSends = (1.f / hertz);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns whether the connection should send based on the tick rate of the connection and the owning
+// session
+//
+bool NetConnection::IsReadyToFlush() const
+{
+	float sessionTime = m_owningSession->GetTimeBetweenSends();
+	float sendInterval = MaxFloat(sessionTime, m_timeBetweenSends);
+
+	return (m_sendTimer->GetElapsedTime() > sendInterval);
 }

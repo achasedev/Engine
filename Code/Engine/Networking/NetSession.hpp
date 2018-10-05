@@ -83,6 +83,10 @@ public:
 	void							SetSimLatency(float minLatency, float maxLatency);
 	bool							IsReceiving() const;
 
+	// Network tick
+	void							SetNetTickRate(float hertz);
+	float							GetTimeBetweenSends() const;
+
 
 private:
 	//-----Private Methods-----
@@ -113,5 +117,9 @@ private:
 	std::thread									m_receivingThread;
 	std::mutex									m_receiveLock;
 	std::vector<PendingReceive>					m_receiveQueue;
-	bool										m_isReceiving = false;
+	bool m_isReceiving = false;
+
+	// Network tick
+	float										m_timeBetweenSends = 0.f;
+
 };

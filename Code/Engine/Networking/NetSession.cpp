@@ -291,7 +291,10 @@ void NetSession::ProcessOutgoing()
 	{
 		if (m_connections[index] != nullptr)
 		{
-			m_connections[index]->FlushMessages();
+			if (m_connections[index]->IsReadyToFlush())
+			{
+				m_connections[index]->FlushMessages();
+			}
 		}
 	}
 }
@@ -321,6 +324,24 @@ void NetSession::SetSimLatency(float minLatency, float maxLatency = 0.f)
 bool NetSession::IsReceiving() const
 {
 	return m_isReceiving;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the network tick rate for the session
+//
+void NetSession::SetNetTickRate(float hertz)
+{
+	m_timeBetweenSends = (1.f / hertz);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the time to wait between sending messages
+//
+float NetSession::GetTimeBetweenSends() const
+{
+	return m_timeBetweenSends;
 }
 
 

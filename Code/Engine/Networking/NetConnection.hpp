@@ -12,6 +12,7 @@ class UDPSocket;
 class BytePacker;
 class NetSession;
 class NetMessage;
+class Stopwatch;
 
 class NetConnection
 {
@@ -30,6 +31,9 @@ public:
 	// Returns the target address this connection is associated with
 	NetAddress_t				GetAddress();
 
+	void						SetNetTickRate(float hertz);
+	bool						IsReadyToFlush() const;
+
 
 private:
 	//-----Private Data-----
@@ -39,5 +43,9 @@ private:
 
 	NetSession*					m_owningSession = nullptr;
 	uint8_t						m_indexInSession;
+
+	// For net tick
+	float						m_timeBetweenSends = 0.f;
+	Stopwatch*					m_sendTimer = nullptr;
 
 };
