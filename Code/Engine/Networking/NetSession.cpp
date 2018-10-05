@@ -4,6 +4,7 @@
 /* Date: September 20th, 2018
 /* Description: Implementation of the NetSession class
 /************************************************************************/
+#include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/LogSystem.hpp"
 #include "Engine/Core/Time/Clock.hpp"
 #include "Engine/Networking/UDPSocket.hpp"
@@ -11,6 +12,7 @@
 #include "Engine/Networking/NetSession.hpp"
 #include "Engine/Networking/NetMessage.hpp"
 #include "Engine/Networking/NetConnection.hpp"
+
 
 //-----------------------------------------------------------------------------------------------
 // Constructor
@@ -337,16 +339,20 @@ void NetSession::ReceiveIncoming()
 
 		if (amountReceived > 0)
 		{
-			NetPacket* packet = new NetPacket(buffer, PACKET_MTU);
+			// Check if we should keep the packet, or simulate loss
+			if (!CheckRandomChance(m_lossChance))
+			{
+				NetPacket* packet = new NetPacket(buffer, PACKET_MTU);
 
-			packet->AdvanceWriteHead(amountReceived);
+				packet->AdvanceWriteHead(amountReceived);
 
-			PendingReceive pending;
-			pending.packet = packet;
-			pending.senderAddress = senderAddress;
-			pending.timeStamp = Clock::GetMasterClock()->GetTotalSeconds() + m_latencyRange.GetRandomInRange();
+				PendingReceive pending;
+				pending.packet = packet;
+				pending.senderAddress = senderAddress;
+				pending.timeStamp = Clock::GetMasterClock()->GetTotalSeconds() + m_latencyRange.GetRandomInRange();
 
-			PushNewReceive(pending);
+				PushNewReceive(pending);
+			}
 		}
 	}
 
@@ -392,13 +398,20 @@ bool NetSession::GetNextReceive(PendingReceive& out_pending)
 		m_receiveLock.unlock();
 		return false;
 	}
+	
+	// Else check if the first packet is ready to be processed
+	float currTime = Clock::GetMasterClock()->GetTotalSeconds();
 
-	out_pending = m_receiveQueue[0];
-	m_receiveQueue.erase(m_receiveQueue.begin());
+	bool packetReady = false;
+	if (m_receiveQueue[0].timeStamp <= currTime)
+	{
+		out_pending = m_receiveQueue[0];
+		m_receiveQueue.erase(m_receiveQueue.begin());
+		packetReady = true;
+	}
 
 	m_receiveLock.unlock();
-
-	return true;
+	return packetReady;
 }
 
 
