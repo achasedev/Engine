@@ -63,7 +63,8 @@ public:
 	void ProcessCharacterCode(unsigned char keyCode);
 	void ProcessKeydownCode(unsigned char keyCode);
 
-	void WriteHistoryToFile();
+	void				WriteCommandHistoryToFile();
+	void				LoadCommandHistoryFromFile();
 
 	static void			Initialize();
 	static void			Shutdown();

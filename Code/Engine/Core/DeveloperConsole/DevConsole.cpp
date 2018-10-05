@@ -733,23 +733,64 @@ void DevConsole::ProcessKeydownCode(unsigned char keyCode)
 //-----------------------------------------------------------------------------------------------
 // Writes the command history to a text file
 //
-void DevConsole::WriteHistoryToFile()
+void DevConsole::WriteCommandHistoryToFile()
 {
-	UNIMPLEMENTED();
-// 	File file;
-// 
-// 	bool success = file.Open("Data/Logs/Command_History.txt", "w");
-// 
-// 	if (!success)
-// 	{
-// 		LogTaggedPrintf("DEV_CONSOLE", "Error: Couldn't open the log history file");
-// 		return;
-// 	}
-// 
-// 	int numCommandsInHistory = (int) m_commandHistory.size();
-// 	int lineCountToWrite = (numCommandsInHistory < MAX_HISTORY_WRITE_COUNT ? numCommandsInHistory : MAX_HISTORY_WRITE_COUNT);
+	File file;
 
-	//for ()
+	bool success = file.Open("Data/Logs/Command_History.log", "w");
+
+	if (!success)
+	{
+		LogTaggedPrintf("DEV_CONSOLE", "Error: Couldn't open the log history file for write");
+		return;
+	}
+
+	int numCommandsInHistory = (int) m_commandHistory.size();
+	int lineCountToWrite = (numCommandsInHistory < MAX_HISTORY_WRITE_COUNT ? numCommandsInHistory : MAX_HISTORY_WRITE_COUNT);
+
+	for (int i = 0; i < lineCountToWrite; ++i)
+	{
+		int lineIndex = m_commandHistory.size() - 1 - lineCountToWrite + i;
+		std::string toWrite = m_commandHistory[i] + '\n';
+
+		file.Write(toWrite.c_str(), toWrite.size());
+	}
+
+	//file.Flush();
+	file.Close();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Loads the command history from the history log and puts it in the DevConsole's history to
+// be reused
+//
+void DevConsole::LoadCommandHistoryFromFile()
+{
+	File file;
+
+	bool success = file.Open("Data/Logs/Command_History.log", "r");
+
+	if (!success)
+	{
+		LogTaggedPrintf("DEV_CONSOLE", "Error: Couldn't open the log history file for read");
+		return;
+	}
+
+	file.LoadFileToMemory();
+
+	while (!file.IsAtEndOfFile())
+	{
+		std::string line;
+		file.GetNextLine(line);
+
+		if (line.size() > 0)
+		{
+			m_commandHistory.push_back(line);
+		}
+	}
+
+	file.Close();
 }
 
 
@@ -768,6 +809,9 @@ void DevConsole::Initialize()
 	Command::Register("show_log",						"Enables rendering of the log window and text",			Command_ShowLog);
 	Command::Register("hook_console_to_logsystem",		"Enables rendering of the log window and text",			Command_HookToLogSystem);
 
+	// Load the DevConsole History
+	s_instance->LoadCommandHistoryFromFile();
+
 	// Load the font here to prevent hitch on first log open
 	AssetDB::CreateOrGetBitmapFont("Data/Images/Fonts/ConsoleFont.png");
 }
@@ -778,6 +822,8 @@ void DevConsole::Initialize()
 //
 void DevConsole::Shutdown()
 {
+	s_instance->WriteCommandHistoryToFile();
+
 	delete s_instance;
 	s_instance = nullptr;
 }
