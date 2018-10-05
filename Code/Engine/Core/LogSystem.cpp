@@ -29,8 +29,9 @@ const int STRINGF_STACK_LOCAL_TEMP_LENGTH = 2048;
 
 // Static members
 bool											LogSystem::s_isRunning = true;
-File*											LogSystem::s_logfile = nullptr;
-const char*										LogSystem::LOG_FILE_NAME_FORMAT = "Data/Logs/SystemLog%i_%s.txt";
+File*											LogSystem::s_logFile = nullptr;
+File*											LogSystem::s_timeStampFile = nullptr;
+const char*										LogSystem::LOG_FILE_NAME_FORMAT = "Data/Logs/SystemLog_%s.log";
 ThreadHandle_t									LogSystem::s_logThread = nullptr;
 std::shared_mutex								LogSystem::s_callbackLock;
 ThreadSafeQueue<LogMessage_t>					LogSystem::s_logQueue;
@@ -54,28 +55,41 @@ void LogSystem::Initialize()
 	CreateDirectoryA("Data/Logs", NULL);
 
 	// Make the file objects
-	s_logfile = new File();
+	s_logFile = new File();
 
 	// Get the paths, and open the files
-	std::string logFileName = Stringf(LOG_FILE_NAME_FORMAT, ::GetCurrentThreadId(), GetFormattedSystemDateAndTime().c_str());
-	s_logfile->Open(logFileName.c_str(), "w+");
+	std::string logFileName = Stringf(LOG_FILE_NAME_FORMAT, "HOST");
+	bool success = s_logFile->Open(logFileName.c_str(), "w+");
+
+	int count = 0;
+	while (!success)
+	{
+		count++;
+		logFileName = Stringf(LOG_FILE_NAME_FORMAT, Stringf("%s_%i", "CLIENT", count).c_str());
+		success = s_logFile->Open(logFileName.c_str(), "w+");
+	}
 
 	// Make a file writer for the latest log file
 	LogCallBack_t writerCallback;
 	writerCallback.callback = WriteToFile;
 	writerCallback.name = "Log File Writer";
-	writerCallback.argumentData = s_logfile;
+	writerCallback.argumentData = s_logFile;
 	AddCallback(writerCallback);
 
-	// Make a file writer callback for the time stamped log file
-// 	s_timeStampedFile = new File();
-// 	std::string timeStampedName = Stringf(LOG_FILE_NAME_FORMAT, GetFormattedSystemDateAndTime().c_str());
-// 	s_timeStampedFile->Open(timeStampedName.c_str(), "a+");
-// 
-// 	writerCallback.name = "File_writer_timestamped";
-// 	writerCallback.argumentData = s_timeStampedFile;
-// 	writerCallback.callback = WriteToFile;
-// 	AddCallback(writerCallback);
+
+	// Also open a time stamp file for record keeping
+	s_timeStampFile = new File();
+	std::string timeStampName = Stringf(LOG_FILE_NAME_FORMAT, GetFormattedSystemDateAndTime().c_str());
+
+	success = s_timeStampFile->Open(timeStampName.c_str(), "w+");
+
+	if (success)
+	{
+		writerCallback.name = "Time Stamped File Writer";
+		writerCallback.argumentData = s_timeStampFile;
+		AddCallback(writerCallback);
+	}
+
 
 	// For printing logs to output - only listen for DEBUG tags to avoid spamming
 	LogCallBack_t debugCallback;
@@ -105,11 +119,18 @@ void LogSystem::Shutdown()
 	Thread::Join(s_logThread);
 	s_logThread = nullptr;
 
-	if (s_logfile != nullptr)
+	if (s_logFile != nullptr)
 	{
-		s_logfile->Close();
-		delete s_logfile;
-		s_logfile = nullptr;
+		s_logFile->Close();
+		delete s_logFile;
+		s_logFile = nullptr;
+	}
+
+	if (s_timeStampFile != nullptr)
+	{
+		s_timeStampFile->Close();
+		delete s_timeStampFile;
+		s_timeStampFile = nullptr;
 	}
 }
 
@@ -164,7 +185,7 @@ void LogSystem::FlushLog()
 	}
 	
 	// Flush the files
-	s_logfile->Flush();
+	s_logFile->Flush();
 }
 
 

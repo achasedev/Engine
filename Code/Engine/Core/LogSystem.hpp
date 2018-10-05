@@ -101,7 +101,8 @@ private:
 	//-----Private Data-----
 
 	// For writing to the log file
-	static File* s_logfile;
+	static File* s_logFile;
+	static File* s_timeStampFile;
 
 	static bool s_isRunning;
 	static ThreadHandle_t s_logThread;
