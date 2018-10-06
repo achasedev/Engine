@@ -31,8 +31,13 @@ public:
 	// Returns the target address this connection is associated with
 	NetAddress_t				GetAddress();
 
+	// Network tick
 	void						SetNetTickRate(float hertz);
 	bool						IsReadyToFlush() const;
+
+	// Heartbeat
+	void						SetHeartbeat(float hertz);
+	bool						HasHeartbeatElapsed() const;
 
 
 private:
@@ -47,5 +52,8 @@ private:
 	// For net tick
 	float						m_timeBetweenSends = 0.f;
 	Stopwatch*					m_sendTimer = nullptr;
+
+	float						m_timeBetweenHeartbeats = 0.5f;
+	Stopwatch*					m_heartbeatTimer = nullptr;
 
 };

@@ -87,6 +87,9 @@ public:
 	void							SetNetTickRate(float hertz);
 	float							GetTimeBetweenSends() const;
 
+	// Heartbeat
+	void							SetAllConnectionHeartbeats(float hertz);
+
 
 private:
 	//-----Private Methods-----

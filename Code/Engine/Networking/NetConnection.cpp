@@ -13,6 +13,7 @@
 #include "Engine/Networking/NetSession.hpp"
 #include "Engine/Networking/NetConnection.hpp"
 
+
 //-----------------------------------------------------------------------------------------------
 // Constructor
 //
@@ -22,6 +23,8 @@ NetConnection::NetConnection(NetAddress_t& address, NetSession* session, uint8_t
 	, m_indexInSession(connectionIndex)
 {
 	m_sendTimer = new Stopwatch();
+	m_heartbeatTimer = new Stopwatch();
+	m_heartbeatTimer->SetInterval(m_timeBetweenHeartbeats);
 }
 
 
@@ -42,6 +45,12 @@ NetConnection::~NetConnection()
 	{
 		delete m_sendTimer;
 		m_sendTimer = nullptr;
+	}
+
+	if (m_heartbeatTimer != nullptr)
+	{
+		delete m_heartbeatTimer;
+		m_heartbeatTimer = nullptr;
 	}
 }
 
@@ -164,4 +173,30 @@ bool NetConnection::IsReadyToFlush() const
 	float sendInterval = MaxFloat(sessionTime, m_timeBetweenSends);
 
 	return (m_sendTimer->GetElapsedTime() > sendInterval);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the heartbeat of the connection to correspond to the given frequency
+//
+void NetConnection::SetHeartbeat(float hertz)
+{
+	m_timeBetweenHeartbeats = (1.0f / hertz);
+	m_heartbeatTimer->SetInterval(m_timeBetweenHeartbeats);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns true if the connection should send a heartbeat
+//
+bool NetConnection::HasHeartbeatElapsed() const
+{
+	bool elapsed = m_heartbeatTimer->HasIntervalElapsed();
+
+	if (elapsed)
+	{
+		m_heartbeatTimer->SetInterval(m_timeBetweenHeartbeats);
+	}
+
+	return elapsed;
 }

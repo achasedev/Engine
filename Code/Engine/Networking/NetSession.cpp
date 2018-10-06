@@ -15,11 +15,24 @@
 
 
 //-----------------------------------------------------------------------------------------------
+// Heartbeat message callback
+//
+bool OnHeartBeat(NetMessage* msg, const NetSender_t& sender)
+{
+	ConsolePrintf("Heartbeat received from %s", sender.address.ToString().c_str());
+	UNUSED(msg);
+
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Constructor
 //
 NetSession::NetSession()
 {
-	// Spin up the thread for processing receives
+	// Register the heartbeat definition
+	RegisterMessageDefinition("heartbeat", OnHeartBeat);
 }
 
 
@@ -291,6 +304,19 @@ void NetSession::ProcessOutgoing()
 	{
 		if (m_connections[index] != nullptr)
 		{
+			// Check heartbeat
+			if (m_connections[index]->HasHeartbeatElapsed())
+			{
+				uint8_t definitionIndex;
+				bool found = GetMessageDefinitionIndex("heartbeat", definitionIndex);
+
+				if (found)
+				{
+					m_connections[index]->Send(new NetMessage(definitionIndex));
+				}
+			}
+
+			// Check send rate
 			if (m_connections[index]->IsReadyToFlush())
 			{
 				m_connections[index]->FlushMessages();
@@ -342,6 +368,20 @@ void NetSession::SetNetTickRate(float hertz)
 float NetSession::GetTimeBetweenSends() const
 {
 	return m_timeBetweenSends;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the heartbeat of all connections
+//
+void NetSession::SetAllConnectionHeartbeats(float hertz)
+{
+	int connectionCount = (int) m_connections.size();
+
+	for (int index = 0; index < connectionCount; ++index)
+	{
+		m_connections[index]->SetHeartbeat(hertz);
+	}
 }
 
 
