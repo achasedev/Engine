@@ -53,8 +53,8 @@ void NetPacket::WriteHeader(const PacketHeader_t& header)
 //
 bool NetPacket::ReadHeader(PacketHeader_t& out_header)
 {
-	bool success = ReadBytes(&out_header, sizeof(PacketHeader_t));
-	return success;
+	size_t bytesRead = ReadBytes(&out_header, sizeof(PacketHeader_t));
+	return (bytesRead > 0);
 }
 
 

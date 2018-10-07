@@ -509,6 +509,14 @@ bool NetSession::VerifyPacket(NetPacket* packet)
 		return false;
 	}
 
+	// Check the sender connection index, and ensure it is valid
+	// (Index isn't the invalid index but is either out of range or has no connection associated with it)
+	int connIndex = header.senderConnectionIndex;
+	if (connIndex != INVALID_CONNECTION_INDEX && (connIndex >= m_connections.size() || m_connections[connIndex] == nullptr))
+	{
+		return false;
+	}
+
 	// Peek at the header and verify the messages
 	uint8_t messageCount = header.unreliableMessageCount;
 
@@ -549,6 +557,13 @@ void NetSession::ProcessReceivedPacket(NetPacket* packet, const NetAddress_t& se
 	packet->ReadHeader(header);
 	packet->SetSenderConnectionIndex(header.senderConnectionIndex);
 
+	// Update the connection's acknowledgment data if there is one
+	if (header.senderConnectionIndex != INVALID_CONNECTION_INDEX)
+	{
+		m_connections[header.senderConnectionIndex]->UpdateAckData(header);
+	}
+
+	// Process the messages
 	uint8_t messageCount = header.unreliableMessageCount;
 
 	for (int i = 0; i < messageCount; ++i)

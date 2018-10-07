@@ -39,7 +39,7 @@ public:
 private:
 	//-----Private Data-----
 
-	Clock* m_referenceClock;
+	Clock* m_referenceClock = nullptr;
 
 	uint64_t m_startHPC;
 	uint64_t m_endHPC;

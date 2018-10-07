@@ -76,7 +76,7 @@ void NetConnection::FlushMessages()
 
 	// Package them all into one NetPacket
 	NetPacket* packet = new NetPacket();
-	packet->AdvanceWriteHead(2); // Advance the write head now, and write the header later
+	packet->AdvanceWriteHead(sizeof(PacketHeader_t)); // Advance the write head now, and write the header later
 	packet->SetSenderConnectionIndex(m_owningSession->GetLocalConnectionIndex());
 	packet->SetReceiverConnectionIndex(m_indexInSession);
 
@@ -97,8 +97,10 @@ void NetConnection::FlushMessages()
 		}
 		else
 		{
-			PacketHeader_t header(m_owningSession->GetLocalConnectionIndex(), messagesWritten);
+			PacketHeader_t header = CreateHeaderForNextSend(messagesWritten);
 			packet->WriteHeader(header);
+
+			OnPacketSend(packet);
 
 			// Send the current packet and start again
 			bool sent = m_owningSession->SendPacket(packet);
@@ -114,7 +116,7 @@ void NetConnection::FlushMessages()
 
 			// Reset
 			packet->ResetWrite();
-			packet->AdvanceWriteHead(2);
+			packet->AdvanceWriteHead(sizeof(PacketHeader_t));
 
 			packet->WriteMessage(msg);
 			messagesWritten = 1;
@@ -123,8 +125,10 @@ void NetConnection::FlushMessages()
 		delete msg;
 	}
 	
-	PacketHeader_t header(m_owningSession->GetLocalConnectionIndex(), messagesWritten);
+	PacketHeader_t header = CreateHeaderForNextSend(messagesWritten);
 	packet->WriteHeader(header);
+
+	OnPacketSend(packet);
 
 	bool sent = m_owningSession->SendPacket(packet);
 
@@ -199,4 +203,104 @@ bool NetConnection::HasHeartbeatElapsed() const
 	}
 
 	return elapsed;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Creates the packet header for the next packet to be sent
+//
+PacketHeader_t NetConnection::CreateHeaderForNextSend(uint8_t messageCount)
+{
+	PacketHeader_t header;
+	header.senderConnectionIndex = m_owningSession->GetLocalConnectionIndex();
+	header.unreliableMessageCount = messageCount;
+	header.packetAck = m_nextSentAck;
+
+	return header;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Called when a packet is being sent
+//
+void NetConnection::OnPacketSend(NetPacket* packet)
+{
+	++m_nextSentAck;
+
+	if (m_nextSentAck == INVALID_PACKET_ACK)
+	{
+		++m_nextSentAck;
+	}
+
+	// Track the packet ack here
+	UNUSED(packet);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Called when a packet is received associated with this connection
+// Returns true if a new ack was received, false otherwise
+//
+bool NetConnection::UpdateAckData(const PacketHeader_t& header)
+{
+	// Call on the highest received ack
+	OnAckReceived(header.highestReceivedAck);
+
+	// Call on all acks in the history
+	for (int i = 0; i < 16; ++i)
+	{
+		uint16_t bitFlag = 1 << i;
+		if (header.receivedHistory & bitFlag)
+		{
+			OnAckReceived((uint16_t)(header.highestReceivedAck - (i + 1)));
+		}
+	}
+
+	// Now update the highest packet I have received from my connection
+	uint16_t receivedAck = header.packetAck;
+	uint16_t distance = receivedAck - m_highestReceivedAck;
+
+	if (distance == 0)
+	{
+		// Duplicate ack, do nothing
+		return false;
+	}
+
+	if ((distance & 0x8000) == 0)
+	{
+		m_highestReceivedAck = receivedAck;
+
+		// Left shift the distance
+		m_receivedBitfield = m_receivedBitfield << distance;
+		m_receivedBitfield |= (1 << (distance - 1)); // Set the history of the highest order bit
+	}
+	else
+	{
+		// Else got a packet older than the highest received
+		distance = m_highestReceivedAck - receivedAck;
+
+		// Check if the bit is already set = if so duplicate ack
+		uint16_t mask = (1 << (distance - 1));
+		
+		if ((m_receivedBitfield & mask) == mask)
+		{
+			// Already acknowledged this packet, so do nothing
+			return false;
+		}
+
+		// Acknowledge the new packet
+		m_receivedBitfield |= mask;
+	}
+
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Called when an ACK is received off of a packet
+//
+void NetConnection::OnAckReceived(uint16_t ack)
+{
+	// Here we'd update the array to do something
+	UNUSED(ack);
 }

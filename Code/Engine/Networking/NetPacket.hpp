@@ -21,6 +21,8 @@
 #define INVALID_CONNECTION_INDEX (0xff)
 #endif
 
+#define INVALID_PACKET_ACK (0xffff)
+
 // Predeclarations
 class NetMessage;
 
@@ -31,8 +33,14 @@ struct PacketHeader_t
 	PacketHeader_t(uint8_t connectionIndex, uint8_t messageCount)
 		: senderConnectionIndex(connectionIndex), unreliableMessageCount(messageCount) {}
 
-	uint8_t senderConnectionIndex = INVALID_CONNECTION_INDEX;
-	uint8_t unreliableMessageCount = 0;
+	// Basic info
+	uint8_t senderConnectionIndex	= INVALID_CONNECTION_INDEX;
+	uint8_t unreliableMessageCount	= 0;
+
+	// For reliable delivery
+	uint16_t packetAck				= INVALID_PACKET_ACK;
+	uint16_t highestReceivedAck		= INVALID_PACKET_ACK;
+	uint16_t receivedHistory		= 0;
 };
 
 
