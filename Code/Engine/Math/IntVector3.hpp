@@ -42,6 +42,8 @@ public:
 	float	GetLength() const;							// Calculates the magnitude of the vector
 	float	GetLengthSquared() const;					// Calculates the squared magnitude of the vector
 
+	void	SetFromText(const char* text);
+
 	static IntVector3 GetRandomVector(int maxDeviation);
 
 	// Helper accessors

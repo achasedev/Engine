@@ -750,7 +750,6 @@ void DevConsole::WriteCommandHistoryToFile()
 
 	for (int i = 0; i < lineCountToWrite; ++i)
 	{
-		int lineIndex = m_commandHistory.size() - 1 - lineCountToWrite + i;
 		std::string toWrite = m_commandHistory[i] + '\n';
 
 		file.Write(toWrite.c_str(), toWrite.size());

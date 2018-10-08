@@ -14,6 +14,7 @@
 #include "Engine/Math/IntRange.hpp"
 #include "Engine/Math/Vector2.hpp"
 #include "Engine/Math/IntVector2.hpp"
+#include "Engine/Math/IntVector3.hpp"
 #include "Engine/Math/AABB2.hpp"
 
 //-----------------------------------------------------------------------------------------------
@@ -236,5 +237,27 @@ std::string ParseXmlAttribute(const tinyxml2::XMLElement& element, const char* a
 	else
 	{	
 		return std::string(attributeText);
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Gets an attribute value and returns it as an IntVector3, with const char* default value
+//
+IntVector3 ParseXmlAttribute(const XMLElement& element, const char* attributeName, const IntVector3& defaultValue)
+{
+	IntVector3 vectorToReturn;
+
+	const char* attributeText = element.Attribute(attributeName);
+
+	if (attributeText == nullptr)
+	{
+		// Attribute not found
+		return defaultValue;
+	}
+	else
+	{
+		vectorToReturn.SetFromText(attributeText);
+		return vectorToReturn;
 	}
 }

@@ -173,6 +173,40 @@ float IntVector3::GetLengthSquared() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Sets the vector values from the text provided
+//
+void IntVector3::SetFromText(const char* text)
+{
+	std::string stringText = text;
+
+	size_t firstCommaPosition = stringText.find(",");
+
+	// No comma present in text
+	if (firstCommaPosition == std::string::npos)
+	{
+		return;
+	}
+
+	int xValue = atoi(std::string(stringText, 0, firstCommaPosition).c_str());
+
+	size_t secondCommaPosition = stringText.find(",", firstCommaPosition + 1);
+
+	// Not enough commas/nothing between commas
+	if (secondCommaPosition == std::string::npos || secondCommaPosition == firstCommaPosition + 1)
+	{
+		return;
+	}
+
+	int yValue = atoi(std::string(text, firstCommaPosition + 1, secondCommaPosition).c_str());
+	int zValue = atoi(std::string(text, secondCommaPosition + 1).c_str());
+
+	x = xValue;
+	y = yValue;
+	z = zValue;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns a random 3D IntVector with values within the maxDeviation of 0
 //
 IntVector3 IntVector3::GetRandomVector(int maxDeviation)

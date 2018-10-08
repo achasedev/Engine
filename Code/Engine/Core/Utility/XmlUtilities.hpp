@@ -20,6 +20,7 @@ class Vector2;
 class IntRange;
 class FloatRange;
 class IntVector2;
+class IntVector3;
 class AABB2;
 
 int				ParseXmlAttribute( const XMLElement& element, const char* attributeName, int defaultValue );
@@ -31,6 +32,7 @@ Vector2			ParseXmlAttribute( const XMLElement& element, const char* attributeNam
 IntRange		ParseXmlAttribute( const XMLElement& element, const char* attributeName, const IntRange& defaultValue );
 FloatRange		ParseXmlAttribute( const XMLElement& element, const char* attributeName, const FloatRange& defaultValue );
 IntVector2		ParseXmlAttribute( const XMLElement& element, const char* attributeName, const IntVector2& defaultValue );
+IntVector3		ParseXmlAttribute( const XMLElement& element, const char* attributeName, const IntVector3& defaultValue);
 AABB2			ParseXmlAttribute( const XMLElement& element, const char* attributeName, const AABB2& defaultValue );
 std::string		ParseXmlAttribute( const XMLElement& element, const char* attributeName, const std::string& defaultValue );
 std::string		ParseXmlAttribute( const XMLElement& element, const char* attributeName, const char* defaultValue=nullptr );
