@@ -18,6 +18,7 @@ public:
 	HeatMap(const IntVector2& dimensions, float initialHeatValuePerCell);
 
 	// Mutators
+	void Clear(float clearValue);
 	void SetHeat(const IntVector2& cellCoords, float newHeatValue);
 	void SetHeat(int index, float newHeatValue);
 	void AddHeat(const IntVector2& cellCoords, float addAmount);

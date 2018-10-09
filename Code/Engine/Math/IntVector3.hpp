@@ -48,6 +48,7 @@ public:
 
 	// Helper accessors
 	IntVector2 xy() const;
+	IntVector2 xz() const;
 
 
 public:

@@ -18,10 +18,20 @@ HeatMap::HeatMap(const IntVector2& dimensions, float initialHeatValuePerCell)
 {
 	int numCells = (m_dimensions.x * m_dimensions.y);
 
-	m_heatPerGridCell.reserve(numCells);
+	m_heatPerGridCell.resize(numCells);
+	Clear(initialHeatValuePerCell);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets all cells to have the given clear value
+//
+void HeatMap::Clear(float clearValue)
+{
+	int numCells = (m_dimensions.x * m_dimensions.y);
 	for (int i = 0; i < numCells; i++)
 	{
-		m_heatPerGridCell.push_back(initialHeatValuePerCell);
+		m_heatPerGridCell[i] = clearValue;
 	}
 }
 
@@ -160,7 +170,12 @@ bool HeatMap::UpdateCurrFromNeighbor(int currIndex, int neighborIndex, float max
 //
 float HeatMap::GetHeat(const IntVector2& cellCoords) const
 {
-	GUARANTEE_OR_DIE(AreCoordsValid(cellCoords), Stringf("Error: HeatMap::GetHeat() received bad coords, coords were (%d,%d)", cellCoords.x, cellCoords.y));
+	if (!AreCoordsValid(cellCoords))
+	{
+		return 9999999999.f;
+	}
+
+	//GUARANTEE_OR_DIE(AreCoordsValid(cellCoords), Stringf("Error: HeatMap::GetHeat() received bad coords, coords were (%d,%d)", cellCoords.x, cellCoords.y));
 
 	int index = (cellCoords.y * m_dimensions.x) + cellCoords.x;
 	return m_heatPerGridCell[index];

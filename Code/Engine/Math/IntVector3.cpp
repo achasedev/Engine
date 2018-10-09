@@ -231,6 +231,15 @@ IntVector2 IntVector3::xy() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the x and z components of this IntVector3
+//
+IntVector2 IntVector3::xz() const
+{
+	return IntVector2(x, z);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the distance between points a and b
 //
 float GetDistance(const IntVector3& a, const IntVector3& b)
