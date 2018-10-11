@@ -4,6 +4,7 @@
 /* Date: September 20th, 2018
 /* Description: Implementation of the NetSession class
 /************************************************************************/
+#include "Engine/Assets/AssetDB.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/LogSystem.hpp"
 #include "Engine/Core/Time/Clock.hpp"
@@ -11,6 +12,7 @@
 #include "Engine/Networking/NetPacket.hpp"
 #include "Engine/Networking/NetSession.hpp"
 #include "Engine/Networking/NetMessage.hpp"
+#include "Engine/Rendering/Core/Renderer.hpp"
 #include "Engine/Networking/NetConnection.hpp"
 
 
@@ -46,6 +48,55 @@ NetSession::~NetSession()
 
 	m_boundSocket->Close();
 	delete m_boundSocket;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Renders the session info to the screen for debugging
+//
+void NetSession::RenderDebugInfo() const
+{
+	AABB2 bounds = Renderer::GetUIBounds();
+	Renderer* renderer = Renderer::GetInstance();
+
+	renderer->Draw2DQuad(bounds, AABB2::UNIT_SQUARE_OFFCENTER, Rgba::BLACK);
+
+	float fontHeight = bounds.maxs.y * 0.03f;
+
+	BitmapFont* font = AssetDB::GetBitmapFont("Data/Images/Fonts/ConsoleFont.png");
+	renderer->DrawTextInBox2D("SESSION INFO", bounds, Vector2::ZERO, fontHeight, TEXT_DRAW_OVERRUN, font, Rgba::BLUE);
+
+	bounds.Translate(Vector2(0.f, -fontHeight));
+	fontHeight = bounds.maxs.y * 0.02f;
+
+	std::string simText = Stringf("Simulated Lag: %.0fms-%.0fms | Simulated Loss: %.2f%%", m_latencyRange.min, m_latencyRange.max, m_lossChance * 100.f);
+	renderer->DrawTextInBox2D(simText.c_str(), bounds, Vector2::ZERO, fontHeight, TEXT_DRAW_OVERRUN, font, Rgba::GRAY);
+	bounds.Translate(Vector2(0.f, -fontHeight));
+
+	renderer->DrawTextInBox2D(Stringf("Socket Address: %s", m_boundSocket->GetNetAddress().ToString().c_str()).c_str(), bounds, Vector2::ZERO, fontHeight, TEXT_DRAW_OVERRUN, font, Rgba::YELLOW);
+	bounds.Translate(Vector2(0.f, -2.f * fontHeight));
+
+	renderer->DrawTextInBox2D("Connections:", bounds, Vector2::ZERO, fontHeight, TEXT_DRAW_OVERRUN, font);
+	bounds.Translate(Vector2(0.f, -fontHeight));
+
+	std::string headingText = Stringf("-- %-*s%-*s%-*s%-*s%-*s%-*s%-*s%-*s%-*s",
+		6, "INDEX", 21, "ADDRESS", 6, "RTT", 6, "LOSS", 6, "LRCV", 6, "LSNT", 8, "SNTACK", 8, "RCVACK", 10, "RCVBITS");
+
+	renderer->DrawTextInBox2D(headingText.c_str(), bounds, Vector2::ZERO, fontHeight, TEXT_DRAW_OVERRUN, font);
+	bounds.Translate(Vector2(0.f, -fontHeight));
+
+	int numConnections = (int) m_connections.size();
+
+	for (int index = 0; index < numConnections; ++index)
+	{
+		if (m_connections[index] != nullptr)
+		{
+			std::string connectionInfo = m_connections[index]->GetDebugInfo();
+
+			renderer->DrawTextInBox2D(connectionInfo.c_str(), bounds, Vector2::ZERO, fontHeight, TEXT_DRAW_OVERRUN, font);
+			bounds.Translate(Vector2(0.f, -fontHeight));
+		}
+	}
 }
 
 
@@ -223,6 +274,12 @@ bool NetSession::AddConnection(uint8_t connectionIndex, NetAddress_t address)
 	NetConnection* newConnection = new NetConnection(address, this, connectionIndex);
 	m_connections[connectionIndex] = newConnection;
 
+	// Check if this is our address, and update it if so
+	if (m_boundSocket->GetNetAddress() == address)
+	{
+		m_localConnectionIndex = connectionIndex;
+	}
+
 	return true;
 }
 
@@ -302,24 +359,26 @@ void NetSession::ProcessOutgoing()
 	// Flush each connection
 	for (int index = 0; index < m_connections.size(); ++index)
 	{
-		if (m_connections[index] != nullptr)
+		NetConnection* currConnection = m_connections[index];
+
+		if (currConnection != nullptr)
 		{
 			// Check heartbeat
-			if (m_connections[index]->HasHeartbeatElapsed())
+			if (currConnection->HasHeartbeatElapsed())
 			{
 				uint8_t definitionIndex;
 				bool found = GetMessageDefinitionIndex("heartbeat", definitionIndex);
 
 				if (found)
 				{
-					m_connections[index]->Send(new NetMessage(definitionIndex));
+					currConnection->Send(new NetMessage(definitionIndex));
 				}
 			}
 
 			// Check send rate
-			if (m_connections[index]->IsReadyToFlush())
+			if (currConnection->HasNetTickElapsed() && (currConnection->HasOutboundMessages() || currConnection->NeedsToForceSend()))
 			{
-				m_connections[index]->FlushMessages();
+				currConnection->FlushMessages();
 			}
 		}
 	}
@@ -340,6 +399,8 @@ void NetSession::SetSimLoss(float lossAmount)
 //
 void NetSession::SetSimLatency(float minLatency, float maxLatency = 0.f)
 {
+	minLatency = MaxFloat(minLatency, 0.f);
+	maxLatency = MaxFloat(maxLatency, minLatency);
 	m_latencyRange = FloatRange(minLatency, maxLatency);
 }
 
@@ -410,7 +471,7 @@ void NetSession::ReceiveIncoming()
 				PendingReceive pending;
 				pending.packet = packet;
 				pending.senderAddress = senderAddress;
-				pending.timeStamp = Clock::GetMasterClock()->GetTotalSeconds() + m_latencyRange.GetRandomInRange();
+				pending.timeStamp = Clock::GetMasterClock()->GetTotalSeconds() + m_latencyRange.GetRandomInRange() * 0.001f;
 
 				PushNewReceive(pending);
 			}
@@ -560,7 +621,7 @@ void NetSession::ProcessReceivedPacket(NetPacket* packet, const NetAddress_t& se
 	// Update the connection's acknowledgment data if there is one
 	if (header.senderConnectionIndex != INVALID_CONNECTION_INDEX)
 	{
-		m_connections[header.senderConnectionIndex]->UpdateAckData(header);
+		m_connections[header.senderConnectionIndex]->OnPacketReceived(header);
 	}
 
 	// Process the messages

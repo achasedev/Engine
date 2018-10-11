@@ -440,3 +440,30 @@ std::string ToString(const std::string* value)
 {
 	return *value;
 }
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns a bitstring text of the value
+//
+std::string GetAsBitString(uint16_t value)
+{
+	std::string string;
+
+	int numChars = sizeof(uint16_t) * 8;
+
+	for (int charIndex = 0; charIndex < numChars; ++charIndex)
+	{
+		uint16_t mask = (1 << (numChars - charIndex - 1));
+
+		if ((value & mask) == mask)
+		{
+			string.push_back('1');
+		}
+		else
+		{
+			string.push_back('0');
+		}
+	}
+
+	return string;
+}

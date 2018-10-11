@@ -57,3 +57,5 @@ std::string ToString(const Vector4* value);
 
 std::string ToString(const std::string& value);	// For use with templating
 std::string ToString(const std::string* value);
+
+std::string GetAsBitString(uint16_t value);

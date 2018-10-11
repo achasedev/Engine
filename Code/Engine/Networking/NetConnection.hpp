@@ -17,6 +17,12 @@ class Stopwatch;
 
 #define MAX_UNACKED_HISTORY (256)
 
+struct PacketTracker_t
+{
+	uint16_t	packetAck = INVALID_PACKET_ACK;
+	float		timeSent = -1.f;
+};
+
 class NetConnection
 {
 public:
@@ -36,14 +42,21 @@ public:
 
 	// Network tick
 	void						SetNetTickRate(float hertz);
-	bool						IsReadyToFlush() const;
+	bool						HasNetTickElapsed() const;
 
 	// Heartbeat
 	void						SetHeartbeat(float hertz);
 	bool						HasHeartbeatElapsed() const;
 
 	// Reliable delivery
-	bool						UpdateAckData(const PacketHeader_t& header);
+	bool						OnPacketReceived(const PacketHeader_t& header);
+
+	// RTT/Loss
+	bool						HasOutboundMessages() const;
+	bool						NeedsToForceSend() const;
+
+	// For drawing
+	std::string					GetDebugInfo() const;
 
 
 private:
@@ -51,14 +64,17 @@ private:
 
 	// For reliable delivery
 	PacketHeader_t				CreateHeaderForNextSend(uint8_t messageCount);
-	void						OnPacketSend(NetPacket* packet);
+	void						OnPacketSend(const PacketHeader_t& header);
 	void						OnAckReceived(uint16_t ack);
+
+	// RTT/Loss
+	void						UpdateLossCalculation();
 
 
 private:
 	//-----Private Data-----
 
-	std::vector<NetMessage*>	m_outboundUnreliables;
+	std::vector<NetMessage*>	m_outboundMessages;
 	NetAddress_t				m_address;
 
 	NetSession*					m_owningSession = nullptr;
@@ -73,15 +89,23 @@ private:
 
 	// Reliable delivery
 	uint16_t m_nextSentAck = 0;
-	uint16_t m_highestReceivedAck;
+	uint16_t m_highestReceivedAck = 0;
 	uint16_t m_receivedBitfield = 0;
 
-	NetPacket* m_sendButUnackedPackets[MAX_UNACKED_HISTORY];
+	PacketTracker_t m_sentButUnackedPackets[MAX_UNACKED_HISTORY];
 
-	float m_lastSendTime = 0.f;
-	float m_lastReceiveTime = 0.f;
+	Stopwatch* m_lastSentTimer = nullptr;
+	Stopwatch* m_lastReceivedTimer = nullptr;
+
+	int m_packetsSent = 0;
+	int m_lossCount = 0;
 
 	float m_loss = 0.f;
 	float m_rtt = 0.f;
+
+	bool m_forceSendNextTick = false;
+
+	static constexpr float RTT_BLEND_FACTOR = 0.1f;
+	static constexpr unsigned int LOSS_WINDOW_COUNT = 50;
 
 };

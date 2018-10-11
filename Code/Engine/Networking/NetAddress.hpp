@@ -18,6 +18,8 @@ public:
 	NetAddress_t(const sockaddr* addr);
 	NetAddress_t(const char* string, bool bindable = false);
 
+	bool operator==(const NetAddress_t& compare) const;
+
 	bool					ToSockAddr(sockaddr* out_addr, size_t* out_addrLen) const;
 	bool					FromSockAddr(const sockaddr* addr);
 

@@ -73,6 +73,15 @@ NetAddress_t::NetAddress_t(const char* addressText, bool bindable /*= false*/)
 
 
 //-----------------------------------------------------------------------------------------------
+// Compares two addresses, and returns true if they match
+//
+bool NetAddress_t::operator==(const NetAddress_t& compare) const
+{
+	return ((ipv4Address == compare.ipv4Address) && (port == compare.port));
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Extracts the member information from this NetAddress and stores it in the socket address provided
 //
 bool NetAddress_t::ToSockAddr(sockaddr* out_addr, size_t* out_addrLen) const

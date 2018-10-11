@@ -6,6 +6,7 @@
 /************************************************************************/
 #include "Engine/Core/LogSystem.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/Time/Clock.hpp"
 #include "Engine/Core/Time/Stopwatch.hpp"
 #include "Engine/Networking/UDPSocket.hpp"
 #include "Engine/Networking/NetPacket.hpp"
@@ -24,6 +25,9 @@ NetConnection::NetConnection(NetAddress_t& address, NetSession* session, uint8_t
 {
 	m_sendTimer = new Stopwatch();
 	m_heartbeatTimer = new Stopwatch();
+	m_lastSentTimer = new Stopwatch();
+	m_lastReceivedTimer = new Stopwatch();
+
 	m_heartbeatTimer->SetInterval(m_timeBetweenHeartbeats);
 }
 
@@ -34,12 +38,12 @@ NetConnection::NetConnection(NetAddress_t& address, NetSession* session, uint8_t
 NetConnection::~NetConnection()
 {
 	// Check for any pending messages that didn't get sent
-	for (int i = 0; i < (int)m_outboundUnreliables.size(); ++i)
+	for (int i = 0; i < (int)m_outboundMessages.size(); ++i)
 	{
-		delete m_outboundUnreliables[i];
+		delete m_outboundMessages[i];
 	}
 
-	m_outboundUnreliables.clear();
+	m_outboundMessages.clear();
 
 	if (m_sendTimer != nullptr)
 	{
@@ -52,6 +56,18 @@ NetConnection::~NetConnection()
 		delete m_heartbeatTimer;
 		m_heartbeatTimer = nullptr;
 	}
+
+	if (m_lastSentTimer != nullptr)
+	{
+		delete m_lastSentTimer;
+		m_lastSentTimer = nullptr;
+	}
+
+	if (m_lastReceivedTimer != nullptr)
+	{
+		delete m_lastReceivedTimer;
+		m_lastReceivedTimer = nullptr;
+	}
 }
 
 
@@ -60,7 +76,7 @@ NetConnection::~NetConnection()
 //
 void NetConnection::Send(NetMessage* msg)
 {
-	m_outboundUnreliables.push_back(msg);
+	m_outboundMessages.push_back(msg);
 }
 
 
@@ -69,11 +85,6 @@ void NetConnection::Send(NetMessage* msg)
 //
 void NetConnection::FlushMessages()
 {
-	if (m_outboundUnreliables.size() == 0)
-	{
-		return;
-	}
-
 	// Package them all into one NetPacket
 	NetPacket* packet = new NetPacket();
 	packet->AdvanceWriteHead(sizeof(PacketHeader_t)); // Advance the write head now, and write the header later
@@ -82,9 +93,9 @@ void NetConnection::FlushMessages()
 
 	uint8_t messagesWritten = 0;
 
-	for (int msgIndex = 0; msgIndex < m_outboundUnreliables.size(); ++msgIndex)
+	for (int msgIndex = 0; msgIndex < m_outboundMessages.size(); ++msgIndex)
 	{
-		NetMessage* msg = m_outboundUnreliables[msgIndex];
+		NetMessage* msg = m_outboundMessages[msgIndex];
 
 		// Check if the message will fit
 		// 2 bytes for the header and message size, 1 byte for message definition index,
@@ -100,7 +111,8 @@ void NetConnection::FlushMessages()
 			PacketHeader_t header = CreateHeaderForNextSend(messagesWritten);
 			packet->WriteHeader(header);
 
-			OnPacketSend(packet);
+			// Update the latest ack sent for the connection
+			OnPacketSend(header);
 
 			// Send the current packet and start again
 			bool sent = m_owningSession->SendPacket(packet);
@@ -128,7 +140,9 @@ void NetConnection::FlushMessages()
 	PacketHeader_t header = CreateHeaderForNextSend(messagesWritten);
 	packet->WriteHeader(header);
 
-	OnPacketSend(packet);
+	// Update the latest ack sent for the connection
+	OnPacketSend(header);
+	
 
 	bool sent = m_owningSession->SendPacket(packet);
 
@@ -142,10 +156,11 @@ void NetConnection::FlushMessages()
 	}
 		
 
-	m_outboundUnreliables.clear();
+	m_outboundMessages.clear();
 
 	// Reset the send timer
 	m_sendTimer->Reset();
+	m_forceSendNextTick = false;
 }
 
 
@@ -171,7 +186,7 @@ void NetConnection::SetNetTickRate(float hertz)
 // Returns whether the connection should send based on the tick rate of the connection and the owning
 // session
 //
-bool NetConnection::IsReadyToFlush() const
+bool NetConnection::HasNetTickElapsed() const
 {
 	float sessionTime = m_owningSession->GetTimeBetweenSends();
 	float sendInterval = MaxFloat(sessionTime, m_timeBetweenSends);
@@ -215,6 +230,8 @@ PacketHeader_t NetConnection::CreateHeaderForNextSend(uint8_t messageCount)
 	header.senderConnectionIndex = m_owningSession->GetLocalConnectionIndex();
 	header.unreliableMessageCount = messageCount;
 	header.packetAck = m_nextSentAck;
+	header.highestReceivedAck = m_highestReceivedAck;
+	header.receivedHistory = m_receivedBitfield;
 
 	return header;
 }
@@ -223,8 +240,38 @@ PacketHeader_t NetConnection::CreateHeaderForNextSend(uint8_t messageCount)
 //-----------------------------------------------------------------------------------------------
 // Called when a packet is being sent
 //
-void NetConnection::OnPacketSend(NetPacket* packet)
+void NetConnection::OnPacketSend(const PacketHeader_t& header)
 {
+	// Don't do anything to a packet that has no messages
+	if (header.unreliableMessageCount == 0)
+	{
+		return;
+	}
+
+	// Track the packet
+	PacketTracker_t tracker;
+	tracker.packetAck = m_nextSentAck;
+	tracker.timeSent = Clock::GetMasterClock()->GetTotalSeconds();
+
+	uint16_t index = (m_nextSentAck % MAX_UNACKED_HISTORY);
+
+	// Check to update packet loss (overwrite a packet never ack'd)
+	if (m_sentButUnackedPackets[index].packetAck != INVALID_PACKET_ACK)
+	{
+		m_lossCount++;
+	}
+
+	m_packetsSent++;
+
+	if (m_packetsSent >= LOSS_WINDOW_COUNT)
+	{
+		UpdateLossCalculation();
+	}
+
+	// Loss calculated, now update the tracker in the array
+	m_sentButUnackedPackets[index] = tracker;
+
+	// Increment the next ack to send
 	++m_nextSentAck;
 
 	if (m_nextSentAck == INVALID_PACKET_ACK)
@@ -232,8 +279,8 @@ void NetConnection::OnPacketSend(NetPacket* packet)
 		++m_nextSentAck;
 	}
 
-	// Track the packet ack here
-	UNUSED(packet);
+	// Reset the send timer
+	m_lastSentTimer->Reset();
 }
 
 
@@ -241,7 +288,7 @@ void NetConnection::OnPacketSend(NetPacket* packet)
 // Called when a packet is received associated with this connection
 // Returns true if a new ack was received, false otherwise
 //
-bool NetConnection::UpdateAckData(const PacketHeader_t& header)
+bool NetConnection::OnPacketReceived(const PacketHeader_t& header)
 {
 	// Call on the highest received ack
 	OnAckReceived(header.highestReceivedAck);
@@ -292,7 +339,40 @@ bool NetConnection::UpdateAckData(const PacketHeader_t& header)
 		m_receivedBitfield |= mask;
 	}
 
+	// Reset the last received timer
+	m_lastReceivedTimer->Reset();
+
 	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns true if the connection has any pending outbound messages
+//
+bool NetConnection::HasOutboundMessages() const
+{
+	return (m_outboundMessages.size() > 0.f);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns true if the connection should send a packet next frame to maintain RTT
+//
+bool NetConnection::NeedsToForceSend() const
+{
+	return m_forceSendNextTick;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns a string representation of the connection's data and state
+//
+std::string NetConnection::GetDebugInfo() const
+{
+	std::string debugText = Stringf("   %-*i%-*s%-*.3f%-*.3f%-*.3f%-*.3f%-*i%-*i%-*s",
+		6, m_indexInSession, 21, m_address.ToString().c_str(), 6, m_rtt, 6, m_loss, 6, m_lastReceivedTimer->GetElapsedTime(), 6, m_lastSentTimer->GetElapsedTime(), 8, m_nextSentAck - 1, 8, m_highestReceivedAck, 10, GetAsBitString(m_receivedBitfield).c_str());
+
+	return debugText;
 }
 
 
@@ -301,6 +381,43 @@ bool NetConnection::UpdateAckData(const PacketHeader_t& header)
 //
 void NetConnection::OnAckReceived(uint16_t ack)
 {
-	// Here we'd update the array to do something
-	UNUSED(ack);
+	// If the ack is invalid do nothing
+	if (ack == INVALID_PACKET_ACK)
+	{
+		return;
+	}
+
+	// Check if this has to be acknowledged at all (already ack'd, or just bad ack)
+	int index = (ack % MAX_UNACKED_HISTORY);
+	if (m_sentButUnackedPackets[index].packetAck == INVALID_PACKET_ACK)
+	{
+		return;
+	}
+
+	// Calculate RTT
+	float currentTime = Clock::GetMasterClock()->GetTotalSeconds();
+
+	float timeDilation = currentTime - m_sentButUnackedPackets[index].timeSent;
+
+	// Blend in this RTT to our existing RTT
+	m_rtt = (1.f - RTT_BLEND_FACTOR) * m_rtt + RTT_BLEND_FACTOR * timeDilation;
+
+	// It has been received, so invalidate
+	m_sentButUnackedPackets[index].packetAck = INVALID_PACKET_ACK;
+
+	// Force send next tick to maintain RTT
+	m_forceSendNextTick = true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Updates the calculated loss for this connection given the window
+//
+void NetConnection::UpdateLossCalculation()
+{
+	m_loss = (float)m_lossCount / (float)m_packetsSent;
+
+	// Reset the current count for the next window
+	m_packetsSent = 0;
+	m_lossCount = 0;
 }

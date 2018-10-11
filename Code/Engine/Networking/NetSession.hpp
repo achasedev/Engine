@@ -56,6 +56,8 @@ public:
 	NetSession();
 	~NetSession();
 
+	void							RenderDebugInfo() const;
+
 	// Binding and Sending
 	bool							Bind(unsigned short port, uint16_t portRange);
 	bool							SendPacket(const NetPacket* packet);
