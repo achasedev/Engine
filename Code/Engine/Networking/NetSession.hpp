@@ -90,7 +90,8 @@ public:
 	float							GetTimeBetweenSends() const;
 
 	// Heartbeat
-	void							SetAllConnectionHeartbeats(float hertz);
+	void							SetConnectionHeartbeatInterval(float hertz);
+	float							GetHeartbeatInterval() const;
 
 
 private:
@@ -126,5 +127,8 @@ private:
 
 	// Network tick
 	float										m_timeBetweenSends = 0.f;
+
+	// Heartbeat
+	float										m_heartBeatInverval = 0.5f;
 
 };

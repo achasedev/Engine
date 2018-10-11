@@ -17,6 +17,7 @@
 #define PACKET_MTU (ETHERNET_MTU - 40 - 8) 
 #endif
 
+#define PACKET_HEADER_SIZE (8)
 #ifndef INVALID_CONNECTION_INDEX
 #define INVALID_CONNECTION_INDEX (0xff)
 #endif
@@ -35,12 +36,14 @@ struct PacketHeader_t
 
 	// Basic info
 	uint8_t senderConnectionIndex	= INVALID_CONNECTION_INDEX;
-	uint8_t unreliableMessageCount	= 0;
 
 	// For reliable delivery
 	uint16_t packetAck				= INVALID_PACKET_ACK;
-	uint16_t highestReceivedAck		= INVALID_PACKET_ACK;
 	uint16_t receivedHistory		= 0;
+	uint16_t highestReceivedAck		= INVALID_PACKET_ACK;
+
+	uint8_t unreliableMessageCount	= 0;
+
 };
 
 

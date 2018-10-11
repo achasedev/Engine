@@ -28,7 +28,7 @@ NetConnection::NetConnection(NetAddress_t& address, NetSession* session, uint8_t
 	m_lastSentTimer = new Stopwatch();
 	m_lastReceivedTimer = new Stopwatch();
 
-	m_heartbeatTimer->SetInterval(m_timeBetweenHeartbeats);
+	m_heartbeatTimer->SetInterval(m_owningSession->GetHeartbeatInterval());
 }
 
 
@@ -87,7 +87,7 @@ void NetConnection::FlushMessages()
 {
 	// Package them all into one NetPacket
 	NetPacket* packet = new NetPacket();
-	packet->AdvanceWriteHead(sizeof(PacketHeader_t)); // Advance the write head now, and write the header later
+	packet->AdvanceWriteHead(PACKET_HEADER_SIZE); // Advance the write head now, and write the header later
 	packet->SetSenderConnectionIndex(m_owningSession->GetLocalConnectionIndex());
 	packet->SetReceiverConnectionIndex(m_indexInSession);
 
@@ -119,6 +119,7 @@ void NetConnection::FlushMessages()
 
 			if (sent)
 			{
+				ConsolePrintf(Rgba::GREEN, "Sent packet with ack %i", header.packetAck);
 				LogTaggedPrintf("NET", "NetConnection sent packet with %i messages", messagesWritten);
 			}
 			else
@@ -148,6 +149,7 @@ void NetConnection::FlushMessages()
 
 	if (sent)
 	{
+		ConsolePrintf(Rgba::GREEN, "Sent packet with ack %i", header.packetAck);
 		LogTaggedPrintf("NET", "NetConnection sent packet with %i messages", messagesWritten);
 	}
 	else
@@ -191,17 +193,7 @@ bool NetConnection::HasNetTickElapsed() const
 	float sessionTime = m_owningSession->GetTimeBetweenSends();
 	float sendInterval = MaxFloat(sessionTime, m_timeBetweenSends);
 
-	return (m_sendTimer->GetElapsedTime() > sendInterval);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Sets the heartbeat of the connection to correspond to the given frequency
-//
-void NetConnection::SetHeartbeat(float hertz)
-{
-	m_timeBetweenHeartbeats = (1.0f / hertz);
-	m_heartbeatTimer->SetInterval(m_timeBetweenHeartbeats);
+	return (m_sendTimer->GetElapsedTime() >= sendInterval);
 }
 
 
@@ -214,7 +206,7 @@ bool NetConnection::HasHeartbeatElapsed() const
 
 	if (elapsed)
 	{
-		m_heartbeatTimer->SetInterval(m_timeBetweenHeartbeats);
+		m_heartbeatTimer->SetInterval(m_owningSession->GetHeartbeatInterval());
 	}
 
 	return elapsed;
@@ -229,7 +221,16 @@ PacketHeader_t NetConnection::CreateHeaderForNextSend(uint8_t messageCount)
 	PacketHeader_t header;
 	header.senderConnectionIndex = m_owningSession->GetLocalConnectionIndex();
 	header.unreliableMessageCount = messageCount;
-	header.packetAck = m_nextSentAck;
+
+	if (messageCount > 0)
+	{
+		header.packetAck = m_nextSentAck;
+	}
+	else
+	{
+		header.packetAck = INVALID_PACKET_ACK;
+	}
+
 	header.highestReceivedAck = m_highestReceivedAck;
 	header.receivedHistory = m_receivedBitfield;
 
@@ -242,8 +243,8 @@ PacketHeader_t NetConnection::CreateHeaderForNextSend(uint8_t messageCount)
 //
 void NetConnection::OnPacketSend(const PacketHeader_t& header)
 {
-	// Don't do anything to a packet that has no messages
-	if (header.unreliableMessageCount == 0)
+	// Don't do anything to a packet that has no messages (invalid)
+	if (header.unreliableMessageCount == 0 || header.packetAck == INVALID_PACKET_ACK)
 	{
 		return;
 	}
@@ -291,7 +292,7 @@ void NetConnection::OnPacketSend(const PacketHeader_t& header)
 bool NetConnection::OnPacketReceived(const PacketHeader_t& header)
 {
 	// Call on the highest received ack
-	OnAckReceived(header.highestReceivedAck);
+	OnAckConfirmed(header.highestReceivedAck);
 
 	// Call on all acks in the history
 	for (int i = 0; i < 16; ++i)
@@ -299,45 +300,53 @@ bool NetConnection::OnPacketReceived(const PacketHeader_t& header)
 		uint16_t bitFlag = 1 << i;
 		if (header.receivedHistory & bitFlag)
 		{
-			OnAckReceived((uint16_t)(header.highestReceivedAck - (i + 1)));
+			OnAckConfirmed((uint16_t)(header.highestReceivedAck - (i + 1)));
 		}
 	}
 
-	// Now update the highest packet I have received from my connection
-	uint16_t receivedAck = header.packetAck;
-	uint16_t distance = receivedAck - m_highestReceivedAck;
-
-	if (distance == 0)
+	// Now update the highest packet I have received from my connection, if it's valid
+	if (header.packetAck != INVALID_PACKET_ACK)
 	{
-		// Duplicate ack, do nothing
-		return false;
-	}
+		uint16_t receivedAck = header.packetAck;
+		uint16_t distance = receivedAck - m_highestReceivedAck;
 
-	if ((distance & 0x8000) == 0)
-	{
-		m_highestReceivedAck = receivedAck;
-
-		// Left shift the distance
-		m_receivedBitfield = m_receivedBitfield << distance;
-		m_receivedBitfield |= (1 << (distance - 1)); // Set the history of the highest order bit
-	}
-	else
-	{
-		// Else got a packet older than the highest received
-		distance = m_highestReceivedAck - receivedAck;
-
-		// Check if the bit is already set = if so duplicate ack
-		uint16_t mask = (1 << (distance - 1));
-		
-		if ((m_receivedBitfield & mask) == mask)
+		if (distance == 0)
 		{
-			// Already acknowledged this packet, so do nothing
+			// Duplicate ack, do nothing
+			ERROR_AND_DIE("Received duplicate ack");
 			return false;
 		}
 
-		// Acknowledge the new packet
-		m_receivedBitfield |= mask;
+		if ((distance & 0x8000) == 0)
+		{
+			m_highestReceivedAck = receivedAck;
+
+			// Left shift the distance
+			m_receivedBitfield = m_receivedBitfield << distance;
+			m_receivedBitfield |= (1 << (distance - 1)); // Set the history of the highest order bit
+		}
+		else
+		{
+			// Else got a packet older than the highest received
+			distance = m_highestReceivedAck - receivedAck;
+
+			// Check if the bit is already set = if so duplicate ack
+			uint16_t mask = (1 << (distance - 1));
+
+			if ((m_receivedBitfield & mask) == mask)
+			{
+				// Already acknowledged this packet, so do nothing
+				return false;
+			}
+
+			// Acknowledge the new packet
+			m_receivedBitfield |= mask;
+		}
+
+		// Force send next tick to maintain RTT
+		m_forceSendNextTick = true;
 	}
+	
 
 	// Reset the last received timer
 	m_lastReceivedTimer->Reset();
@@ -351,7 +360,7 @@ bool NetConnection::OnPacketReceived(const PacketHeader_t& header)
 //
 bool NetConnection::HasOutboundMessages() const
 {
-	return (m_outboundMessages.size() > 0.f);
+	return (m_outboundMessages.size() > 0);
 }
 
 
@@ -369,8 +378,8 @@ bool NetConnection::NeedsToForceSend() const
 //
 std::string NetConnection::GetDebugInfo() const
 {
-	std::string debugText = Stringf("   %-*i%-*s%-*.3f%-*.3f%-*.3f%-*.3f%-*i%-*i%-*s",
-		6, m_indexInSession, 21, m_address.ToString().c_str(), 6, m_rtt, 6, m_loss, 6, m_lastReceivedTimer->GetElapsedTime(), 6, m_lastSentTimer->GetElapsedTime(), 8, m_nextSentAck - 1, 8, m_highestReceivedAck, 10, GetAsBitString(m_receivedBitfield).c_str());
+	std::string debugText = Stringf("   %-*i%-*s%-*.2f%-*.2f%-*.2f%-*.2f%-*i%-*i%-*s",
+		6, m_indexInSession, 21, m_address.ToString().c_str(), 8, 1000.f * m_rtt, 7, m_loss, 7, m_lastReceivedTimer->GetElapsedTime(), 7, m_lastSentTimer->GetElapsedTime(), 8, m_nextSentAck - 1, 8, m_highestReceivedAck, 10, GetAsBitString(m_receivedBitfield).c_str());
 
 	return debugText;
 }
@@ -379,7 +388,7 @@ std::string NetConnection::GetDebugInfo() const
 //-----------------------------------------------------------------------------------------------
 // Called when an ACK is received off of a packet
 //
-void NetConnection::OnAckReceived(uint16_t ack)
+void NetConnection::OnAckConfirmed(uint16_t ack)
 {
 	// If the ack is invalid do nothing
 	if (ack == INVALID_PACKET_ACK)
@@ -389,7 +398,7 @@ void NetConnection::OnAckReceived(uint16_t ack)
 
 	// Check if this has to be acknowledged at all (already ack'd, or just bad ack)
 	int index = (ack % MAX_UNACKED_HISTORY);
-	if (m_sentButUnackedPackets[index].packetAck == INVALID_PACKET_ACK)
+	if (m_sentButUnackedPackets[index].packetAck == INVALID_PACKET_ACK || m_sentButUnackedPackets[index].packetAck != ack)
 	{
 		return;
 	}
@@ -397,16 +406,28 @@ void NetConnection::OnAckReceived(uint16_t ack)
 	// Calculate RTT
 	float currentTime = Clock::GetMasterClock()->GetTotalSeconds();
 
-	float timeDilation = currentTime - m_sentButUnackedPackets[index].timeSent;
+	float timeDilation = (currentTime - m_sentButUnackedPackets[index].timeSent);
 
 	// Blend in this RTT to our existing RTT
-	m_rtt = (1.f - RTT_BLEND_FACTOR) * m_rtt + RTT_BLEND_FACTOR * timeDilation;
+	bool shouldUpdate = true;
+	for (int i = 1; i < m_nextSentAck - ack; ++i)
+	{
+		int checkIndex = ack + i;
+		if (m_sentButUnackedPackets[checkIndex].packetAck == INVALID_PACKET_ACK)
+		{
+			shouldUpdate = false;
+			break;
+		}
+	}
+
+	if (shouldUpdate)
+	{
+		m_rtt = (1.f - RTT_BLEND_FACTOR) * m_rtt + RTT_BLEND_FACTOR * timeDilation;
+		ConsolePrintf("Dilation: %.2f | RTT: %.2f", timeDilation, m_rtt);
+	}
 
 	// It has been received, so invalidate
 	m_sentButUnackedPackets[index].packetAck = INVALID_PACKET_ACK;
-
-	// Force send next tick to maintain RTT
-	m_forceSendNextTick = true;
 }
 
 

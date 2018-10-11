@@ -37,13 +37,18 @@ void NetPacket::WriteHeader(const PacketHeader_t& header)
 
 	// Set the write head back to the beginning to write
 	ResetWrite();
-	size_t headerSize = sizeof(PacketHeader_t);
-	WriteBytes(headerSize, &header);
+
+	// Write each element separately
+	Write(header.senderConnectionIndex);
+	Write(header.packetAck);
+	Write(header.highestReceivedAck);
+	Write(header.receivedHistory);
+	Write(header.unreliableMessageCount);
 
 	// Move write head back to where it was
-	if (writtenBytes > headerSize)
+	if (writtenBytes > 8)
 	{
-		AdvanceWriteHead(writtenBytes - headerSize);
+		AdvanceWriteHead(writtenBytes - 8);
 	}
 }
 
@@ -53,8 +58,15 @@ void NetPacket::WriteHeader(const PacketHeader_t& header)
 //
 bool NetPacket::ReadHeader(PacketHeader_t& out_header)
 {
-	size_t bytesRead = ReadBytes(&out_header, sizeof(PacketHeader_t));
-	return (bytesRead > 0);
+	size_t totalRead = 0;
+
+	totalRead += Read(out_header.senderConnectionIndex);
+	totalRead += Read(out_header.packetAck);
+	totalRead += Read(out_header.highestReceivedAck);
+	totalRead += Read(out_header.receivedHistory);
+	totalRead += Read(out_header.unreliableMessageCount);
+
+	return (totalRead == PACKET_HEADER_SIZE);
 }
 
 

@@ -21,8 +21,9 @@
 //
 bool OnHeartBeat(NetMessage* msg, const NetSender_t& sender)
 {
-	ConsolePrintf("Heartbeat received from %s", sender.address.ToString().c_str());
+	//ConsolePrintf("Heartbeat received from %s", sender.address.ToString().c_str());
 	UNUSED(msg);
+	UNUSED(sender);
 
 	return true;
 }
@@ -59,8 +60,6 @@ void NetSession::RenderDebugInfo() const
 	AABB2 bounds = Renderer::GetUIBounds();
 	Renderer* renderer = Renderer::GetInstance();
 
-	renderer->Draw2DQuad(bounds, AABB2::UNIT_SQUARE_OFFCENTER, Rgba::BLACK);
-
 	float fontHeight = bounds.maxs.y * 0.03f;
 
 	BitmapFont* font = AssetDB::GetBitmapFont("Data/Images/Fonts/ConsoleFont.png");
@@ -80,7 +79,7 @@ void NetSession::RenderDebugInfo() const
 	bounds.Translate(Vector2(0.f, -fontHeight));
 
 	std::string headingText = Stringf("-- %-*s%-*s%-*s%-*s%-*s%-*s%-*s%-*s%-*s",
-		6, "INDEX", 21, "ADDRESS", 6, "RTT", 6, "LOSS", 6, "LRCV", 6, "LSNT", 8, "SNTACK", 8, "RCVACK", 10, "RCVBITS");
+		6, "INDEX", 21, "ADDRESS", 8, "RTT(ms)", 7, "LOSS", 7, "LRCV", 7, "LSNT", 8, "SNTACK", 8, "RCVACK", 10, "RCVBITS");
 
 	renderer->DrawTextInBox2D(headingText.c_str(), bounds, Vector2::ZERO, fontHeight, TEXT_DRAW_OVERRUN, font);
 	bounds.Translate(Vector2(0.f, -fontHeight));
@@ -263,7 +262,10 @@ bool NetSession::GetMessageDefinitionIndex(const std::string& name, uint8_t& out
 bool NetSession::AddConnection(uint8_t connectionIndex, NetAddress_t address)
 {
 	// Keep it in range of the vector
-	m_connections.resize(connectionIndex + 1);
+	if (connectionIndex >= (uint8_t)m_connections.size())
+	{
+		m_connections.resize(connectionIndex + 1);
+	}
 
 	if (m_connections[connectionIndex] != nullptr)
 	{
@@ -326,6 +328,7 @@ uint8_t NetSession::GetLocalConnectionIndex() const
 //
 void NetSession::ProcessIncoming()
 {
+	ConsolePrintf(Rgba::MAGENTA, "Process Incoming, size: %i", m_receiveQueue.size());
 	bool done = false;
 	while (!done)
 	{
@@ -376,8 +379,10 @@ void NetSession::ProcessOutgoing()
 			}
 
 			// Check send rate
-			if (currConnection->HasNetTickElapsed() && (currConnection->HasOutboundMessages() || currConnection->NeedsToForceSend()))
+			ConsolePrintf("ProcessOutgoing called");
+			if ((currConnection->HasOutboundMessages() || currConnection->NeedsToForceSend()))
 			{
+				ConsolePrintf(Rgba::ORANGE, "Connection %i flushed!", index);
 				currConnection->FlushMessages();
 			}
 		}
@@ -435,14 +440,18 @@ float NetSession::GetTimeBetweenSends() const
 //-----------------------------------------------------------------------------------------------
 // Sets the heartbeat of all connections
 //
-void NetSession::SetAllConnectionHeartbeats(float hertz)
+void NetSession::SetConnectionHeartbeatInterval(float hertz)
 {
-	int connectionCount = (int) m_connections.size();
+	m_heartBeatInverval = (1.f / hertz);
+}
 
-	for (int index = 0; index < connectionCount; ++index)
-	{
-		m_connections[index]->SetHeartbeat(hertz);
-	}
+
+//-----------------------------------------------------------------------------------------------
+// Returns the heartbeat interval for the session
+//
+float NetSession::GetHeartbeatInterval() const
+{
+	return m_heartBeatInverval;
 }
 
 
@@ -461,6 +470,7 @@ void NetSession::ReceiveIncoming()
 
 		if (amountReceived > 0)
 		{
+			ConsolePrintf(Rgba::BLUE, "Received %i bytes", amountReceived);
 			// Check if we should keep the packet, or simulate loss
 			if (!CheckRandomChance(m_lossChance))
 			{
@@ -471,7 +481,9 @@ void NetSession::ReceiveIncoming()
 				PendingReceive pending;
 				pending.packet = packet;
 				pending.senderAddress = senderAddress;
-				pending.timeStamp = Clock::GetMasterClock()->GetTotalSeconds() + m_latencyRange.GetRandomInRange() * 0.001f;
+
+				float latency = m_latencyRange.GetRandomInRange() * 0.001f;
+				pending.timeStamp = Clock::GetMasterClock()->GetTotalSeconds() + latency;
 
 				PushNewReceive(pending);
 			}
@@ -505,6 +517,8 @@ void NetSession::PushNewReceive(PendingReceive& pending)
 	}
 
 	m_receiveLock.unlock();
+
+	ConsolePrintf(Rgba::YELLOW, "Pushed packet");
 }
 
 
@@ -530,6 +544,10 @@ bool NetSession::GetNextReceive(PendingReceive& out_pending)
 		out_pending = m_receiveQueue[0];
 		m_receiveQueue.erase(m_receiveQueue.begin());
 		packetReady = true;
+	}
+	else
+	{
+		ConsoleErrorf("Packet in queue but not ready!");
 	}
 
 	m_receiveLock.unlock();

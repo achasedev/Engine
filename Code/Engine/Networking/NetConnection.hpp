@@ -45,7 +45,6 @@ public:
 	bool						HasNetTickElapsed() const;
 
 	// Heartbeat
-	void						SetHeartbeat(float hertz);
 	bool						HasHeartbeatElapsed() const;
 
 	// Reliable delivery
@@ -65,7 +64,7 @@ private:
 	// For reliable delivery
 	PacketHeader_t				CreateHeaderForNextSend(uint8_t messageCount);
 	void						OnPacketSend(const PacketHeader_t& header);
-	void						OnAckReceived(uint16_t ack);
+	void						OnAckConfirmed(uint16_t ack);
 
 	// RTT/Loss
 	void						UpdateLossCalculation();
@@ -84,12 +83,12 @@ private:
 	float						m_timeBetweenSends = 0.f;
 	Stopwatch*					m_sendTimer = nullptr;
 
-	float						m_timeBetweenHeartbeats = 0.5f;
+	//float						m_timeBetweenHeartbeats = 0.5f;
 	Stopwatch*					m_heartbeatTimer = nullptr;
 
 	// Reliable delivery
 	uint16_t m_nextSentAck = 0;
-	uint16_t m_highestReceivedAck = 0;
+	uint16_t m_highestReceivedAck = INVALID_PACKET_ACK;
 	uint16_t m_receivedBitfield = 0;
 
 	PacketTracker_t m_sentButUnackedPackets[MAX_UNACKED_HISTORY];
@@ -105,7 +104,7 @@ private:
 
 	bool m_forceSendNextTick = false;
 
-	static constexpr float RTT_BLEND_FACTOR = 0.1f;
+	static constexpr float RTT_BLEND_FACTOR = 0.01f;
 	static constexpr unsigned int LOSS_WINDOW_COUNT = 50;
 
 };
