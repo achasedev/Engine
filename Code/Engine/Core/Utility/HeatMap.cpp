@@ -103,7 +103,8 @@ void HeatMap::Seed(float seedValue, const IntVector2& seedLocation)
 void HeatMap::SolveMapUpToDistance(float maxDist, const HeatMap* costs/*= nullptr*/)
 {
 	// No cost specified, so each step costs 1 by default
-	if (costs == nullptr)
+	bool costsProvided = (costs != nullptr);
+	if (!costsProvided)
 	{
 		costs = new HeatMap(m_dimensions, 1.f);
 	}
@@ -138,6 +139,11 @@ void HeatMap::SolveMapUpToDistance(float maxDist, const HeatMap* costs/*= nullpt
 				valueChanged = valueChanged || northChanged || southChanged || eastChanged || westChanged;
 			}
 		}
+	}
+
+	if (!costsProvided)
+	{
+		delete costs;
 	}
 }
 
