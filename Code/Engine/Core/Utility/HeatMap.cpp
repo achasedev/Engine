@@ -246,11 +246,34 @@ IntVector2 HeatMap::GetMinNeighborCoords(const IntVector2& currCoords) const
 
 	float minDistance = MinFloat(northDistance, southDistance, eastDistance, westDistance);
 
-	// Return the appropriate coords
-	if		(minDistance == eastDistance) { return eastCoords; }
-	else if (minDistance == westDistance) { return westCoords; }
-	else if (minDistance == northDistance) { return northCoords; }
-	else { return southCoords; }
+	// Return the appropriate coords, randomizing ties
+	float tieCount = 1.f;
+	IntVector2 returnValue;
+
+	if (minDistance == eastDistance && CheckRandomChance(1.f / tieCount)) 
+	{
+		returnValue = eastCoords;
+		tieCount += 1.0f;
+	}
+
+	if (minDistance == westDistance && CheckRandomChance(1.f / tieCount))
+	{ 
+		returnValue = westCoords; 
+		tieCount += 1.0f;
+	}
+	
+	if (minDistance == northDistance && CheckRandomChance(1.f / tieCount))
+	{ 
+		returnValue = northCoords; 
+		tieCount += 1.0f;
+	}
+	
+	if (minDistance == southDistance && CheckRandomChance(1.f / tieCount))
+	{ 
+		returnValue = southCoords; 
+	}
+
+	return returnValue;
 }
 
 
