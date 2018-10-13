@@ -90,6 +90,13 @@ const IntVector2 IntVector2::operator*( int uniformScale ) const
 
 
 //-----------------------------------------------------------------------------------------------
+const IntVector2 IntVector2::operator/(int divisor) const
+{
+	return IntVector2((x / divisor), (y / divisor));
+}
+
+
+//-----------------------------------------------------------------------------------------------
 void IntVector2::operator+=( const IntVector2& vecToAdd )
 {
 	x += vecToAdd.x;

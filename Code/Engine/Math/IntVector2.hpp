@@ -29,11 +29,11 @@ public:
 	const IntVector2 operator+( const IntVector2& vecToAdd ) const;			// vec2 + vec2
 	const IntVector2 operator-( const IntVector2& vecToSubtract ) const;	// vec2 - vec2
 	const IntVector2 operator*( int uniformScale ) const;					// vec2 * int
+	const IntVector2 operator/(int divisor) const;
 
 	void operator+=( const IntVector2& vecToAdd );							// vec2 += vec2
 	void operator-=( const IntVector2& vecToSubtract );						// vec2 -= vec2
 	void operator*=( const int uniformScale );								// vec2 *= int
-
 	void operator=( const IntVector2& copyFrom );							// vec2 = vec2
 	bool operator==( const IntVector2& compare ) const;						// vec2 == vec2
 	bool operator!=( const IntVector2& compare ) const;						// vec2 != vec2
