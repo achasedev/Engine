@@ -31,7 +31,9 @@ public:
 	float GetHeat(int index) const;
 
 	// Producers
+	unsigned int GetCellCount() const;
 	int			GetIndex(int x, int y) const;
+	IntVector2  GetCoordsForIndex(unsigned int index) const;
 	void		GetGreedyShortestPath(const IntVector2& pathStartCoords, const IntVector2& pathEndCoords, std::vector<IntVector2>& path) const;
 	IntVector2	GetMinNeighborCoords(const IntVector2& currCoords) const;
 	bool		AreCoordsValid(const IntVector2& coords) const;

@@ -198,6 +198,15 @@ float HeatMap::GetHeat(int index) const
 }
 
 
+//-----------------------------------------------------------------------------------------------
+// Returns the number of cells in the heatmap
+//
+unsigned int HeatMap::GetCellCount() const
+{
+	return m_dimensions.x * m_dimensions.y;
+}
+
+
 //----------------------------------------------------------------------------------
 // Gets the index for the position (x, y)
 // Returns -1 for coords out of bounds
@@ -212,6 +221,18 @@ int HeatMap::GetIndex(int x, int y) const
 	{
 		return y * m_dimensions.x + x; 
 	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the coords associated with the given index
+//
+IntVector2 HeatMap::GetCoordsForIndex(unsigned int index) const
+{
+	int y = index / m_dimensions.x;
+	int x = index % m_dimensions.x;
+
+	return IntVector2(x, y);
 }
 
 

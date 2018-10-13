@@ -22,8 +22,6 @@ bool VoxelTexture::CreateFromFile(const char* filename)
 
 	file->LoadFileToMemory();
 
-	FileWriteFromBuffer("Data/test.qef", file->GetData(), (int) file->GetSize());
-
 	std::string currLine;
 
 	// "Qubicle Exchange Format"
