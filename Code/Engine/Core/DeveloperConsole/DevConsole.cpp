@@ -1104,18 +1104,18 @@ void Command_HookToLogSystem(Command& cmd)
 void Command_RunBatchFile(Command& cmd)
 {
 	std::string filename;
-	bool success = cmd.GetParam("f", filename);
+	bool filenameSpecifed = cmd.GetParam("f", filename);
 
-	if (!success)
+	if (!filenameSpecifed)
 	{
 		ConsoleErrorf("Must provide a file name");
 		return;
 	}
 
 	File file;
-	success = file.Open(filename.c_str(), "r");
+	bool fileOpened = file.Open(filename.c_str(), "r");
 
-	if (!success)
+	if (!fileOpened)
 	{
 		ConsoleErrorf("Couldn't open file %s", filename.c_str());
 		return;
@@ -1133,8 +1133,8 @@ void Command_RunBatchFile(Command& cmd)
 
 		if (line.size() > 0)
 		{
-			bool success = Command::Run(line);
-			if (success)
+			bool commandSucceeded = Command::Run(line);
+			if (commandSucceeded)
 			{
 				++numCommandsSuccess;
 			}
