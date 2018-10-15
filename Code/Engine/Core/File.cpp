@@ -38,6 +38,12 @@ FILE* OpenFile(const char* filepath, const char* flags)
 //
 bool CloseFile(FILE* fileHandle)
 {
+	// Don't close a nullptr
+	if (fileHandle == nullptr)
+	{
+		return true;
+	}
+
 	int err = fclose(fileHandle);
 	if (err != 0)
 	{
@@ -125,11 +131,7 @@ std::string GetFullFilePath(const std::string& localFilePath)
 //
 File::~File()
 {
-	if (m_data != nullptr)
-	{
-		free((void*)m_data);
-		m_data = nullptr;
-	}
+	Close();
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -137,6 +139,11 @@ File::~File()
 //
 bool File::Open(const char* filepath, const char* flags)
 {
+	if (m_filePointer != nullptr)
+	{
+		Close();
+	}
+
 	m_filePointer = (void*) OpenFile(filepath, flags);
 
 	return (m_filePointer != nullptr);
@@ -149,6 +156,20 @@ bool File::Open(const char* filepath, const char* flags)
 bool File::Close()
 {
 	bool success = CloseFile((FILE*) m_filePointer);
+	m_filePointer = nullptr;
+
+	if (m_data != nullptr)
+	{
+		free((void*)m_data);
+		m_data = nullptr;
+	}
+
+	// Reset members
+	m_size = 0;
+	m_offset = 0;
+	m_isAtEndOfFile = false;
+	m_lineNumber = 0;
+
 	return success;
 }
 
