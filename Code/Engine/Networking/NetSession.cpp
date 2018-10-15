@@ -328,7 +328,6 @@ uint8_t NetSession::GetLocalConnectionIndex() const
 //
 void NetSession::ProcessIncoming()
 {
-	ConsolePrintf(Rgba::MAGENTA, "Process Incoming, size: %i", m_receiveQueue.size());
 	bool done = false;
 	while (!done)
 	{
@@ -379,10 +378,8 @@ void NetSession::ProcessOutgoing()
 			}
 
 			// Check send rate
-			ConsolePrintf("ProcessOutgoing called");
 			if ((currConnection->HasOutboundMessages() || currConnection->NeedsToForceSend()))
 			{
-				ConsolePrintf(Rgba::ORANGE, "Connection %i flushed!", index);
 				currConnection->FlushMessages();
 			}
 		}
@@ -470,7 +467,6 @@ void NetSession::ReceiveIncoming()
 
 		if (amountReceived > 0)
 		{
-			ConsolePrintf(Rgba::BLUE, "Received %i bytes", amountReceived);
 			// Check if we should keep the packet, or simulate loss
 			if (!CheckRandomChance(m_lossChance))
 			{
@@ -517,8 +513,6 @@ void NetSession::PushNewReceive(PendingReceive& pending)
 	}
 
 	m_receiveLock.unlock();
-
-	ConsolePrintf(Rgba::YELLOW, "Pushed packet");
 }
 
 

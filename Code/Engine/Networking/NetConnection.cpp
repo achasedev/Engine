@@ -149,7 +149,6 @@ void NetConnection::FlushMessages()
 
 	if (sent)
 	{
-		ConsolePrintf(Rgba::GREEN, "Sent packet with ack %i", header.packetAck);
 		LogTaggedPrintf("NET", "NetConnection sent packet with %i messages", messagesWritten);
 	}
 	else
@@ -423,7 +422,6 @@ void NetConnection::OnAckConfirmed(uint16_t ack)
 	if (shouldUpdate)
 	{
 		m_rtt = (1.f - RTT_BLEND_FACTOR) * m_rtt + RTT_BLEND_FACTOR * timeDilation;
-		ConsolePrintf("Dilation: %.2f | RTT: %.2f", timeDilation, m_rtt);
 	}
 
 	// It has been received, so invalidate
