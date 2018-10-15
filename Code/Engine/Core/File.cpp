@@ -121,6 +121,18 @@ std::string GetFullFilePath(const std::string& localFilePath)
 
 
 //-----------------------------------------------------------------------------------------------
+// Destructor
+//
+File::~File()
+{
+	if (m_data != nullptr)
+	{
+		free((void*)m_data);
+		m_data = nullptr;
+	}
+}
+
+//-----------------------------------------------------------------------------------------------
 // Opens the file given by filepath, using the appropriate flags
 //
 bool File::Open(const char* filepath, const char* flags)

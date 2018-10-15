@@ -31,7 +31,7 @@ public:
 
 	// Initialization
 	File() {}
-	~File() {}
+	~File();
 
 	// Opening/Closing
 	bool Open(const char* filepath, const char* flags);

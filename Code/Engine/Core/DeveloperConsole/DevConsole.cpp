@@ -52,6 +52,7 @@ void Command_Clear(Command& cmd);
 void Command_HideLog(Command& cmd);
 void Command_ShowLog(Command& cmd);
 void Command_HookToLogSystem(Command& cmd);
+void Command_RunBatchFile(Command& cmd);
 
 // For LogSystem printing
 static void WriteToDevConsole(LogMessage_t log, void* args);
@@ -807,6 +808,7 @@ void DevConsole::Initialize()
 	Command::Register("hide_log",						"Disables rendering of the log window and text",		Command_HideLog);
 	Command::Register("show_log",						"Enables rendering of the log window and text",			Command_ShowLog);
 	Command::Register("hook_console_to_logsystem",		"Enables rendering of the log window and text",			Command_HookToLogSystem);
+	Command::Register("run_batch",						"Runs a batch job file",								Command_RunBatchFile);
 
 	// Load the DevConsole History
 	s_instance->LoadCommandHistoryFromFile();
@@ -1093,4 +1095,53 @@ void Command_HookToLogSystem(Command& cmd)
 
 	LogSystem::AddCallback("DevConsole Writer", WriteToDevConsole, nullptr);
 	ConsolePrintf(Rgba::GREEN, "LogSystem now writing to DevConsole output");
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Loads a text file and runs each line as a command
+//
+void Command_RunBatchFile(Command& cmd)
+{
+	std::string filename;
+	bool success = cmd.GetParam("f", filename);
+
+	if (!success)
+	{
+		ConsoleErrorf("Must provide a file name");
+		return;
+	}
+
+	File file;
+	success = file.Open(filename.c_str(), "r");
+
+	if (!success)
+	{
+		ConsoleErrorf("Couldn't open file %s", filename.c_str());
+		return;
+	}
+
+	ConsolePrintf(Rgba::GREEN, "-----Running Batch Job-----");
+
+	file.LoadFileToMemory();
+
+	int numCommandsSuccess = 0;
+	while (!file.IsAtEndOfFile())
+	{
+		std::string line;
+		file.GetNextLine(line);
+
+		if (line.size() > 0)
+		{
+			bool success = Command::Run(line);
+			if (success)
+			{
+				++numCommandsSuccess;
+			}
+		}
+	}
+
+	file.Close();
+
+	ConsolePrintf(Rgba::GREEN, "-----Batch job finished, %i commands executed successfully-----", numCommandsSuccess);
 }
