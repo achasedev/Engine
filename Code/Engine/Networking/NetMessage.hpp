@@ -6,6 +6,7 @@
 /************************************************************************/
 #pragma once
 #include "Engine/Networking/BytePacker.hpp"
+#include "Engine/Networking/NetAddress.hpp"
 #include <string>
 
 // Limit messages to 1KB
@@ -14,20 +15,10 @@
 class BytePacker;
 class NetConnection;
 class NetMessage;
+class NetSession;
 
-// Callback for the NetSession
-typedef bool(*NetMessage_cb)(NetMessage* msg, const NetSender_t& sender);
+struct NetMessageDefinition_t;
 
-struct NetMessageDefinition_t
-{
-	NetMessageDefinition_t(uint8_t _id, const std::string& _name, NetMessage_cb _callback, eNetMessageOption _options)
-		: id(_id), name(_name), callback(_callback), options(_options) {}
-
-	uint8_t				id;
-	std::string			name = "";
-	NetMessage_cb		callback = nullptr;
-	eNetMessageOption	options;
-};
 
 class NetMessage : public BytePacker
 {
@@ -47,6 +38,7 @@ public:
 	// Accessors
 	uint8_t							GetDefinitionID() const;
 	const NetMessageDefinition_t*	GetDefinition() const;
+	std::string						GetName() const;
 
 	// Producers
 	bool							RequiresConnection() const;

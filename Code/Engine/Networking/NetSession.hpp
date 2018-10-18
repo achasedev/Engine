@@ -20,6 +20,8 @@ class NetConnection;
 class NetSession;
 
 #define INVALID_CONNECTION_INDEX (0xff)
+#define MAX_CONNECTIONS (32)
+#define MAX_MESSAGE_DEFINITIONS (256)
 
 struct NetSender_t
 {
@@ -45,6 +47,20 @@ enum eNetMessageOption : uint32_t
 	NET_MSG_OPTION_RELIABLE = (1 << 1),
 	NET_MSG_OPTION_IN_ORDER = (1 << 2),
 	NET_MSG_OPTION_HEARTBEAT = (1 << 3)
+};
+
+// Callback for the NetSession
+typedef bool(*NetMessage_cb)(NetMessage* msg, const NetSender_t& sender);
+
+struct NetMessageDefinition_t
+{
+	NetMessageDefinition_t(uint8_t _id, const std::string& _name, NetMessage_cb _callback, eNetMessageOption _options)
+		: id(_id), name(_name), callback(_callback), options(_options) {}
+
+	uint8_t				id;
+	std::string			name = "";
+	NetMessage_cb		callback = nullptr;
+	eNetMessageOption	options;
 };
 
 struct PendingReceive
@@ -112,7 +128,7 @@ private:
 	void							PushNewReceive(PendingReceive& pending);
 	bool							GetNextReceive(PendingReceive& out_pending);
 
-	void							SortDefinitions();
+	//void							SortDefinitions();
 	bool							VerifyPacket(NetPacket* packet);
 	void							ProcessReceivedPacket(NetPacket* packet, const NetAddress_t& senderAddress);
 
@@ -121,8 +137,8 @@ private:
 	//-----Private Data-----
 
 	UDPSocket*									m_boundSocket;
-	std::vector<NetConnection*>					m_connections;
-	std::vector<const NetMessageDefinition_t*>	m_messageDefinitions;
+	NetConnection*								m_connections[MAX_CONNECTIONS];
+	const NetMessageDefinition_t*				m_messageDefinitions[MAX_MESSAGE_DEFINITIONS];
 
 	uint8_t										m_localConnectionIndex = 0xff;
 

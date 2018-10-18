@@ -6,7 +6,7 @@
 /************************************************************************/
 #include "Engine/Networking/NetPacket.hpp"
 #include "Engine/Networking/NetMessage.hpp"
-
+#include "Engine/Networking/NetSession.hpp"
 
 //-----------------------------------------------------------------------------------------------
 // Constructor
@@ -106,7 +106,7 @@ bool NetPacket::WriteMessage(const NetMessage* message)
 //-----------------------------------------------------------------------------------------------
 // Reads the message and returns it in out_message
 //
-bool NetPacket::ReadMessage(NetMessage* out_message)
+bool NetPacket::ReadMessage(NetMessage* out_message, NetSession* session)
 {
 	// Read the header + message payload size
 	int8_t headerSize = sizeof(int8_t);
@@ -127,13 +127,15 @@ bool NetPacket::ReadMessage(NetMessage* out_message)
 		return false;
 	}
 
+	const NetMessageDefinition_t* definition = session->GetMessageDefinition(msgIndex);
+
 	// Read the message payload
 	int16_t msgSize = msgAndHeaderSize - headerSize;
 	int8_t payload[MESSAGE_MTU];
 	amountRead = ReadBytes(payload, msgSize);
 
 	// Construct the message
-	*out_message = NetMessage(msgIndex, payload, msgSize);
+	*out_message = NetMessage(definition, payload, msgSize);
 	out_message->AdvanceWriteHead(msgSize);
 
 	return true;

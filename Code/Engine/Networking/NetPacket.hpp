@@ -63,7 +63,7 @@ public:
 
 	// Message Methods
 	bool		WriteMessage(const NetMessage* message);
-	bool		ReadMessage(NetMessage* out_message);
+	bool		ReadMessage(NetMessage* out_message, NetSession* session);
 
 	// Mutators
 	void		SetSenderConnectionIndex(uint8_t index);

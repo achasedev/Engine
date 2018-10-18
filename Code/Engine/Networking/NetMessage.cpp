@@ -5,6 +5,7 @@
 /* Description: Implementation of the NetMessage class
 /************************************************************************/
 #include "Engine/Networking/NetMessage.hpp"
+#include "Engine/Networking/NetSession.hpp"
 
 //-----------------------------------------------------------------------------------------------
 // Default constructor
@@ -105,9 +106,18 @@ const NetMessageDefinition_t* NetMessage::GetDefinition() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the name of the definition for this message
+//
+std::string NetMessage::GetName() const
+{
+	return m_definition->name;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns true if this message requires a connection in order to be processed
 //
 bool NetMessage::RequiresConnection() const
 {
-	
+	return ((m_definition->options & NET_MSG_OPTION_CONNECTIONLESS) != NET_MSG_OPTION_CONNECTIONLESS);
 }

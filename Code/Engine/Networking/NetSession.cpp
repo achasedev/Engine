@@ -74,9 +74,7 @@ void NetSession::RenderDebugInfo() const
 	renderer->DrawTextInBox2D(headingText.c_str(), bounds, Vector2::ZERO, fontHeight, TEXT_DRAW_OVERRUN, font);
 	bounds.Translate(Vector2(0.f, -fontHeight));
 
-	int numConnections = (int) m_connections.size();
-
-	for (int index = 0; index < numConnections; ++index)
+	for (int index = 0; index < MAX_CONNECTIONS; ++index)
 	{
 		if (m_connections[index] != nullptr)
 		{
@@ -95,19 +93,13 @@ void NetSession::RenderDebugInfo() const
 void NetSession::RegisterMessageDefinition(uint8_t messageID, const std::string& name, NetMessage_cb callback, eNetMessageOption options /*= NET_MSG_OPTION_NONE*/)
 {
 	// Check for duplicates
-	for (int index = 0; index < (int) m_messageDefinitions.size(); ++index)
+	if (m_messageDefinitions[messageID] != nullptr)
 	{
-		if (m_messageDefinitions[index]->name == name)
-		{
-			LogTaggedPrintf("NET", "Warning - NetSession::RegisterMessageDefinition() registered duplicate definition name \"%s\"", name.c_str());
-
-			delete m_messageDefinitions[index];
-			m_messageDefinitions.erase(m_messageDefinitions.begin() + index);
-			break;
-		}
+		LogTaggedPrintf("NET", "Warning - NetSession::RegisterMessageDefinition() registered duplicate definition id for \"%s\" and \"%s\"", m_messageDefinitions[messageID]->name.c_str(), name.c_str());
+		delete m_messageDefinitions[messageID];
 	}
 
-	m_messageDefinitions.push_back(new NetMessageDefinition_t(messageID, name, callback, options));
+	m_messageDefinitions[messageID] = new NetMessageDefinition_t(messageID, name, callback, options);
 }
 
 
@@ -152,7 +144,7 @@ bool NetSession::Bind(unsigned short port, uint16_t portRange)
 
 	// We're bound, so now we're available for connections
 	// Now is a good time to sort the definition vector
-	SortDefinitions();
+	//SortDefinitions();
 
 	return bound;
 }
@@ -178,7 +170,7 @@ bool NetSession::SendPacket(const NetPacket* packet)
 bool NetSession::SendMessageDirect(NetMessage* message, const NetSender_t& sender)
 {
 	NetPacket packet;
-	packet.AdvanceWriteHead(sizeof(PacketHeader_t));
+	packet.AdvanceWriteHead(PACKET_HEADER_SIZE);
 
 	packet.WriteMessage(message);
 
@@ -199,9 +191,9 @@ bool NetSession::SendMessageDirect(NetMessage* message, const NetSender_t& sende
 //
 const NetMessageDefinition_t* NetSession::GetMessageDefinition(const std::string& name)
 {
-	for (int index = 0; index < (int)m_messageDefinitions.size(); ++index)
+	for (int index = 0; index < MAX_MESSAGE_DEFINITIONS; ++index)
 	{
-		if (m_messageDefinitions[index]->name == name)
+		if (m_messageDefinitions[index] != nullptr && m_messageDefinitions[index]->name == name)
 		{
 			return m_messageDefinitions[index];
 		}
@@ -217,7 +209,7 @@ const NetMessageDefinition_t* NetSession::GetMessageDefinition(const std::string
 //
 const NetMessageDefinition_t* NetSession::GetMessageDefinition(const uint8_t index)
 {
-	if (index > (uint8_t)m_messageDefinitions.size())
+	if (index >= MAX_MESSAGE_DEFINITIONS)
 	{
 		LogTaggedPrintf("NET", "Error - NetSession::GetMessageDefinition() received index out of range, index was %i", index);
 		return nullptr;
@@ -232,7 +224,7 @@ const NetMessageDefinition_t* NetSession::GetMessageDefinition(const uint8_t ind
 //
 bool NetSession::GetMessageDefinitionIndex(const std::string& name, uint8_t& out_index)
 {
-	for (uint8_t index = 0; index < (uint8_t)m_messageDefinitions.size(); ++index)
+	for (uint8_t index = 0; index < MAX_MESSAGE_DEFINITIONS; ++index)
 	{
 		if (m_messageDefinitions[index]->name == name)
 		{
@@ -251,12 +243,6 @@ bool NetSession::GetMessageDefinitionIndex(const std::string& name, uint8_t& out
 //
 bool NetSession::AddConnection(uint8_t connectionIndex, NetAddress_t address)
 {
-	// Keep it in range of the vector
-	if (connectionIndex >= (uint8_t)m_connections.size())
-	{
-		m_connections.resize(connectionIndex + 1);
-	}
-
 	if (m_connections[connectionIndex] != nullptr)
 	{
 		LogTaggedPrintf("NET", "Warning: NetSession::AddConnection() tried to add a connection to an already existing connection index, index was %i", connectionIndex);
@@ -281,12 +267,11 @@ bool NetSession::AddConnection(uint8_t connectionIndex, NetAddress_t address)
 //
 void NetSession::CloseAllConnections()
 {
-	for (int index = 0; index < (int)m_messageDefinitions.size(); ++index)
+	for (int index = 0; index < MAX_CONNECTIONS; ++index)
 	{
 		delete m_connections[index];
+		m_connections[index] = nullptr;
 	}
-
-	m_connections.clear();
 }
 
 
@@ -349,7 +334,7 @@ void NetSession::ProcessIncoming()
 void NetSession::ProcessOutgoing()
 {
 	// Flush each connection
-	for (int index = 0; index < m_connections.size(); ++index)
+	for (int index = 0; index < MAX_CONNECTIONS; ++index)
 	{
 		NetConnection* currConnection = m_connections[index];
 
@@ -358,7 +343,6 @@ void NetSession::ProcessOutgoing()
 			// Check heartbeat
 			if (currConnection->HasHeartbeatElapsed())
 			{
-				uint8_t definitionIndex;
 				const NetMessageDefinition_t* definition = GetMessageDefinition("heartbeat");
 
 				if (definition != nullptr)
@@ -551,24 +535,24 @@ bool NetSession::GetNextReceive(PendingReceive& out_pending)
 }
 
 
-//-----------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------
 // Sorts the NetMessageDefinition collection to validate the indices
-//
-void NetSession::SortDefinitions()
-{
-	for (int i = 0; i < (int)m_messageDefinitions.size() - 1; ++i)
-	{
-		for (int j = i + 1; j < (int)m_messageDefinitions.size(); ++j)
-		{
-			if (m_messageDefinitions[j]->name < m_messageDefinitions[i]->name)
-			{
-				const NetMessageDefinition_t* temp = m_messageDefinitions[i];
-				m_messageDefinitions[i] = m_messageDefinitions[j];
-				m_messageDefinitions[j] = temp;
-			}
-		}
-	}
-}
+// 
+// void NetSession::SortDefinitions()
+// {
+// 	for (int i = 0; i < (int)m_messageDefinitions.size() - 1; ++i)
+// 	{
+// 		for (int j = i + 1; j < (int)m_messageDefinitions.size(); ++j)
+// 		{
+// 			if (m_messageDefinitions[j]->name < m_messageDefinitions[i]->name)
+// 			{
+// 				const NetMessageDefinition_t* temp = m_messageDefinitions[i];
+// 				m_messageDefinitions[i] = m_messageDefinitions[j];
+// 				m_messageDefinitions[j] = temp;
+// 			}
+// 		}
+// 	}
+// }
 
 
 //-----------------------------------------------------------------------------------------------
@@ -587,7 +571,7 @@ bool NetSession::VerifyPacket(NetPacket* packet)
 	// Check the sender connection index, and ensure it is valid
 	// (Index isn't the invalid index but is either out of range or has no connection associated with it)
 	int connIndex = header.senderConnectionIndex;
-	if (connIndex != INVALID_CONNECTION_INDEX && (connIndex >= m_connections.size() || m_connections[connIndex] == nullptr))
+	if (connIndex != INVALID_CONNECTION_INDEX && (connIndex >= MAX_CONNECTIONS || m_connections[connIndex] == nullptr))
 	{
 		return false;
 	}
@@ -644,17 +628,25 @@ void NetSession::ProcessReceivedPacket(NetPacket* packet, const NetAddress_t& se
 	for (int i = 0; i < messageCount; ++i)
 	{
 		NetMessage message;
-		packet->ReadMessage(&message);
+		packet->ReadMessage(&message, this); // Need to pass the session to look up the definition
 
-		const NetMessageDefinition_t* definition = message.GetDefinition();
+		bool connectionExists = (GetConnection(header.senderConnectionIndex) != nullptr);
+		if (message.RequiresConnection() && !connectionExists)
+		{
+			LogTaggedPrintf("NET", "Received message \"%s\" from a connectionless client that requires a connection", message.GetName().c_str());
+		}
+		else
+		{
+			// Call the callback handler
+			NetSender_t sender;
+			sender.address = senderAddress;
+			sender.netSession = this;
+			sender.connectionIndex = header.senderConnectionIndex;
 
-		NetSender_t sender;
-		sender.address = senderAddress;
-		sender.netSession = this;
-		sender.connectionIndex = header.senderConnectionIndex;
-
-		// Call the callback
-		definition->callback(&message, sender);
+			// Call the callback
+			const NetMessageDefinition_t* definition = message.GetDefinition();
+			definition->callback(&message, sender);
+		}
 	}
 }
 
