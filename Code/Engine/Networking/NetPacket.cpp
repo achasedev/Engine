@@ -88,7 +88,7 @@ bool NetPacket::WriteMessage(const NetMessage* message)
 	}
 
 	// Write the message index
-	uint8_t msgIndex = message->GetDefinitionIndex();
+	uint8_t msgIndex = message->GetDefinitionID();
 	success = WriteBytes(sizeof(int8_t), &msgIndex);
 
 	if (!success)

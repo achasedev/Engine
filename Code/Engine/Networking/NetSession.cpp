@@ -15,27 +15,17 @@
 #include "Engine/Rendering/Core/Renderer.hpp"
 #include "Engine/Networking/NetConnection.hpp"
 
-
-//-----------------------------------------------------------------------------------------------
-// Heartbeat message callback
-//
-bool OnHeartBeat(NetMessage* msg, const NetSender_t& sender)
-{
-	//ConsolePrintf("Heartbeat received from %s", sender.address.ToString().c_str());
-	UNUSED(msg);
-	UNUSED(sender);
-
-	return true;
-}
-
+// Message callbacks
+bool OnPing(NetMessage* msg, const NetSender_t& sender);
+bool OnPong(NetMessage* msg, const NetSender_t& sender);
+bool OnHeartBeat(NetMessage* msg, const NetSender_t& sender);
 
 //-----------------------------------------------------------------------------------------------
 // Constructor
 //
 NetSession::NetSession()
 {
-	// Register the heartbeat definition
-	RegisterMessageDefinition("heartbeat", OnHeartBeat);
+	RegisterCoreMessages();
 }
 
 
@@ -102,7 +92,7 @@ void NetSession::RenderDebugInfo() const
 //-----------------------------------------------------------------------------------------------
 // Adds a call back for message handling
 //
-void NetSession::RegisterMessageDefinition(const std::string& name, NetMessage_cb callback)
+void NetSession::RegisterMessageDefinition(uint8_t messageID, const std::string& name, NetMessage_cb callback, eNetMessageOption options /*= NET_MSG_OPTION_NONE*/)
 {
 	// Check for duplicates
 	for (int index = 0; index < (int) m_messageDefinitions.size(); ++index)
@@ -117,7 +107,7 @@ void NetSession::RegisterMessageDefinition(const std::string& name, NetMessage_c
 		}
 	}
 
-	m_messageDefinitions.push_back(new NetMessageDefinition_t(name, callback));
+	m_messageDefinitions.push_back(new NetMessageDefinition_t(messageID, name, callback, options));
 }
 
 
@@ -369,11 +359,11 @@ void NetSession::ProcessOutgoing()
 			if (currConnection->HasHeartbeatElapsed())
 			{
 				uint8_t definitionIndex;
-				bool found = GetMessageDefinitionIndex("heartbeat", definitionIndex);
+				const NetMessageDefinition_t* definition = GetMessageDefinition("heartbeat");
 
-				if (found)
+				if (definition != nullptr)
 				{
-					currConnection->Send(new NetMessage(definitionIndex));
+					currConnection->Send(new NetMessage(definition));
 				}
 			}
 
@@ -449,6 +439,18 @@ void NetSession::SetConnectionHeartbeatInterval(float hertz)
 float NetSession::GetHeartbeatInterval() const
 {
 	return m_heartBeatInverval;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Creates the NetMessageDefinitions for the core supported messages
+//
+void NetSession::RegisterCoreMessages()
+{
+	RegisterMessageDefinition(NET_MSG_PING, "ping", OnPing, NET_MSG_OPTION_CONNECTIONLESS);
+	RegisterMessageDefinition(NET_MSG_PONG, "pong", OnPong, NET_MSG_OPTION_CONNECTIONLESS);
+
+	RegisterMessageDefinition(NET_MSG_HEARTBEAT, "heartbeat", OnHeartBeat, NET_MSG_OPTION_HEARTBEAT);
 }
 
 
@@ -644,10 +646,7 @@ void NetSession::ProcessReceivedPacket(NetPacket* packet, const NetAddress_t& se
 		NetMessage message;
 		packet->ReadMessage(&message);
 
-		uint8_t defIndex = message.GetDefinitionIndex();
-		const NetMessageDefinition_t* definition = m_messageDefinitions[defIndex];
-
-		message.SetDefinitionIndex(defIndex);
+		const NetMessageDefinition_t* definition = message.GetDefinition();
 
 		NetSender_t sender;
 		sender.address = senderAddress;
@@ -657,4 +656,75 @@ void NetSession::ProcessReceivedPacket(NetPacket* packet, const NetAddress_t& se
 		// Call the callback
 		definition->callback(&message, sender);
 	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Message callbacks
+//-----------------------------------------------------------------------------------------------
+
+
+//-----------------------------------------------------------------------------------------------
+// Called when a ping is received, responds with a pong
+//
+bool OnPing(NetMessage* msg, const NetSender_t& sender)
+{
+	std::string str;
+	msg->ReadString(str);
+
+	ConsolePrintf("Received ping from %s: %s", sender.address.ToString().c_str(), str.c_str());
+
+	// Respond with a pong
+	const NetMessageDefinition_t* definition = sender.netSession->GetMessageDefinition("pong");
+	if (definition == nullptr)
+	{
+		ConsoleErrorf("OnPing couldn't find definition for message named \"pong\"");
+		return false;
+	}
+
+	NetMessage message(definition);
+	NetConnection* connection = sender.netSession->GetConnection(sender.connectionIndex);
+
+
+	if (connection != nullptr)
+	{
+		connection->Send(&message);
+		ConsolePrintf(Rgba::GREEN, "Sent a message to connection %i", sender.connectionIndex);
+	}
+	else
+	{
+		sender.netSession->SendMessageDirect(&message, sender);
+		ConsolePrintf(Rgba::GREEN, "Sent an indirect message to address %s", sender.address.ToString().c_str());
+	}
+
+	// all messages serve double duty
+	// do some work, and also validate
+	// if a message ends up being malformed, we return false
+	// to notify the session we may want to kick this connection; 
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Called when a pong message is received, after a ping is sent
+//
+bool OnPong(NetMessage* msg, const NetSender_t& sender)
+{
+	UNUSED(msg);
+	ConsolePrintf("Received pong from %s", sender.address.ToString().c_str());
+
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Heartbeat message callback
+//
+bool OnHeartBeat(NetMessage* msg, const NetSender_t& sender)
+{
+	//ConsolePrintf("Heartbeat received from %s", sender.address.ToString().c_str());
+	UNUSED(msg);
+	UNUSED(sender);
+
+	return true;
 }

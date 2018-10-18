@@ -6,6 +6,7 @@
 /************************************************************************/
 #include "Engine/Math/FloatRange.hpp"
 #include "Engine/Networking/NetAddress.hpp"
+#include "Engine/Networking/NetMessage.hpp"
 #include "Engine/DataStructures/ThreadSafeVector.hpp"
 #include <vector>
 #include <string>
@@ -27,17 +28,23 @@ struct NetSender_t
 	NetSession*		netSession = nullptr;
 };
 
-// Callback for the NetSession
-typedef bool(*NetMessage_cb)(NetMessage* msg, const NetSender_t& sender);
 
-struct NetMessageDefinition_t
+// Enum for message definitions
+enum eNetCoreMessage : uint8_t
 {
-	NetMessageDefinition_t(const std::string& _name, NetMessage_cb _callback)
-		: name(_name), callback(_callback) {}
+	NET_MSG_PING = 0,
+	NET_MSG_PONG,
+	NET_MSG_HEARTBEAT,
+	NET_MSG_CORE_COUNT
+};
 
-	std::string		name = "";
-	uint8_t			sessionIndex = 0;
-	NetMessage_cb	callback = nullptr;
+enum eNetMessageOption : uint32_t
+{
+	NET_MSG_OPTION_NONE = 0,
+	NET_MSG_OPTION_CONNECTIONLESS = (1 << 0),
+	NET_MSG_OPTION_RELIABLE = (1 << 1),
+	NET_MSG_OPTION_IN_ORDER = (1 << 2),
+	NET_MSG_OPTION_HEARTBEAT = (1 << 3)
 };
 
 struct PendingReceive
@@ -46,6 +53,7 @@ struct PendingReceive
 	NetPacket*		packet = nullptr;
 	NetAddress_t	senderAddress;
 };
+
 
 class NetSession
 {
@@ -65,7 +73,7 @@ public:
 	bool							SendMessageDirect(NetMessage* message, const NetSender_t& sender);
 
 	// Message Definitions
-	void							RegisterMessageDefinition(const std::string& name, NetMessage_cb callback);
+	void							RegisterMessageDefinition(uint8_t messageID, const std::string& name, NetMessage_cb callback, eNetMessageOption options = NET_MSG_OPTION_NONE);
 	const NetMessageDefinition_t*	GetMessageDefinition(const std::string& name);
 	const NetMessageDefinition_t*	GetMessageDefinition(const uint8_t index);
 	bool							GetMessageDefinitionIndex(const std::string& name, uint8_t& out_index);
@@ -96,6 +104,8 @@ public:
 
 private:
 	//-----Private Methods-----
+
+	void							RegisterCoreMessages();
 
 	void							ReceiveIncoming();
 

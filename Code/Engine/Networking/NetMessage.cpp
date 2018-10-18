@@ -6,7 +6,6 @@
 /************************************************************************/
 #include "Engine/Networking/NetMessage.hpp"
 
-
 //-----------------------------------------------------------------------------------------------
 // Default constructor
 //
@@ -19,9 +18,9 @@ NetMessage::NetMessage()
 //-----------------------------------------------------------------------------------------------
 // Constructor - for reconstructing messages from a received payload
 //
-NetMessage::NetMessage(uint8_t definitionIndex, void* payload, const int16_t& payloadSize)
+NetMessage::NetMessage(const NetMessageDefinition_t* definition, void* payload, const int16_t& payloadSize)
 	: BytePacker(MESSAGE_MTU, m_payload, false, LITTLE_ENDIAN)
-	, m_definitionIndex(definitionIndex)
+	, m_definition(definition)
 {
 	// Put the payload contents in
 	memcpy(m_payload, payload, payloadSize);
@@ -31,9 +30,9 @@ NetMessage::NetMessage(uint8_t definitionIndex, void* payload, const int16_t& pa
 //-----------------------------------------------------------------------------------------------
 // Constructor for a NetMessage with a definition
 //
-NetMessage::NetMessage(uint8_t definitionIndex)
+NetMessage::NetMessage(const NetMessageDefinition_t* definition)
 	: BytePacker(MESSAGE_MTU, m_payload, false, LITTLE_ENDIAN)
-	, m_definitionIndex(definitionIndex)
+	, m_definition(definition)
 {
 }
 
@@ -50,7 +49,7 @@ NetMessage::NetMessage(NetMessage&& moveFrom)
 	m_writeHead = moveFrom.m_writeHead;
 	m_ownsMemory = moveFrom.m_ownsMemory;
 
-	m_definitionIndex = moveFrom.m_definitionIndex;
+	m_definition = moveFrom.m_definition;
 	memcpy(m_payload, moveFrom.m_payload, MESSAGE_MTU);
 
 	// Invalidate
@@ -77,7 +76,7 @@ NetMessage& NetMessage::operator=(NetMessage&& moveFrom)
 	m_writeHead = moveFrom.m_writeHead;
 	m_ownsMemory = moveFrom.m_ownsMemory;
 
-	m_definitionIndex = moveFrom.m_definitionIndex;
+	m_definition = moveFrom.m_definition;
 	memcpy(m_payload, moveFrom.m_payload, m_bufferCapacity);
 
 	// Invalidate
@@ -90,16 +89,25 @@ NetMessage& NetMessage::operator=(NetMessage&& moveFrom)
 //-----------------------------------------------------------------------------------------------
 // Returns the index in the NetSession for this message definition
 //
-uint8_t NetMessage::GetDefinitionIndex() const
+uint8_t NetMessage::GetDefinitionID() const
 {
-	return m_definitionIndex;
+	return m_definition->id;
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Sets the definition members
+// Returns the definition of this message
 //
-void NetMessage::SetDefinitionIndex(uint8_t definitionIndex)
+const NetMessageDefinition_t* NetMessage::GetDefinition() const
 {
-	m_definitionIndex = definitionIndex;
+	return m_definition;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns true if this message requires a connection in order to be processed
+//
+bool NetMessage::RequiresConnection() const
+{
+	
 }
