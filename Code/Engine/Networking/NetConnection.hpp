@@ -16,11 +16,28 @@ class NetMessage;
 class Stopwatch;
 
 #define MAX_UNACKED_HISTORY (256)
+#define MAX_RELIABLES_PER_PACKET (32)
 
 struct PacketTracker_t
 {
+	bool AddReliableID(uint16_t reliableID)
+	{
+		if (m_reliablesInPacket == MAX_RELIABLES_PER_PACKET)
+		{
+			return false;
+		}
+
+		m_sentReliableIDs[m_reliablesInPacket] = reliableID;
+		++m_reliablesInPacket;
+
+		return true;
+	}
+
 	uint16_t	packetAck = INVALID_PACKET_ACK;
 	float		timeSent = -1.f;
+
+	uint16_t m_sentReliableIDs[MAX_RELIABLES_PER_PACKET];
+	unsigned int m_reliablesInPacket = 0;
 };
 
 class NetConnection
@@ -66,6 +83,9 @@ private:
 	void						OnPacketSend(const PacketHeader_t& header);
 	void						OnAckConfirmed(uint16_t ack);
 
+	PacketTracker_t*			GetTrackerForAck(uint16_t ack);
+	void						InvalidateTracker(uint16_t ack);
+
 	// RTT/Loss
 	void						UpdateLossCalculation();
 
@@ -73,7 +93,12 @@ private:
 private:
 	//-----Private Data-----
 
-	std::vector<NetMessage*>	m_outboundMessages;
+	std::vector<NetMessage*>	m_outboundUnreliables;
+	std::vector<NetMessage*>	m_unsentReliables;
+	std::vector<NetMessage*>	m_unconfirmedReliables;
+
+	std::vector<uint16_t>		m_receivedReliableIDs;
+
 	NetAddress_t				m_address;
 
 	NetSession*					m_owningSession = nullptr;
@@ -91,7 +116,7 @@ private:
 	uint16_t m_highestReceivedAck = INVALID_PACKET_ACK;
 	uint16_t m_receivedBitfield = 0;
 
-	PacketTracker_t m_sentButUnackedPackets[MAX_UNACKED_HISTORY];
+	PacketTracker_t m_packetTrackers[MAX_UNACKED_HISTORY];
 
 	Stopwatch* m_lastSentTimer = nullptr;
 	Stopwatch* m_lastReceivedTimer = nullptr;

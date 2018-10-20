@@ -175,7 +175,7 @@ bool NetSession::SendMessageDirect(NetMessage* message, const NetSender_t& sende
 	packet.WriteMessage(message);
 
 	PacketHeader_t header;
-	header.unreliableMessageCount = 1;
+	header.totalMessageCount = 1;
 	header.senderConnectionIndex = INVALID_CONNECTION_INDEX;
 
 	packet.WriteHeader(header);
@@ -577,7 +577,7 @@ bool NetSession::VerifyPacket(NetPacket* packet)
 	}
 
 	// Peek at the header and verify the messages
-	uint8_t messageCount = header.unreliableMessageCount;
+	uint8_t messageCount = header.totalMessageCount;
 
 	for (int i = 0; i < messageCount; ++i)
 	{
@@ -623,7 +623,7 @@ void NetSession::ProcessReceivedPacket(NetPacket* packet, const NetAddress_t& se
 	}
 
 	// Process the messages
-	uint8_t messageCount = header.unreliableMessageCount;
+	uint8_t messageCount = header.totalMessageCount;
 
 	for (int i = 0; i < messageCount; ++i)
 	{

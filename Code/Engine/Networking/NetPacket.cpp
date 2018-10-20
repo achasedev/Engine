@@ -43,7 +43,7 @@ void NetPacket::WriteHeader(const PacketHeader_t& header)
 	Write(header.packetAck);
 	Write(header.highestReceivedAck);
 	Write(header.receivedHistory);
-	Write(header.unreliableMessageCount);
+	Write(header.totalMessageCount);
 
 	// Move write head back to where it was
 	if (writtenBytes > 8)
@@ -64,7 +64,7 @@ bool NetPacket::ReadHeader(PacketHeader_t& out_header)
 	totalRead += Read(out_header.packetAck);
 	totalRead += Read(out_header.highestReceivedAck);
 	totalRead += Read(out_header.receivedHistory);
-	totalRead += Read(out_header.unreliableMessageCount);
+	totalRead += Read(out_header.totalMessageCount);
 
 	return (totalRead == PACKET_HEADER_SIZE);
 }
@@ -78,9 +78,18 @@ bool NetPacket::WriteMessage(const NetMessage* message)
 	bool success;
 
 	// Write the header + message payload size
-	int16_t msgSize = (int16_t) message->GetWrittenByteCount();
-	uint16_t msgAndHeaderSize = msgSize + 1;
-	success = WriteBytes(2, &msgAndHeaderSize);
+	uint16_t msgHeaderSize = message->GetHeaderSize();
+	uint16_t msgPayloadSize = message->GetPayloadSize();
+
+	uint16_t totalSize = msgHeaderSize + msgPayloadSize;
+
+	// Check size requirements
+	if (totalSize > PACKET_MTU - GetWrittenByteCount())
+	{
+		return false;
+	}
+
+	success = WriteBytes(2, &totalSize);
 
 	if (!success) 
 	{ 
@@ -97,7 +106,7 @@ bool NetPacket::WriteMessage(const NetMessage* message)
 	}
 
 	// Write the message payload
-	success = WriteBytes(msgSize, message->GetBuffer());
+	success = WriteBytes(msgPayloadSize, message->GetBuffer());
 
 	return success;
 }
@@ -109,18 +118,20 @@ bool NetPacket::WriteMessage(const NetMessage* message)
 bool NetPacket::ReadMessage(NetMessage* out_message, NetSession* session)
 {
 	// Read the header + message payload size
-	int8_t headerSize = sizeof(int8_t);
-	int16_t msgAndHeaderSize;
-	size_t amountRead = ReadBytes(&msgAndHeaderSize, sizeof(int16_t));
+	int16_t headerAndPayloadSize;
+	size_t amountRead = ReadBytes(&headerAndPayloadSize, sizeof(int16_t));
 
 	if (amountRead == 0)
 	{
 		return false;
 	}
 
-	// Read the message index
+	// Read in the message header
+	uint8_t msgHeaderSize = 1;
+
+	// First the message index
 	int8_t msgIndex;
-	amountRead = ReadBytes(&msgIndex, headerSize);
+	amountRead = Read(msgIndex);
 
 	if (amountRead == 0)
 	{
@@ -129,14 +140,28 @@ bool NetPacket::ReadMessage(NetMessage* out_message, NetSession* session)
 
 	const NetMessageDefinition_t* definition = session->GetMessageDefinition(msgIndex);
 
+	// If the message is reliable, we need to get the reliable ID
+	uint16_t reliableID = 0;
+	if ((definition->options & NET_MSG_OPTION_RELIABLE) == NET_MSG_OPTION_RELIABLE)
+	{
+		amountRead = Read(reliableID);
+		if (amountRead == 0)
+		{
+			return false;
+		}
+
+		// Add on the size of the reliable ID to the header size
+		msgHeaderSize += sizeof(uint16_t);
+	}
+
 	// Read the message payload
-	int16_t msgSize = msgAndHeaderSize - headerSize;
+	int16_t payloadSize = headerAndPayloadSize - msgHeaderSize;
 	int8_t payload[MESSAGE_MTU];
-	amountRead = ReadBytes(payload, msgSize);
+	amountRead = ReadBytes(payload, payloadSize);
 
 	// Construct the message
-	*out_message = NetMessage(definition, payload, msgSize);
-	out_message->AdvanceWriteHead(msgSize);
+	*out_message = NetMessage(definition, payload, payloadSize, reliableID);
+	out_message->AdvanceWriteHead(payloadSize);
 
 	return true;
 }

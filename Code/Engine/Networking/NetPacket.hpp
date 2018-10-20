@@ -32,7 +32,7 @@ struct PacketHeader_t
 {
 	PacketHeader_t() {}
 	PacketHeader_t(uint8_t connectionIndex, uint8_t messageCount)
-		: senderConnectionIndex(connectionIndex), unreliableMessageCount(messageCount) {}
+		: senderConnectionIndex(connectionIndex), totalMessageCount(messageCount) {}
 
 	// Basic info
 	uint8_t senderConnectionIndex	= INVALID_CONNECTION_INDEX;
@@ -42,7 +42,7 @@ struct PacketHeader_t
 	uint16_t receivedHistory		= 0;
 	uint16_t highestReceivedAck		= INVALID_PACKET_ACK;
 
-	uint8_t unreliableMessageCount	= 0;
+	uint8_t totalMessageCount		= 0;
 
 };
 
