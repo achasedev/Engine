@@ -13,6 +13,7 @@
 #include "Engine/Math/FloatRange.hpp"
 #include "Engine/Math/IntRange.hpp"
 #include "Engine/Math/Vector2.hpp"
+#include "Engine/Math/Vector3.hpp"
 #include "Engine/Math/IntVector2.hpp"
 #include "Engine/Math/IntVector3.hpp"
 #include "Engine/Math/AABB2.hpp"
@@ -260,4 +261,36 @@ IntVector3 ParseXmlAttribute(const XMLElement& element, const char* attributeNam
 		vectorToReturn.SetFromText(attributeText);
 		return vectorToReturn;
 	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Gets an attribute value and returns it as an Vector3, with default value
+//
+Vector3 ParseXmlAttribute(const XMLElement& element, const char* attributeName, const Vector3& defaultValue)
+{
+	Vector3 vectorToReturn;
+
+	const char* attributeText = element.Attribute(attributeName);
+
+	if (attributeText == nullptr)
+	{
+		// Attribute not found
+		return defaultValue;
+	}
+	else
+	{
+		vectorToReturn.SetFromText(attributeText);
+		return vectorToReturn;
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Gets an attribute value and returns it as an unsigned int, with default value
+//
+unsigned int ParseXmlAttribute(const XMLElement& element, const char* attributeName, unsigned int defaultValue)
+{
+	int attributeValue = element.UnsignedAttribute(attributeName, defaultValue);
+	return attributeValue;
 }
