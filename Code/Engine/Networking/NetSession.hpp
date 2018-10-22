@@ -46,7 +46,6 @@ enum eNetMessageOption : uint32_t
 	NET_MSG_OPTION_CONNECTIONLESS = (1 << 0),
 	NET_MSG_OPTION_RELIABLE = (1 << 1),
 	NET_MSG_OPTION_IN_ORDER = (1 << 2),
-	NET_MSG_OPTION_HEARTBEAT = (1 << 3)
 };
 
 // Callback for the NetSession

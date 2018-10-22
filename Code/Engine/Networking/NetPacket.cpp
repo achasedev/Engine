@@ -75,7 +75,11 @@ bool NetPacket::ReadHeader(PacketHeader_t& out_header)
 //
 bool NetPacket::WriteMessage(const NetMessage* message)
 {
-	bool success;
+	// Check if the message will fit
+	if (!CanFitMessage(message))
+	{
+		return false;
+	}
 
 	// Write the header + message payload size
 	uint16_t msgHeaderSize = message->GetHeaderSize();
@@ -83,13 +87,7 @@ bool NetPacket::WriteMessage(const NetMessage* message)
 
 	uint16_t totalSize = msgHeaderSize + msgPayloadSize;
 
-	// Check size requirements
-	if (totalSize > PACKET_MTU - GetWrittenByteCount())
-	{
-		return false;
-	}
-
-	success = WriteBytes(2, &totalSize);
+	bool success = WriteBytes(2, &totalSize);
 
 	if (!success) 
 	{ 
@@ -103,6 +101,17 @@ bool NetPacket::WriteMessage(const NetMessage* message)
 	if (!success)
 	{
 		return false;
+	}
+
+	// If the message is reliable, we need to write the reliable ID
+	if (message->IsReliable())
+	{
+		success = Write(message->GetReliableID());
+
+		if (!success)
+		{
+			return false;
+		}
 	}
 
 	// Write the message payload
@@ -200,4 +209,17 @@ uint8_t NetPacket::GetSenderConnectionIndex() const
 uint8_t NetPacket::GetReceiverConnectionIndex() const
 {
 	return m_receiverIndex;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns whether the packet can fit the given message completely
+//
+bool NetPacket::CanFitMessage(const NetMessage* message) const
+{
+	int freeSpace = (PACKET_MTU - (int) GetWrittenByteCount());
+
+	int messageSize = sizeof(uint16_t) + message->GetHeaderSize() + message->GetPayloadSize();
+
+	return (freeSpace >= messageSize);
 }

@@ -33,6 +33,13 @@ struct PacketTracker_t
 		return true;
 	}
 
+	void Clear()
+	{
+		packetAck = INVALID_PACKET_ACK;
+		timeSent = -1.0f;
+		m_reliablesInPacket = 0;
+	}
+
 	uint16_t	packetAck = INVALID_PACKET_ACK;
 	float		timeSent = -1.f;
 
@@ -83,6 +90,7 @@ private:
 	void						OnPacketSend(const PacketHeader_t& header);
 	void						OnAckConfirmed(uint16_t ack);
 
+	PacketTracker_t*			CreateTrackerForAck(uint16_t ack);
 	PacketTracker_t*			GetTrackerForAck(uint16_t ack);
 	void						InvalidateTracker(uint16_t ack);
 
@@ -108,13 +116,14 @@ private:
 	float						m_timeBetweenSends = 0.f;
 	Stopwatch*					m_sendTimer = nullptr;
 
-	//float						m_timeBetweenHeartbeats = 0.5f;
 	Stopwatch*					m_heartbeatTimer = nullptr;
 
 	// Reliable delivery
-	uint16_t m_nextSentAck = 0;
+	uint16_t m_nextAckToSend = 0;
 	uint16_t m_highestReceivedAck = INVALID_PACKET_ACK;
 	uint16_t m_receivedBitfield = 0;
+
+	uint16_t m_nextReliableIDToSend = 0;
 
 	PacketTracker_t m_packetTrackers[MAX_UNACKED_HISTORY];
 

@@ -4,6 +4,7 @@
 /* Date: September 20th, 2018
 /* Description: Implementation of the NetMessage class
 /************************************************************************/
+#include "Engine/Core/Time/Clock.hpp"
 #include "Engine/Networking/NetMessage.hpp"
 #include "Engine/Networking/NetSession.hpp"
 
@@ -169,5 +170,20 @@ uint16_t NetMessage::GetHeaderSize() const
 
 uint16_t NetMessage::GetPayloadSize() const
 {
-	return GetWrittenByteCount();
+	return (uint16_t) GetWrittenByteCount();
+}
+
+void NetMessage::ResetTimeLastSent()
+{
+	m_lastSentTime = Clock::GetMasterClock()->GetTotalSeconds();
+}
+
+void NetMessage::AssignReliableID(uint16_t reliableID)
+{
+	m_reliableID = reliableID;
+}
+
+uint16_t NetMessage::GetReliableID() const
+{
+	return m_reliableID;
 }

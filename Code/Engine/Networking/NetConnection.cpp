@@ -14,7 +14,7 @@
 #include "Engine/Networking/NetSession.hpp"
 #include "Engine/Networking/NetConnection.hpp"
 
-#define RELIABLE_RESEND_INTERVAL (0.05) // 50 ms
+#define RELIABLE_RESEND_INTERVAL (0.1) // 100 ms
 
 //-----------------------------------------------------------------------------------------------
 // Constructor
@@ -113,6 +113,7 @@ void NetConnection::FlushMessages()
 	packet->SetReceiverConnectionIndex(m_indexInSession);
 
 	uint8_t messagesWritten = 0;
+	PacketTracker_t* tracker = CreateTrackerForAck(m_nextAckToSend);
 
 	// Write unconfirmed messages first
 	int unconfirmedCount = (int) m_unconfirmedReliables.size();
@@ -125,12 +126,36 @@ void NetConnection::FlushMessages()
 
 			if (success)
 			{
-
+				tracker->AddReliableID(m_unconfirmedReliables[unconfirmedIndex]->GetReliableID());
+				m_unconfirmedReliables[unconfirmedIndex]->ResetTimeLastSent();
+				++messagesWritten;
 			}
 		}
 	}
 
 	// Write unsent messages next
+	for (int unsentIndex = 0; unsentIndex < (int)m_unsentReliables.size(); /*Increment nothing, since we remove from the front*/)
+	{
+		NetMessage* unsentMessage = m_unsentReliables[unsentIndex];
+
+		if (packet->CanFitMessage(unsentMessage))
+		{
+			unsentMessage->AssignReliableID(m_nextReliableIDToSend);
+			++m_nextReliableIDToSend;
+
+			if (packet->WriteMessage(unsentMessage))
+			{
+				tracker->AddReliableID(unsentMessage->GetReliableID());
+
+				// Update the lists
+				m_unsentReliables.erase(m_unsentReliables.begin());
+				m_unconfirmedReliables.push_back(unsentMessage);
+
+				unsentMessage->ResetTimeLastSent();
+				++messagesWritten;
+			}
+		}
+	}
 
 	// Write unreliables last
 	for (int msgIndex = 0; msgIndex < m_outboundUnreliables.size(); ++msgIndex)
@@ -138,44 +163,13 @@ void NetConnection::FlushMessages()
 		NetMessage* msg = m_outboundUnreliables[msgIndex];
 
 		// Check if the message will fit
-		// 2 bytes for the header and message size, 1 byte for message definition index,
-		// and then the payload
-		uint16_t totalSize = (uint16_t) (2 + 1 + msg->GetWrittenByteCount());
-		if (packet->GetRemainingWritableByteCount() >= totalSize)
+		if (packet->CanFitMessage(msg))
 		{
 			packet->WriteMessage(msg);
 			messagesWritten++;
 		}
-		else
-		{
-			PacketHeader_t header = CreateHeaderForNextSend(messagesWritten);
-			packet->WriteHeader(header);
 
-			// Update the latest ack sent for the connection
-			OnPacketSend(header);
-
-			// Send the current packet and start again
-			bool sent = m_owningSession->SendPacket(packet);
-
-			if (sent)
-			{
-				ConsolePrintf(Rgba::GREEN, "Sent packet with ack %i", header.packetAck);
-				LogTaggedPrintf("NET", "NetConnection sent packet with %i messages", messagesWritten);
-			}
-			else
-			{
-				LogTaggedPrintf("NET", "NetConnection couldn't send packet for %i messages", messagesWritten);
-			}
-
-			// Reset
-			packet->ResetWrite();
-			packet->AdvanceWriteHead(sizeof(PacketHeader_t));
-
-			packet->WriteMessage(msg);
-			messagesWritten = 1;
-		}
-
-		delete msg;
+		delete m_outboundUnreliables[msgIndex];
 	}
 	
 	PacketHeader_t header = CreateHeaderForNextSend(messagesWritten);
@@ -183,7 +177,6 @@ void NetConnection::FlushMessages()
 
 	// Update the latest ack sent for the connection
 	OnPacketSend(header);
-	
 
 	bool sent = m_owningSession->SendPacket(packet);
 
@@ -196,7 +189,7 @@ void NetConnection::FlushMessages()
 		LogTaggedPrintf("NET", "NetConnection couldn't send packet for %i messages", messagesWritten);
 	}
 		
-
+	// Clear the unreliable list, even if not all were sent
 	m_outboundUnreliables.clear();
 
 	// Reset the send timer
@@ -263,7 +256,7 @@ PacketHeader_t NetConnection::CreateHeaderForNextSend(uint8_t messageCount)
 
 	if (messageCount > 0)
 	{
-		header.packetAck = m_nextSentAck;
+		header.packetAck = m_nextAckToSend;
 	}
 	else
 	{
@@ -289,34 +282,21 @@ void NetConnection::OnPacketSend(const PacketHeader_t& header)
 	}
 
 	// Track the packet
-	PacketTracker_t tracker;
-	tracker.packetAck = m_nextSentAck;
-	tracker.timeSent = Clock::GetMasterClock()->GetTotalSeconds();
-
-	uint16_t index = (m_nextSentAck % MAX_UNACKED_HISTORY);
-
-	// Check to update packet loss (overwrite a packet never ack'd)
-	if (m_packetTrackers[index].packetAck != INVALID_PACKET_ACK)
-	{
-		m_lossCount++;
-	}
+	PacketTracker_t* tracker = GetTrackerForAck(header.packetAck);
+	tracker->timeSent = Clock::GetMasterClock()->GetTotalSeconds();
 
 	m_packetsSent++;
-
 	if (m_packetsSent >= LOSS_WINDOW_COUNT)
 	{
 		UpdateLossCalculation();
 	}
 
-	// Loss calculated, now update the tracker in the array
-	m_packetTrackers[index] = tracker;
-
 	// Increment the next ack to send
-	++m_nextSentAck;
+	++m_nextAckToSend;
 
-	if (m_nextSentAck == INVALID_PACKET_ACK)
+	if (m_nextAckToSend == INVALID_PACKET_ACK)
 	{
-		++m_nextSentAck;
+		++m_nextAckToSend;
 	}
 
 	// Reset the send timer
@@ -417,7 +397,7 @@ bool NetConnection::NeedsToForceSend() const
 std::string NetConnection::GetDebugInfo() const
 {
 	std::string debugText = Stringf("   %-*i%-*s%-*.2f%-*.2f%-*.2f%-*.2f%-*i%-*i%-*s",
-		6, m_indexInSession, 21, m_address.ToString().c_str(), 8, 1000.f * m_rtt, 7, m_loss, 7, m_lastReceivedTimer->GetElapsedTime(), 7, m_lastSentTimer->GetElapsedTime(), 8, m_nextSentAck - 1, 8, m_highestReceivedAck, 10, GetAsBitString(m_receivedBitfield).c_str());
+		6, m_indexInSession, 21, m_address.ToString().c_str(), 8, 1000.f * m_rtt, 7, m_loss, 7, m_lastReceivedTimer->GetElapsedTime(), 7, m_lastSentTimer->GetElapsedTime(), 8, m_nextAckToSend - 1, 8, m_highestReceivedAck, 10, GetAsBitString(m_receivedBitfield).c_str());
 
 	return debugText;
 }
@@ -442,7 +422,7 @@ void NetConnection::OnAckConfirmed(uint16_t ack)
 
 	// Blend in this RTT to our existing RTT
 	bool shouldUpdate = true;
-	for (int i = 1; i < m_nextSentAck - ack; ++i)
+	for (int i = 1; i < m_nextAckToSend - ack; ++i)
 	{
 		int checkIndex = ack + i;
 		if (m_packetTrackers[checkIndex].packetAck == INVALID_PACKET_ACK)
@@ -459,6 +439,34 @@ void NetConnection::OnAckConfirmed(uint16_t ack)
 
 	// It has been received, so invalidate
 	InvalidateTracker(ack);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Creates and returns a tracker for the given ack
+//
+PacketTracker_t* NetConnection::CreateTrackerForAck(uint16_t ack)
+{
+	// If the ack is invalid do nothing
+	if (ack == INVALID_PACKET_ACK)
+	{
+		return nullptr;
+	}
+
+	// Check if this has to be acknowledged at all (already ack'd, or just bad ack)
+	int index = (ack % MAX_UNACKED_HISTORY);
+
+	// Check to update packet loss (overwrite a packet never ack'd)
+	if (m_packetTrackers[index].packetAck != INVALID_PACKET_ACK)
+	{
+		m_lossCount++;
+	}
+
+	PacketTracker_t* tracker = &m_packetTrackers[index];
+	tracker->Clear();
+	tracker->packetAck = ack;
+
+	return tracker;
 }
 
 

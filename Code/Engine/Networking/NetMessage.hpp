@@ -40,6 +40,7 @@ public:
 	const NetMessageDefinition_t*	GetDefinition() const;
 	std::string						GetName() const;
 	float							GetLastSentTime() const;
+	uint16_t						GetReliableID() const;
 
 	// Producers
 	bool							RequiresConnection() const;
@@ -48,6 +49,10 @@ public:
 
 	uint16_t						GetHeaderSize() const;
 	uint16_t						GetPayloadSize() const;
+
+	// Mutators
+	void							ResetTimeLastSent();
+	void							AssignReliableID(uint16_t reliableID);
 
 
 private:

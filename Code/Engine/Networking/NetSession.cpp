@@ -434,7 +434,7 @@ void NetSession::RegisterCoreMessages()
 	RegisterMessageDefinition(NET_MSG_PING, "ping", OnPing, NET_MSG_OPTION_CONNECTIONLESS);
 	RegisterMessageDefinition(NET_MSG_PONG, "pong", OnPong, NET_MSG_OPTION_CONNECTIONLESS);
 
-	RegisterMessageDefinition(NET_MSG_HEARTBEAT, "heartbeat", OnHeartBeat, NET_MSG_OPTION_HEARTBEAT);
+	RegisterMessageDefinition(NET_MSG_HEARTBEAT, "heartbeat", OnHeartBeat);
 }
 
 

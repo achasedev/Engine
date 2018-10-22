@@ -42,6 +42,7 @@ struct PacketHeader_t
 	uint16_t receivedHistory		= 0;
 	uint16_t highestReceivedAck		= INVALID_PACKET_ACK;
 
+	// Total message count, reliable and unreliable
 	uint8_t totalMessageCount		= 0;
 
 };
@@ -72,6 +73,10 @@ public:
 	// Accessors
 	uint8_t		GetSenderConnectionIndex() const;
 	uint8_t		GetReceiverConnectionIndex() const;
+
+	// Producers
+	bool		CanFitMessage(const NetMessage* message) const;
+
 
 
 private:
