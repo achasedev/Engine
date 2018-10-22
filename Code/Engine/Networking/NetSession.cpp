@@ -525,10 +525,6 @@ bool NetSession::GetNextReceive(PendingReceive& out_pending)
 		m_receiveQueue.erase(m_receiveQueue.begin());
 		packetReady = true;
 	}
-	else
-	{
-		ConsoleErrorf("Packet in queue but not ready!");
-	}
 
 	m_receiveLock.unlock();
 	return packetReady;
@@ -616,10 +612,12 @@ void NetSession::ProcessReceivedPacket(NetPacket* packet, const NetAddress_t& se
 	packet->ReadHeader(header);
 	packet->SetSenderConnectionIndex(header.senderConnectionIndex);
 
+	NetConnection* connection = GetConnection(header.senderConnectionIndex);
+
 	// Update the connection's acknowledgment data if there is one
-	if (header.senderConnectionIndex != INVALID_CONNECTION_INDEX)
+	if (connection != nullptr)
 	{
-		m_connections[header.senderConnectionIndex]->OnPacketReceived(header);
+		connection->OnPacketReceived(header);
 	}
 
 	// Process the messages
@@ -630,14 +628,19 @@ void NetSession::ProcessReceivedPacket(NetPacket* packet, const NetAddress_t& se
 		NetMessage message;
 		packet->ReadMessage(&message, this); // Need to pass the session to look up the definition
 
-		bool connectionExists = (GetConnection(header.senderConnectionIndex) != nullptr);
+		bool connectionExists = (connection != nullptr);
 		if (message.RequiresConnection() && !connectionExists)
 		{
 			LogTaggedPrintf("NET", "Received message \"%s\" from a connectionless client that requires a connection", message.GetName().c_str());
 		}
 		else
 		{
-			// Call the callback handler
+			// Call the callback handler, checking we don't process twice
+			if (message.IsReliable() && connection->HasReliableIDAlreadyBeenReceived(message.GetReliableID()))
+			{
+				continue;
+			}
+
 			NetSender_t sender;
 			sender.address = senderAddress;
 			sender.netSession = this;
@@ -646,6 +649,11 @@ void NetSession::ProcessReceivedPacket(NetPacket* packet, const NetAddress_t& se
 			// Call the callback
 			const NetMessageDefinition_t* definition = message.GetDefinition();
 			definition->callback(&message, sender);
+
+			if (message.IsReliable() && connection != nullptr)
+			{
+				connection->AddProcessedReliableID(message.GetReliableID());
+			}
 		}
 	}
 }

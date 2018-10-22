@@ -15,6 +15,7 @@
 #include "Engine/Networking/NetConnection.hpp"
 
 #define RELIABLE_RESEND_INTERVAL (0.1) // 100 ms
+#define RELIABLE_WINDOW (32)
 
 //-----------------------------------------------------------------------------------------------
 // Constructor
@@ -178,16 +179,7 @@ void NetConnection::FlushMessages()
 	// Update the latest ack sent for the connection
 	OnPacketSend(header);
 
-	bool sent = m_owningSession->SendPacket(packet);
-
-	if (sent)
-	{
-		LogTaggedPrintf("NET", "NetConnection sent packet with %i messages", messagesWritten);
-	}
-	else
-	{
-		LogTaggedPrintf("NET", "NetConnection couldn't send packet for %i messages", messagesWritten);
-	}
+	m_owningSession->SendPacket(packet);
 		
 	// Clear the unreliable list, even if not all were sent
 	m_outboundUnreliables.clear();
@@ -365,7 +357,6 @@ bool NetConnection::OnPacketReceived(const PacketHeader_t& header)
 		m_forceSendNextTick = true;
 	}
 	
-
 	// Reset the last received timer
 	m_lastReceivedTimer->Reset();
 
@@ -378,7 +369,7 @@ bool NetConnection::OnPacketReceived(const PacketHeader_t& header)
 //
 bool NetConnection::HasOutboundMessages() const
 {
-	return (m_outboundUnreliables.size() > 0);
+	return (m_unsentReliables.size() > 0 || m_unconfirmedReliables.size() > 0 || m_outboundUnreliables.size() > 0);
 }
 
 
@@ -436,9 +427,26 @@ void NetConnection::OnAckConfirmed(uint16_t ack)
 	{
 		m_rtt = (1.f - RTT_BLEND_FACTOR) * m_rtt + RTT_BLEND_FACTOR * timeDilation;
 	}
+	
+	// Remove reliable messages that have been confirmed
+	for (int reliableIndex = (int)tracker->m_reliablesInPacket - 1; reliableIndex >= 0 ; --reliableIndex)
+	{
+		uint16_t currID = tracker->m_sentReliableIDs[reliableIndex];
+
+		for (int unconfirmedIndex = 0; unconfirmedIndex < (int)m_unconfirmedReliables.size(); ++unconfirmedIndex)
+		{
+			if (m_unconfirmedReliables[unconfirmedIndex]->GetReliableID() == currID)
+			{
+				ConsolePrintf(Rgba::GREEN, "Confirmed %i", currID);
+				delete m_unconfirmedReliables[unconfirmedIndex];
+				m_unconfirmedReliables.erase(m_unconfirmedReliables.begin() + unconfirmedIndex);
+				break;
+			}
+		}
+	}
 
 	// It has been received, so invalidate
-	InvalidateTracker(ack);
+	//InvalidateTracker(ack);
 }
 
 
@@ -500,6 +508,34 @@ void NetConnection::InvalidateTracker(uint16_t ack)
 	int index = (ack % MAX_UNACKED_HISTORY);
 	
 	m_packetTrackers[index].packetAck = INVALID_PACKET_ACK;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns whether the reliable ID has already been processed (recently) by the connection
+//
+bool NetConnection::HasReliableIDAlreadyBeenReceived(uint16_t reliableID) const
+{
+	int receivedCount = (int)m_receivedReliableIDs.size();
+
+	for (int receivedIndex = 0; receivedIndex < receivedCount; ++receivedIndex)
+	{
+		if (m_receivedReliableIDs[receivedIndex] == reliableID)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Stores the reliable ID on this connection's list of processed IDs
+//
+void NetConnection::AddProcessedReliableID(uint16_t reliableID)
+{
+	m_receivedReliableIDs.push_back(reliableID);
 }
 
 

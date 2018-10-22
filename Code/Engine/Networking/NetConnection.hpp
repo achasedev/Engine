@@ -73,6 +73,8 @@ public:
 
 	// Reliable delivery
 	bool						OnPacketReceived(const PacketHeader_t& header);
+	bool						HasReliableIDAlreadyBeenReceived(uint16_t reliableID) const;
+	void						AddProcessedReliableID(uint16_t reliableID);
 
 	// RTT/Loss
 	bool						HasOutboundMessages() const;

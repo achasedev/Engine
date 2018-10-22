@@ -53,6 +53,7 @@ NetMessage::NetMessage(NetMessage&& moveFrom)
 	m_ownsMemory = moveFrom.m_ownsMemory;
 
 	m_definition = moveFrom.m_definition;
+	m_reliableID = moveFrom.m_reliableID;
 	memcpy(m_payload, moveFrom.m_payload, MESSAGE_MTU);
 
 	// Invalidate
@@ -80,6 +81,7 @@ NetMessage& NetMessage::operator=(NetMessage&& moveFrom)
 	m_ownsMemory = moveFrom.m_ownsMemory;
 
 	m_definition = moveFrom.m_definition;
+	m_reliableID = moveFrom.m_reliableID;
 	memcpy(m_payload, moveFrom.m_payload, m_bufferCapacity);
 
 	// Invalidate
