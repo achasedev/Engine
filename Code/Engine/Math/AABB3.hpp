@@ -38,3 +38,6 @@ public:
 	static const AABB3 UNIT_CUBE;
 
 };
+
+bool DoAABB3sOverlap(const AABB3& boxOne, const AABB3& boxTwo);								// Checks for overlap, including boundaries
+

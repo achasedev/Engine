@@ -2,6 +2,8 @@
 #include "Engine/Math/IntVector3.hpp"
 #include <stdint.h>
 
+#define MAX_TEXTURE_VOXEL_WIDTH (32)
+#define MAX_TEXTURE_BYTE_WIDTH (MAX_TEXTURE_VOXEL_WIDTH / 8)
 class Rgba;
 
 class VoxelTexture
@@ -25,7 +27,7 @@ public:
 	Rgba			GetColorAtIndex(unsigned int index) const;
 	IntVector3		GetDimensions() const;
 	unsigned int	GetVoxelCount() const;
-	uint8_t			GetCollisionByteThatContainsCoords(const IntVector3& coords) const;
+	uint32_t		GetCollisionByteForRow(int localY, int localZ) const;
 
 	// Producers
 	bool			DoLocalCoordsHaveCollision(const IntVector3& coords) const;
@@ -34,7 +36,7 @@ public:
 private:
 	//-----Private Data-----
 
-	uint8_t*	m_collisionFlags = nullptr;
+	uint32_t*	m_collisionFlags = nullptr;
 	Rgba*		m_colorData = nullptr;
 	IntVector3	m_dimensions;
 

@@ -362,7 +362,7 @@ AABB2 AABB2::operator-(const Vector2& antiTranslation) const
 // Checks if the given Box2Ds a and b overlap (either their boundaries intersect, or one is contained
 // in another
 //
-bool DoAABBsOverlap(const AABB2& a, const AABB2& b)
+bool DoAABB2sOverlap(const AABB2& a, const AABB2& b)
 {
 	bool doOverlap = true;
 

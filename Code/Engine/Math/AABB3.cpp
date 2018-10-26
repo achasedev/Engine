@@ -118,3 +118,44 @@ Vector3 AABB3::GetBackTopLeft() const
 {
 	return Vector3(mins.x, maxs.y, maxs.z);
 }
+
+
+//-----------------------------------------------------------------------------------------------
+// Checks if the given AABB3s a and b overlap (either their boundaries intersect, or one is contained
+// in another
+//
+bool DoAABB2sOverlap(const AABB3& a, const AABB3& b)
+{
+	bool doOverlap = true;
+
+	// Check if a is completely to the left of b
+	if (a.maxs.x <= b.mins.x)
+	{
+		doOverlap = false;
+		// Check if a is completely to the right of b
+	}
+	else if (a.mins.x >= b.maxs.x)
+	{
+		doOverlap = false;
+		// Check if a is completely above b
+	}
+	else if (a.mins.y >= b.maxs.y)
+	{
+		doOverlap = false;
+		// Check if a is completely below b
+	}
+	else if (a.maxs.y <= b.mins.y)
+	{
+		doOverlap = false;
+	}
+	else if (a.maxs.z <= b.mins.z)
+	{
+		doOverlap = false;
+	}
+	else if (a.mins.z >= b.maxs.z)
+	{
+		doOverlap = false;
+	}
+
+	return doOverlap;
+}

@@ -60,6 +60,6 @@ public:
 };
 
 
-bool DoAABBsOverlap(const AABB2& boxOne, const AABB2& boxTwo);								// Checks for overlap, including boundaries
+bool DoAABB2sOverlap(const AABB2& boxOne, const AABB2& boxTwo);								// Checks for overlap, including boundaries
 
 const AABB2 Interpolate(const AABB2& start, const AABB2& end, float fractionTowardEnd);		// Interpolates the mins/maxes of the boxes
