@@ -1,5 +1,6 @@
 #pragma once
 #include "Engine/Math/IntVector3.hpp"
+#include <stdint.h>
 
 class Rgba;
 
@@ -11,9 +12,9 @@ public:
 	VoxelTexture();
 	~VoxelTexture();
 
-	bool		CreateFromFile(const char* filename);
-	bool		CreateFromColorStream(const Rgba* colors, const IntVector3& dimensions);
-	VoxelTexture* Clone() const;
+	bool			CreateFromFile(const char* filename);
+	bool			CreateFromColorStream(const Rgba* colors, const IntVector3& dimensions);
+	VoxelTexture*	Clone() const;
 
 	// Mutators
 	void			SetColorAtCoords(const IntVector3& coords, const Rgba& color);
@@ -24,11 +25,17 @@ public:
 	Rgba			GetColorAtIndex(unsigned int index) const;
 	IntVector3		GetDimensions() const;
 	unsigned int	GetVoxelCount() const;
+	uint8_t			GetCollisionByteThatContainsCoords(const IntVector3& coords) const;
+
+	// Producers
+	bool			DoLocalCoordsHaveCollision(const IntVector3& coords) const;
+
 
 private:
 	//-----Private Data-----
 
-	Rgba*		m_colorData;
+	uint8_t*	m_collisionFlags = nullptr;
+	Rgba*		m_colorData = nullptr;
 	IntVector3	m_dimensions;
 
 };
