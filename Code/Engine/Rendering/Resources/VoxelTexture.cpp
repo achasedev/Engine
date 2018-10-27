@@ -194,9 +194,34 @@ VoxelTexture* VoxelTexture::Clone() const
 	return newTexture;
 }
 
+void VoxelTexture::SetColorAtCoords(const IntVector3& coords, const Rgba& color)
+{
+	int index = coords.y * (m_dimensions.x * m_dimensions.z) + coords.z * m_dimensions.x + coords.x;
+	SetColorAtIndex(index, color);
+}
+
 void VoxelTexture::SetColorAtIndex(unsigned int index, const Rgba& color)
 {
 	m_colorData[index] = color;
+	
+	int yCoord = index / (m_dimensions.x * m_dimensions.z);
+	int leftOver = index % (m_dimensions.x * m_dimensions.z);
+
+	int zCoord = leftOver / m_dimensions.x;
+	int xCoord = leftOver % m_dimensions.x;
+
+	uint32_t& flags = m_collisionFlags[yCoord * m_dimensions.z + zCoord];
+	int mask = 0x80000000 >> xCoord;
+
+	if (color.a == 0)
+	{
+		mask = ~mask;
+		flags &= mask;
+	}
+	else
+	{
+		flags |= (0x80000000 >> xCoord);
+	}
 }
 
 Rgba VoxelTexture::GetColorAtCoords(const IntVector3& coords) const
@@ -222,6 +247,8 @@ unsigned int VoxelTexture::GetVoxelCount() const
 
  uint32_t VoxelTexture::GetCollisionByteForRow(int localY, int localZ) const
 {
+	 ASSERT_OR_DIE(AreCoordsValid(0, localY, localZ), "Voxel texture received bad coords");
+
 	return m_collisionFlags[localY * m_dimensions.z + localZ];
 }
 
@@ -233,4 +260,24 @@ unsigned int VoxelTexture::GetVoxelCount() const
 
 	 bool hasCollision = ((flags & (1 << bitOffset)) != 0);
 	 return hasCollision;
+ }
+
+ bool VoxelTexture::AreCoordsValid(int x, int y, int z) const
+ {
+	 if (x < 0 || x >= m_dimensions.x)
+	 {
+		 return false;
+	 }
+
+	 if (y < 0 || y >= m_dimensions.y)
+	 {
+		 return false;
+	 }
+
+	 if (z < 0 || z >= m_dimensions.z)
+	 {
+		 return false;
+	 }
+
+	 return true;
  }

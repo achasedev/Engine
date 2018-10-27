@@ -34,6 +34,12 @@ public:
 
 
 private:
+	//-----Private Methods-----
+
+	bool AreCoordsValid(int x, int y, int z) const;
+
+
+private:
 	//-----Private Data-----
 
 	uint32_t*	m_collisionFlags = nullptr;
