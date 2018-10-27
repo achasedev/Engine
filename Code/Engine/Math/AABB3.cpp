@@ -124,7 +124,7 @@ Vector3 AABB3::GetBackTopLeft() const
 // Checks if the given AABB3s a and b overlap (either their boundaries intersect, or one is contained
 // in another
 //
-bool DoAABB2sOverlap(const AABB3& a, const AABB3& b)
+bool DoAABB3sOverlap(const AABB3& a, const AABB3& b)
 {
 	bool doOverlap = true;
 

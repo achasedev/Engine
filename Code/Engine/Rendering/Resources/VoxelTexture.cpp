@@ -125,7 +125,7 @@ bool VoxelTexture::CreateFromFile(const char* filename)
 		if (m_colorData[index].a != 0)
 		{
 			uint32_t& flags = m_collisionFlags[yCoord * m_dimensions.z + zCoord];
-			flags |= (0x80000000 >> xCoord);
+			flags |= (TEXTURE_LEFTMOST_COLLISION_BIT >> xCoord);
 		}
 	}
 
@@ -210,7 +210,7 @@ void VoxelTexture::SetColorAtIndex(unsigned int index, const Rgba& color)
 	int xCoord = leftOver % m_dimensions.x;
 
 	uint32_t& flags = m_collisionFlags[yCoord * m_dimensions.z + zCoord];
-	int mask = 0x80000000 >> xCoord;
+	int mask = TEXTURE_LEFTMOST_COLLISION_BIT >> xCoord;
 
 	if (color.a == 0)
 	{
@@ -219,7 +219,7 @@ void VoxelTexture::SetColorAtIndex(unsigned int index, const Rgba& color)
 	}
 	else
 	{
-		flags |= (0x80000000 >> xCoord);
+		flags |= (TEXTURE_LEFTMOST_COLLISION_BIT >> xCoord);
 	}
 }
 
