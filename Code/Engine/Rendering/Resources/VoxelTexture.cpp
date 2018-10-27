@@ -186,7 +186,6 @@ VoxelTexture* VoxelTexture::Clone() const
 
 	memcpy(newTexture->m_colorData, m_colorData, byteSize);
 
-
 	// Collision
 	newTexture->m_collisionFlags = (uint32_t*)malloc(sizeof(uint32_t) * m_dimensions.y * m_dimensions.z);
 	memcpy(newTexture->m_collisionFlags, m_collisionFlags, sizeof(uint32_t) * m_dimensions.y * m_dimensions.z);

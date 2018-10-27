@@ -80,10 +80,6 @@ public:
 	static MaterialInstance*	CreateMaterialInstance(const std::string& name);
 	static Material*			CreateOrGetSharedMaterial(const std::string& name);
 
-	// Voxel QEF Files
-	static VoxelTexture*		GetVoxelTexture(const std::string& name);
-	static VoxelTexture*		CreateOrGetVoxelTexture(const std::string& name);
-	static VoxelTexture*		CreateVoxelTextureInstance(const std::string& name);
 
 private:
 	//-----Private Data-----
