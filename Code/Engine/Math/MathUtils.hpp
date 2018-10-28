@@ -120,7 +120,9 @@ bool Quadratic(Vector2& out_solutions, float a, float b, float c);
 
 
 // General functions
-int		MinInt(int a, int b);
+int			MinInt(int a, int b);
+int			MaxInt(int a, int b);
+
 unsigned int MinInt(unsigned int a, unsigned int b);
 unsigned int MaxInt(unsigned int a, unsigned int b);
 float	MaxFloat(float a, float b, float c, float d);

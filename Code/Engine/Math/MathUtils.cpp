@@ -925,6 +925,8 @@ int MinInt(int a, int b)
 }
 
 
+
+
 //-----------------------------------------------------------------------------------------------
 // Returns the min of 2 unsigned ints
 //
@@ -938,6 +940,15 @@ unsigned int MinInt(unsigned int a, unsigned int b)
 // Returns the max of 2 unsigned ints
 //
 unsigned int MaxInt(unsigned int a, unsigned int b)
+{
+	return (a > b ? a : b);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the max of a and b
+//
+int MaxInt(int a, int b)
 {
 	return (a > b ? a : b);
 }

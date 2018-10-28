@@ -22,6 +22,7 @@ public:
 	Vector3() {}															// default constructor: do nothing (for speed)
 	Vector3( const Vector3& copyFrom );										// copy constructor (from another vec2)
 	explicit Vector3( float initialX, float initialY, float initialZ);		// explicit constructor (from x, y)
+	explicit Vector3(int initialX, int initialY, int initialZ);		// explicit constructor (from x, y)
 	explicit Vector3(const IntVector3& intVector);							// constructor from an IntVector3
 	Vector3(float value);
 
