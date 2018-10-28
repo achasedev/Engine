@@ -131,6 +131,7 @@ float	MinFloat(float a, float b);
 float	MaxFloat(float a, float b);
 int		AbsoluteValue(int inValue);
 float	AbsoluteValue(float inValue);
+Vector3 AbsoluteValue(const Vector3& inValue);
 
 // Float comparison function
 bool AreMostlyEqual(float a, float b, float epsilon = 0.0001f);

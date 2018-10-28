@@ -1025,6 +1025,20 @@ float AbsoluteValue(float inValue)
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the component-wise absolute value of the given Vector3
+//
+Vector3 AbsoluteValue(const Vector3& inValue)
+{
+	Vector3 result;
+	result.x = AbsoluteValue(inValue.x);
+	result.y = AbsoluteValue(inValue.y);
+	result.z = AbsoluteValue(inValue.z);
+
+	return result;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns true if the difference between each component is less than or equal to epsilon
 //
 bool AreMostlyEqual(const Vector3& a, const Vector3& b, float epsilon /*= 0.0001f*/)
