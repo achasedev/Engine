@@ -17,6 +17,17 @@
 #define RELIABLE_RESEND_INTERVAL (0.1) // 100 ms
 #define RELIABLE_WINDOW (32)
 
+
+//- C FUNCTION ----------------------------------------------------------------------------------------------
+// Function that returns true if the value is less than the second value within the reliable window
+//
+bool CycleLessThan(uint16_t first, uint16_t second)
+{
+	uint16_t distance = second - first;
+	return (distance & 0x8000) == 0;
+}
+
+
 //-----------------------------------------------------------------------------------------------
 // Constructor
 //
@@ -134,12 +145,12 @@ void NetConnection::FlushMessages()
 		}
 	}
 
-	// Write unsent messages next
-	for (int unsentIndex = 0; unsentIndex < (int)m_unsentReliables.size(); /*Increment nothing, since we remove from the front*/)
+	// Write unsent messages next, but not if we have too many unconfirmed reliables
+	for (int unsentIndex = 0; unsentIndex < (int)m_unsentReliables.size(); ++unsentIndex)
 	{
 		NetMessage* unsentMessage = m_unsentReliables[unsentIndex];
 
-		if (packet->CanFitMessage(unsentMessage))
+		if (packet->CanFitMessage(unsentMessage) && NextSendIsWithinReliableWindow())
 		{
 			unsentMessage->AssignReliableID(m_nextReliableIDToSend);
 			++m_nextReliableIDToSend;
@@ -151,6 +162,7 @@ void NetConnection::FlushMessages()
 				// Update the lists
 				m_unsentReliables.erase(m_unsentReliables.begin());
 				m_unconfirmedReliables.push_back(unsentMessage);
+				--unsentIndex;
 
 				unsentMessage->ResetTimeLastSent();
 				++messagesWritten;
@@ -446,7 +458,7 @@ void NetConnection::OnAckConfirmed(uint16_t ack)
 	}
 
 	// It has been received, so invalidate
-	//InvalidateTracker(ack);
+	InvalidateTracker(ack);
 }
 
 
@@ -512,12 +524,49 @@ void NetConnection::InvalidateTracker(uint16_t ack)
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the oldest unconfirmed reliable id that we sent
+//
+bool NetConnection::NextSendIsWithinReliableWindow() const
+{
+	// Get the oldest unconfirmed id
+	int unconfirmedCount = (int)m_unconfirmedReliables.size();
+	uint16_t oldestID;
+	bool found = false;
+	for (int i = 0; i < unconfirmedCount; ++i)
+	{
+		if (!found || CycleLessThan(m_unconfirmedReliables[i]->GetReliableID(), oldestID))
+		{
+			oldestID = m_unconfirmedReliables[i]->GetReliableID();
+			found = true;
+		}
+	}
+
+	if (!found)
+	{
+		return true;
+	}
+
+	// Ensure our next send would fit within the window
+	uint16_t maxIDCanSend = oldestID + RELIABLE_WINDOW;
+	return CycleLessThan(m_nextReliableIDToSend, maxIDCanSend);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns whether the reliable ID has already been processed (recently) by the connection
 //
 bool NetConnection::HasReliableIDAlreadyBeenReceived(uint16_t reliableID) const
 {
 	int receivedCount = (int)m_receivedReliableIDs.size();
 
+	// First check if it's outside the window
+	uint16_t minID = m_highestReceivedReliableID - RELIABLE_WINDOW + 1;
+	if (CycleLessThan(reliableID, minID))
+	{
+		return true;
+	}
+
+	// Within window, just check if it is in our received list
 	for (int receivedIndex = 0; receivedIndex < receivedCount; ++receivedIndex)
 	{
 		if (m_receivedReliableIDs[receivedIndex] == reliableID)
@@ -535,7 +584,23 @@ bool NetConnection::HasReliableIDAlreadyBeenReceived(uint16_t reliableID) const
 //
 void NetConnection::AddProcessedReliableID(uint16_t reliableID)
 {
+	if (CycleLessThan(m_highestReceivedReliableID, reliableID))
+	{
+		m_highestReceivedReliableID = reliableID;
+	}
+
 	m_receivedReliableIDs.push_back(reliableID);
+
+	for (int i = 0; i < (int) m_receivedReliableIDs.size(); ++i)
+	{
+		uint16_t minID = m_highestReceivedReliableID - RELIABLE_WINDOW + 1;
+
+		if (CycleLessThan(m_receivedReliableIDs[i], minID))
+		{
+			m_receivedReliableIDs.erase(m_receivedReliableIDs.begin() + i);
+			--i;
+		}
+	}
 }
 
 

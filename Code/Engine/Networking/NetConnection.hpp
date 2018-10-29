@@ -17,6 +17,7 @@ class Stopwatch;
 
 #define MAX_UNACKED_HISTORY (256)
 #define MAX_RELIABLES_PER_PACKET (32)
+#define RELIABLE_WINDOW (32)
 
 struct PacketTracker_t
 {
@@ -95,6 +96,7 @@ private:
 	PacketTracker_t*			CreateTrackerForAck(uint16_t ack);
 	PacketTracker_t*			GetTrackerForAck(uint16_t ack);
 	void						InvalidateTracker(uint16_t ack);
+	bool						NextSendIsWithinReliableWindow() const;
 
 	// RTT/Loss
 	void						UpdateLossCalculation();
@@ -126,6 +128,7 @@ private:
 	uint16_t m_receivedBitfield = 0;
 
 	uint16_t m_nextReliableIDToSend = 0;
+	uint16_t m_highestReceivedReliableID = ~0;
 
 	PacketTracker_t m_packetTrackers[MAX_UNACKED_HISTORY];
 
