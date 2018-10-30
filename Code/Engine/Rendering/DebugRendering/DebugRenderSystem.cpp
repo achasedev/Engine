@@ -501,9 +501,9 @@ void DebugRenderSystem::Draw2DLine(const Vector2& startPosition, const Vector2& 
 //-----------------------------------------------------------------------------------------------
 // Draws screenspace text, base function
 //
-void DebugRenderSystem::Draw2DText(const std::string& text, const AABB2& bounds, const DebugRenderOptions& options, float textHeight /*= 50.f*/)
+void DebugRenderSystem::Draw2DText(const std::string& text, const AABB2& bounds, const DebugRenderOptions& options, float textHeight /*= 50.f*/, const Vector2& alignment /*=Vector2::ZERO*/)
 {
-	DebugRenderTask_Text2D* textTask = new DebugRenderTask_Text2D(text, bounds, options, textHeight);
+	DebugRenderTask_Text2D* textTask = new DebugRenderTask_Text2D(text, bounds, options, textHeight, alignment);
 	s_instance->m_tasks.push_back(textTask);
 }
 
@@ -511,7 +511,7 @@ void DebugRenderSystem::Draw2DText(const std::string& text, const AABB2& bounds,
 //-----------------------------------------------------------------------------------------------
 // Draws screenspace text, helper function
 //
-void DebugRenderSystem::Draw2DText(const std::string& text, const AABB2& bounds, float lifetime, const Rgba& color /*= Rgba::WHITE*/, float textHeight /*= 50.f*/)
+void DebugRenderSystem::Draw2DText(const std::string& text, const AABB2& bounds, float lifetime, const Rgba& color /*= Rgba::WHITE*/, float textHeight /*= 50.f*/, const Vector2& alignment /*=Vector2::ZERO*/)
 {
 	DebugRenderOptions options;
 
@@ -519,7 +519,7 @@ void DebugRenderSystem::Draw2DText(const std::string& text, const AABB2& bounds,
 	options.m_endColor = color;
 	options.m_lifetime = lifetime;
 
-	Draw2DText(text, bounds, options, textHeight);
+	Draw2DText(text, bounds, options, textHeight, alignment);
 }
 
 //------C Functions-----

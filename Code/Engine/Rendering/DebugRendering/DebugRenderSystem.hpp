@@ -50,7 +50,7 @@ public:
 	// 2D
 	static void Draw2DQuad(const AABB2& bounds, const DebugRenderOptions& options);
 	static void Draw2DLine(const Vector2& startPosition, const Vector2& endPosition, const DebugRenderOptions& options, const Rgba& endStartColor, const Rgba& endEndColor, float lineWidth = 1.0f);
-	static void Draw2DText(const std::string& text, const AABB2& bounds, const DebugRenderOptions& options, float textHeight = 50.f);
+	static void Draw2DText(const std::string& text, const AABB2& bounds, const DebugRenderOptions& options, float textHeight = 50.f, const Vector2& alignment = Vector2::ZERO);
 
 	// 3D
 	static void DrawPoint(const Vector3& position, const DebugRenderOptions& options, float radius = 1.0f);
@@ -65,7 +65,7 @@ public:
 	// 2D
 	static void Draw2DQuad(const AABB2& bounds, const Rgba& color, float lifetime);
 	static void Draw2DLine(const Vector2& startPosition, const Vector2& endPostion, const Rgba& color, float lifeTime, float lineWidth = 1.0f);
-	static void Draw2DText(const std::string& text, const AABB2& bounds, float lifetime, const Rgba& color = Rgba::WHITE, float textHeight = 50.f);
+	static void Draw2DText(const std::string& text, const AABB2& bounds, float lifetime, const Rgba& color = Rgba::WHITE, float textHeight = 50.f, const Vector2& alignment = Vector2::ZERO);
 
 	// 3D
 	static void DrawPoint(const Vector3& position, float lifeTime, const Rgba& color = Rgba::WHITE, float radius = 1.0f);

@@ -14,7 +14,7 @@ class DebugRenderTask_Text2D : public DebugRenderTask
 public:
 	//-----Public Methods-----
 
-	DebugRenderTask_Text2D(const std::string& text, const AABB2& bounds, const DebugRenderOptions& options, float textHeight = 50.f);
+	DebugRenderTask_Text2D(const std::string& text, const AABB2& bounds, const DebugRenderOptions& options, float textHeight = 50.f, const Vector2& alignment = Vector2::ZERO);
 
 	virtual void Render() const override;
 
@@ -26,5 +26,5 @@ private:
 	AABB2 m_pixelBounds;
 
 	float m_textHeight;
-
+	Vector2 m_alignment;
 };
