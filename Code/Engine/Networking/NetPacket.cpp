@@ -112,6 +112,24 @@ bool NetPacket::WriteMessage(const NetMessage* message)
 		{
 			return false;
 		}
+
+		// If the message is in order, we need to write the sequence ID
+		if (message->IsInOrder())
+		{
+			success = Write(message->GetSequenceID());
+
+			if (!success)
+			{
+				return false;
+			}
+
+			success = Write(message->GetSequenceChannelID());
+
+			if (!success)
+			{
+				return false;
+			}
+		}
 	}
 
 	// Write the message payload
@@ -136,7 +154,7 @@ bool NetPacket::ReadMessage(NetMessage* out_message, NetSession* session)
 	}
 
 	// Read in the message header
-	uint8_t msgHeaderSize = 1;
+	uint8_t msgHeaderSize = 1; // 1 for the message ID
 
 	// First the message index
 	int8_t msgIndex;
@@ -148,10 +166,15 @@ bool NetPacket::ReadMessage(NetMessage* out_message, NetSession* session)
 	}
 
 	const NetMessageDefinition_t* definition = session->GetMessageDefinition(msgIndex);
+	bool isReliable = definition->IsReliable();
+	bool isInOrder = definition->IsInOrder();
 
 	// If the message is reliable, we need to get the reliable ID
 	uint16_t reliableID = 0;
-	if ((definition->options & NET_MSG_OPTION_RELIABLE) == NET_MSG_OPTION_RELIABLE)
+	uint16_t sequenceID = 0;
+	uint8_t sequenceChannelID = 0;
+
+	if (isReliable)
 	{
 		amountRead = Read(reliableID);
 		if (amountRead == 0)
@@ -161,6 +184,24 @@ bool NetPacket::ReadMessage(NetMessage* out_message, NetSession* session)
 
 		// Add on the size of the reliable ID to the header size
 		msgHeaderSize += sizeof(uint16_t);
+
+		if (isInOrder)
+		{
+			amountRead = Read(sequenceID);
+			if (amountRead == 0)
+			{
+				return false;
+			}
+
+			amountRead = Read(sequenceChannelID);
+			if (amountRead == 0)
+			{
+				return false;
+			}
+
+			// Add on the size of the sequence ID to the header size
+			msgHeaderSize += (sizeof(uint16_t) + sizeof(uint8_t));
+		}
 	}
 
 	// Read the message payload
@@ -169,7 +210,12 @@ bool NetPacket::ReadMessage(NetMessage* out_message, NetSession* session)
 	amountRead = ReadBytes(payload, payloadSize);
 
 	// Construct the message
-	*out_message = NetMessage(definition, payload, payloadSize, reliableID);
+	*out_message = NetMessage(definition, payload, payloadSize);
+
+	out_message->AssignReliableID(reliableID);
+	out_message->AssignSequenceID(sequenceID);
+	out_message->AssignSequenceChannelID(sequenceChannelID);
+
 	out_message->AdvanceWriteHead(payloadSize);
 
 	return true;

@@ -91,6 +91,14 @@ void NetConnection::Send(NetMessage* msg)
 {
 	if (msg->IsReliable())
 	{
+		if (msg->IsInOrder())
+		{
+			uint8_t channelIndex = msg->GetSequenceChannelID();
+
+			uint16_t sequenceID = m_sequenceChannels[channelIndex].GetAndIncrementNextIDToSend();
+			msg->AssignSequenceID(sequenceID);
+		}
+
 		m_unsentReliables.push_back(msg);
 	}
 	else
@@ -530,7 +538,7 @@ bool NetConnection::NextSendIsWithinReliableWindow() const
 {
 	// Get the oldest unconfirmed id
 	int unconfirmedCount = (int)m_unconfirmedReliables.size();
-	uint16_t oldestID;
+	uint16_t oldestID = 0;
 	bool found = false;
 	for (int i = 0; i < unconfirmedCount; ++i)
 	{
@@ -614,4 +622,53 @@ void NetConnection::UpdateLossCalculation()
 	// Reset the current count for the next window
 	m_packetsSent = 0;
 	m_lossCount = 0;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the sequence channel at the current index
+//
+NetSequenceChannel* NetConnection::GetSequenceChannel(uint8_t sequenceChannelID)
+{
+	if (sequenceChannelID > MAX_SEQUENCE_CHANNELS)
+	{
+		return nullptr;
+	}
+
+	return &m_sequenceChannels[sequenceChannelID];
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns whether the message is the next message to process within its channel
+//
+bool NetConnection::IsNextMessageInSequence(NetMessage* message)
+{
+	if (!message->IsInOrder())
+	{
+		return true;
+	}
+
+	NetSequenceChannel* channel = GetSequenceChannel(message->GetSequenceChannelID());
+
+	ASSERT_OR_DIE(channel != nullptr, "Error: NetConnection::IsNextMessageInSequence() called on an InOrder message with no channel");
+	return channel->IsMessageNextExpected(message->GetSequenceID());
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Adds the given message to the appropriate channel to be processed in order later
+//
+void NetConnection::QueueInOrderMessage(NetMessage* message)
+{
+	if (!message->IsInOrder())
+	{
+		return;
+	}
+
+	NetSequenceChannel* channel = GetSequenceChannel(message->GetSequenceChannelID());
+	if (channel != nullptr)
+	{
+		channel->AddOutOfOrderMessage(message);
+	}
 }

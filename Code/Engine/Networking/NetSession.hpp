@@ -56,6 +56,16 @@ struct NetMessageDefinition_t
 	NetMessageDefinition_t(uint8_t _id, const std::string& _name, NetMessage_cb _callback, eNetMessageOption _options)
 		: id(_id), name(_name), callback(_callback), options(_options) {}
 
+	bool IsReliable() const
+	{
+		return (options & NET_MSG_OPTION_RELIABLE) == NET_MSG_OPTION_RELIABLE;
+	}
+
+	bool IsInOrder() const
+	{
+		return (options & NET_MSG_OPTION_IN_ORDER) == NET_MSG_OPTION_IN_ORDER;
+	}
+
 	uint8_t				id;
 	std::string			name = "";
 	NetMessage_cb		callback = nullptr;
@@ -130,6 +140,8 @@ private:
 	//void							SortDefinitions();
 	bool							VerifyPacket(NetPacket* packet);
 	void							ProcessReceivedPacket(NetPacket* packet, const NetAddress_t& senderAddress);
+	bool							ShouldMessageBeProcessed(NetMessage* message, NetConnection* connection);
+	void							ProcessReceivedMessage(NetMessage* message, const NetAddress_t& address, uint8_t connectionIndex);
 
 
 private:

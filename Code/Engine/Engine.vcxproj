@@ -315,6 +315,7 @@
     <ClCompile Include="Networking\NetConnection.cpp" />
     <ClCompile Include="Networking\NetMessage.cpp" />
     <ClCompile Include="Networking\NetPacket.cpp" />
+    <ClCompile Include="Networking\NetSequenceChannel.cpp" />
     <ClCompile Include="Networking\NetSession.cpp" />
     <ClCompile Include="Networking\RemoteCommandService.cpp" />
     <ClCompile Include="Networking\TCPSocket.cpp" />
@@ -457,6 +458,7 @@
     <ClInclude Include="Networking\NetConnection.hpp" />
     <ClInclude Include="Networking\NetMessage.hpp" />
     <ClInclude Include="Networking\NetPacket.hpp" />
+    <ClInclude Include="Networking\NetSequenceChannel.hpp" />
     <ClInclude Include="Networking\NetSession.hpp" />
     <ClInclude Include="Networking\RemoteCommandService.hpp" />
     <ClInclude Include="Networking\Socket.hpp" />

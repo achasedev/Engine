@@ -341,15 +341,15 @@ void NetSession::ProcessOutgoing()
 		if (currConnection != nullptr)
 		{
 			// Check heartbeat
-			if (currConnection->HasHeartbeatElapsed())
-			{
-				const NetMessageDefinition_t* definition = GetMessageDefinition("heartbeat");
-
-				if (definition != nullptr)
-				{
-					currConnection->Send(new NetMessage(definition));
-				}
-			}
+// 			if (currConnection->HasHeartbeatElapsed())
+// 			{
+// 				const NetMessageDefinition_t* definition = GetMessageDefinition("heartbeat");
+// 
+// 				if (definition != nullptr)
+// 				{
+// 					currConnection->Send(new NetMessage(definition));
+// 				}
+// 			}
 
 			// Check send rate
 			if ((currConnection->HasOutboundMessages() || currConnection->NeedsToForceSend()))
@@ -531,26 +531,6 @@ bool NetSession::GetNextReceive(PendingReceive& out_pending)
 }
 
 
-// -----------------------------------------------------------------------------------------------
-// Sorts the NetMessageDefinition collection to validate the indices
-// 
-// void NetSession::SortDefinitions()
-// {
-// 	for (int i = 0; i < (int)m_messageDefinitions.size() - 1; ++i)
-// 	{
-// 		for (int j = i + 1; j < (int)m_messageDefinitions.size(); ++j)
-// 		{
-// 			if (m_messageDefinitions[j]->name < m_messageDefinitions[i]->name)
-// 			{
-// 				const NetMessageDefinition_t* temp = m_messageDefinitions[i];
-// 				m_messageDefinitions[i] = m_messageDefinitions[j];
-// 				m_messageDefinitions[j] = temp;
-// 			}
-// 		}
-// 	}
-// }
-
-
 //-----------------------------------------------------------------------------------------------
 // Verifies that the packet is of correct format
 //
@@ -628,32 +608,105 @@ void NetSession::ProcessReceivedPacket(NetPacket* packet, const NetAddress_t& se
 		NetMessage message;
 		packet->ReadMessage(&message, this); // Need to pass the session to look up the definition
 
-		bool connectionExists = (connection != nullptr);
-		if (message.RequiresConnection() && !connectionExists)
+		// Check if we should process it
+		bool shouldProcess = ShouldMessageBeProcessed(&message, connection);
+
+		if (shouldProcess)
 		{
-			LogTaggedPrintf("NET", "Received message \"%s\" from a connectionless client that requires a connection", message.GetName().c_str());
+			// Process
+			ProcessReceivedMessage(&message, senderAddress, header.senderConnectionIndex);
+
+			// In order - check all messages in sequence after it
+			if (message.IsInOrder())
+			{
+				uint8_t sequenceChannelID = message.GetSequenceChannelID();
+				NetSequenceChannel* channel = connection->GetSequenceChannel(sequenceChannelID);
+
+				// Process all messages that we have after that in order
+				NetMessage* nextMessage = channel->GetNextMessageToProcess();
+
+				while (nextMessage != nullptr)
+				{
+					ProcessReceivedMessage(nextMessage, senderAddress, header.senderConnectionIndex);
+				
+					delete nextMessage;
+					nextMessage = channel->GetNextMessageToProcess();
+				}
+			}
 		}
-		else
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Checks if the message should be processed right now, returning true if so
+//
+bool NetSession::ShouldMessageBeProcessed(NetMessage* message, NetConnection* connection)
+{
+	// Requires connection check
+	bool connectionExists = (connection != nullptr);
+	if (message->RequiresConnection() && !connectionExists)
+	{
+		LogTaggedPrintf("NET", "Received message \"%s\" from a connectionless client that requires a connection", message->GetName().c_str());
+		return false;
+	}
+
+	// Double process check
+	if (message->IsReliable() && connection->HasReliableIDAlreadyBeenReceived(message->GetReliableID()))
+	{
+		return false;
+	}
+
+	// Sequence Channel ID check
+	NetSequenceChannel* channel = connection->GetSequenceChannel(message->GetSequenceChannelID());
+	if (message->IsInOrder() && channel == nullptr)
+	{
+		LogTaggedPrintf("NET", "ProcessIncoming received in-order message with a bad sequence channel ID, ID was %i", message->GetSequenceChannelID());
+		return false;
+	}
+
+	// In order check - queue it for later
+	if (message->IsInOrder() && !connection->IsNextMessageInSequence(message))
+	{
+		NetMessage* queuedMessage = new NetMessage();
+		*queuedMessage = std::move(*message);
+
+		connection->QueueInOrderMessage(queuedMessage);
+		return false;
+	}
+
+	// Return true - signaling we should process it
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Processes the message
+//
+void NetSession::ProcessReceivedMessage(NetMessage* message, const NetAddress_t& address, uint8_t connectionIndex)
+{
+	NetSender_t sender;
+	sender.address = address;
+	sender.netSession = this;
+	sender.connectionIndex = connectionIndex;
+
+	const NetMessageDefinition_t* definition = message->GetDefinition();
+	definition->callback(message, sender);
+
+	NetConnection* connection = GetConnection(sender.connectionIndex);
+	if (message->IsReliable() && connection != nullptr)
+	{
+		connection->AddProcessedReliableID(message->GetReliableID());
+	}
+
+	// Increment the next id to expect for in order traffic
+	if (message->IsInOrder() && connection != nullptr)
+	{
+		NetSequenceChannel* channel = connection->GetSequenceChannel(message->GetSequenceChannelID());
+
+		if (channel != nullptr)
 		{
-			// Call the callback handler, checking we don't process twice
-			if (message.IsReliable() && connection->HasReliableIDAlreadyBeenReceived(message.GetReliableID()))
-			{
-				continue;
-			}
-
-			NetSender_t sender;
-			sender.address = senderAddress;
-			sender.netSession = this;
-			sender.connectionIndex = header.senderConnectionIndex;
-
-			// Call the callback
-			const NetMessageDefinition_t* definition = message.GetDefinition();
-			definition->callback(&message, sender);
-
-			if (message.IsReliable() && connection != nullptr)
-			{
-				connection->AddProcessedReliableID(message.GetReliableID());
-			}
+			channel->IncrementNextExpectedID();
 		}
 	}
 }

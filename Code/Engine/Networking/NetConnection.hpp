@@ -5,8 +5,9 @@
 /* Description: Class to represent a single connection in a NetSession
 /************************************************************************/
 #pragma once
-#include "Engine/Networking/NetAddress.hpp"
 #include "Engine/Networking/NetPacket.hpp"
+#include "Engine/Networking/NetAddress.hpp"
+#include "Engine/Networking/NetSequenceChannel.hpp"
 #include <vector>
 
 class UDPSocket;
@@ -18,6 +19,7 @@ class Stopwatch;
 #define MAX_UNACKED_HISTORY (256)
 #define MAX_RELIABLES_PER_PACKET (32)
 #define RELIABLE_WINDOW (32)
+#define MAX_SEQUENCE_CHANNELS (32)
 
 struct PacketTracker_t
 {
@@ -81,6 +83,11 @@ public:
 	bool						HasOutboundMessages() const;
 	bool						NeedsToForceSend() const;
 
+	// In order traffic
+	NetSequenceChannel*			GetSequenceChannel(uint8_t sequenceChannelID);
+	bool						IsNextMessageInSequence(NetMessage* message);
+	void						QueueInOrderMessage(NetMessage* message);
+
 	// For drawing
 	std::string					GetDebugInfo() const;
 
@@ -128,7 +135,9 @@ private:
 	uint16_t m_receivedBitfield = 0;
 
 	uint16_t m_nextReliableIDToSend = 0;
-	uint16_t m_highestReceivedReliableID = ~0;
+	uint16_t m_highestReceivedReliableID = 0xffff;
+
+	NetSequenceChannel m_sequenceChannels[MAX_SEQUENCE_CHANNELS];
 
 	PacketTracker_t m_packetTrackers[MAX_UNACKED_HISTORY];
 

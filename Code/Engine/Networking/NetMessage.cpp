@@ -20,10 +20,9 @@ NetMessage::NetMessage()
 //-----------------------------------------------------------------------------------------------
 // Constructor - for reconstructing messages from a received payload
 //
-NetMessage::NetMessage(const NetMessageDefinition_t* definition, void* payload, const int16_t& payloadSize, uint16_t reliableID /*= 0*/)
+NetMessage::NetMessage(const NetMessageDefinition_t* definition, void* payload, const int16_t& payloadSize)
 	: BytePacker(MESSAGE_MTU, m_payload, false, LITTLE_ENDIAN)
 	, m_definition(definition)
-	, m_reliableID(reliableID)
 {
 	// Put the payload contents in
 	memcpy(m_payload, payload, payloadSize);
@@ -54,6 +53,10 @@ NetMessage::NetMessage(NetMessage&& moveFrom)
 
 	m_definition = moveFrom.m_definition;
 	m_reliableID = moveFrom.m_reliableID;
+
+	m_sequenceID = moveFrom.m_sequenceID;
+	m_sequenceChannelID = moveFrom.m_sequenceChannelID;
+
 	memcpy(m_payload, moveFrom.m_payload, MESSAGE_MTU);
 
 	// Invalidate
@@ -82,6 +85,10 @@ NetMessage& NetMessage::operator=(NetMessage&& moveFrom)
 
 	m_definition = moveFrom.m_definition;
 	m_reliableID = moveFrom.m_reliableID;
+
+	m_sequenceID = moveFrom.m_sequenceID;
+	m_sequenceChannelID = moveFrom.m_sequenceChannelID;
+
 	memcpy(m_payload, moveFrom.m_payload, m_bufferCapacity);
 
 	// Invalidate
@@ -141,7 +148,7 @@ bool NetMessage::RequiresConnection() const
 //
 bool NetMessage::IsReliable() const
 {
-	return ((m_definition->options & NET_MSG_OPTION_RELIABLE) == NET_MSG_OPTION_RELIABLE);
+	return (m_definition->IsReliable());
 }
 
 
@@ -150,7 +157,7 @@ bool NetMessage::IsReliable() const
 //
 bool NetMessage::IsInOrder() const
 {
-	return ((m_definition->options & NET_MSG_OPTION_IN_ORDER) == NET_MSG_OPTION_IN_ORDER);
+	return (m_definition->IsInOrder());
 }
 
 
@@ -164,6 +171,11 @@ uint16_t NetMessage::GetHeaderSize() const
 	if (IsReliable())
 	{
 		size += sizeof(uint16_t);
+
+		if (IsInOrder())
+		{
+			size += (sizeof(uint16_t) + sizeof(uint8_t));
+		}
 	}
 
 	return size;
@@ -185,7 +197,27 @@ void NetMessage::AssignReliableID(uint16_t reliableID)
 	m_reliableID = reliableID;
 }
 
+void NetMessage::AssignSequenceID(uint16_t sequenceID)
+{
+	m_sequenceID = sequenceID;
+}
+
+void NetMessage::AssignSequenceChannelID(uint8_t channelID)
+{
+	m_sequenceChannelID = channelID;
+}
+
 uint16_t NetMessage::GetReliableID() const
 {
 	return m_reliableID;
+}
+
+uint16_t NetMessage::GetSequenceID() const
+{
+	return m_sequenceID;
+}
+
+uint8_t NetMessage::GetSequenceChannelID() const
+{
+	return m_sequenceChannelID;
 }
