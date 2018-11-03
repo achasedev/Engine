@@ -16,8 +16,8 @@ public:
 	VoxelTexture();
 	~VoxelTexture();
 
-	bool			CreateFromFile(const char* filename);
-	bool			CreateFromColorStream(const Rgba* colors, const IntVector3& dimensions);
+	bool			CreateFromFile(const char* filename, bool createCollisionMatrix);
+	bool			CreateFromColorStream(const Rgba* colors, const IntVector3& dimensions, bool createCollisionMatrix);
 	VoxelTexture*	Clone() const;
 
 	// Mutators

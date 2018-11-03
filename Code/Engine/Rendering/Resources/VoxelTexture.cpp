@@ -21,7 +21,7 @@ VoxelTexture::~VoxelTexture()
 	}
 }
 
-bool VoxelTexture::CreateFromFile(const char* filename)
+bool VoxelTexture::CreateFromFile(const char* filename, bool createCollisionMatrix)
 {
 	File* file = new File();
 	bool opened = file->Open(filename, "r");
@@ -88,9 +88,12 @@ bool VoxelTexture::CreateFromFile(const char* filename)
 	memset(m_colorData, 0, sizeof(Rgba) * voxelCount);
 
 	// Set up the collision flags as well
-	int amount = sizeof(uint32_t) * m_dimensions.y * m_dimensions.z;
-	m_collisionFlags = (uint32_t*)malloc(amount);
-	memset(m_collisionFlags, 0, amount);
+	if (createCollisionMatrix)
+	{
+		int amount = sizeof(uint32_t) * m_dimensions.y * m_dimensions.z;
+		m_collisionFlags = (uint32_t*)malloc(amount);
+		memset(m_collisionFlags, 0, amount);
+	}
 
 	// Safety check
 	ASSERT_OR_DIE(sizeof(m_collisionFlags[0]) == MAX_TEXTURE_BYTE_WIDTH, "Error: Max VoxelTexture width isn't set up correctly");
@@ -122,7 +125,8 @@ bool VoxelTexture::CreateFromFile(const char* filename)
 
 		m_colorData[index] = colorPallette[colorIndex];
 
-		if (m_colorData[index].a != 0)
+		// Update the collision bit for this voxel
+		if (createCollisionMatrix && m_colorData[index].a != 0)
 		{
 			uint32_t& flags = m_collisionFlags[yCoord * m_dimensions.z + zCoord];
 			flags |= (TEXTURE_LEFTMOST_COLLISION_BIT >> xCoord);
@@ -135,7 +139,7 @@ bool VoxelTexture::CreateFromFile(const char* filename)
 	return true;
 }
 
-bool VoxelTexture::CreateFromColorStream(const Rgba* colors, const IntVector3& dimensions)
+bool VoxelTexture::CreateFromColorStream(const Rgba* colors, const IntVector3& dimensions, bool createCollisionMatrix)
 {
 	m_dimensions = dimensions;
 
@@ -149,28 +153,31 @@ bool VoxelTexture::CreateFromColorStream(const Rgba* colors, const IntVector3& d
 	m_colorData = (Rgba*)malloc(sizeof(Rgba) * numVoxels);
 	memcpy(m_colorData, colors, numVoxels * sizeof(Rgba));
 
-	m_collisionFlags = (uint32_t*)malloc(sizeof(uint32_t) * dimensions.y * dimensions.z);
+	if (createCollisionMatrix)
+	{
+		m_collisionFlags = (uint32_t*)malloc(sizeof(uint32_t) * dimensions.y * dimensions.z);
 
-// 	for (int y = 0; y < m_dimensions.y; ++y)
-// 	{
-// 		for (int z = 0; z < m_dimensions.z; ++z)
-// 		{
-// 			for (int x = 0; x < m_dimensions.x; ++x)
-// 			{
-// 				Rgba color = GetColorAtCoords(IntVector3(x, y, z));
-// 
-// 				if (color.a != 0)
-// 				{
-// 					int index = y * (m_dimensions.x * m_dimensions.z) + z * m_dimensions.x + x;
-// 					int byteIndex = index / 8;
-// 					int bitOffset = 7 - (index % 8);
-// 
-// 					uint32_t& collisionByte = m_collisionFlags[byteIndex];
-// 					collisionByte |= (1 << bitOffset);
-// 				}
-// 			}
-// 		}
-//	}
+		for (int y = 0; y < m_dimensions.y; ++y)
+		{
+			for (int z = 0; z < m_dimensions.z; ++z)
+			{
+				for (int x = 0; x < m_dimensions.x; ++x)
+				{
+					Rgba color = GetColorAtCoords(IntVector3(x, y, z));
+
+					if (color.a != 0)
+					{
+						int index = y * (m_dimensions.x * m_dimensions.z) + z * m_dimensions.x + x;
+						int byteIndex = index / 8;
+						int bitOffset = 7 - (index % 8);
+
+						uint32_t& collisionByte = m_collisionFlags[byteIndex];
+						collisionByte |= (1 << bitOffset);
+					}
+				}
+			}
+		}
+	}
 
 	return true;
 }
