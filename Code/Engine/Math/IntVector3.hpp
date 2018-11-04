@@ -56,6 +56,7 @@ public:
 
 	// Static constants
  	const static IntVector3 ZERO;
+	const static IntVector3 ONES;
 
 
 public:

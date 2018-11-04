@@ -232,6 +232,11 @@ void VoxelTexture::SetColorAtIndex(unsigned int index, const Rgba& color)
 
 Rgba VoxelTexture::GetColorAtCoords(const IntVector3& coords) const
 {
+	if (!AreCoordsValid(coords.x, coords.y, coords.z))
+	{
+		return Rgba(0, 0, 0, 0);
+	}
+
 	int index = coords.y * (m_dimensions.x * m_dimensions.z) + coords.z * m_dimensions.x + coords.x;
 	return m_colorData[index];
 }

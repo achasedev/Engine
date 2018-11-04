@@ -12,7 +12,7 @@
 
 // Initialize the static constants
  const IntVector3 IntVector3::ZERO				= IntVector3(0, 0, 0);
-
+ const IntVector3 IntVector3::ONES				= IntVector3(1, 1, 1);
 
 //-----------------------------------------------------------------------------------------------
 // default constructor
