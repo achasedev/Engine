@@ -950,6 +950,11 @@ static void WriteToDevConsole(LogMessage_t log, void* args)
 //
 bool ConsoleMessageHandler(unsigned int msg, size_t wparam, size_t lparam)
 {
+	if (!DevConsole::IsDevConsoleOpen())
+	{
+		return true;
+	}
+
 	UNUSED(lparam);
 	// Get the keycode of the key pressed
 	unsigned char keyCode = (unsigned char) wparam;
@@ -968,6 +973,7 @@ bool ConsoleMessageHandler(unsigned int msg, size_t wparam, size_t lparam)
 		return false;
 	}
 	}
+
 	return true;
 }
 
