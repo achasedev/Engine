@@ -22,6 +22,7 @@ class NetSession;
 #define INVALID_CONNECTION_INDEX (0xff)
 #define MAX_CONNECTIONS (32)
 #define MAX_MESSAGE_DEFINITIONS (256)
+#define DEFAULT_PORT_RANGE (10)
 
 struct NetSender_t
 {
@@ -79,6 +80,33 @@ struct PendingReceive
 	NetAddress_t	senderAddress;
 };
 
+// Host/Join
+struct NetConnectionInfo_t
+{
+	NetAddress_t address;
+	std::string name;
+	uint8_t sessionIndex;
+};
+
+enum eSessionState
+{
+	SESSION_DISCONNECTED = 0,	// Session can be modified
+	SESSION_BOUND,				// Bound to a socket - can send and receive connectionless messages. No connections exist
+	SESSION_CONNECTING,			// Attempting to connect - waiting for a response from a host
+	SESSION_JOINING,			// Has established a connection, waiting final setup information/join completion
+	SESSION_READY				// We are fully in the session
+};
+
+enum eSessionError
+{
+	SESSION_OK,
+	SESSION_ERROR_USER_DISCONNECTED,
+
+	SESSION_ERROR_JOIN_DENIED,
+	SESSION_ERROR_JOIN_DENIED_NOTHOST,
+	SESSION_ERROR_JOIN_DENIED_CLOSED,
+	SESSION_ERROR_JOIN_DENIED_FULL
+};
 
 class NetSession
 {
@@ -89,12 +117,22 @@ public:
 	NetSession();
 	~NetSession();
 
+	// Connecting
+	void							Host(const std::string& myName, uint16_t port, uint16_t portRange = DEFAULT_PORT_RANGE);
+	void							Join(const std::string& myName, const NetConnectionInfo_t& hostInfo);
+	void							Disconnect();
+
+	// Errors
+	void							SetError(eSessionError error, const std::string& errorMessage);
+	void							ClearError();
+	eSessionError					GetLastError(std::string& out_errorMessage);
+
+	void							Update();
+
 	void							RenderDebugInfo() const;
 
-	// Binding and Sending
-	bool							Bind(unsigned short port, uint16_t portRange);
+	// Sending
 	bool							SendPacket(const NetPacket* packet);
-
 	bool							SendMessageDirect(NetMessage* message, const NetSender_t& sender);
 
 	// Message Definitions
@@ -104,10 +142,12 @@ public:
 	bool							GetMessageDefinitionIndex(const std::string& name, uint8_t& out_index);
 
 	// Connections
-	bool							AddConnection(uint8_t bindingIndex, NetAddress_t targetAddress);
 	void							CloseAllConnections();
 	NetConnection*					GetConnection(uint8_t connectionIndex) const;
 	uint8_t							GetLocalConnectionIndex() const;
+
+	NetConnection*					GetMyConnection() const;
+	NetConnection*					GetHostConnection() const;
 
 	// General message processing
 	void							ProcessIncoming();
@@ -130,6 +170,11 @@ public:
 private:
 	//-----Private Methods-----
 
+	bool							BindSocket(unsigned short port, uint16_t portRange);
+	NetConnection*					CreateConnection(const NetConnectionInfo_t& connectionInfo);
+	void							DestroyConnection(NetConnection* connection);
+	void							BindConnection(uint8_t index, NetConnection* connection);
+
 	void							RegisterCoreMessages();
 
 	void							ReceiveIncoming();
@@ -137,7 +182,6 @@ private:
 	void							PushNewReceive(PendingReceive& pending);
 	bool							GetNextReceive(PendingReceive& out_pending);
 
-	//void							SortDefinitions();
 	bool							VerifyPacket(NetPacket* packet);
 	void							ProcessReceivedPacket(NetPacket* packet, const NetAddress_t& senderAddress);
 	bool							ShouldMessageBeProcessed(NetMessage* message, NetConnection* connection);
@@ -147,8 +191,18 @@ private:
 private:
 	//-----Private Data-----
 
+	// State management
+	eSessionState m_state = SESSION_DISCONNECTED;
+	eSessionError m_error = SESSION_OK;
+	std::string m_errorMesssage;
+
+	// Convenience pointers
+	NetConnection* m_myConnection = nullptr;
+	NetConnection* m_hostConnection = nullptr;
+
 	UDPSocket*									m_boundSocket;
-	NetConnection*								m_connections[MAX_CONNECTIONS];
+	std::vector<NetConnection*>					m_allConnections;
+	NetConnection*								m_boundConnections[MAX_CONNECTIONS];
 	const NetMessageDefinition_t*				m_messageDefinitions[MAX_MESSAGE_DEFINITIONS];
 
 	uint8_t										m_localConnectionIndex = 0xff;
@@ -157,15 +211,16 @@ private:
 	float										m_lossChance = 0.f;
 	FloatRange									m_latencyRange;
 
+	// Receiving
 	std::thread									m_receivingThread;
 	std::mutex									m_receiveLock;
 	std::vector<PendingReceive>					m_receiveQueue;
 	bool m_isReceiving = false;
 
-	// Network tick
+	// Network tick in seconds
 	float										m_timeBetweenSends = 0.f;
 
-	// Heartbeat
-	float										m_heartBeatInverval = 0.5f;
+	// Heartbeat in seconds
+	float										m_heartBeatInverval = 1.f;
 
 };

@@ -50,14 +50,29 @@ struct PacketTracker_t
 	unsigned int m_reliablesInPacket = 0;
 };
 
+enum eConnectionState
+{
+	CONNECTION_DISCONNECTED,
+	CONNECTION_BOUND,
+	CONNECTION_READY,
+};
+
 class NetConnection
 {
 public:
 	//-----Public Methods-----
 
-	NetConnection(NetAddress_t& address, NetSession* session, uint8_t connectionIndex);
+	NetConnection(NetSession* session, const NetConnectionInfo_t& connectionInfo);
 	~NetConnection();
 
+	// State
+	inline bool IsBound() const { return m_state >= CONNECTION_BOUND; }
+	inline bool IsDisconnected() const { return m_state == CONNECTION_DISCONNECTED; }
+	inline bool IsReady() const { return m_state == CONNECTION_READY; }
+	inline bool IsMe() const { return m_owningSession->GetMyConnection() == this; }
+	inline bool IsHost() const { return m_owningSession->GetHostConnection() == this; }
+
+	void		SetConnectionState(eConnectionState state);
 
 	// Queues the message to be processed later
 	void						Send(NetMessage* msg);
@@ -65,7 +80,8 @@ public:
 
 
 	// Returns the target address this connection is associated with
-	NetAddress_t				GetAddress();
+	NetAddress_t				GetAddress() const;
+	uint8_t						GetSessionIndex() const;
 
 	// Network tick
 	void						SetNetTickRate(float hertz);
@@ -112,16 +128,16 @@ private:
 private:
 	//-----Private Data-----
 
+	NetConnectionInfo_t			m_connectionInfo;
+	NetSession*					m_owningSession = nullptr;
+
+	eConnectionState			m_state = CONNECTION_DISCONNECTED;
+
 	std::vector<NetMessage*>	m_outboundUnreliables;
 	std::vector<NetMessage*>	m_unsentReliables;
 	std::vector<NetMessage*>	m_unconfirmedReliables;
 
 	std::vector<uint16_t>		m_receivedReliableIDs;
-
-	NetAddress_t				m_address;
-
-	NetSession*					m_owningSession = nullptr;
-	uint8_t						m_indexInSession;
 
 	// For net tick
 	float						m_timeBetweenSends = 0.f;

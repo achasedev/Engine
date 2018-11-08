@@ -31,10 +31,9 @@ bool CycleLessThan(uint16_t first, uint16_t second)
 //-----------------------------------------------------------------------------------------------
 // Constructor
 //
-NetConnection::NetConnection(NetAddress_t& address, NetSession* session, uint8_t connectionIndex)
-	: m_address(address)
+NetConnection::NetConnection(NetSession* session, const NetConnectionInfo_t& connectionInfo)
+	: m_connectionInfo(connectionInfo)
 	, m_owningSession(session)
-	, m_indexInSession(connectionIndex)
 {
 	m_sendTimer = new Stopwatch();
 	m_heartbeatTimer = new Stopwatch();
@@ -85,6 +84,15 @@ NetConnection::~NetConnection()
 
 
 //-----------------------------------------------------------------------------------------------
+// Sets the state of this connection to the state specified
+//
+void NetConnection::SetConnectionState(eConnectionState state)
+{
+	m_state = state;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Queues the message to be sent during a flush
 //
 void NetConnection::Send(NetMessage* msg)
@@ -130,7 +138,7 @@ void NetConnection::FlushMessages()
 	NetPacket* packet = new NetPacket();
 	packet->AdvanceWriteHead(PACKET_HEADER_SIZE); // Advance the write head now, and write the header later
 	packet->SetSenderConnectionIndex(m_owningSession->GetLocalConnectionIndex());
-	packet->SetReceiverConnectionIndex(m_indexInSession);
+	packet->SetReceiverConnectionIndex(m_connectionInfo.sessionIndex);
 
 	uint8_t messagesWritten = 0;
 	PacketTracker_t* tracker = CreateTrackerForAck(m_nextAckToSend);
@@ -213,9 +221,15 @@ void NetConnection::FlushMessages()
 //-----------------------------------------------------------------------------------------------
 // Returns the target address for this connection
 //
-NetAddress_t NetConnection::GetAddress()
+NetAddress_t NetConnection::GetAddress() const
 {
-	return m_address;
+	return m_connectionInfo.address;
+}
+
+
+uint8_t NetConnection::GetSessionIndex() const
+{
+	return m_connectionInfo.sessionIndex;
 }
 
 
@@ -408,7 +422,7 @@ bool NetConnection::NeedsToForceSend() const
 std::string NetConnection::GetDebugInfo() const
 {
 	std::string debugText = Stringf("   %-*i%-*s%-*.2f%-*.2f%-*.2f%-*.2f%-*i%-*i%-*s",
-		6, m_indexInSession, 21, m_address.ToString().c_str(), 8, 1000.f * m_rtt, 7, m_loss, 7, m_lastReceivedTimer->GetElapsedTime(), 7, m_lastSentTimer->GetElapsedTime(), 8, m_nextAckToSend - 1, 8, m_highestReceivedAck, 10, GetAsBitString(m_receivedBitfield).c_str());
+		6, m_connectionInfo.sessionIndex, 21, m_connectionInfo.address.ToString().c_str(), 8, 1000.f * m_rtt, 7, m_loss, 7, m_lastReceivedTimer->GetElapsedTime(), 7, m_lastSentTimer->GetElapsedTime(), 8, m_nextAckToSend - 1, 8, m_highestReceivedAck, 10, GetAsBitString(m_receivedBitfield).c_str());
 
 	return debugText;
 }
