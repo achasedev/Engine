@@ -16,10 +16,6 @@
 #include <WS2tcpip.h>
 #include <Windows.h>
 
-void Command_GetAddressForHost(Command& cmd);
-void Command_Connect(Command& cmd);
-void Command_Host(Command& cmd);
-
 bool Net::s_isRunning = false;
 
 //-----------------------------------------------------------------------------------------------
@@ -43,10 +39,6 @@ bool Net::Initialize()
 	if (success)
 	{
 		s_isRunning = true;
-
-		Command::Register("net_address", "Returns the IP address for the given host name.", &Command_GetAddressForHost);
-		Command::Register("net_connect", "Connects to a remote host and sends a message.", &Command_Connect);
-		Command::Register("net_host", "Creates a host session on this device for client connections", &Command_Host);
 	}
 	
 	return success;
@@ -153,151 +145,4 @@ bool Net::GetAddressForHost(sockaddr_in* out_addr, int* out_addrlen, const char*
 
 	::freeaddrinfo(result);
 	return foundAddress;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Command to print this computer's local IP address to the DevConsole
-//
-void Command_GetAddressForHost(Command& cmd)
-{
-	std::string hostname;
-	cmd.GetParam("h", hostname);
-
-	sockaddr_in address;
-	memset(&address, 0, sizeof(sockaddr));
-	int addressLength = 0;
-
-	// If no name was specified, default to this device's host name
-	if (IsStringNullOrEmpty(hostname))
-	{
-		bool foundLocalHostname = Net::GetLocalHostName(hostname);
-
-		if (!foundLocalHostname)
-		{
-			return;
-		}
-	}
-
-	// Get the address
-	bool succeeded = Net::GetAddressForHost(&address, &addressLength, hostname.c_str());
-
-	if (succeeded)
-	{
-		// Print out the address
-		char out[256];
-		::inet_ntop(address.sin_family, &(address.sin_addr), out, 256);
-		ConsolePrintf(Rgba::GREEN, "IP address for hostname %s is %s", hostname.c_str(), out);
-		LogTaggedPrintf("NET", "IP address for hostname %s is %s", hostname.c_str(), out);
-	}
-	else
-	{
-		ConsoleErrorf("Couldn't find address for hostname %s", hostname.c_str());
-		LogTaggedPrintf("NET", "Couldn't find address for hostname %s", hostname.c_str());
-	}
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Command to connect to a remote IP and send a message
-//
-void Command_Connect(Command& cmd)
-{
-	std::string addr_string, ip, port, message;
-
-	bool messageSpecified = cmd.GetParam("m", message);
-	bool addressSpecified = cmd.GetParam("a", addr_string);
-	
-	if (!messageSpecified || !addressSpecified)
-	{
-		ConsoleErrorf("No message or address specified, use the -m and -a flags");
-		return;
-	}
-
-	NetAddress_t addr(addr_string.c_str());
-
-	TODO("Check for valid address");
-	
-	TCPSocket socket;
-	if (!socket.Connect(addr))
-	{
-		ConsoleErrorf("Failed to connect");
-		return;
-	}
-
-	ConsolePrintf("Connected to %s", addr_string.c_str());
-
-	socket.Send(message.c_str(), message.size());
-
-	char payload[256];
-	int amountReceived = socket.Receive(payload, 256 - 1U);
-
-	if (amountReceived > 0)
-	{
-		payload[amountReceived] = NULL;
-		ConsolePrintf("Received: %s", payload);
-	}
-
-	socket.Close();
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Function to listen for connections on a separate thread, to allow console printing
-//
-void HostThread(void* params)
-{
-	int maxQueued = *((int*)params);
-	unsigned short port = *((unsigned short*)(((int*)params) + 1));
-	free(params);
-
-	TCPSocket hostSocket;
-	if (!hostSocket.Listen(port, maxQueued))
-	{
-		ConsoleErrorf("Error occurred while trying to host, see log for details");
-		return;
-	}
-
-	while (hostSocket.IsListening() && Net::IsRunning())
-	{
-		TCPSocket* clientSocket = hostSocket.Accept();
-		if (clientSocket != nullptr)
-		{
-			// Client connected, receive their data
-			char buffer[1024];
-			int receivedSize = clientSocket->Receive(buffer, 1023);
-
-			if (receivedSize > 0)
-			{
-				buffer[receivedSize] = NULL;
-
-				ConsolePrintf(Rgba::GREEN, "Received: %s", buffer);
-				clientSocket->Send("PONG", 5);
-			}
-
-			delete clientSocket;
-		}
-	}
-
-	// Done accepting connections, so close
-	hostSocket.Close();
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Command to create a listening host on this device, using the port specified
-//
-void Command_Host(Command& cmd)
-{
-	int maxQueued = 16;
-	cmd.GetParam("q", maxQueued, &maxQueued);
-
-	unsigned short port = 80;
-	cmd.GetParam("p", port, &port);
-
-	void* params = malloc(sizeof(int) + sizeof(unsigned short));
-	*((int*)params) = maxQueued;
-	*(unsigned short*)(((int*)params) + 1) = port;
-
-	Thread::CreateAndDetach(HostThread, params);
 }

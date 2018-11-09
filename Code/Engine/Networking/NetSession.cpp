@@ -35,10 +35,17 @@ NetSession::NetSession()
 NetSession::~NetSession()
 {
 	m_isReceiving = false;
-	m_receivingThread.join();
+	if (m_receivingThread.joinable())
+	{
+		m_receivingThread.join();
+	}
 
-	m_boundSocket->Close();
-	delete m_boundSocket;
+	if (m_boundSocket != nullptr)
+	{
+		m_boundSocket->Close();
+		delete m_boundSocket;
+		m_boundSocket = nullptr;
+	}
 }
 
 
@@ -134,7 +141,28 @@ void NetSession::RenderDebugInfo() const
 	renderer->DrawTextInBox2D(simText.c_str(), bounds, Vector2::ZERO, fontHeight, TEXT_DRAW_OVERRUN, font, Rgba::GRAY);
 	bounds.Translate(Vector2(0.f, -fontHeight));
 
-	renderer->DrawTextInBox2D(Stringf("Socket Address: %s", m_boundSocket->GetNetAddress().ToString().c_str()).c_str(), bounds, Vector2::ZERO, fontHeight, TEXT_DRAW_OVERRUN, font, Rgba::YELLOW);
+	std::string stateText = "State: ";
+	switch (m_state)
+	{
+	case SESSION_DISCONNECTED:
+		stateText += "Disconnected";
+		break;
+	case SESSION_BOUND:
+		stateText += Stringf("Bound to address %s", m_boundSocket->GetNetAddress().ToString().c_str());
+		break;
+	case SESSION_CONNECTING:
+		stateText += "Connecting...";
+		break;
+	case SESSION_JOINING:
+		stateText += "Joining...";
+		break;
+	case SESSION_READY:
+		stateText += "Ready(?)";
+		break;
+	default:
+		break;
+	}
+	renderer->DrawTextInBox2D(stateText, bounds, Vector2::ZERO, fontHeight, TEXT_DRAW_OVERRUN, font, Rgba::YELLOW);
 	bounds.Translate(Vector2(0.f, -2.f * fontHeight));
 
 	renderer->DrawTextInBox2D("Connections:", bounds, Vector2::ZERO, fontHeight, TEXT_DRAW_OVERRUN, font);
@@ -337,7 +365,12 @@ NetConnection* NetSession::GetConnection(uint8_t index) const
 //
 uint8_t NetSession::GetLocalConnectionIndex() const
 {
-	return m_localConnectionIndex;
+	if (m_myConnection == nullptr)
+	{
+		return INVALID_CONNECTION_INDEX;
+	}
+
+	return m_myConnection->GetSessionIndex();
 }
 
 
@@ -402,15 +435,15 @@ void NetSession::ProcessOutgoing()
 		if (currConnection != nullptr)
 		{
 			// Check heartbeat
-// 			if (currConnection->HasHeartbeatElapsed())
-// 			{
-// 				const NetMessageDefinition_t* definition = GetMessageDefinition("heartbeat");
-// 
-// 				if (definition != nullptr)
-// 				{
-// 					currConnection->Send(new NetMessage(definition));
-// 				}
-// 			}
+			if (currConnection->HasHeartbeatElapsed())
+			{
+				const NetMessageDefinition_t* definition = GetMessageDefinition("heartbeat");
+
+				if (definition != nullptr)
+				{
+					currConnection->Send(new NetMessage(definition));
+				}
+			}
 
 			// Check send rate
 			if ((currConnection->HasOutboundMessages() || currConnection->NeedsToForceSend()))
@@ -493,7 +526,7 @@ float NetSession::GetHeartbeatInterval() const
 NetConnection* NetSession::CreateConnection(const NetConnectionInfo_t& connectionInfo)
 {
 	NetConnection* connection = new NetConnection(this, connectionInfo);
-	m_allConnections.push_back(connection);
+	m_pendingConnections.push_back(connection);
 
 	if (connectionInfo.sessionIndex != INVALID_CONNECTION_INDEX)
 	{
@@ -528,11 +561,11 @@ void NetSession::DestroyConnection(NetConnection* connection)
 	}
 
 	// Remove it from the list of all connections
-	for (int i = 0; i < (int)m_allConnections.size(); ++i)
+	for (int i = 0; i < (int)m_pendingConnections.size(); ++i)
 	{
-		if (m_allConnections[i] == connection)
+		if (m_pendingConnections[i] == connection)
 		{
-			m_allConnections.erase(m_allConnections.begin() + i);
+			m_pendingConnections.erase(m_pendingConnections.begin() + i);
 			break;
 		}
 	}
@@ -543,12 +576,27 @@ void NetSession::DestroyConnection(NetConnection* connection)
 
 
 //-----------------------------------------------------------------------------------------------
-// Binds the given connection....idk what that means
+// Binds the given connection by putting it in the indexed list, removing it from the pending list
 //
 void NetSession::BindConnection(uint8_t index, NetConnection* connection)
 {
-	UNUSED(index);
-	UNUSED(connection);
+	if (m_boundConnections[index] != nullptr)
+	{
+		LogTaggedPrintf("NET", "Error: NetSession::BindConnection() tried to bind connection address %s to index %i already in use", connection->GetAddress().ToString().c_str(), index);
+		return;
+	}
+
+	m_boundConnections[index] = connection;
+
+	// Also remove the connection from our list of pending connections if it exists there
+	for (int i = 0; i < (int)m_pendingConnections.size(); ++i)
+	{
+		if (m_pendingConnections[i] == connection)
+		{
+			m_pendingConnections.erase(m_pendingConnections.begin() + i);
+			break;
+		}
+	}
 }
 
 

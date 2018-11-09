@@ -201,11 +201,9 @@ private:
 	NetConnection* m_hostConnection = nullptr;
 
 	UDPSocket*									m_boundSocket;
-	std::vector<NetConnection*>					m_allConnections;
+	std::vector<NetConnection*>					m_pendingConnections;
 	NetConnection*								m_boundConnections[MAX_CONNECTIONS];
 	const NetMessageDefinition_t*				m_messageDefinitions[MAX_MESSAGE_DEFINITIONS];
-
-	uint8_t										m_localConnectionIndex = 0xff;
 
 	// Net sim, latency in milliseconds
 	float										m_lossChance = 0.f;
