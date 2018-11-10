@@ -5,6 +5,7 @@
 /* Description: Class to represent a single collection of network connections
 /************************************************************************/
 #include "Engine/Math/FloatRange.hpp"
+#include "Engine/Core/Time/Stopwatch.hpp"
 #include "Engine/Networking/NetAddress.hpp"
 #include "Engine/Networking/NetMessage.hpp"
 #include "Engine/DataStructures/ThreadSafeVector.hpp"
@@ -23,6 +24,7 @@ class NetSession;
 #define MAX_CONNECTIONS (32)
 #define MAX_MESSAGE_DEFINITIONS (256)
 #define DEFAULT_PORT_RANGE (10)
+#define JOIN_TIMEOUT (10)
 
 struct NetSender_t
 {
@@ -38,6 +40,14 @@ enum eNetCoreMessage : uint8_t
 	NET_MSG_PING = 0,
 	NET_MSG_PONG,
 	NET_MSG_HEARTBEAT,
+
+	// For host join
+	NET_MSG_JOIN_REQUEST,		// unreliable
+	NET_MSG_JOIN_DENY,			// unreliable
+	NET_MSG_JOIN_ACCEPT,		// reliable, in-order
+	NET_MSG_NEW_CONNECTION,		// reliable, in-order
+	NET_MSG_JOIN_FINISHED,		// reliable, in-order
+	NET_MSG_UPDATE_CONN_STATE,	// reliable, in-order
 	NET_MSG_CORE_COUNT
 };
 
@@ -46,7 +56,7 @@ enum eNetMessageOption : uint32_t
 	NET_MSG_OPTION_NONE = 0,
 	NET_MSG_OPTION_CONNECTIONLESS = (1 << 0),
 	NET_MSG_OPTION_RELIABLE = (1 << 1),
-	NET_MSG_OPTION_IN_ORDER = (1 << 2),
+	NET_MSG_OPTION_IN_ORDER = (1 << 2) | NET_MSG_OPTION_RELIABLE, // All in-order traffic is reliable!
 };
 
 // Callback for the NetSession
@@ -119,9 +129,11 @@ public:
 
 	// Connecting
 	void							Host(const std::string& myName, uint16_t port, uint16_t portRange = DEFAULT_PORT_RANGE);
-	void							Join(const std::string& myName, const NetConnectionInfo_t& hostInfo);
+	void							Join(const std::string& myName, NetConnectionInfo_t& hostInfo);
 	void							Disconnect();
 
+	bool							IsHosting() const;
+	
 	// Errors
 	void							SetError(eSessionError error, const std::string& errorMessage);
 	void							ClearError();
@@ -134,6 +146,7 @@ public:
 	// Sending
 	bool							SendPacket(const NetPacket* packet);
 	bool							SendMessageDirect(NetMessage* message, const NetSender_t& sender);
+	bool							BroadcastMessage(NetMessage* message);
 
 	// Message Definitions
 	void							RegisterMessageDefinition(uint8_t messageID, const std::string& name, NetMessage_cb callback, eNetMessageOption options = NET_MSG_OPTION_NONE);
@@ -148,6 +161,9 @@ public:
 
 	NetConnection*					GetMyConnection() const;
 	NetConnection*					GetHostConnection() const;
+	bool							IsConnectionListFull() const;
+	bool							DoesConnectionForAddressExist(const NetSender_t& sender) const;
+	unsigned int					GetConnectionCount() const;
 
 	// General message processing
 	void							ProcessIncoming();
@@ -170,10 +186,13 @@ public:
 private:
 	//-----Private Methods-----
 
+	void							TransitionToState(eSessionState state);
+
 	bool							BindSocket(unsigned short port, uint16_t portRange);
 	NetConnection*					CreateConnection(const NetConnectionInfo_t& connectionInfo);
 	void							DestroyConnection(NetConnection* connection);
 	void							BindConnection(uint8_t index, NetConnection* connection);
+	uint8_t							GetFreeConnectionIndex() const;
 
 	void							RegisterCoreMessages();
 
@@ -186,6 +205,14 @@ private:
 	void							ProcessReceivedPacket(NetPacket* packet, const NetAddress_t& senderAddress);
 	bool							ShouldMessageBeProcessed(NetMessage* message, NetConnection* connection);
 	void							ProcessReceivedMessage(NetMessage* message, const NetAddress_t& address, uint8_t connectionIndex);
+
+	// Host/Join handlers, to allow access to CreateConnection and such
+	friend bool						OnJoinRequest(NetMessage* msg, const NetSender_t& sender);
+	friend bool						OnJoinDeny(NetMessage* msg, const NetSender_t& sender);
+	friend bool						OnJoinAccept(NetMessage* msg, const NetSender_t& sender);
+	friend bool						OnNewConnection(NetMessage* msg, const NetSender_t& sender);
+	friend bool						OnJoinFinished(NetMessage* msg, const NetSender_t& sender);
+	friend bool						OnUpdateConnectionState(NetMessage* msg, const NetSender_t& sender);
 
 
 private:
@@ -204,6 +231,9 @@ private:
 	std::vector<NetConnection*>					m_pendingConnections;
 	NetConnection*								m_boundConnections[MAX_CONNECTIONS];
 	const NetMessageDefinition_t*				m_messageDefinitions[MAX_MESSAGE_DEFINITIONS];
+
+	Stopwatch									m_joinTimer;
+	Stopwatch									m_stateTimer;
 
 	// Net sim, latency in milliseconds
 	float										m_lossChance = 0.f;

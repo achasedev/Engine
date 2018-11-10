@@ -89,6 +89,12 @@ NetConnection::~NetConnection()
 void NetConnection::SetConnectionState(eConnectionState state)
 {
 	m_state = state;
+
+	// If this is my connection and I am ready, tell everyone I know I'm ready
+	if (m_owningSession->GetMyConnection() == this && state == CONNECTION_READY)
+	{
+		m_owningSession->BroadcastMessage(new NetMessage(m_owningSession->GetMessageDefinition("update_connection_state")));
+	}
 }
 
 

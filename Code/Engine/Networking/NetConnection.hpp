@@ -66,7 +66,7 @@ public:
 	~NetConnection();
 
 	// State
-	inline bool IsBound() const { return m_state >= CONNECTION_BOUND; }
+	inline bool IsConnected() const { return m_state >= CONNECTION_BOUND; }
 	inline bool IsDisconnected() const { return m_state == CONNECTION_DISCONNECTED; }
 	inline bool IsReady() const { return m_state == CONNECTION_READY; }
 	inline bool IsMe() const { return m_owningSession->GetMyConnection() == this; }
