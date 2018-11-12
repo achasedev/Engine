@@ -89,12 +89,6 @@ NetConnection::~NetConnection()
 void NetConnection::SetConnectionState(eConnectionState state)
 {
 	m_state = state;
-
-	// If this is my connection and I am ready, tell everyone I know I'm ready
-	if (m_owningSession->GetMyConnection() == this && state == CONNECTION_READY)
-	{
-		m_owningSession->BroadcastMessage(new NetMessage(m_owningSession->GetMessageDefinition("update_connection_state")));
-	}
 }
 
 
@@ -225,6 +219,24 @@ void NetConnection::FlushMessages()
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the name (ID) of the user this connection points to
+//
+std::string NetConnection::GetName() const
+{
+	return m_connectionInfo.name;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Updates the connection's name (ID)
+//
+void NetConnection::UpdateName(const std::string& name)
+{
+	m_connectionInfo.name = name;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the target address for this connection
 //
 NetAddress_t NetConnection::GetAddress() const
@@ -236,6 +248,15 @@ NetAddress_t NetConnection::GetAddress() const
 uint8_t NetConnection::GetSessionIndex() const
 {
 	return m_connectionInfo.sessionIndex;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the session index of the connection
+//
+void NetConnection::SetSessionIndex(uint8_t index)
+{
+	m_connectionInfo.sessionIndex = index;
 }
 
 
@@ -427,8 +448,8 @@ bool NetConnection::NeedsToForceSend() const
 //
 std::string NetConnection::GetDebugInfo() const
 {
-	std::string debugText = Stringf("   %-*i%-*s%-*.2f%-*.2f%-*.2f%-*.2f%-*i%-*i%-*s",
-		6, m_connectionInfo.sessionIndex, 21, m_connectionInfo.address.ToString().c_str(), 8, 1000.f * m_rtt, 7, m_loss, 7, m_lastReceivedTimer->GetElapsedTime(), 7, m_lastSentTimer->GetElapsedTime(), 8, m_nextAckToSend - 1, 8, m_highestReceivedAck, 10, GetAsBitString(m_receivedBitfield).c_str());
+	std::string debugText = Stringf("   %-*i%-*s%-*s%-*.2f%-*.2f%-*.2f%-*.2f%-*i%-*i%-*s",
+		6, m_connectionInfo.sessionIndex, 10, m_connectionInfo.name.c_str(), 21, m_connectionInfo.address.ToString().c_str(), 8, 1000.f * m_rtt, 7, m_loss, 7, m_lastReceivedTimer->GetElapsedTime(), 7, m_lastSentTimer->GetElapsedTime(), 8, m_nextAckToSend - 1, 8, m_highestReceivedAck, 10, GetStateAsString().c_str());
 
 	return debugText;
 }
@@ -642,6 +663,28 @@ void NetConnection::UpdateLossCalculation()
 	// Reset the current count for the next window
 	m_packetsSent = 0;
 	m_lossCount = 0;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the state of the connection as a string
+//
+std::string NetConnection::GetStateAsString() const
+{
+	switch (m_state)
+	{
+	case CONNECTION_DISCONNECTED:
+		return "DC'd";
+		break;
+	case CONNECTION_BOUND:
+		return "BOUND";
+		break;
+	case CONNECTION_READY:
+		return "READY";
+		break;
+	default:
+		break;
+	}
 }
 
 

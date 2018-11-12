@@ -80,8 +80,11 @@ public:
 
 
 	// Returns the target address this connection is associated with
+	std::string					GetName() const;
+	void						UpdateName(const std::string& name);
 	NetAddress_t				GetAddress() const;
 	uint8_t						GetSessionIndex() const;
+	void						SetSessionIndex(uint8_t index);
 
 	// Network tick
 	void						SetNetTickRate(float hertz);
@@ -123,6 +126,8 @@ private:
 
 	// RTT/Loss
 	void						UpdateLossCalculation();
+
+	std::string					GetStateAsString() const;
 
 
 private:

@@ -83,6 +83,7 @@ void NetSession::Host(const std::string& myName, uint16_t port, uint16_t portRan
 	m_hostConnection = connection;
 
 	connection->SetConnectionState(CONNECTION_READY);
+	TransitionToState(SESSION_READY);
 }
 
 
@@ -97,7 +98,7 @@ void NetSession::Join(const std::string& myName, NetConnectionInfo_t& hostInfo)
 		return;
 	}
 
-	uint16_t portRange = (uint16_t) GetConnectionCount();
+	uint16_t portRange = MAX_CONNECTIONS;
 	
 	bool bound = BindSocket(hostInfo.address.port, portRange);
 
@@ -109,22 +110,56 @@ void NetSession::Join(const std::string& myName, NetConnectionInfo_t& hostInfo)
 	}
 
 	// Create a connection for the host
-	hostInfo.sessionIndex = 0; // Ensure the host is at 0
+	hostInfo.sessionIndex = 0;
 	m_hostConnection = CreateConnection(hostInfo);
 	
 	// Create a connection for ourselves, with no index yet
 	NetConnectionInfo_t myInfo;
 	myInfo.address = m_boundSocket->GetNetAddress();
-	myInfo.name = "ME";
-	myInfo.sessionIndex = INVALID_CONNECTION_INDEX;
+	myInfo.name = myName;
+	myInfo.sessionIndex = INVALID_CONNECTION_INDEX; // Mark connnection as INVALID until we get an index from the host
 
 	m_myConnection = CreateConnection(myInfo);
 
+	// Send a join request
+	NetMessage* msg = new NetMessage(GetMessageDefinition("join_request"));
+	m_hostConnection->Send(msg);
+
+	ConsolePrintf(Rgba::GREEN, "Sent a request to host address %s", m_hostConnection->GetAddress().ToString().c_str());
+
 	// We have a connection but is still in the DISCONNECTED connection state, so we're flagged as
 	// connecting still
-	m_state = SESSION_CONNECTING;
+	TransitionToState(SESSION_CONNECTING);
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Destroys all connections and sets us to a disconnected state
+//
+void NetSession::Disconnect()
+{
+	for (int i = 0; i < MAX_CONNECTIONS; ++i)
+	{
+		if (m_boundConnections[i] != nullptr)
+		{
+			DestroyConnection(m_boundConnections[i]);
+		}
+	}
+
+	if (m_myConnection != nullptr)
+	{
+		delete m_myConnection;
+		m_myConnection = nullptr;
+	}
+
+	if (m_hostConnection != nullptr)
+	{
+		delete m_hostConnection;
+		m_hostConnection = nullptr;
+	}
+
+	TransitionToState(SESSION_DISCONNECTED);
+}
 
 //-----------------------------------------------------------------------------------------------
 // Returns whether this session is currently a host of a connection graph
@@ -195,9 +230,16 @@ void NetSession::Update()
 		break;
 	case SESSION_CONNECTING:
 		// Check if we've connected, and if so transition out
-		if (m_myConnection->IsConnected())
+		if (m_hostConnection->IsConnected())
 		{
-			TransitionToState(SESSION_JOINING);
+			if (m_hostConnection->IsReady())
+			{
+				TransitionToState(SESSION_READY);
+			}
+			else
+			{
+				TransitionToState(SESSION_JOINING);
+			}
 		}
 		else
 		{
@@ -212,7 +254,9 @@ void NetSession::Update()
 			{
 				// We're not connected to the host yet at all, so keep sending requests
 				NetMessage* msg = new NetMessage(GetMessageDefinition("join_request"));
-				m_myConnection->Send(msg);
+				m_hostConnection->Send(msg);
+
+				ConsolePrintf(Rgba::GREEN, "Sent a request to host address %s", m_hostConnection->GetAddress().ToString().c_str());
 
 				m_joinTimer.SetInterval(0.1f);
 			}
@@ -288,7 +332,7 @@ void NetSession::RenderDebugInfo() const
 		stateText += "Joining...";
 		break;
 	case SESSION_READY:
-		stateText += "Ready(?)";
+		stateText += "Ready";
 		break;
 	default:
 		break;
@@ -299,8 +343,8 @@ void NetSession::RenderDebugInfo() const
 	renderer->DrawTextInBox2D("Connections:", bounds, Vector2::ZERO, fontHeight, TEXT_DRAW_OVERRUN, font);
 	bounds.Translate(Vector2(0.f, -fontHeight));
 
-	std::string headingText = Stringf("-- %-*s%-*s%-*s%-*s%-*s%-*s%-*s%-*s%-*s",
-		6, "INDEX", 21, "ADDRESS", 8, "RTT(ms)", 7, "LOSS", 7, "LRCV", 7, "LSNT", 8, "SNTACK", 8, "RCVACK", 10, "RCVBITS");
+	std::string headingText = Stringf("-- %-*s%-*s%-*s%-*s%-*s%-*s%-*s%-*s%-*s%-*s",
+		6, "INDEX", 10, "NAME", 21, "ADDRESS", 8, "RTT(ms)", 7, "LOSS", 7, "LRCV", 7, "LSNT", 8, "SNTACK", 8, "RCVACK", 10, "STATE");
 
 	renderer->DrawTextInBox2D(headingText.c_str(), bounds, Vector2::ZERO, fontHeight, TEXT_DRAW_OVERRUN, font);
 	bounds.Translate(Vector2(0.f, -fontHeight));
@@ -438,7 +482,7 @@ bool NetSession::SendMessageDirect(NetMessage* message, const NetSender_t& sende
 //-----------------------------------------------------------------------------------------------
 // Broadcasts the given message to all connections except my connection
 //
-bool NetSession::BroadcastMessage(NetMessage* message)
+void NetSession::BroadcastMessage(NetMessage* message)
 {
 	for (int i = 0; i < MAX_CONNECTIONS; ++i)
 	{
@@ -759,7 +803,6 @@ float NetSession::GetHeartbeatInterval() const
 NetConnection* NetSession::CreateConnection(const NetConnectionInfo_t& connectionInfo)
 {
 	NetConnection* connection = new NetConnection(this, connectionInfo);
-	m_pendingConnections.push_back(connection);
 
 	if (connectionInfo.sessionIndex != INVALID_CONNECTION_INDEX)
 	{
@@ -793,16 +836,6 @@ void NetSession::DestroyConnection(NetConnection* connection)
 		m_boundConnections[index] = nullptr;
 	}
 
-	// Remove it from the list of all connections
-	for (int i = 0; i < (int)m_pendingConnections.size(); ++i)
-	{
-		if (m_pendingConnections[i] == connection)
-		{
-			m_pendingConnections.erase(m_pendingConnections.begin() + i);
-			break;
-		}
-	}
-
 	// Free up the memory
 	delete connection;
 }
@@ -821,15 +854,8 @@ void NetSession::BindConnection(uint8_t index, NetConnection* connection)
 
 	m_boundConnections[index] = connection;
 
-	// Also remove the connection from our list of pending connections if it exists there
-	for (int i = 0; i < (int)m_pendingConnections.size(); ++i)
-	{
-		if (m_pendingConnections[i] == connection)
-		{
-			m_pendingConnections.erase(m_pendingConnections.begin() + i);
-			break;
-		}
-	}
+	// Update the connection's index stored internally
+	connection->SetSessionIndex(index);
 
 	// Flag it as bound
 	connection->SetConnectionState(CONNECTION_BOUND);
@@ -843,7 +869,7 @@ uint8_t NetSession::GetFreeConnectionIndex() const
 {
 	for (int i = 0; i < MAX_CONNECTIONS; ++i)
 	{
-		if (m_boundConnections[i] != nullptr)
+		if (m_boundConnections[i] == nullptr)
 		{
 			return i;
 		}
@@ -863,12 +889,12 @@ void NetSession::RegisterCoreMessages()
 	RegisterMessageDefinition(NET_MSG_HEARTBEAT, "heartbeat", OnHeartBeat);
 
 	// Host/Join
-	RegisterMessageDefinition(NET_MSG_JOIN_REQUEST, "join_request", OnJoinRequest);
-	RegisterMessageDefinition(NET_MSG_JOIN_DENY, "join_deny", OnJoinDeny);
-	RegisterMessageDefinition(NET_MSG_JOIN_ACCEPT, "join_accept", OnJoinAccept);
-	RegisterMessageDefinition(NET_MSG_NEW_CONNECTION, "new_connection", OnNewConnection);
-	RegisterMessageDefinition(NET_MSG_JOIN_FINISHED, "join_finished", OnJoinFinished);
-	RegisterMessageDefinition(NET_MSG_UPDATE_CONN_STATE, "update_connection_state", OnUpdateConnectionState);
+	RegisterMessageDefinition(NET_MSG_JOIN_REQUEST, "join_request", OnJoinRequest, NET_MSG_OPTION_CONNECTIONLESS);
+	RegisterMessageDefinition(NET_MSG_JOIN_DENY, "join_deny", OnJoinDeny, NET_MSG_OPTION_CONNECTIONLESS);
+	RegisterMessageDefinition(NET_MSG_JOIN_ACCEPT, "join_accept", OnJoinAccept, NET_MSG_OPTION_IN_ORDER);
+	RegisterMessageDefinition(NET_MSG_NEW_CONNECTION, "new_connection", OnNewConnection, NET_MSG_OPTION_IN_ORDER);
+	RegisterMessageDefinition(NET_MSG_HOST_FINISHED_SETUP, "host_setup_complete", OnHostFinishedSettingMeUp, NET_MSG_OPTION_IN_ORDER);
+	RegisterMessageDefinition(NET_MSG_CLIENT_JOIN_FINISHED, "client_join_finished", OnClientFinishedTheirSetup, NET_MSG_OPTION_IN_ORDER);
 }
 
 
@@ -1234,7 +1260,7 @@ bool OnJoinRequest(NetMessage* msg, const NetSender_t& sender)
 	bool isHosting = session->IsHosting();
 	bool isFull = session->IsConnectionListFull();
 
-	if (!isHosting || isFull)
+	if (isHosting && !isFull)
 	{
 		// Create a connection for this
 		NetConnectionInfo_t info;
@@ -1251,7 +1277,10 @@ bool OnJoinRequest(NetMessage* msg, const NetSender_t& sender)
 		LogTaggedPrintf("NET", "Address %s connected", sender.address.ToString().c_str());
 
 		// Also send a join finished message, since we finished joining them on our end
-		NetMessage* finishedMessage = new NetMessage(session->GetMessageDefinition("join_finished"));
+		// Contains their index to use and the host's name
+		NetMessage* finishedMessage = new NetMessage(session->GetMessageDefinition("host_setup_complete"));
+		finishedMessage->Write(info.sessionIndex);
+		finishedMessage->WriteString(session->GetMyConnection()->GetName());
 		connection->Send(finishedMessage);
 	}
 	else
@@ -1272,13 +1301,88 @@ bool OnJoinRequest(NetMessage* msg, const NetSender_t& sender)
 
 		session->SendMessageDirect(msg, sender);
 	}
-
 }
+
+
+//- C FUNCTION ----------------------------------------------------------------------------------
+// When a join deny message is received, just print
+//
+bool OnJoinDeny(NetMessage* msg, const NetSender_t& sender)
+{
+	std::string errorMessage;
+	msg->ReadString(errorMessage);
+
+	ConsoleErrorf("Failed to join - %s", errorMessage.c_str());
+	ConsoleErrorf("Disconnecting session");
+	sender.netSession->Disconnect();
+
+	return true;
+}
+
+
+//- C FUNCTION ----------------------------------------------------------------------------------
+// When the host accepts our join request
+//
+bool OnJoinAccept(NetMessage* msg, const NetSender_t& sender)
+{
+	ConsolePrintf(Rgba::GREEN, "Host accepted the connection, will send a join finished message when they are done setting up...");
+	return true;
+}
+
+
+//- C FUNCTION ----------------------------------------------------------------------------------
+// Function callback for when a new connection is received
+//
+bool OnNewConnection(NetMessage* msg, const NetSender_t& sender)
+{
+	return true;
+}
+
+
+//- C FUNCTION ----------------------------------------------------------------------------------
+// Function callback for when the host is finished setting up a connection
+//
+bool OnHostFinishedSettingMeUp(NetMessage* msg, const NetSender_t& sender)
+{
+	ConsolePrintf(Rgba::GREEN, "Received a finished setup message from the host, finalizing our connection...");
+	uint8_t myIndex;
+
+	if (!msg->Read(myIndex))
+	{
+		ConsoleErrorf("Couldn't read Join Accept indices from message");
+		return false;
+	}
+
+	NetConnection* myConnection = sender.netSession->GetMyConnection();
+
+	// Bind my connection
+	sender.netSession->BindConnection(myIndex, myConnection);
+
+	// Also update the host's name
+	std::string hostName;
+	msg->ReadString(hostName);
+
+	NetConnection* hostConnection = sender.netSession->GetHostConnection();
+	hostConnection->UpdateName(hostName);
+
+	// No other work to do, so mark connections as ready
+	myConnection->SetConnectionState(CONNECTION_READY);
+	hostConnection->SetConnectionState(CONNECTION_READY);
+
+	// Let the host know we're ready, and what our name is
+	NetMessage* finishedMsg = new NetMessage(sender.netSession->GetMessageDefinition("client_join_finished"));
+	finishedMsg->WriteString(myConnection->GetName());
+
+	hostConnection->Send(finishedMsg);
+
+	ConsolePrintf(Rgba::GREEN, "Finished setting up our connections, now telling the host we're done");
+}
+
 
 //-----------------------------------------------------------------------------------------------
 // Handler for when the connection is ready on the sender's end, and we can mark it ready here
 //
-bool OnUpdateConnectionState(NetMessage* msg, const NetSender_t& sender)
+bool OnClientFinishedTheirSetup(NetMessage* msg, const NetSender_t& sender)
 {
 	NetConnection* connection = sender.netSession->GetConnection(sender.connectionIndex);
 
@@ -1287,6 +1391,13 @@ bool OnUpdateConnectionState(NetMessage* msg, const NetSender_t& sender)
 		return false;
 	}
 
+	// Get the client's name
+	std::string clientName;
+	msg->ReadString(clientName);
+
+	connection->UpdateName(clientName);
+
+	// Mark the connection ready
 	connection->SetConnectionState(CONNECTION_READY);
 
 	ConsolePrintf(Rgba::GREEN, "Received ready confirm from address %s, connection set to ready", sender.address.ToString().c_str());

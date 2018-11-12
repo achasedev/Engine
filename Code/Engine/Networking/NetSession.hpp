@@ -46,8 +46,8 @@ enum eNetCoreMessage : uint8_t
 	NET_MSG_JOIN_DENY,			// unreliable
 	NET_MSG_JOIN_ACCEPT,		// reliable, in-order
 	NET_MSG_NEW_CONNECTION,		// reliable, in-order
-	NET_MSG_JOIN_FINISHED,		// reliable, in-order
-	NET_MSG_UPDATE_CONN_STATE,	// reliable, in-order
+	NET_MSG_HOST_FINISHED_SETUP,		// reliable, in-order
+	NET_MSG_CLIENT_JOIN_FINISHED,	// reliable, in-order
 	NET_MSG_CORE_COUNT
 };
 
@@ -133,7 +133,7 @@ public:
 	void							Disconnect();
 
 	bool							IsHosting() const;
-	
+
 	// Errors
 	void							SetError(eSessionError error, const std::string& errorMessage);
 	void							ClearError();
@@ -146,7 +146,7 @@ public:
 	// Sending
 	bool							SendPacket(const NetPacket* packet);
 	bool							SendMessageDirect(NetMessage* message, const NetSender_t& sender);
-	bool							BroadcastMessage(NetMessage* message);
+	void							BroadcastMessage(NetMessage* message);
 
 	// Message Definitions
 	void							RegisterMessageDefinition(uint8_t messageID, const std::string& name, NetMessage_cb callback, eNetMessageOption options = NET_MSG_OPTION_NONE);
@@ -211,8 +211,8 @@ private:
 	friend bool						OnJoinDeny(NetMessage* msg, const NetSender_t& sender);
 	friend bool						OnJoinAccept(NetMessage* msg, const NetSender_t& sender);
 	friend bool						OnNewConnection(NetMessage* msg, const NetSender_t& sender);
-	friend bool						OnJoinFinished(NetMessage* msg, const NetSender_t& sender);
-	friend bool						OnUpdateConnectionState(NetMessage* msg, const NetSender_t& sender);
+	friend bool						OnHostFinishedSettingMeUp(NetMessage* msg, const NetSender_t& sender);
+	friend bool						OnClientFinishedTheirSetup(NetMessage* msg, const NetSender_t& sender);
 
 
 private:
@@ -228,7 +228,6 @@ private:
 	NetConnection* m_hostConnection = nullptr;
 
 	UDPSocket*									m_boundSocket;
-	std::vector<NetConnection*>					m_pendingConnections;
 	NetConnection*								m_boundConnections[MAX_CONNECTIONS];
 	const NetMessageDefinition_t*				m_messageDefinitions[MAX_MESSAGE_DEFINITIONS];
 
