@@ -65,6 +65,28 @@ NetMessage::NetMessage(NetMessage&& moveFrom)
 
 
 //-----------------------------------------------------------------------------------------------
+// Copy constructor
+//
+NetMessage::NetMessage(const NetMessage& copy)
+	: BytePacker(MESSAGE_MTU, m_payload, false, LITTLE_ENDIAN)
+{
+	m_bufferCapacity = copy.m_bufferCapacity;
+	m_endianness = copy.m_endianness;
+	m_readHead = copy.m_readHead;
+	m_writeHead = copy.m_writeHead;
+	m_ownsMemory = copy.m_ownsMemory;
+
+	m_definition = copy.m_definition;
+	m_reliableID = copy.m_reliableID;
+
+	m_sequenceID = copy.m_sequenceID;
+	m_sequenceChannelID = copy.m_sequenceChannelID;
+
+	memcpy(m_payload, copy.m_payload, MESSAGE_MTU);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Destructor - for cleaning up the BytePacker
 //
 NetMessage::~NetMessage()
@@ -93,6 +115,29 @@ NetMessage& NetMessage::operator=(NetMessage&& moveFrom)
 
 	// Invalidate
 	moveFrom.m_buffer = nullptr;
+
+	return *this;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Copy override
+//
+NetMessage& NetMessage::operator=(const NetMessage& copy)
+{
+	m_bufferCapacity = copy.m_bufferCapacity;
+	m_endianness = copy.m_endianness;
+	m_readHead = copy.m_readHead;
+	m_writeHead = copy.m_writeHead;
+	m_ownsMemory = copy.m_ownsMemory;
+
+	m_definition = copy.m_definition;
+	m_reliableID = copy.m_reliableID;
+
+	m_sequenceID = copy.m_sequenceID;
+	m_sequenceChannelID = copy.m_sequenceChannelID;
+
+	memcpy(m_payload, copy.m_payload, MESSAGE_MTU);
 
 	return *this;
 }

@@ -484,11 +484,21 @@ bool NetSession::SendMessageDirect(NetMessage* message, const NetSender_t& sende
 //
 void NetSession::BroadcastMessage(NetMessage* message)
 {
+	bool firstSent = false;
 	for (int i = 0; i < MAX_CONNECTIONS; ++i)
 	{
 		if (m_boundConnections[i] != nullptr && m_boundConnections[i] != m_myConnection)
 		{
-			m_boundConnections[i]->Send(message);
+			if (!firstSent)
+			{
+				m_boundConnections[i]->Send(message);
+				firstSent = true;
+			}
+			else
+			{
+				NetMessage* copy = new NetMessage(*message);
+				m_boundConnections[i]->Send(copy);
+			}
 		}
 	}
 }
@@ -507,8 +517,7 @@ const NetMessageDefinition_t* NetSession::GetMessageDefinition(const std::string
 		}
 	}
 
-	LogTaggedPrintf("NET", "Error - NetSession::GetMessageDefinition() couldn't find definition for name %s", name.c_str());
-	return nullptr;
+	ERROR_AND_DIE("Message definition doesn't exist");
 }
 
 
@@ -519,8 +528,7 @@ const NetMessageDefinition_t* NetSession::GetMessageDefinition(const uint8_t ind
 {
 	if (index >= MAX_MESSAGE_DEFINITIONS)
 	{
-		LogTaggedPrintf("NET", "Error - NetSession::GetMessageDefinition() received index out of range, index was %i", index);
-		return nullptr;
+		ERROR_AND_DIE("Message definition doesn't exist");
 	}
 
 	return m_messageDefinitions[index];
@@ -867,7 +875,7 @@ void NetSession::BindConnection(uint8_t index, NetConnection* connection)
 //
 uint8_t NetSession::GetFreeConnectionIndex() const
 {
-	for (int i = 0; i < MAX_CONNECTIONS; ++i)
+	for (uint8_t i = 0; i < MAX_CONNECTIONS; ++i)
 	{
 		if (m_boundConnections[i] == nullptr)
 		{
@@ -1248,6 +1256,8 @@ bool OnHeartBeat(NetMessage* msg, const NetSender_t& sender)
 //
 bool OnJoinRequest(NetMessage* msg, const NetSender_t& sender)
 {
+	UNUSED(msg);
+
 	NetSession* session = sender.netSession;
 
 	// Check to ignore
@@ -1270,17 +1280,39 @@ bool OnJoinRequest(NetMessage* msg, const NetSender_t& sender)
 
 		NetConnection* connection = session->CreateConnection(info);
 
-		NetMessage* msg = new NetMessage(session->GetMessageDefinition("join_accept"));
-		connection->Send(msg);
+		NetMessage* acceptMsg = new NetMessage(session->GetMessageDefinition("join_accept"));
+		connection->Send(acceptMsg);
 
 		ConsolePrintf(Rgba::GREEN, "Accepted join request for address %s", sender.address.ToString().c_str());
 		LogTaggedPrintf("NET", "Address %s connected", sender.address.ToString().c_str());
 
-		// Also send a join finished message, since we finished joining them on our end
-		// Contains their index to use and the host's name
+		// Need to send the client all the info of the other connections
 		NetMessage* finishedMessage = new NetMessage(session->GetMessageDefinition("host_setup_complete"));
+
+		// Write their new index
 		finishedMessage->Write(info.sessionIndex);
+
+		// Write the host name
 		finishedMessage->WriteString(session->GetMyConnection()->GetName());
+
+		// Write all other connections to the packet (skip host)
+		uint8_t connectionCount = (uint8_t) session->GetConnectionCount() - 2; // Remove the client and the host
+		finishedMessage->Write(connectionCount);
+
+		// Write each info
+		for (uint8_t i = 1; i < MAX_CONNECTIONS; ++i)
+		{
+			if (i == info.sessionIndex) { continue; } // Don't send them their own info
+
+			NetConnection* currConnection = session->GetConnection(i);
+		
+			if (currConnection == nullptr) { continue; }
+
+			finishedMessage->WriteString(currConnection->GetName());
+			finishedMessage->Write(currConnection->GetSessionIndex());
+			finishedMessage->WriteString(currConnection->GetAddress().ToString().c_str());
+		}
+
 		connection->Send(finishedMessage);
 	}
 	else
@@ -1296,11 +1328,13 @@ bool OnJoinRequest(NetMessage* msg, const NetSender_t& sender)
 			error += "Recipient is full on connections";
 		}
 
-		NetMessage* msg = new NetMessage(session->GetMessageDefinition("join_deny"));
-		msg->WriteString(error);
+		NetMessage* denyMsg = new NetMessage(session->GetMessageDefinition("join_deny"));
+		denyMsg->WriteString(error);
 
-		session->SendMessageDirect(msg, sender);
+		session->SendMessageDirect(denyMsg, sender);
 	}
+
+	return true;
 }
 
 
@@ -1325,16 +1359,44 @@ bool OnJoinDeny(NetMessage* msg, const NetSender_t& sender)
 //
 bool OnJoinAccept(NetMessage* msg, const NetSender_t& sender)
 {
+	UNUSED(msg);
+	UNUSED(sender);
+
 	ConsolePrintf(Rgba::GREEN, "Host accepted the connection, will send a join finished message when they are done setting up...");
 	return true;
 }
 
 
 //- C FUNCTION ----------------------------------------------------------------------------------
-// Function callback for when a new connection is received
+// Function callback for when a new connection is added to the session
 //
 bool OnNewConnection(NetMessage* msg, const NetSender_t& sender)
 {
+	std::string name;
+	uint8_t index;
+	std::string address;
+
+	msg->ReadString(name);
+	msg->Read(index);
+	msg->ReadString(address);
+
+	// Don't add the new connection if we already have one at that index
+	if (sender.netSession->GetConnection(index) != nullptr)
+	{
+		return false;
+	}
+
+	NetConnectionInfo_t info;
+	info.address = NetAddress_t(address.c_str());
+	info.name = name;
+	info.sessionIndex = index;
+
+	NetConnection* newConnection = sender.netSession->CreateConnection(info);
+
+	newConnection->SetConnectionState(CONNECTION_READY);
+
+	ConsolePrintf("%s joined", name.c_str());
+
 	return true;
 }
 
@@ -1365,6 +1427,27 @@ bool OnHostFinishedSettingMeUp(NetMessage* msg, const NetSender_t& sender)
 	NetConnection* hostConnection = sender.netSession->GetHostConnection();
 	hostConnection->UpdateName(hostName);
 
+	// Now make all the connections...
+	uint8_t connectionCount;
+	msg->Read(connectionCount);
+
+	for (int i = 0; i < connectionCount; ++i)
+	{
+		std::string addressString, name;
+		uint8_t index;
+
+		msg->ReadString(name);
+		msg->Read(index);
+		msg->ReadString(addressString);
+
+		NetConnectionInfo_t info;
+		info.address = NetAddress_t(addressString.c_str());
+		info.sessionIndex = index;
+		info.name = name;
+
+		sender.netSession->CreateConnection(info);
+	}
+
 	// No other work to do, so mark connections as ready
 	myConnection->SetConnectionState(CONNECTION_READY);
 	hostConnection->SetConnectionState(CONNECTION_READY);
@@ -1376,6 +1459,8 @@ bool OnHostFinishedSettingMeUp(NetMessage* msg, const NetSender_t& sender)
 	hostConnection->Send(finishedMsg);
 
 	ConsolePrintf(Rgba::GREEN, "Finished setting up our connections, now telling the host we're done");
+
+	return true;
 }
 
 
@@ -1401,4 +1486,15 @@ bool OnClientFinishedTheirSetup(NetMessage* msg, const NetSender_t& sender)
 	connection->SetConnectionState(CONNECTION_READY);
 
 	ConsolePrintf(Rgba::GREEN, "Received ready confirm from address %s, connection set to ready", sender.address.ToString().c_str());
+
+	// Have the host tell everyone of the new addition
+	NetMessage* message = new NetMessage(sender.netSession->GetMessageDefinition("new_connection"));
+	message->WriteString(clientName);
+	message->Write(connection->GetSessionIndex());
+	message->WriteString(connection->GetAddress().ToString().c_str());
+
+
+	sender.netSession->BroadcastMessage(message);
+
+	return true;
 }

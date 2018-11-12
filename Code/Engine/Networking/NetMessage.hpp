@@ -29,11 +29,11 @@ public:
 	NetMessage(NetMessage&& moveFrom);
 	NetMessage(const NetMessageDefinition_t* definition);
 	NetMessage(const NetMessageDefinition_t* definition, void* payload, const int16_t& payloadSize);
-	NetMessage(const NetMessage& copy) = delete;
+	NetMessage(const NetMessage& copy);
 	~NetMessage();
 
 	NetMessage& operator=(NetMessage&& moveFrom);
-	NetMessage& operator=(const NetMessage&) = delete;
+	NetMessage& operator=(const NetMessage&);
 
 	// Accessors
 	uint8_t							GetDefinitionID() const;
