@@ -43,12 +43,13 @@ enum eNetCoreMessage : uint8_t
 	NET_MSG_HEARTBEAT,
 
 	// For host join
-	NET_MSG_JOIN_REQUEST,		// unreliable
-	NET_MSG_JOIN_DENY,			// unreliable
-	NET_MSG_JOIN_ACCEPT,		// reliable, in-order
-	NET_MSG_NEW_CONNECTION,		// reliable, in-order
-	NET_MSG_HOST_FINISHED_SETUP,		// reliable, in-order
+	NET_MSG_JOIN_REQUEST,			// unreliable
+	NET_MSG_JOIN_DENY,				// unreliable
+	NET_MSG_JOIN_ACCEPT,			// reliable, in-order
+	NET_MSG_NEW_CONNECTION,			// reliable, in-order
+	NET_MSG_HOST_FINISHED_SETUP,	// reliable, in-order
 	NET_MSG_CLIENT_JOIN_FINISHED,	// reliable, in-order
+	NET_MSG_HANG_UP,				// unreliable
 	NET_MSG_CORE_COUNT
 };
 
@@ -156,7 +157,6 @@ public:
 	bool							GetMessageDefinitionIndex(const std::string& name, uint8_t& out_index);
 
 	// Connections
-	void							CloseAllConnections();
 	NetConnection*					GetConnection(uint8_t connectionIndex) const;
 	uint8_t							GetLocalConnectionIndex() const;
 
@@ -215,6 +215,7 @@ private:
 	friend bool						OnNewConnection(NetMessage* msg, const NetSender_t& sender);
 	friend bool						OnHostFinishedSettingClientUp(NetMessage* msg, const NetSender_t& sender);
 	friend bool						OnClientFinishedTheirSetup(NetMessage* msg, const NetSender_t& sender);
+	friend bool						OnHangUp(NetMessage* msg, const NetSender_t& sender);
 
 
 private:

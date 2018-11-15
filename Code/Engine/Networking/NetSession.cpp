@@ -35,18 +35,8 @@ NetSession::NetSession()
 //
 NetSession::~NetSession()
 {
-	m_isReceiving = false;
-	if (m_receivingThread.joinable())
-	{
-		m_receivingThread.join();
-	}
-
-	if (m_boundSocket != nullptr)
-	{
-		m_boundSocket->Close();
-		delete m_boundSocket;
-		m_boundSocket = nullptr;
-	}
+	// Clean up connections; send hang up messages
+	ShutdownSession();
 }
 
 
@@ -136,6 +126,27 @@ void NetSession::Join(const std::string& myName, NetConnectionInfo_t& hostInfo)
 //
 void NetSession::ShutdownSession()
 {
+	// Join the receiving thread
+	m_isReceiving = false;
+	if (m_receivingThread.joinable())
+	{
+		m_receivingThread.join();
+	}
+
+	// Send hang up messages
+	for (int i = 0; i < MAX_CONNECTIONS; ++i)
+	{
+		if (m_boundConnections[i] != nullptr)
+		{
+			NetMessage* msg = new NetMessage(GetMessageDefinition("hang_up"));
+			m_boundConnections[i]->Send(msg);
+		}
+	}
+
+	// Force a send out to get the hang up received
+	ProcessOutgoing();
+
+	// Then delete them all
 	for (int i = 0; i < MAX_CONNECTIONS; ++i)
 	{
 		if (m_boundConnections[i] != nullptr)
@@ -144,16 +155,31 @@ void NetSession::ShutdownSession()
 		}
 	}
 
-	if (m_myConnection != nullptr)
+	// Our connection and the host connection aren't in the bound list when connecting
+	// To prevent memory leak, check them here
+	if (m_myConnection != nullptr && !m_myConnection->IsConnected())
 	{
 		delete m_myConnection;
-		m_myConnection = nullptr;
 	}
 
-	if (m_hostConnection != nullptr)
+	m_myConnection = nullptr;
+
+	if (m_hostConnection != nullptr && !m_hostConnection->IsConnected())
 	{
 		delete m_hostConnection;
-		m_hostConnection = nullptr;
+	}
+
+	m_hostConnection = nullptr;
+	
+	if (m_boundSocket != nullptr)
+	{
+		if (!m_boundSocket->IsClosed())
+		{
+			m_boundSocket->Close();
+		}
+
+		delete m_boundSocket;
+		m_boundSocket = nullptr;
 	}
 
 	ConsolePrintf("Session shut down");
@@ -161,6 +187,7 @@ void NetSession::ShutdownSession()
 
 	TransitionToState(SESSION_DISCONNECTED);
 }
+
 
 //-----------------------------------------------------------------------------------------------
 // Returns whether this session is currently a host of a connection graph
@@ -541,19 +568,6 @@ bool NetSession::GetMessageDefinitionIndex(const std::string& name, uint8_t& out
 
 
 //-----------------------------------------------------------------------------------------------
-// Closes all connections in the session
-//
-void NetSession::CloseAllConnections()
-{
-	for (int index = 0; index < MAX_CONNECTIONS; ++index)
-	{
-		delete m_boundConnections[index];
-		m_boundConnections[index] = nullptr;
-	}
-}
-
-
-//-----------------------------------------------------------------------------------------------
 // Returns the NetConnection at the given index, nullptr if out of range
 //
 NetConnection* NetSession::GetConnection(uint8_t index) const
@@ -817,12 +831,6 @@ void NetSession::DestroyConnection(NetConnection* connection)
 	{
 		uint8_t index = connection->GetSessionIndex();
 		m_boundConnections[index] = nullptr;
-
-		if (connection->IsReady() && connection != m_myConnection)
-		{
-			ConsolePrintf("%s disconnected", connection->GetName().c_str());
-			LogTaggedPrintf("NET", "%s disconnected", connection->GetName().c_str());
-		}
 	}
 
 	// Clean up convenience pointers
@@ -885,8 +893,6 @@ uint8_t NetSession::GetFreeConnectionIndex() const
 //
 void NetSession::CheckForDisconnects()
 {
-	bool hostWasPresent = (m_hostConnection != nullptr);
-
 	for (uint8_t connectionIndex = 0; connectionIndex < MAX_CONNECTIONS; ++connectionIndex)
 	{
 		if (m_boundConnections[connectionIndex] != nullptr) 
@@ -895,14 +901,15 @@ void NetSession::CheckForDisconnects()
 
 			if (m_boundConnections[connectionIndex]->IsDisconnected() || lastReceivedTime >= CONNECTION_LAST_RECEIVED_TIMEOUT)
 			{
+				ConsolePrintf("%s timed out", m_boundConnections[connectionIndex]->GetName().c_str());
+				LogTaggedPrintf("NET", "%s timed out", m_boundConnections[connectionIndex]->GetName().c_str());
+
 				DestroyConnection(m_boundConnections[connectionIndex]);
 			}
 		}
 	}
 
-	bool hostNowPresent = (m_hostConnection != nullptr);
-
-	if (hostWasPresent && !hostNowPresent)
+	if (m_state != SESSION_DISCONNECTED && m_hostConnection == nullptr)
 	{
 		ConsolePrintf("Lost connection to host");
 		LogTaggedPrintf("NET", "Lost connection to host at address");
@@ -928,6 +935,7 @@ void NetSession::RegisterCoreMessages()
 	RegisterMessageDefinition(NET_MSG_NEW_CONNECTION, "new_connection", OnNewConnection, NET_MSG_OPTION_IN_ORDER);
 	RegisterMessageDefinition(NET_MSG_HOST_FINISHED_SETUP, "host_setup_complete", OnHostFinishedSettingClientUp, NET_MSG_OPTION_IN_ORDER);
 	RegisterMessageDefinition(NET_MSG_CLIENT_JOIN_FINISHED, "client_join_finished", OnClientFinishedTheirSetup, NET_MSG_OPTION_IN_ORDER);
+	RegisterMessageDefinition(NET_MSG_HANG_UP, "hang_up", OnHangUp);
 }
 
 
@@ -1518,6 +1526,24 @@ bool OnClientFinishedTheirSetup(NetMessage* msg, const NetSender_t& sender)
 	message->WriteString(connection->GetAddress().ToString().c_str());
 
 	sender.netSession->BroadcastMessage(message);
+
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Callback for when a hang up message is received
+//
+bool OnHangUp(NetMessage* msg, const NetSender_t& sender)
+{
+	UNUSED(msg);
+
+	NetConnection* connection = sender.netSession->GetConnection(sender.connectionIndex);
+
+	ConsolePrintf("%s disconnected", connection->GetName().c_str());
+	LogTaggedPrintf("NET", "%s disconnected", connection->GetName().c_str());
+
+	sender.netSession->DestroyConnection(connection);
 
 	return true;
 }
