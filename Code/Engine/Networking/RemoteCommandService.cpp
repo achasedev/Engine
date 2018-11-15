@@ -260,7 +260,6 @@ RemoteCommandService::RemoteCommandService()
 
 	InitializeUILayout();
 
-	ConsolePrintf("RCS re-entered initial state");
 	LogTaggedPrintf("RCS", "Entered Initial State");
 }
 
@@ -328,14 +327,11 @@ void RemoteCommandService::Update_Initial()
 
 	if (m_joinRequestAddress.size() > 0)
 	{
-		ConsolePrintf("RCS is trying to join address %s...", m_joinRequestAddress.c_str());
-		LogTaggedPrintf("RCS", "Entered TryToJoinAddress State");
+		LogTaggedPrintf("RCS", "RCS is trying to join address %s...", m_joinRequestAddress.c_str());
 		m_state = STATE_TRYTOJOINADDRESS;
 	}
 	else
 	{
-		ConsolePrintf("RCS is trying to join local...");
-		LogTaggedPrintf("RCS", "Entered TryToJoinLocal State");
 		m_state = STATE_TRYTOJOINLOCAL;
 	}
 }
@@ -352,7 +348,6 @@ void RemoteCommandService::Update_TryToJoinLocal()
 	if (!localAddressFound)
 	{
 		m_state = STATE_INITIAL;
-		ConsolePrintf("RCS re-entered initial state");
 		LogTaggedPrintf("RCS", "Entered Initial State");
 		return;
 	}
@@ -365,8 +360,7 @@ void RemoteCommandService::Update_TryToJoinLocal()
 	if (!connected)
 	{
 		m_state = STATE_TRYTOHOST;
-		ConsolePrintf("RCS failed to join local, trying to host...");
-		LogTaggedPrintf("RCS", "Entered TryToHost State");
+		LogTaggedPrintf("RCS", "RCS trying to host");
 		return;
 	}
 
@@ -375,8 +369,8 @@ void RemoteCommandService::Update_TryToJoinLocal()
 	m_connections.push_back(joinSocket);
 	m_buffers.push_back(new BytePacker(BIG_ENDIAN));
 	m_state = STATE_CLIENT;
-	LogTaggedPrintf("RCS", "Entered Client State");
-	ConsolePrintf(Rgba::GREEN, "RCS is a client.");
+
+	LogTaggedPrintf("RCS", "RCS is a host");
 }
 
 
@@ -395,8 +389,7 @@ void RemoteCommandService::Update_TryToJoinAddress()
 	{
 		delete joinSocket;
 		m_state = STATE_INITIAL;
-		ConsolePrintf("RCS re-entered initial state");
-		LogTaggedPrintf("RCS", "Entered Initial State");
+		LogTaggedPrintf("RCS", "RCS entered initial state");
 
 		m_joinRequestAddress.clear();
 
@@ -407,8 +400,8 @@ void RemoteCommandService::Update_TryToJoinAddress()
 	m_connections.push_back(joinSocket);
 	m_buffers.push_back(new BytePacker(BIG_ENDIAN));
 	m_state = STATE_CLIENT;
-	ConsolePrintf(Rgba::GREEN, "RCS successfully joined address %s", m_joinRequestAddress.c_str());
-	LogTaggedPrintf("RCS", "Entered Client State");
+
+	LogTaggedPrintf("RCS", "RCS successfully joined address %s", m_joinRequestAddress.c_str());
 
 	// Always clear the join request
 	m_joinRequestAddress.clear();
@@ -426,14 +419,14 @@ void RemoteCommandService::Update_TryToHost()
 	{
 		m_delayTimer->SetInterval(DELAY_TIME);
 		m_state = STATE_DELAY;
-		ConsolePrintf("Failed to host, moving to delay state");
-		LogTaggedPrintf("RCS", "Entered Delay State");
+
+		LogTaggedPrintf("RCS", "RCS failed to host, moving to delay");
 	}
 	else
 	{
 		m_state = STATE_HOST;
-		ConsolePrintf(Rgba::GREEN, "RCS is now hosting.");
-		LogTaggedPrintf("RCS", "Entered Host State");
+
+		LogTaggedPrintf("RCS", "RCS is now hosting");
 	}
 }
 
@@ -447,7 +440,7 @@ void RemoteCommandService::Update_Delay()
 	{
 		m_delayTimer->Reset();
 		m_state = STATE_INITIAL;
-		ConsolePrintf("RCS re-entered initial state");
+	
 		LogTaggedPrintf("RCS", "Entered Initial State");
 	}
 }
@@ -462,7 +455,6 @@ void RemoteCommandService::Update_Host()
 	if (m_joinRequestAddress.size() > 0)
 	{
 		m_state = STATE_INITIAL;
-		ConsolePrintf("RCS re-entered initial state");
 		LogTaggedPrintf("RCS", "Entered Initial State");
 	}
 
@@ -481,7 +473,6 @@ void RemoteCommandService::Update_Client()
 	if (m_joinRequestAddress.size() > 0)
 	{
 		m_state = STATE_INITIAL;
-		ConsolePrintf("RCS re-entered initial state");
 		LogTaggedPrintf("RCS", "Entered Initial State");
 		return;
 	}
@@ -493,7 +484,6 @@ void RemoteCommandService::Update_Client()
 	if (m_connections.size() == 0)
 	{
 		m_state = STATE_INITIAL;
-		ConsolePrintf("RCS lost connection to host, re-entering initial state");
 		LogTaggedPrintf("RCS", "RCS lost connection to host, re-entering initial state");
 	}
 }

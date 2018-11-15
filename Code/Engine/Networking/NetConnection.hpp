@@ -5,6 +5,7 @@
 /* Description: Class to represent a single connection in a NetSession
 /************************************************************************/
 #pragma once
+#include "Engine/Core/Time/Stopwatch.hpp"
 #include "Engine/Networking/NetPacket.hpp"
 #include "Engine/Networking/NetAddress.hpp"
 #include "Engine/Networking/NetSequenceChannel.hpp"
@@ -14,7 +15,6 @@ class UDPSocket;
 class BytePacker;
 class NetSession;
 class NetMessage;
-class Stopwatch;
 
 #define MAX_UNACKED_HISTORY (256)
 #define MAX_RELIABLES_PER_PACKET (32)
@@ -72,7 +72,7 @@ public:
 	inline bool IsMe() const { return m_owningSession->GetMyConnection() == this; }
 	inline bool IsHost() const { return m_owningSession->GetHostConnection() == this; }
 
-	void		SetConnectionState(eConnectionState state);
+	void SetConnectionState(eConnectionState state);
 
 	// Queues the message to be processed later
 	void						Send(NetMessage* msg);
@@ -91,7 +91,7 @@ public:
 	bool						HasNetTickElapsed() const;
 
 	// Heartbeat
-	bool						HasHeartbeatElapsed() const;
+	bool						HasHeartbeatElapsed();
 
 	// Reliable delivery
 	bool						OnPacketReceived(const PacketHeader_t& header);
@@ -106,6 +106,9 @@ public:
 	NetSequenceChannel*			GetSequenceChannel(uint8_t sequenceChannelID);
 	bool						IsNextMessageInSequence(NetMessage* message);
 	void						QueueInOrderMessage(NetMessage* message);
+
+	// For disconnects
+	float						GetTimeSinceLastReceive() const;
 
 	// For drawing
 	std::string					GetDebugInfo() const;
@@ -146,9 +149,9 @@ private:
 
 	// For net tick
 	float						m_timeBetweenSends = 0.f;
-	Stopwatch*					m_sendTimer = nullptr;
+	Stopwatch					m_sendTimer;
 
-	Stopwatch*					m_heartbeatTimer = nullptr;
+	Stopwatch					m_heartbeatTimer;
 
 	// Reliable delivery
 	uint16_t m_nextAckToSend = 0;
@@ -162,8 +165,8 @@ private:
 
 	PacketTracker_t m_packetTrackers[MAX_UNACKED_HISTORY];
 
-	Stopwatch* m_lastSentTimer = nullptr;
-	Stopwatch* m_lastReceivedTimer = nullptr;
+	Stopwatch m_lastSentTimer;
+	Stopwatch m_lastReceivedTimer;
 
 	int m_packetsSent = 0;
 	int m_lossCount = 0;

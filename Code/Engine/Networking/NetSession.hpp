@@ -25,6 +25,7 @@ class NetSession;
 #define MAX_MESSAGE_DEFINITIONS (256)
 #define DEFAULT_PORT_RANGE (10)
 #define JOIN_TIMEOUT (10)
+#define CONNECTION_LAST_RECEIVED_TIMEOUT (10)
 
 struct NetSender_t
 {
@@ -130,7 +131,7 @@ public:
 	// Connecting
 	void							Host(const std::string& myName, uint16_t port, uint16_t portRange = DEFAULT_PORT_RANGE);
 	void							Join(const std::string& myName, NetConnectionInfo_t& hostInfo);
-	void							Disconnect();
+	void							ShutdownSession();
 
 	bool							IsHosting() const;
 
@@ -193,6 +194,7 @@ private:
 	void							DestroyConnection(NetConnection* connection);
 	void							BindConnection(uint8_t index, NetConnection* connection);
 	uint8_t							GetFreeConnectionIndex() const;
+	void							CheckForDisconnects();
 
 	void							RegisterCoreMessages();
 
@@ -211,7 +213,7 @@ private:
 	friend bool						OnJoinDeny(NetMessage* msg, const NetSender_t& sender);
 	friend bool						OnJoinAccept(NetMessage* msg, const NetSender_t& sender);
 	friend bool						OnNewConnection(NetMessage* msg, const NetSender_t& sender);
-	friend bool						OnHostFinishedSettingMeUp(NetMessage* msg, const NetSender_t& sender);
+	friend bool						OnHostFinishedSettingClientUp(NetMessage* msg, const NetSender_t& sender);
 	friend bool						OnClientFinishedTheirSetup(NetMessage* msg, const NetSender_t& sender);
 
 

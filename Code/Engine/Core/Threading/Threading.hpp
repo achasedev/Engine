@@ -17,9 +17,6 @@ typedef void (*Thread_cb)(void *paramData);
 
 namespace Thread
 {
-	// For console commands
-	void RegisterConsoleCommands();
-
 	// Creating
 	ThreadHandle_t Create( Thread_cb cb, void *user_data = nullptr ); 
 

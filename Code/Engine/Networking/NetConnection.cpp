@@ -35,12 +35,10 @@ NetConnection::NetConnection(NetSession* session, const NetConnectionInfo_t& con
 	: m_connectionInfo(connectionInfo)
 	, m_owningSession(session)
 {
-	m_sendTimer = new Stopwatch();
-	m_heartbeatTimer = new Stopwatch();
-	m_lastSentTimer = new Stopwatch();
-	m_lastReceivedTimer = new Stopwatch();
-
-	m_heartbeatTimer->SetInterval(m_owningSession->GetHeartbeatInterval());
+	if (m_owningSession != nullptr)
+	{
+		m_heartbeatTimer.SetInterval(m_owningSession->GetHeartbeatInterval());
+	}
 }
 
 
@@ -49,7 +47,6 @@ NetConnection::NetConnection(NetSession* session, const NetConnectionInfo_t& con
 //
 NetConnection::~NetConnection()
 {
-	// Check for any pending messages that didn't get sent
 	for (int i = 0; i < (int)m_outboundUnreliables.size(); ++i)
 	{
 		delete m_outboundUnreliables[i];
@@ -57,28 +54,23 @@ NetConnection::~NetConnection()
 
 	m_outboundUnreliables.clear();
 
-	if (m_sendTimer != nullptr)
+	for (int i = 0; i < (int)m_unconfirmedReliables.size(); ++i)
 	{
-		delete m_sendTimer;
-		m_sendTimer = nullptr;
+		delete m_unconfirmedReliables[i];
 	}
 
-	if (m_heartbeatTimer != nullptr)
+	m_unconfirmedReliables.clear();
+
+	for (int i = 0; i < m_unsentReliables.size(); ++i)
 	{
-		delete m_heartbeatTimer;
-		m_heartbeatTimer = nullptr;
+		delete m_unsentReliables[i];
 	}
 
-	if (m_lastSentTimer != nullptr)
-	{
-		delete m_lastSentTimer;
-		m_lastSentTimer = nullptr;
-	}
+	m_unsentReliables.clear();
 
-	if (m_lastReceivedTimer != nullptr)
+	for (int i = 0; i < MAX_SEQUENCE_CHANNELS; ++i)
 	{
-		delete m_lastReceivedTimer;
-		m_lastReceivedTimer = nullptr;
+		m_sequenceChannels[i].ClearOutOfOrderMessages();
 	}
 }
 
@@ -213,7 +205,7 @@ void NetConnection::FlushMessages()
 	m_outboundUnreliables.clear();
 
 	// Reset the send timer
-	m_sendTimer->Reset();
+	m_sendTimer.Reset();
 	m_forceSendNextTick = false;
 }
 
@@ -278,20 +270,20 @@ bool NetConnection::HasNetTickElapsed() const
 	float sessionTime = m_owningSession->GetTimeBetweenSends();
 	float sendInterval = MaxFloat(sessionTime, m_timeBetweenSends);
 
-	return (m_sendTimer->GetElapsedTime() >= sendInterval);
+	return (m_sendTimer.GetElapsedTime() >= sendInterval);
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Returns true if the connection should send a heartbeat
 //
-bool NetConnection::HasHeartbeatElapsed() const
+bool NetConnection::HasHeartbeatElapsed()
 {
-	bool elapsed = m_heartbeatTimer->HasIntervalElapsed();
+	bool elapsed = m_heartbeatTimer.HasIntervalElapsed();
 
 	if (elapsed)
 	{
-		m_heartbeatTimer->SetInterval(m_owningSession->GetHeartbeatInterval());
+		m_heartbeatTimer.SetInterval(m_owningSession->GetHeartbeatInterval());
 	}
 
 	return elapsed;
@@ -353,7 +345,7 @@ void NetConnection::OnPacketSend(const PacketHeader_t& header)
 	}
 
 	// Reset the send timer
-	m_lastSentTimer->Reset();
+	m_lastSentTimer.Reset();
 }
 
 
@@ -419,7 +411,7 @@ bool NetConnection::OnPacketReceived(const PacketHeader_t& header)
 	}
 	
 	// Reset the last received timer
-	m_lastReceivedTimer->Reset();
+	m_lastReceivedTimer.Reset();
 
 	return true;
 }
@@ -449,7 +441,7 @@ bool NetConnection::NeedsToForceSend() const
 std::string NetConnection::GetDebugInfo() const
 {
 	std::string debugText = Stringf("   %-*i%-*s%-*s%-*.2f%-*.2f%-*.2f%-*.2f%-*i%-*i%-*s",
-		6, m_connectionInfo.sessionIndex, 10, m_connectionInfo.name.c_str(), 21, m_connectionInfo.address.ToString().c_str(), 8, 1000.f * m_rtt, 7, m_loss, 7, m_lastReceivedTimer->GetElapsedTime(), 7, m_lastSentTimer->GetElapsedTime(), 8, m_nextAckToSend - 1, 8, m_highestReceivedAck, 10, GetStateAsString().c_str());
+		6, m_connectionInfo.sessionIndex, 10, m_connectionInfo.name.c_str(), 21, m_connectionInfo.address.ToString().c_str(), 8, 1000.f * m_rtt, 7, m_loss, 7, m_lastReceivedTimer.GetElapsedTime(), 7, m_lastSentTimer.GetElapsedTime(), 8, m_nextAckToSend - 1, 8, m_highestReceivedAck, 10, GetStateAsString().c_str());
 
 	return debugText;
 }
@@ -498,7 +490,6 @@ void NetConnection::OnAckConfirmed(uint16_t ack)
 		{
 			if (m_unconfirmedReliables[unconfirmedIndex]->GetReliableID() == currID)
 			{
-				ConsolePrintf(Rgba::GREEN, "Confirmed %i", currID);
 				delete m_unconfirmedReliables[unconfirmedIndex];
 				m_unconfirmedReliables.erase(m_unconfirmedReliables.begin() + unconfirmedIndex);
 				break;
@@ -683,6 +674,7 @@ std::string NetConnection::GetStateAsString() const
 		return "READY";
 		break;
 	default:
+		return "";
 		break;
 	}
 }
@@ -734,4 +726,13 @@ void NetConnection::QueueInOrderMessage(NetMessage* message)
 	{
 		channel->AddOutOfOrderMessage(message);
 	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the time since the last received packet on this connection
+//
+float NetConnection::GetTimeSinceLastReceive() const
+{
+	return m_lastReceivedTimer.GetElapsedTime();
 }

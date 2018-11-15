@@ -14,12 +14,14 @@ class NetSequenceChannel
 public:
 	//-----Public Methods-----
 
+	~NetSequenceChannel();
+
 	// Mutators/Accessors
 	void		AddOutOfOrderMessage(NetMessage* msg);
 	uint16_t	GetAndIncrementNextIDToSend();
 	NetMessage* GetNextMessageToProcess();
 	void		IncrementNextExpectedID();
-
+	void		ClearOutOfOrderMessages();
 
 	// Producers
 	bool		IsMessageNextExpected(uint16_t sequenceID) const;

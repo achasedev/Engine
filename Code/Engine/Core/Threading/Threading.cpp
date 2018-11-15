@@ -9,51 +9,6 @@
 #include "Engine/Core/Threading/Threading.hpp"
 #include "Engine/Core/DeveloperConsole/Command.hpp"
 
-// Console Commands
-// Does time consuming work, to test thread use
-void ThreadTest(void *) 
-{
-	// Open a file and output about 50MB of random numbers to it; 
-	int* buffer = (int*) malloc(sizeof(int) * 100000000);
-
-	for (int i = 0; i < 100000000; ++i)
-	{
-		buffer[i] = 270;
-	}
-
-	FileWriteFromBuffer("Data/Logs/garbage.dat", (const char*) buffer, sizeof(int) * 100000000);
-	DebuggerPrintf( "Finished thread work." ); 
-}
-
-// Does time-consuming work on the main thread
-void Command_RunWorkOnMainThread(Command& cmd)
-{
-	UNUSED(cmd);
-	ConsolePrintf("Doing work on main thread (should lag)...");
-	ThreadTest(nullptr);
-}
-
-// Does time consuming work on a separate thread
-void Command_RunWorkOnNewThread(Command& cmd)
-{
-	UNUSED(cmd);
-
-	ConsolePrintf("Doing work on new thread (should NOT lag)...");
-	Thread::CreateAndDetach(ThreadTest);
-}
-
-// End console commands
-
-
-//-----------------------------------------------------------------------------------------------
-// Registers the console commands related to threading to the command system
-//
-void Thread::RegisterConsoleCommands()
-{
-	Command::Register("thread_test_main", "Runs a lot of work on the main thread", Command_RunWorkOnMainThread);
-	Command::Register("thread_test_new", "Runs a lot of work on a new thread", Command_RunWorkOnNewThread);
-}
-
 
 //-----------------------------------------------------------------------------------------------
 // Creates a thread, returning the handle

@@ -9,6 +9,15 @@
 
 
 //-----------------------------------------------------------------------------------------------
+// Destructor
+//
+NetSequenceChannel::~NetSequenceChannel()
+{
+	ClearOutOfOrderMessages();
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Adds the given message to the queue to be processed later, avoiding duplicates
 //
 void NetSequenceChannel::AddOutOfOrderMessage(NetMessage* msg)
@@ -69,6 +78,20 @@ NetMessage* NetSequenceChannel::GetNextMessageToProcess()
 void NetSequenceChannel::IncrementNextExpectedID()
 {
 	++m_nextSequenceIDToProcess;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Clears the out of order messages in the channel
+//
+void NetSequenceChannel::ClearOutOfOrderMessages()
+{
+	for (int i = 0; i < (int)m_outOfOrderMessages.size(); ++i)
+	{
+		delete m_outOfOrderMessages[i];
+	}
+
+	m_outOfOrderMessages.clear();
 }
 
 

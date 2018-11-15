@@ -40,8 +40,6 @@ std::map<std::string, LogFilteredCallback_t>	LogSystem::s_callbacks;
 // Callback for writing the log to the system file
 static void WriteToFile(LogMessage_t log, void* fileptr);
 static void WriteToDebugOutput(LogMessage_t log, void* fileptr);
-static void Command_TestFlood(Command& cmd);
-static void Command_TestFlush(Command& cmd);
 static void Command_ShowAllTags(Command& cmd);
 static void Command_HideAllTags(Command& cmd);
 
@@ -297,8 +295,6 @@ void LogSystem::HideAllTags()
 //
 void LogSystem::InitializeConsoleCommands()
 {
-	Command::Register("log_test_flood",		"Tests the log system by loading a test file and flooding the LogSystem with logs",			Command_TestFlood);
-	Command::Register("log_test_flush",		"Tests the log system by sending a log message, then immediately flushing and breaking",	Command_TestFlush);
 	Command::Register("log_show_all_tags",	"Enables all tags on all current callback hooks in the LogSystem",							Command_ShowAllTags);
 	Command::Register("log_hide_all_tags",	"Disables all tags on all current callback hooks in the LogSystem",							Command_HideAllTags);
 }
@@ -472,103 +468,6 @@ void LogErrorf(char const *format, ...)
 //////////////////////////////////////////////////////////////////////////
 // Console Commands
 //////////////////////////////////////////////////////////////////////////
-
-//-----------------------------------------------------------------------------------------------
-// Opens a large file and parses it, printing the line to the LogSystem as logs
-//
-void ThreadOpenBig(void* arguments)
-{
-	int i = *((int*) arguments);
-
-	File* file = new File();
-	
-	const char* filepath = &(((const char*)arguments)[sizeof(int)]);
-	bool success = file->Open(filepath, "r");
-
-	if (!success)
-	{
-		ConsoleErrorf("Error: File \"%s\" couldn't be opened", filepath);
-		return;
-	}
-
-	file->LoadFileToMemory();
-
-	int count = 0;
-	while (!file->IsAtEndOfFile())
-	{
-		count++;
-		std::string line;
-		unsigned int lineNumber = file->GetNextLine(line);
-		LogPrintf("[%u:%u] %s", i, lineNumber, line.c_str());
-	}
-
-	ConsolePrintf(Rgba::GREEN, "Thread %i completed.", i);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Tests the threaded LogSystem by spinning up threads and having them all send logs to be logged
-//
-void Command_TestFlood(Command& cmd)
-{
-	ProfileScoped ps("flood");
-	UNUSED(ps);
-
-	// Get the thread count, default to 4
-	int threadCount = 4;
-	cmd.GetParam("c", threadCount, &threadCount);
-
-	// Get the source file name
-	std::string filepath;
-	cmd.GetParam("f", filepath, &filepath);
-
-	if (IsStringNullOrEmpty(filepath))
-	{
-		ConsoleErrorf("Error: No path specified");
-		return;
-	}
-
-	// Get the arguments together
-	unsigned char* args = (unsigned char*) malloc(sizeof(int) + sizeof(char) * (filepath.size() + 1)); // Add 1 to null terminate
-	
-	for (int i = 0; i < filepath.size() + 1; ++i)
-	{
-		int offset = i + 4; // Offset 4 to get around the thread count arg
-		args[offset] = filepath.c_str()[i];
-	}
-
-	for (int i = 0; i < threadCount; ++i)
-	{
-		ProfileScoped pss(Stringf("%i thread creation.", i));
-		UNUSED(pss);
-
-		*((int*) args) = i; // Pass the thread id
-		Thread::CreateAndDetach(ThreadOpenBig, args); // Create it
-	}
-
-	free(args); // Free up the argument after all threads are going, to be safe
-
-	ConsolePrintf(Rgba::GREEN, "Flood test started for %i threads.", threadCount);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Tests the threaded LogSystem by creating a write and immediately flushing to disk
-//
-void Command_TestFlush(Command& cmd)
-{
-	std::string message = "This is a flush test.";
-	cmd.GetParam("m", message, &message);
-
-	LogMessage_t log;
-	log.message = message;
-	log.tag = "FLUSH TEST";
-
-	LogSystem::AddLog(log);
-	LogSystem::FlushLog();
-
-	ASSERT_RECOVERABLE(false, Stringf("Flush log called, check the log file to ensure \"%s\" was written to \"Data/Logs/SystemLog.txt.\"", message.c_str()));
-}
 
 
 //-----------------------------------------------------------------------------------------------
