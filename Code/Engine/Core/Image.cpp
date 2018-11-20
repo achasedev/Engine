@@ -146,7 +146,7 @@ bool Image::LoadFromFile(const std::string& filepath)
 Rgba Image::GetTexelColor(int x, int y) const
 {
 	// Safety check
-	GUARANTEE_OR_DIE(x >= 0 && y >= 0 && x < m_dimensions.x && y < m_dimensions.y, Stringf("Error: Image::SetTexel coords were out of bounds, coords were (%i, %i)", x, y));
+	GUARANTEE_OR_DIE(x >= 0 && y >= 0 && x < m_dimensions.x && y < m_dimensions.y, Stringf("Error: Image::GetTexel coords were out of bounds, coords were (%i, %i)", x, y));
 
 	int index = ((m_dimensions.x * y) + x) * m_numComponentsPerTexel;
 
