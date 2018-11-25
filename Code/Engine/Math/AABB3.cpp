@@ -121,6 +121,24 @@ Vector3 AABB3::GetBackTopLeft() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns whether the box bounds contains the given point
+//
+bool AABB3::ContainsPoint(const Vector3& point) const
+{
+	bool outsideX = point.x > maxs.x || point.x < mins.x;
+	bool outsideY = point.y > maxs.y || point.y < mins.y;
+	bool outsideZ = point.z > maxs.z || point.z < mins.z;
+
+	if (outsideX || outsideY || outsideZ)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Checks if the given AABB3s a and b overlap (either their boundaries intersect, or one is contained
 // in another
 //

@@ -8,6 +8,7 @@
 /************************************************************************/
 #pragma once
 #include "Engine/Core/Rgba.hpp"
+#include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/Vector2.hpp"
 #include "Engine/Math/Vector3.hpp"
 #include "Engine/Math/Vector4.hpp"
@@ -141,3 +142,4 @@ bool AreMostlyEqual(const Matrix44& a, const Matrix44& b, float epsilon = 0.0001
 
 // Misc
 bool DoSpheresOverlap(const Vector3& posA, float radiusA, const Vector3& posB, float radiusB);
+bool DoesBoxSphereOverlap(const AABB3& boxBounds, const Vector3& sphereCenter, float sphereRadius);

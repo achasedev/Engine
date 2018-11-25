@@ -1110,3 +1110,26 @@ bool DoSpheresOverlap(const Vector3& posA, float radiusA, const Vector3& posB, f
 
 	return (distanceSquared <= radiiSquared);
 }
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns whether the given box and sphere overlap
+//
+bool DoesBoxSphereOverlap(const AABB3& boxBounds, const Vector3& sphereCenter, float sphereRadius)
+{
+	Vector3 boxCenter = boxBounds.GetCenter();
+
+	if (boxBounds.ContainsPoint(sphereCenter))
+	{
+		return true;
+	}
+
+	Vector3 directionToBox = (boxCenter - sphereCenter);
+	float distance = directionToBox.NormalizeAndGetLength();
+
+	float magnitude = MinFloat(sphereRadius, distance);
+
+	Vector3 closestPosition = sphereCenter + (magnitude * directionToBox);
+
+	return boxBounds.ContainsPoint(closestPosition);
+}

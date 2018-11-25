@@ -34,6 +34,8 @@ public:
 	Vector3 GetBackTopRight() const;
 	Vector3 GetBackTopLeft() const;
 
+	bool ContainsPoint(const Vector3& point) const;
+
 	//-----Static Constants-----
 	static const AABB3 UNIT_CUBE;
 
