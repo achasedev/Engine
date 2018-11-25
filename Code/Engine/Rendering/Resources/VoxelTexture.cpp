@@ -59,7 +59,10 @@ bool VoxelTexture::CreateFromFile(const char* filename, bool createCollisionMatr
 		return false;
 	}
 
-	ASSERT_OR_DIE(m_dimensions.x <= MAX_TEXTURE_VOXEL_WIDTH, "Error: Voxel texture is too wide.");
+	if (m_dimensions.x > MAX_TEXTURE_VOXEL_WIDTH)
+	{
+		createCollisionMatrix = false;
+	}
 
 	// Number of colors
 	file->GetNextLine(currLine);
@@ -94,9 +97,6 @@ bool VoxelTexture::CreateFromFile(const char* filename, bool createCollisionMatr
 		m_collisionFlags = (uint32_t*)malloc(amount);
 		memset(m_collisionFlags, 0, amount);
 	}
-
-	// Safety check
-	ASSERT_OR_DIE(sizeof(m_collisionFlags[0]) == MAX_TEXTURE_BYTE_WIDTH, "Error: Max VoxelTexture width isn't set up correctly");
 
 	// Now get all the voxel colors
 	while (!file->IsAtEndOfFile())
@@ -194,8 +194,11 @@ VoxelTexture* VoxelTexture::Clone() const
 	memcpy(newTexture->m_colorData, m_colorData, byteSize);
 
 	// Collision
-	newTexture->m_collisionFlags = (uint32_t*)malloc(sizeof(uint32_t) * m_dimensions.y * m_dimensions.z);
-	memcpy(newTexture->m_collisionFlags, m_collisionFlags, sizeof(uint32_t) * m_dimensions.y * m_dimensions.z);
+	if (m_collisionFlags != nullptr)
+	{
+		newTexture->m_collisionFlags = (uint32_t*)malloc(sizeof(uint32_t) * m_dimensions.y * m_dimensions.z);
+		memcpy(newTexture->m_collisionFlags, m_collisionFlags, sizeof(uint32_t) * m_dimensions.y * m_dimensions.z);
+	}
 
 	return newTexture;
 }
@@ -216,17 +219,20 @@ void VoxelTexture::SetColorAtIndex(unsigned int index, const Rgba& color)
 	int zCoord = leftOver / m_dimensions.x;
 	int xCoord = leftOver % m_dimensions.x;
 
-	uint32_t& flags = m_collisionFlags[yCoord * m_dimensions.z + zCoord];
-	int mask = TEXTURE_LEFTMOST_COLLISION_BIT >> xCoord;
+	if (m_collisionFlags != nullptr)
+	{
+		uint32_t& flags = m_collisionFlags[yCoord * m_dimensions.z + zCoord];
+		int mask = TEXTURE_LEFTMOST_COLLISION_BIT >> xCoord;
 
-	if (color.a == 0)
-	{
-		mask = ~mask;
-		flags &= mask;
-	}
-	else
-	{
-		flags |= (TEXTURE_LEFTMOST_COLLISION_BIT >> xCoord);
+		if (color.a == 0)
+		{
+			mask = ~mask;
+			flags &= mask;
+		}
+		else
+		{
+			flags |= (TEXTURE_LEFTMOST_COLLISION_BIT >> xCoord);
+		}
 	}
 }
 
@@ -258,13 +264,23 @@ unsigned int VoxelTexture::GetVoxelCount() const
 
  uint32_t VoxelTexture::GetCollisionByteForRow(int localY, int localZ) const
 {
-	 ASSERT_OR_DIE(AreCoordsValid(0, localY, localZ), "Voxel texture received bad coords");
+	ASSERT_OR_DIE(AreCoordsValid(0, localY, localZ), "Voxel texture received bad coords");
 
+	if (m_collisionFlags == nullptr)
+	{
+		return 0;
+	}
+	
 	return m_collisionFlags[localY * m_dimensions.z + localZ];
 }
 
  bool VoxelTexture::DoLocalCoordsHaveCollision(const IntVector3& coords) const
  {
+	 if (m_collisionFlags == nullptr)
+	 {
+		 return false;
+	 }
+
 	 int index = coords.y * m_dimensions.z + coords.z;
 	 int bitOffset = MAX_TEXTURE_VOXEL_WIDTH - coords.x - 1;
 	 uint32_t flags = m_collisionFlags[index];
