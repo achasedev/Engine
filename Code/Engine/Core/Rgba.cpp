@@ -86,16 +86,16 @@ void Rgba::SetAsBytes(unsigned char redByte, unsigned char greenByte, unsigned c
 void Rgba::SetAsFloats(float normalizedRed, float normalizedGreen, float normalizedBlue, float normalizedAlpha)
 {
 	float clampedRed = ClampFloat((normalizedRed * 255.f), 0.f, 255.f);
-	r = static_cast<unsigned char>(clampedRed);
+	r = static_cast<unsigned char>(RoundToNearestInt(clampedRed));
 
 	float clampedGreen = ClampFloat((normalizedGreen * 255.f), 0.f, 255.f);
-	g = static_cast<unsigned char>(clampedGreen);
+	g = static_cast<unsigned char>(RoundToNearestInt(clampedGreen));
 
 	float clampedBlue = ClampFloat((normalizedBlue * 255.f), 0.f, 255.f);
-	b = static_cast<unsigned char>(clampedBlue);
+	b = static_cast<unsigned char>(RoundToNearestInt(clampedBlue));
 
 	float clampedAlpha = ClampFloat((normalizedAlpha * 255.f), 0.f, 255.f);
-	a = static_cast<unsigned char>(clampedAlpha);
+	a = static_cast<unsigned char>(RoundToNearestInt(clampedAlpha));
 }
 
 
