@@ -244,6 +244,15 @@ uint8_t NetConnection::GetSessionIndex() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the average rtt of this connection
+//
+float NetConnection::GetRTT() const
+{
+	return m_rtt;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Sets the session index of the connection
 //
 void NetConnection::SetSessionIndex(uint8_t index)

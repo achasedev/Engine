@@ -84,6 +84,7 @@ public:
 	void						UpdateName(const std::string& name);
 	NetAddress_t				GetAddress() const;
 	uint8_t						GetSessionIndex() const;
+	float						GetRTT() const;
 	void						SetSessionIndex(uint8_t index);
 
 	// Network tick
