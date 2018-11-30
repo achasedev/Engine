@@ -18,7 +18,6 @@
 // Message callbacks
 bool OnPing(NetMessage* msg, const NetSender_t& sender);
 bool OnPong(NetMessage* msg, const NetSender_t& sender);
-bool OnHeartBeat(NetMessage* msg, const NetSender_t& sender);
 
 
 //-----------------------------------------------------------------------------------------------
@@ -27,6 +26,7 @@ bool OnHeartBeat(NetMessage* msg, const NetSender_t& sender);
 NetSession::NetSession()
 {
 	RegisterCoreMessages();
+	m_netClock.Reset();
 }
 
 
@@ -301,7 +301,10 @@ void NetSession::Update()
 		}
 		break;
 	case SESSION_READY:
-		// Also do nothing
+		if (!IsHosting())
+		{
+			UpdateClientTime();
+		}
 		break;
 	default:
 		break;
@@ -351,6 +354,11 @@ void NetSession::RenderDebugInfo() const
 		break;
 	}
 	renderer->DrawTextInBox2D(stateText, bounds, Vector2::ZERO, fontHeight, TEXT_DRAW_OVERRUN, font, Rgba::YELLOW);
+	bounds.Translate(Vector2(0.f, -2.f * fontHeight));
+
+	std::string netTimeText = Stringf("Net time: %.2f", GetCurrentNetTime());
+
+	renderer->DrawTextInBox2D(netTimeText, bounds, Vector2::ZERO, fontHeight, TEXT_DRAW_OVERRUN, font, Rgba::YELLOW);
 	bounds.Translate(Vector2(0.f, -2.f * fontHeight));
 
 	renderer->DrawTextInBox2D("Connections:", bounds, Vector2::ZERO, fontHeight, TEXT_DRAW_OVERRUN, font);
@@ -720,13 +728,16 @@ void NetSession::ProcessOutgoing()
 		if (currConnection != nullptr)
 		{
 			// Check heartbeat
-			if (currConnection->HasHeartbeatElapsed())
+			if (currConnection != m_myConnection && currConnection->HasHeartbeatElapsed())
 			{
 				const NetMessageDefinition_t* definition = GetMessageDefinition("heartbeat");
 
 				if (definition != nullptr)
 				{
-					currConnection->Send(new NetMessage(definition));
+					NetMessage* message = new NetMessage(definition);
+					message->Write(m_netClock.GetElapsedTime());
+
+					currConnection->Send(message);
 				}
 			}
 
@@ -802,6 +813,38 @@ void NetSession::SetConnectionHeartbeatInterval(float hertz)
 float NetSession::GetHeartbeatInterval() const
 {
 	return m_heartBeatInverval;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the host time that this client last received
+//
+float NetSession::GetLastHostTime() const
+{
+	return m_lastHostTime;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the current time of this session
+//
+float NetSession::GetCurrentNetTime() const
+{
+	if (IsHosting())
+	{
+		return m_netClock.GetElapsedTime();
+	}
+
+	return m_currentClientTime;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the time that this client is trying to match
+//
+float NetSession::GetDesiredClientTime() const
+{
+	return m_desiredClientTime;
 }
 
 
@@ -895,7 +938,7 @@ void NetSession::CheckForDisconnects()
 {
 	for (uint8_t connectionIndex = 0; connectionIndex < MAX_CONNECTIONS; ++connectionIndex)
 	{
-		if (m_boundConnections[connectionIndex] != nullptr) 
+		if (m_boundConnections[connectionIndex] != nullptr && m_boundConnections[connectionIndex] != m_myConnection) 
 		{ 
 			float lastReceivedTime = m_boundConnections[connectionIndex]->GetTimeSinceLastReceive();
 
@@ -1214,6 +1257,30 @@ void NetSession::ProcessReceivedMessage(NetMessage* message, const NetAddress_t&
 
 
 //-----------------------------------------------------------------------------------------------
+// Updates the given client time to dilate towards the target time
+//
+void NetSession::UpdateClientTime()
+{
+	float deltaTime = m_netClock.GetDeltaSeconds();
+	m_desiredClientTime += deltaTime;
+
+	float timeWithDT = m_currentClientTime + deltaTime;
+	if (timeWithDT > m_desiredClientTime)
+	{
+		float minDilation = (1.0f - NET_MAX_TIME_DILATION) * deltaTime;
+		m_currentClientTime += minDilation;
+		m_currentClientTime = ClampFloat(m_currentClientTime, m_desiredClientTime, timeWithDT);
+	}
+	else if (timeWithDT < m_desiredClientTime)
+	{
+		float maxDilation = (1.0f + NET_MAX_TIME_DILATION) * deltaTime;
+		m_currentClientTime += maxDilation;
+		m_currentClientTime = ClampFloat(m_currentClientTime, timeWithDT, m_desiredClientTime);
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Message callbacks
 //-----------------------------------------------------------------------------------------------
 
@@ -1273,9 +1340,15 @@ bool OnPong(NetMessage* msg, const NetSender_t& sender)
 //
 bool OnHeartBeat(NetMessage* msg, const NetSender_t& sender)
 {
-	//ConsolePrintf("Heartbeat received from %s", sender.address.ToString().c_str());
-	UNUSED(msg);
-	UNUSED(sender);
+	// Read off the host's time
+	float hostTime;
+	msg->Read(hostTime);
+
+	if (hostTime > sender.netSession->GetLastHostTime())
+	{
+		sender.netSession->m_lastHostTime = hostTime + 0.5f * sender.netSession->GetHostConnection()->GetRTT();
+		sender.netSession->m_desiredClientTime = sender.netSession->m_lastHostTime;
+	}
 
 	return true;
 }
@@ -1339,6 +1412,9 @@ bool OnJoinRequest(NetMessage* msg, const NetSender_t& sender)
 			finishedMessage->Write(currConnection->GetSessionIndex());
 			finishedMessage->WriteString(currConnection->GetAddress().ToString().c_str());
 		}
+
+		// At the end, write the host's current time
+		finishedMessage->Write(session->m_netClock.GetElapsedTime());
 
 		connection->Send(finishedMessage);
 	}
@@ -1476,6 +1552,17 @@ bool OnHostFinishedSettingClientUp(NetMessage* msg, const NetSender_t& sender)
 
 		NetConnection* connection = sender.netSession->CreateConnection(info);
 		connection->SetConnectionState(CONNECTION_READY);
+	}
+	
+	// Read off the host's time
+	float hostTime;
+	msg->Read(hostTime);
+
+	if (hostTime > sender.netSession->GetLastHostTime())
+	{
+		sender.netSession->m_lastHostTime = hostTime + 0.5f * hostConnection->GetRTT();
+		sender.netSession->m_desiredClientTime = sender.netSession->m_lastHostTime;
+		sender.netSession->m_currentClientTime = sender.netSession->m_lastHostTime;
 	}
 
 	// No other work to do, so mark connections as ready

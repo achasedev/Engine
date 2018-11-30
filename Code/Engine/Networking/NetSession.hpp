@@ -26,6 +26,7 @@ class NetSession;
 #define DEFAULT_PORT_RANGE (10)
 #define JOIN_TIMEOUT (10)
 #define CONNECTION_LAST_RECEIVED_TIMEOUT (10)
+#define NET_MAX_TIME_DILATION (0.1f)
 
 struct NetSender_t
 {
@@ -183,6 +184,11 @@ public:
 	void							SetConnectionHeartbeatInterval(float hertz);
 	float							GetHeartbeatInterval() const;
 
+	// Net Clock
+	float							GetLastHostTime() const;
+	float							GetCurrentNetTime() const;
+	float							GetDesiredClientTime() const;
+
 
 private:
 	//-----Private Methods-----
@@ -208,6 +214,8 @@ private:
 	bool							ShouldMessageBeProcessed(NetMessage* message, NetConnection* connection);
 	void							ProcessReceivedMessage(NetMessage* message, const NetAddress_t& address, uint8_t connectionIndex);
 
+	void							UpdateClientTime();
+
 	// Host/Join handlers, to allow access to CreateConnection and such
 	friend bool						OnJoinRequest(NetMessage* msg, const NetSender_t& sender);
 	friend bool						OnJoinDeny(NetMessage* msg, const NetSender_t& sender);
@@ -216,6 +224,7 @@ private:
 	friend bool						OnHostFinishedSettingClientUp(NetMessage* msg, const NetSender_t& sender);
 	friend bool						OnClientFinishedTheirSetup(NetMessage* msg, const NetSender_t& sender);
 	friend bool						OnHangUp(NetMessage* msg, const NetSender_t& sender);
+	friend bool						OnHeartBeat(NetMessage* msg, const NetSender_t& sender);
 
 
 private:
@@ -252,5 +261,11 @@ private:
 
 	// Heartbeat in seconds
 	float										m_heartBeatInverval = 1.f;
+
+	// Net clock
+	float										m_lastHostTime = 0.f;
+	float										m_desiredClientTime = 0.f;
+	float										m_currentClientTime = 0.f;
+	Stopwatch									m_netClock;
 
 };
