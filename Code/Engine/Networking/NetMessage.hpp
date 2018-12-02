@@ -28,6 +28,8 @@ public:
 	NetMessage();
 	NetMessage(NetMessage&& moveFrom);
 	NetMessage(const NetMessageDefinition_t* definition);
+	NetMessage(const std::string& definitionName, const NetSession* session);
+
 	NetMessage(const NetMessageDefinition_t* definition, void* payload, const int16_t& payloadSize);
 	NetMessage(const NetMessage& copy);
 	~NetMessage();
@@ -56,7 +58,6 @@ public:
 	void							ResetTimeLastSent();
 	void							AssignReliableID(uint16_t reliableID);
 	void							AssignSequenceID(uint16_t sequenceID);
-	void							AssignSequenceChannelID(uint8_t channelID);
 
 
 private:
@@ -67,7 +68,6 @@ private:
 	uint16_t						m_reliableID;
 
 	uint16_t						m_sequenceID;
-	uint8_t							m_sequenceChannelID = 0;
 
 	float							m_lastSentTime;
 	const NetMessageDefinition_t*	m_definition;

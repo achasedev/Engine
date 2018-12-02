@@ -55,7 +55,6 @@ NetMessage::NetMessage(NetMessage&& moveFrom)
 	m_reliableID = moveFrom.m_reliableID;
 
 	m_sequenceID = moveFrom.m_sequenceID;
-	m_sequenceChannelID = moveFrom.m_sequenceChannelID;
 
 	memcpy(m_payload, moveFrom.m_payload, MESSAGE_MTU);
 
@@ -80,9 +79,17 @@ NetMessage::NetMessage(const NetMessage& copy)
 	m_reliableID = copy.m_reliableID;
 
 	m_sequenceID = copy.m_sequenceID;
-	m_sequenceChannelID = copy.m_sequenceChannelID;
 
 	memcpy(m_payload, copy.m_payload, MESSAGE_MTU);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Constructor from the name and a session
+//
+NetMessage::NetMessage(const std::string& definitionName, const NetSession* session)
+	: NetMessage(session->GetMessageDefinition(definitionName))
+{
 }
 
 
@@ -109,7 +116,6 @@ NetMessage& NetMessage::operator=(NetMessage&& moveFrom)
 	m_reliableID = moveFrom.m_reliableID;
 
 	m_sequenceID = moveFrom.m_sequenceID;
-	m_sequenceChannelID = moveFrom.m_sequenceChannelID;
 
 	memcpy(m_payload, moveFrom.m_payload, m_bufferCapacity);
 
@@ -135,7 +141,6 @@ NetMessage& NetMessage::operator=(const NetMessage& copy)
 	m_reliableID = copy.m_reliableID;
 
 	m_sequenceID = copy.m_sequenceID;
-	m_sequenceChannelID = copy.m_sequenceChannelID;
 
 	memcpy(m_payload, copy.m_payload, MESSAGE_MTU);
 
@@ -247,11 +252,6 @@ void NetMessage::AssignSequenceID(uint16_t sequenceID)
 	m_sequenceID = sequenceID;
 }
 
-void NetMessage::AssignSequenceChannelID(uint8_t channelID)
-{
-	m_sequenceChannelID = channelID;
-}
-
 uint16_t NetMessage::GetReliableID() const
 {
 	return m_reliableID;
@@ -264,5 +264,5 @@ uint16_t NetMessage::GetSequenceID() const
 
 uint8_t NetMessage::GetSequenceChannelID() const
 {
-	return m_sequenceChannelID;
+	return m_definition->sequenceChannelIndex;
 }

@@ -12,6 +12,7 @@
 #include <vector>
 #include <string>
 #include <mutex>
+#include <function>
 
 class UDPSocket;
 class NetPacket;
@@ -19,6 +20,7 @@ class NetMessage;
 class BytePacker;
 class NetConnection;
 class NetSession;
+class NetObjectSystem;
 
 #define INVALID_CONNECTION_INDEX (0xff)
 #define MAX_CONNECTIONS (32)
@@ -51,6 +53,12 @@ enum eNetCoreMessage : uint8_t
 	NET_MSG_HOST_FINISHED_SETUP,	// reliable, in-order
 	NET_MSG_CLIENT_JOIN_FINISHED,	// reliable, in-order
 	NET_MSG_HANG_UP,				// unreliable
+
+	// For net object system
+	NET_MSG_OBJ_CREATE,			// reliable, in-order
+	NET_MSG_OBJ_DESTROY,		// reliable, in-order
+	NET_MSG_OBJ_UPDATE,			// unreliable
+
 	NET_MSG_CORE_COUNT
 };
 
@@ -62,13 +70,14 @@ enum eNetMessageOption : uint32_t
 	NET_MSG_OPTION_IN_ORDER = (1 << 2) | NET_MSG_OPTION_RELIABLE, // All in-order traffic is reliable!
 };
 
-// Callback for the NetSession
+// Callback for the NetSession messages
 typedef bool(*NetMessage_cb)(NetMessage* msg, const NetSender_t& sender);
+typedef void(*NetSessionConnectionEvent_cb)(void* args);
 
 struct NetMessageDefinition_t
 {
-	NetMessageDefinition_t(uint8_t _id, const std::string& _name, NetMessage_cb _callback, eNetMessageOption _options)
-		: id(_id), name(_name), callback(_callback), options(_options) {}
+	NetMessageDefinition_t(uint8_t _id, const std::string& _name, NetMessage_cb _callback, eNetMessageOption _options, uint8_t _sequenceChannelIndex = 0)
+		: id(_id), name(_name), callback(_callback), options(_options), sequenceChannelIndex(_sequenceChannelIndex) {}
 
 	bool IsReliable() const
 	{
@@ -84,6 +93,7 @@ struct NetMessageDefinition_t
 	std::string			name = "";
 	NetMessage_cb		callback = nullptr;
 	eNetMessageOption	options;
+	uint8_t				sequenceChannelIndex;
 };
 
 struct PendingReceive
@@ -152,8 +162,8 @@ public:
 	void							BroadcastMessage(NetMessage* message);
 
 	// Message Definitions
-	void							RegisterMessageDefinition(uint8_t messageID, const std::string& name, NetMessage_cb callback, eNetMessageOption options = NET_MSG_OPTION_NONE);
-	const NetMessageDefinition_t*	GetMessageDefinition(const std::string& name);
+	void							RegisterMessageDefinition(uint8_t messageID, const std::string& name, NetMessage_cb callback, eNetMessageOption options = NET_MSG_OPTION_NONE, uint8_t sequenceChannelIndex = 0);
+	const NetMessageDefinition_t*	GetMessageDefinition(const std::string& name) const;
 	const NetMessageDefinition_t*	GetMessageDefinition(const uint8_t index);
 	bool							GetMessageDefinitionIndex(const std::string& name, uint8_t& out_index);
 
@@ -188,6 +198,9 @@ public:
 	float							GetLastHostTime() const;
 	float							GetCurrentNetTime() const;
 	float							GetDesiredClientTime() const;
+
+	// NetObject System
+	NetObjectSystem*				GetNetObjectSystem() const;
 
 
 private:
@@ -225,6 +238,13 @@ private:
 	friend bool						OnClientFinishedTheirSetup(NetMessage* msg, const NetSender_t& sender);
 	friend bool						OnHangUp(NetMessage* msg, const NetSender_t& sender);
 	friend bool						OnHeartBeat(NetMessage* msg, const NetSender_t& sender);
+
+public:
+	//-----Public Data-----
+
+	// Public callbacks so Game-side code can set it how it likes
+	std::function<void(NetConnection*)>			m_onJoinCallback;
+	std::function<void(NetConnection*)>			m_onLeaveCallback;
 
 
 private:
@@ -268,4 +288,6 @@ private:
 	float										m_currentClientTime = 0.f;
 	Stopwatch									m_netClock;
 
+	// NetObjectSystem
+	NetObjectSystem*							m_netObjectSystem = nullptr;
 };

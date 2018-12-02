@@ -8,12 +8,14 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/LogSystem.hpp"
 #include "Engine/Core/Time/Clock.hpp"
+#include "Engine/Networking/NetObject.hpp"
 #include "Engine/Networking/UDPSocket.hpp"
 #include "Engine/Networking/NetPacket.hpp"
 #include "Engine/Networking/NetSession.hpp"
 #include "Engine/Networking/NetMessage.hpp"
 #include "Engine/Rendering/Core/Renderer.hpp"
 #include "Engine/Networking/NetConnection.hpp"
+#include "Engine/Networking/NetObjectSystem.hpp"
 
 // Message callbacks
 bool OnPing(NetMessage* msg, const NetSender_t& sender);
@@ -25,6 +27,8 @@ bool OnPong(NetMessage* msg, const NetSender_t& sender);
 //
 NetSession::NetSession()
 {
+	m_netObjectSystem = new NetObjectSystem();
+
 	RegisterCoreMessages();
 	m_netClock.Reset();
 }
@@ -37,6 +41,12 @@ NetSession::~NetSession()
 {
 	// Clean up connections; send hang up messages
 	ShutdownSession();
+
+	if (m_netObjectSystem != nullptr)
+	{
+		delete m_netObjectSystem;
+		m_netObjectSystem = nullptr;
+	}
 }
 
 
@@ -386,7 +396,7 @@ void NetSession::RenderDebugInfo() const
 //-----------------------------------------------------------------------------------------------
 // Adds a call back for message handling
 //
-void NetSession::RegisterMessageDefinition(uint8_t messageID, const std::string& name, NetMessage_cb callback, eNetMessageOption options /*= NET_MSG_OPTION_NONE*/)
+void NetSession::RegisterMessageDefinition(uint8_t messageID, const std::string& name, NetMessage_cb callback, eNetMessageOption options /*= NET_MSG_OPTION_NONE*/, uint8_t sequenceChannelIndex /*= 0*/)
 {
 	// Check for duplicates
 	if (m_messageDefinitions[messageID] != nullptr)
@@ -395,7 +405,7 @@ void NetSession::RegisterMessageDefinition(uint8_t messageID, const std::string&
 		delete m_messageDefinitions[messageID];
 	}
 
-	m_messageDefinitions[messageID] = new NetMessageDefinition_t(messageID, name, callback, options);
+	m_messageDefinitions[messageID] = new NetMessageDefinition_t(messageID, name, callback, options, sequenceChannelIndex);
 }
 
 
@@ -528,7 +538,7 @@ void NetSession::BroadcastMessage(NetMessage* message)
 //-----------------------------------------------------------------------------------------------
 // Returns the definition given by name
 //
-const NetMessageDefinition_t* NetSession::GetMessageDefinition(const std::string& name)
+const NetMessageDefinition_t* NetSession::GetMessageDefinition(const std::string& name) const
 {
 	for (int index = 0; index < MAX_MESSAGE_DEFINITIONS; ++index)
 	{
@@ -849,6 +859,15 @@ float NetSession::GetDesiredClientTime() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the NetObjectSystem used by this session
+//
+NetObjectSystem* NetSession::GetNetObjectSystem() const
+{
+	return m_netObjectSystem;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Creates a connection with the given info and attempts to bind it if valid
 //
 NetConnection* NetSession::CreateConnection(const NetConnectionInfo_t& connectionInfo)
@@ -979,6 +998,10 @@ void NetSession::RegisterCoreMessages()
 	RegisterMessageDefinition(NET_MSG_HOST_FINISHED_SETUP, "host_setup_complete", OnHostFinishedSettingClientUp, NET_MSG_OPTION_IN_ORDER);
 	RegisterMessageDefinition(NET_MSG_CLIENT_JOIN_FINISHED, "client_join_finished", OnClientFinishedTheirSetup, NET_MSG_OPTION_IN_ORDER);
 	RegisterMessageDefinition(NET_MSG_HANG_UP, "hang_up", OnHangUp);
+
+	// NetObjectSystem
+	RegisterMessageDefinition(NET_MSG_OBJ_CREATE, "netobj_create", OnNetObjectCreate, NET_MSG_OPTION_IN_ORDER);
+	RegisterMessageDefinition(NET_MSG_OBJ_DESTROY, "netobj_destroy", OnNetObjectDestroy, NET_MSG_OPTION_IN_ORDER);
 }
 
 
@@ -1633,4 +1656,41 @@ bool OnHangUp(NetMessage* msg, const NetSender_t& sender)
 	sender.netSession->DestroyConnection(connection);
 
 	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Callback for when a net object create message is received
+//
+bool OnNetObjectCreate(NetMessage* msg, const NetSender_t& sender)
+{
+	NetObjectSystem *netObjSystem = sender.netSession->GetNetObjectSystem();
+
+	uint8_t typeID = 0xff;
+	uint16_t networkID = 0xffff;
+
+	if (!msg->Read(typeID) || !msg->Read(networkID))
+	{
+		ERROR_AND_DIE("Error: OnNetObjectCreate() couldn't read the necessary ID's");
+	}
+
+	const NetObjectType_t* type = netObjSystem->GetNetObjectTypeForTypeID(typeID);
+
+	// Read off the rest of the game receive data from the message
+	void* localObject = type->receiveCreate(*msg);
+
+	if (localObject != nullptr) 
+	{
+		NetObject *netObj = new NetObject();
+		netObj->m_networkID = networkID;
+		netObj->m_netObjectType = type;
+		netObj->m_localObjectPtr = localObject;
+
+		netObjSystem->RegisterNetObject(netObj);
+	}
+}
+
+bool OnNetObjectDestroy(NetMessage* msg, const NetSender_t& sender)
+{
+
 }
