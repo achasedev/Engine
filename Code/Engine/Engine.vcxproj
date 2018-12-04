@@ -315,7 +315,9 @@
     <ClCompile Include="Networking\NetConnection.cpp" />
     <ClCompile Include="Networking\NetMessage.cpp" />
     <ClCompile Include="Networking\NetObject.cpp" />
+    <ClCompile Include="Networking\NetObjectConnectionView.cpp" />
     <ClCompile Include="Networking\NetObjectSystem.cpp" />
+    <ClCompile Include="Networking\NetObjectView.cpp" />
     <ClCompile Include="Networking\NetPacket.cpp" />
     <ClCompile Include="Networking\NetSequenceChannel.cpp" />
     <ClCompile Include="Networking\NetSession.cpp" />
@@ -460,8 +462,10 @@
     <ClInclude Include="Networking\NetConnection.hpp" />
     <ClInclude Include="Networking\NetMessage.hpp" />
     <ClInclude Include="Networking\NetObject.hpp" />
+    <ClInclude Include="Networking\NetObjectConnectionView.hpp" />
     <ClInclude Include="Networking\NetObjectSystem.hpp" />
     <ClInclude Include="Networking\NetObjectType.hpp" />
+    <ClInclude Include="Networking\NetObjectView.hpp" />
     <ClInclude Include="Networking\NetPacket.hpp" />
     <ClInclude Include="Networking\NetSequenceChannel.hpp" />
     <ClInclude Include="Networking\NetSession.hpp" />

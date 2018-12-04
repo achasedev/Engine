@@ -12,17 +12,31 @@
 
 class NetObject;
 class NetSession;
+class NetObjectView;
+class NetObjectConnectionView;
 
 class NetObjectSystem
 {
 public:
 	//-----Public Methods-----
 	
+	NetObjectSystem();
+	~NetObjectSystem();
+
+	void Update();
+
 	void RegisterNetObject(NetObject* netObj);
+	NetObject* UnregisterNetObject(uint16_t networkID);
 	void RegisterNetObjectType(const NetObjectType_t& type);
 
 	void SyncObject(uint8_t typeID, void* localObject);
 	void UnsyncObject(void* localObject);
+
+	void AddConnectionViewForIndex(uint8_t connectionIndex);
+	void ClearConnectionViewForIndex(uint8_t connectionIndex);
+
+	std::vector<NetMessage*>	GetMessagesToConstructAllNetObjects() const;
+	bool						GetNextSnapshotUpdateMessage(NetMessage* out_message, uint8_t connectionIndex);
 
 	// Accessors
 	const NetObjectType_t* GetNetObjectTypeForTypeID(uint8_t typeID) const;
@@ -31,12 +45,13 @@ public:
 private:
 	//-----Private Methods-----
 	
-	NetObject*		GetNetObjectForLocalObject(void* localObject);
-	NetObject*		GetNetObjectForNetworkID(uint16_t id);
-
+	void			UpdateLocalSnapshots();
 	uint16_t		GetUnusedNetworkID();
 
-	
+	void			AddNetObjectViewToAllConnectionViews(NetObject* netObject);
+	void			RemoveNetObjectViewFromAllConnectionViews(NetObject* netObject);
+
+
 private:
 	//-----Private Data-----
 	
@@ -44,4 +59,6 @@ private:
 	std::vector<NetObjectType_t>	m_netObjectTypes; // By value
 	std::vector<NetObject*>			m_netObjects;
 	uint16_t						m_nextNetworkID = 0;
+
+	NetObjectConnectionView*		m_connectionViews[MAX_CONNECTIONS];
 };

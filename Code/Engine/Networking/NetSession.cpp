@@ -21,6 +21,10 @@
 bool OnPing(NetMessage* msg, const NetSender_t& sender);
 bool OnPong(NetMessage* msg, const NetSender_t& sender);
 
+bool OnNetObjectCreate(NetMessage* msg, const NetSender_t& sender);
+bool OnNetObjectDestroy(NetMessage* msg, const NetSender_t& sender);
+bool OnNetObjectUpdate(NetMessage* msg, const NetSender_t& sender);
+
 
 //-----------------------------------------------------------------------------------------------
 // Constructor
@@ -315,6 +319,12 @@ void NetSession::Update()
 		{
 			UpdateClientTime();
 		}
+
+		// Let the NetObjectSystem Update
+		if (m_netObjectSystem != nullptr)
+		{
+			m_netObjectSystem->Update();
+		}
 		break;
 	default:
 		break;
@@ -518,7 +528,7 @@ void NetSession::BroadcastMessage(NetMessage* message)
 	bool firstSent = false;
 	for (int i = 0; i < MAX_CONNECTIONS; ++i)
 	{
-		if (m_boundConnections[i] != nullptr && m_boundConnections[i] != m_myConnection)
+		if (m_boundConnections[i] != nullptr && m_boundConnections[i] != m_myConnection && m_boundConnections[i]->IsReady())
 		{
 			if (!firstSent)
 			{
@@ -888,6 +898,9 @@ NetConnection* NetSession::CreateConnection(const NetConnectionInfo_t& connectio
 //
 void NetSession::DestroyConnection(NetConnection* connection)
 {
+	// Remove the connection view from the NetObjectSystem
+	m_netObjectSystem->ClearConnectionViewForIndex(connection->GetSessionIndex());
+
 	// Remove the connection from the list if bound connections if bound
 	if (connection->IsConnected())
 	{
@@ -929,6 +942,9 @@ void NetSession::BindConnection(uint8_t index, NetConnection* connection)
 
 	// Flag it as bound
 	connection->SetConnectionState(CONNECTION_BOUND);
+
+	// Add a NetObjectConnectionView for the connection
+	m_netObjectSystem->AddConnectionViewForIndex(index);
 }
 
 
@@ -1002,6 +1018,7 @@ void NetSession::RegisterCoreMessages()
 	// NetObjectSystem
 	RegisterMessageDefinition(NET_MSG_OBJ_CREATE, "netobj_create", OnNetObjectCreate, NET_MSG_OPTION_IN_ORDER);
 	RegisterMessageDefinition(NET_MSG_OBJ_DESTROY, "netobj_destroy", OnNetObjectDestroy, NET_MSG_OPTION_IN_ORDER);
+	RegisterMessageDefinition(NET_MSG_OBJ_UPDATE, "netobj_update", OnNetObjectUpdate);
 }
 
 
@@ -1440,6 +1457,14 @@ bool OnJoinRequest(NetMessage* msg, const NetSender_t& sender)
 		finishedMessage->Write(session->m_netClock.GetElapsedTime());
 
 		connection->Send(finishedMessage);
+
+		// Also send all the NetObject construction messages
+		std::vector<NetMessage*> createMessages = session->GetNetObjectSystem()->GetMessagesToConstructAllNetObjects();
+
+		for (int i = 0; i < createMessages.size(); ++i)
+		{
+			connection->Send(createMessages[i]);
+		}
 	}
 	else
 	{
@@ -1659,7 +1684,7 @@ bool OnHangUp(NetMessage* msg, const NetSender_t& sender)
 }
 
 
-//-----------------------------------------------------------------------------------------------
+//- C FUNCTION ----------------------------------------------------------------------------------
 // Callback for when a net object create message is received
 //
 bool OnNetObjectCreate(NetMessage* msg, const NetSender_t& sender)
@@ -1677,20 +1702,62 @@ bool OnNetObjectCreate(NetMessage* msg, const NetSender_t& sender)
 	const NetObjectType_t* type = netObjSystem->GetNetObjectTypeForTypeID(typeID);
 
 	// Read off the rest of the game receive data from the message
-	void* localObject = type->receiveCreate(*msg);
+	void* localObject = type->readCreate(*msg);
 
 	if (localObject != nullptr) 
 	{
-		NetObject *netObj = new NetObject();
-		netObj->m_networkID = networkID;
-		netObj->m_netObjectType = type;
-		netObj->m_localObjectPtr = localObject;
+		NetObject *netObj = new NetObject(type, networkID, localObject, false);
 
 		netObjSystem->RegisterNetObject(netObj);
 	}
 }
 
+
+//- C FUNCTION ----------------------------------------------------------------------------------
+// Callback for when a NetObject Destroy message is received
+//
 bool OnNetObjectDestroy(NetMessage* msg, const NetSender_t& sender)
 {
+	NetObjectSystem* netObjSystem = sender.netSession->GetNetObjectSystem();
 
+	uint16_t networkID = 0xffff;
+
+	if (!msg->Read(networkID))
+	{
+		ERROR_AND_DIE("Error: OnNetObjectCreate() couldn't read the network ID");
+	}
+
+	NetObject* netObject = netObjSystem->UnregisterNetObject(networkID);
+
+	ASSERT_OR_DIE(netObject != nullptr, "Error: OnNetObjectDestroy() couldnt' find NetObject");
+
+	netObject->GetNetObjectType()->readDestroy(msg, netObject->GetLocalObject());
+
+	delete netObject;
+}
+
+
+
+//- C FUNCTION ----------------------------------------------------------------------------------
+// Callback for when a NetObject Update message is received
+//
+bool OnNetObjectUpdate(NetMessage* msg, const NetSender_t& sender)
+{
+	NetObjectSystem* netObjSystem = sender.netSession->GetNetObjectSystem();
+
+	uint16_t networkID = 0xffff;
+
+	if (!msg->Read(networkID))
+	{
+		ERROR_AND_DIE("Error: OnNetObjectCreate() couldn't read the network ID");
+	}
+
+	NetObject* netObject = netObjSystem->UnregisterNetObject(networkID);
+	ASSERT_OR_DIE(netObject != nullptr, "Error: OnNetObjectUpdate() couldnt' find NetObject");
+
+	const NetObjectType_t* type = netObject->GetNetObjectType();
+
+	type->readSnapshot(*msg, netObject->GetLastReceivedSnapshot());
+
+	return true;
 }

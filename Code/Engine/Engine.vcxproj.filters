@@ -381,6 +381,8 @@
     <ClCompile Include="Networking\NetSequenceChannel.cpp" />
     <ClCompile Include="Networking\NetObjectSystem.cpp" />
     <ClCompile Include="Networking\NetObject.cpp" />
+    <ClCompile Include="Networking\NetObjectView.cpp" />
+    <ClCompile Include="Networking\NetObjectConnectionView.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -739,5 +741,7 @@
     <ClInclude Include="Networking\NetObjectSystem.hpp" />
     <ClInclude Include="Networking\NetObject.hpp" />
     <ClInclude Include="Networking\NetObjectType.hpp" />
+    <ClInclude Include="Networking\NetObjectView.hpp" />
+    <ClInclude Include="Networking\NetObjectConnectionView.hpp" />
   </ItemGroup>
 </Project>

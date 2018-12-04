@@ -214,7 +214,6 @@ bool NetPacket::ReadMessage(NetMessage* out_message, NetSession* session)
 
 	out_message->AssignReliableID(reliableID);
 	out_message->AssignSequenceID(sequenceID);
-	out_message->AssignSequenceChannelID(sequenceChannelID);
 
 	out_message->AdvanceWriteHead(payloadSize);
 

@@ -13,6 +13,7 @@
 #include "Engine/Networking/NetMessage.hpp"
 #include "Engine/Networking/NetSession.hpp"
 #include "Engine/Networking/NetConnection.hpp"
+#include "Engine/Networking/NetObjectSystem.hpp"
 
 #define RELIABLE_RESEND_INTERVAL (0.1) // 100 ms
 #define RELIABLE_WINDOW (32)
@@ -193,6 +194,26 @@ void NetConnection::FlushMessages()
 		delete m_outboundUnreliables[msgIndex];
 	}
 	
+	// If we have any snapshots to send and the room, send them out
+	bool done = false;
+	NetObjectSystem* netObjSystem = m_owningSession->GetNetObjectSystem();
+
+	while (m_owningSession != nullptr && !done)
+	{
+		NetMessage snapshotMessage = NetMessage("netobj_update", m_owningSession);
+		bool hasUpdate = netObjSystem->GetNextSnapshotUpdateMessage(&snapshotMessage, m_connectionInfo.sessionIndex);
+
+		if (hasUpdate && packet->CanFitMessage(&snapshotMessage))
+		{
+			packet->WriteMessage(&snapshotMessage);
+			messagesWritten++;
+		}
+		else
+		{
+			done = true;
+		}
+	}
+
 	PacketHeader_t header = CreateHeaderForNextSend(messagesWritten);
 	packet->WriteHeader(header);
 

@@ -12,7 +12,7 @@
 #include <vector>
 #include <string>
 #include <mutex>
-#include <function>
+#include <functional>
 
 class UDPSocket;
 class NetPacket;

@@ -9,14 +9,14 @@
 
 class NetMessage;
 
-typedef void(*NetObjectSendCreate)(NetMessage& msg, void* args);
-typedef void*(*NetObjectReceiveCreate)(NetMessage& msg);
-typedef void(*NetObjectSendDestroy)(NetMessage& msg, void* args);
-typedef void(*NetObjectReceiveDestroy)(NetMessage* msg);
+typedef void(*NetObjectWriteCreate)(NetMessage& msg, void* object);
+typedef void*(*NetObjectReadCreate)(NetMessage& msg);
+typedef void(*NetObjectWriteDestroy)(NetMessage& msg, void* object);
+typedef void(*NetObjectReadDestroy)(NetMessage* msg, void* object);
 
 typedef void(*NetObjectMakeSnapshot)(void* snapshot, const void* object);
-typedef void(*NetObjectSendSnapshot)(NetMessage& msg, const void* snapshot);
-typedef void(*NetObjectReceiveSnapshot)(NetMessage& msg, void* out_snapshot);
+typedef void(*NetObjectWriteSnapshot)(NetMessage& msg, const void* snapshot);
+typedef void(*NetObjectReadSnapshot)(NetMessage& msg, void* out_snapshot);
 typedef void(*NetObjectApplySnapshot)(void* snapshot, void* object);
 
 struct NetObjectType_t
@@ -25,15 +25,16 @@ struct NetObjectType_t
 	uint8_t	id;
 
 	// Create/Destroy
-	NetObjectSendCreate			sendCreate;
-	NetObjectReceiveCreate		receiveCreate;
-	NetObjectSendDestroy		sendDestroy;
-	NetObjectReceiveDestroy		receiveDestroy;
+	NetObjectWriteCreate		writeCreate;
+	NetObjectReadCreate			readCreate;
+	NetObjectWriteDestroy		writeDestroy;
+	NetObjectReadDestroy		readDestroy;
 
 	// Snapshots
 	size_t						snapshotSize;
 	NetObjectMakeSnapshot		makeSnapshot;
-	NetObjectSendSnapshot		sendSnapshot;
-	NetObjectReceiveSnapshot	receiveSnapshot;
+	NetObjectWriteSnapshot		writeSnapshot;
+	NetObjectReadSnapshot		readSnapshot;
 	NetObjectApplySnapshot		applySnapshot;
+
 };
