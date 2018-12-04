@@ -20,7 +20,7 @@ class NetObjectSystem
 public:
 	//-----Public Methods-----
 	
-	NetObjectSystem();
+	NetObjectSystem(NetSession* session);
 	~NetObjectSystem();
 
 	void Update();
@@ -61,4 +61,5 @@ private:
 	uint16_t						m_nextNetworkID = 0;
 
 	NetObjectConnectionView*		m_connectionViews[MAX_CONNECTIONS];
+
 };

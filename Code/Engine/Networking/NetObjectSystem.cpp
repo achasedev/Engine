@@ -10,7 +10,8 @@
 //-----------------------------------------------------------------------------------------------
 // Constructor
 //
-NetObjectSystem::NetObjectSystem()
+NetObjectSystem::NetObjectSystem(NetSession* session)
+	: m_session(session)
 {
 	for (int i = 0; i < MAX_CONNECTIONS; ++i)
 	{
@@ -215,7 +216,6 @@ bool NetObjectSystem::GetNextSnapshotUpdateMessage(NetMessage* out_message, uint
 
 	// Sanity check
 	int viewCount = (int)m_connectionViews[connectionIndex]->GetViewCount();
-	ASSERT_OR_DIE(viewCount == netObjectCount, "Error: NetObjectSystem::GetNextSnapshotUpdateMessage() had counts not match.");
 
 	if (netObjectCount == 0)
 	{
@@ -332,7 +332,10 @@ void NetObjectSystem::AddNetObjectViewToAllConnectionViews(NetObject* netObject)
 {
 	for (int i = 0; i < MAX_CONNECTIONS; ++i)
 	{
-		m_connectionViews[i]->AddNetObjectView(netObject);
+		if (m_connectionViews[i] != nullptr)
+		{
+			m_connectionViews[i]->AddNetObjectView(netObject);
+		}
 	}
 }
 
@@ -344,7 +347,10 @@ void NetObjectSystem::RemoveNetObjectViewFromAllConnectionViews(NetObject* netOb
 {
 	for (int i = 0; i < MAX_CONNECTIONS; ++i)
 	{
-		m_connectionViews[i]->RemoveNetObjectView(netObject);
+		if (m_connectionViews[i] != nullptr)
+		{
+			m_connectionViews[i]->RemoveNetObjectView(netObject);
+		}
 	}
 }
 

@@ -31,7 +31,7 @@ bool OnNetObjectUpdate(NetMessage* msg, const NetSender_t& sender);
 //
 NetSession::NetSession()
 {
-	m_netObjectSystem = new NetObjectSystem();
+	m_netObjectSystem = new NetObjectSystem(this);
 
 	RegisterCoreMessages();
 	m_netClock.Reset();
@@ -906,6 +906,11 @@ void NetSession::DestroyConnection(NetConnection* connection)
 	{
 		uint8_t index = connection->GetSessionIndex();
 		m_boundConnections[index] = nullptr;
+
+		if (IsHosting())
+		{
+			m_onLeaveCallback(connection);
+		}
 	}
 
 	// Clean up convenience pointers
@@ -1192,6 +1197,8 @@ void NetSession::ProcessReceivedPacket(NetPacket* packet, const NetAddress_t& se
 		NetMessage message;
 		packet->ReadMessage(&message, this); // Need to pass the session to look up the definition
 
+		ConsolePrintf("Received message: %s", message.GetDefinition()->name.c_str());
+
 		// Check if we should process it
 		bool shouldProcess = ShouldMessageBeProcessed(&message, connection);
 
@@ -1457,14 +1464,6 @@ bool OnJoinRequest(NetMessage* msg, const NetSender_t& sender)
 		finishedMessage->Write(session->m_netClock.GetElapsedTime());
 
 		connection->Send(finishedMessage);
-
-		// Also send all the NetObject construction messages
-		std::vector<NetMessage*> createMessages = session->GetNetObjectSystem()->GetMessagesToConstructAllNetObjects();
-
-		for (int i = 0; i < createMessages.size(); ++i)
-		{
-			connection->Send(createMessages[i]);
-		}
 	}
 	else
 	{
@@ -1654,6 +1653,16 @@ bool OnClientFinishedTheirSetup(NetMessage* msg, const NetSender_t& sender)
 	// Mark the connection ready
 	connection->SetConnectionState(CONNECTION_READY);
 
+	sender.netSession->m_onJoinCallback(connection);
+
+	// Send all the NetObject construction messages
+	std::vector<NetMessage*> createMessages = sender.netSession->GetNetObjectSystem()->GetMessagesToConstructAllNetObjects();
+
+	for (int i = 0; i < createMessages.size(); ++i)
+	{
+		connection->Send(createMessages[i]);
+	}
+
 	// Have the host tell everyone of the new addition
 	NetMessage* message = new NetMessage(sender.netSession->GetMessageDefinition("new_connection"));
 	message->WriteString(clientName);
@@ -1709,7 +1718,11 @@ bool OnNetObjectCreate(NetMessage* msg, const NetSender_t& sender)
 		NetObject *netObj = new NetObject(type, networkID, localObject, false);
 
 		netObjSystem->RegisterNetObject(netObj);
+
+		return true;
 	}
+
+	return false;
 }
 
 
@@ -1734,6 +1747,7 @@ bool OnNetObjectDestroy(NetMessage* msg, const NetSender_t& sender)
 	netObject->GetNetObjectType()->readDestroy(msg, netObject->GetLocalObject());
 
 	delete netObject;
+	return true;
 }
 
 

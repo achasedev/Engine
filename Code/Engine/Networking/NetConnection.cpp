@@ -106,6 +106,8 @@ void NetConnection::Send(NetMessage* msg)
 	{
 		m_outboundUnreliables.push_back(msg);
 	}
+
+	ConsolePrintf("Message sent: %s", msg->GetDefinition()->name.c_str());
 }
 
 
@@ -195,24 +197,31 @@ void NetConnection::FlushMessages()
 	}
 	
 	// If we have any snapshots to send and the room, send them out
-	bool done = false;
-	NetObjectSystem* netObjSystem = m_owningSession->GetNetObjectSystem();
-
-	while (m_owningSession != nullptr && !done)
-	{
-		NetMessage snapshotMessage = NetMessage("netobj_update", m_owningSession);
-		bool hasUpdate = netObjSystem->GetNextSnapshotUpdateMessage(&snapshotMessage, m_connectionInfo.sessionIndex);
-
-		if (hasUpdate && packet->CanFitMessage(&snapshotMessage))
-		{
-			packet->WriteMessage(&snapshotMessage);
-			messagesWritten++;
-		}
-		else
-		{
-			done = true;
-		}
-	}
+// 	bool done = false;
+// 	NetObjectSystem* netObjSystem = m_owningSession->GetNetObjectSystem();
+// 
+// 	while (m_owningSession != nullptr && !done)
+// 	{
+// 		NetMessage snapshotMessage = NetMessage("netobj_update", m_owningSession);
+// 		bool hasUpdate = netObjSystem->GetNextSnapshotUpdateMessage(&snapshotMessage, m_connectionInfo.sessionIndex);
+// 
+// 		if (hasUpdate && packet->CanFitMessage(&snapshotMessage))
+// 		{
+// 			bool success = packet->WriteMessage(&snapshotMessage);
+// 			if (success)
+// 			{
+// 				messagesWritten++;
+// 			}
+// 			else
+// 			{
+// 				done = true;
+// 			}
+// 		}
+// 		else
+// 		{
+// 			done = true;
+// 		}
+// 	}
 
 	PacketHeader_t header = CreateHeaderForNextSend(messagesWritten);
 	packet->WriteHeader(header);
