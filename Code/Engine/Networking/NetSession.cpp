@@ -1765,7 +1765,7 @@ bool OnNetObjectUpdate(NetMessage* msg, const NetSender_t& sender)
 		ERROR_AND_DIE("Error: OnNetObjectCreate() couldn't read the network ID");
 	}
 
-	NetObject* netObject = netObjSystem->UnregisterNetObject(networkID);
+	NetObject* netObject = netObjSystem->GetNetObjectForNetworkID(networkID);
 
 	if (netObject == nullptr)
 	{

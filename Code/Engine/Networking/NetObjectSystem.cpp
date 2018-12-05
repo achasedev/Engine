@@ -282,6 +282,25 @@ NetObject* NetObjectSystem::GetNetObjectForLocalObject(void* localObject)
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the NetObject corresponding to the Network ID given
+//
+NetObject* NetObjectSystem::GetNetObjectForNetworkID(uint16_t networkID)
+{
+	int netObjCount = (int)m_netObjects.size();
+
+	for (int i = 0; i < netObjCount; ++i)
+	{
+		if (m_netObjects[i]->GetNetworkID() == networkID)
+		{
+			return m_netObjects[i];
+		}
+	}
+
+	return nullptr;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Creates and updates all local snapshots for each NetObject
 // Done for all objects regardless if we own them, so we have our current stored somewhere (even
 // though we may never use it)

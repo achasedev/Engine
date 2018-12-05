@@ -39,8 +39,9 @@ public:
 	bool						GetNextSnapshotUpdateMessage(NetMessage* out_message, uint8_t connectionIndex);
 
 	// Accessors
-	const NetObjectType_t* GetNetObjectTypeForTypeID(uint8_t typeID) const;
+	const NetObjectType_t*	GetNetObjectTypeForTypeID(uint8_t typeID) const;
 	NetObject*				GetNetObjectForLocalObject(void* localObject);
+	NetObject*				GetNetObjectForNetworkID(uint16_t networkID);
 
 
 private:
