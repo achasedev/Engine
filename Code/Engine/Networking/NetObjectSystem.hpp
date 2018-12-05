@@ -40,6 +40,7 @@ public:
 
 	// Accessors
 	const NetObjectType_t* GetNetObjectTypeForTypeID(uint8_t typeID) const;
+	NetObject*				GetNetObjectForLocalObject(void* localObject);
 
 
 private:

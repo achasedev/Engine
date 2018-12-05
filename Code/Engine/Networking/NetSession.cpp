@@ -1766,10 +1766,13 @@ bool OnNetObjectUpdate(NetMessage* msg, const NetSender_t& sender)
 	}
 
 	NetObject* netObject = netObjSystem->UnregisterNetObject(networkID);
-	ASSERT_OR_DIE(netObject != nullptr, "Error: OnNetObjectUpdate() couldnt' find NetObject");
+
+	if (netObject == nullptr)
+	{
+		return false;
+	}
 
 	const NetObjectType_t* type = netObject->GetNetObjectType();
-
 	type->readSnapshot(*msg, netObject->GetLastReceivedSnapshot());
 
 	return true;

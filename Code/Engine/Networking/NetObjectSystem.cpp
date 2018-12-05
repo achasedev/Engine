@@ -214,9 +214,6 @@ bool NetObjectSystem::GetNextSnapshotUpdateMessage(NetMessage* out_message, uint
 {
 	int netObjectCount = (int)m_netObjects.size();
 
-	// Sanity check
-	int viewCount = (int)m_connectionViews[connectionIndex]->GetViewCount();
-
 	if (netObjectCount == 0)
 	{
 		return false;
@@ -242,6 +239,7 @@ bool NetObjectSystem::GetNextSnapshotUpdateMessage(NetMessage* out_message, uint
 
 	// Write the snapshot
 	type->writeSnapshot(*out_message, netObject->GetLocalSnapshot());
+	objectView->ResetTimeSinceLastSend();
 
 	return true;
 }
@@ -260,6 +258,25 @@ const NetObjectType_t* NetObjectSystem::GetNetObjectTypeForTypeID(uint8_t typeID
 	}
 
 	ERROR_AND_DIE(Stringf("Error: NetObjectSystem::GetNetObjectTypeForTypeID() couldn't find type for ID %i", typeID));
+	return nullptr;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the NetObject associated with the given local object, if one exists, nullptr otherwise
+//
+NetObject* NetObjectSystem::GetNetObjectForLocalObject(void* localObject)
+{
+	int netObjCount = (int)m_netObjects.size();
+
+	for (int i = 0; i < netObjCount; ++i)
+	{
+		if (m_netObjects[i]->GetLocalObject() == localObject)
+		{
+			return m_netObjects[i];
+		}
+	}
+
 	return nullptr;
 }
 
