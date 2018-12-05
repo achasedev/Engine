@@ -150,7 +150,7 @@ void NetSession::ShutdownSession()
 	// Send hang up messages
 	for (int i = 0; i < MAX_CONNECTIONS; ++i)
 	{
-		if (m_boundConnections[i] != nullptr)
+		if (m_boundConnections[i] != nullptr && m_boundConnections[i] != m_myConnection && m_boundConnections[i]->IsReady())
 		{
 			NetMessage* msg = new NetMessage(GetMessageDefinition("hang_up"));
 			m_boundConnections[i]->Send(msg);
@@ -907,10 +907,8 @@ void NetSession::DestroyConnection(NetConnection* connection)
 		uint8_t index = connection->GetSessionIndex();
 		m_boundConnections[index] = nullptr;
 
-		if (IsHosting())
-		{
-			m_onLeaveCallback(connection);
-		}
+		// Call the game-side callback
+		m_onLeaveCallback(connection);
 	}
 
 	// Clean up convenience pointers
@@ -950,6 +948,9 @@ void NetSession::BindConnection(uint8_t index, NetConnection* connection)
 
 	// Add a NetObjectConnectionView for the connection
 	m_netObjectSystem->AddConnectionViewForIndex(index);
+
+	// Call the game-side callback
+	m_onJoinCallback(connection);
 }
 
 
@@ -1652,8 +1653,6 @@ bool OnClientFinishedTheirSetup(NetMessage* msg, const NetSender_t& sender)
 
 	// Mark the connection ready
 	connection->SetConnectionState(CONNECTION_READY);
-
-	sender.netSession->m_onJoinCallback(connection);
 
 	// Send all the NetObject construction messages
 	std::vector<NetMessage*> createMessages = sender.netSession->GetNetObjectSystem()->GetMessagesToConstructAllNetObjects();

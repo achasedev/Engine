@@ -108,6 +108,7 @@ void NetConnection::Send(NetMessage* msg)
 	}
 
 	ConsolePrintf("Message sent: %s", msg->GetDefinition()->name.c_str());
+	LogTaggedPrintf("NET", "Message sent to index %i: %s", m_connectionInfo.sessionIndex, msg->GetDefinition()->name.c_str());
 }
 
 
