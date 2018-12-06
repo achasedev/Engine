@@ -276,35 +276,20 @@ void NetSession::Update()
 		// Idk why this exists
 		break;
 	case SESSION_CONNECTING:
-		// Check if we've connected, and if so transition out
-		if (m_hostConnection->IsConnected())
+		if (m_stateTimer.GetElapsedTime() >= JOIN_TIMEOUT)
 		{
-			if (m_hostConnection->IsReady())
-			{
-				TransitionToState(SESSION_READY);
-			}
-			else
-			{
-				TransitionToState(SESSION_JOINING);
-			}
+			m_error = SESSION_ERROR_JOIN_DENIED;
+			m_errorMesssage = "Timed out";
+
+			ShutdownSession();
 		}
-		else
+		else if (m_joinTimer.HasIntervalElapsed())
 		{
-			if (m_stateTimer.GetElapsedTime() >= JOIN_TIMEOUT)
-			{
-				m_error = SESSION_ERROR_JOIN_DENIED;
-				m_errorMesssage = "Timed out";
+			// We're not connected to the host yet at all, so keep sending requests
+			NetMessage* msg = new NetMessage(GetMessageDefinition("join_request"));
+			m_hostConnection->Send(msg);
 
-				ShutdownSession();
-			}
-			else if (m_joinTimer.HasIntervalElapsed())
-			{
-				// We're not connected to the host yet at all, so keep sending requests
-				NetMessage* msg = new NetMessage(GetMessageDefinition("join_request"));
-				m_hostConnection->Send(msg);
-
-				m_joinTimer.SetInterval(0.1f);
-			}
+			m_joinTimer.SetInterval(0.1f);
 		}
 		break;
 	case SESSION_JOINING:
@@ -1515,6 +1500,7 @@ bool OnJoinAccept(NetMessage* msg, const NetSender_t& sender)
 	UNUSED(msg);
 	UNUSED(sender);
 
+	sender.netSession->TransitionToState(SESSION_JOINING);
 	LogTaggedPrintf("NET", "Host at address %s accepted join request", sender.address.ToString().c_str());
 	return true;
 }
