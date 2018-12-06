@@ -60,7 +60,7 @@ void NetObjectSystem::RegisterNetObject(NetObject* netObj)
 // Removes the net object from the system and returns it; used for when this session would receive 
 // a destroy message from a host
 //
-NetObject* NetObjectSystem::UnregisterNetObject(uint16_t networkID)
+NetObject* NetObjectSystem::UnregisterNetObjectByNetworkID(uint16_t networkID)
 {
 	int objCount = (int)m_netObjects.size();
 
@@ -81,6 +81,12 @@ NetObject* NetObjectSystem::UnregisterNetObject(uint16_t networkID)
 	}
 
 	return netObject;
+}
+
+NetObject* NetObjectSystem::UnregisterNetObjectByLocalObject(void* localObject)
+{
+	NetObject* netObject = GetNetObjectForLocalObject(localObject);
+	return UnregisterNetObjectByNetworkID(netObject->GetNetworkID());
 }
 
 void NetObjectSystem::RegisterNetObjectType(const NetObjectType_t& type)

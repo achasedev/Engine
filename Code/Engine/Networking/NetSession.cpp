@@ -1725,7 +1725,7 @@ bool OnNetObjectDestroy(NetMessage* msg, const NetSender_t& sender)
 		ERROR_AND_DIE("Error: OnNetObjectCreate() couldn't read the network ID");
 	}
 
-	NetObject* netObject = netObjSystem->UnregisterNetObject(networkID);
+	NetObject* netObject = netObjSystem->UnregisterNetObjectByNetworkID(networkID);
 
 	ASSERT_OR_DIE(netObject != nullptr, "Error: OnNetObjectDestroy() couldnt' find NetObject");
 

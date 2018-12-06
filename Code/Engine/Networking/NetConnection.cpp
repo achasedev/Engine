@@ -508,7 +508,7 @@ void NetConnection::OnAckConfirmed(uint16_t ack)
 	bool shouldUpdate = true;
 	for (int i = 1; i < m_nextAckToSend - ack; ++i)
 	{
-		int checkIndex = ack + i;
+		int checkIndex = (ack + i) % 256;
 		if (m_packetTrackers[checkIndex].packetAck == INVALID_PACKET_ACK)
 		{
 			shouldUpdate = false;

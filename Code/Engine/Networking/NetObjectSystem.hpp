@@ -26,7 +26,8 @@ public:
 	void Update();
 
 	void RegisterNetObject(NetObject* netObj);
-	NetObject* UnregisterNetObject(uint16_t networkID);
+	NetObject* UnregisterNetObjectByNetworkID(uint16_t networkID);
+	NetObject* UnregisterNetObjectByLocalObject(void* localObject);
 	void RegisterNetObjectType(const NetObjectType_t& type);
 
 	void SyncObject(uint8_t typeID, void* localObject);
