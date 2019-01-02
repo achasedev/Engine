@@ -377,7 +377,6 @@
     <ClCompile Include="Networking\NetConnection.cpp" />
     <ClCompile Include="Networking\UDPSocket.cpp" />
     <ClCompile Include="Networking\NetPacket.cpp" />
-    <ClCompile Include="Rendering\Resources\VoxelTexture.cpp" />
     <ClCompile Include="Networking\NetSequenceChannel.cpp" />
     <ClCompile Include="Networking\NetObjectSystem.cpp" />
     <ClCompile Include="Networking\NetObject.cpp" />
@@ -735,7 +734,6 @@
     <ClInclude Include="Networking\NetConnection.hpp" />
     <ClInclude Include="Networking\UDPSocket.hpp" />
     <ClInclude Include="Networking\NetPacket.hpp" />
-    <ClInclude Include="Rendering\Resources\VoxelTexture.hpp" />
     <ClInclude Include="DataStructures\ThreadSafeVector.hpp" />
     <ClInclude Include="Networking\NetSequenceChannel.hpp" />
     <ClInclude Include="Networking\NetObjectSystem.hpp" />
