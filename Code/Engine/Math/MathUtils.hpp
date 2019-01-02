@@ -15,6 +15,7 @@
 #include "Engine/Math/IntRange.hpp"
 #include "Engine/Math/Matrix44.hpp"
 #include "Engine/Math/IntVector2.hpp"
+#include <stdint.h>
 
 class Quaternion;
 
@@ -93,7 +94,7 @@ void	SetBits(unsigned char& bitFlags8, unsigned char flagsToSet);					// Sets th
 void	SetBits(unsigned int& bitFlags32, unsigned int flagsToSet);						// Sets the bits indicated by flagsToSet in the 32 bit flag
 void	ClearBits(unsigned char& bitFlags8, unsigned char flagsToClear);				// Clears the bits indicated by flagsToSet in the 8 bit flag
 void	ClearBits(unsigned int& bitFlags32, unsigned int flagsToClear);					// Clears the bits indicated by flagsToSet in the 32 bit flag
-
+uint32_t GetBitsReversed(const uint32_t& bits);
 
 // Easing Functions
 float	SmoothStart2(float t);		// 2nd-degree smooth start (a.k.a "quadratic ease in")

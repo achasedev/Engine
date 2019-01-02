@@ -729,6 +729,28 @@ void ClearBits(unsigned int& bitFlags32, unsigned int flagsToClear)
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the int given with the bits reversed (i.e. 0010010 -> 0100100)
+//
+uint32_t GetBitsReversed(const uint32_t& bits)
+{
+	uint32_t reversedBits = 0;
+
+	for (int i = 0; i < 32; ++i)
+	{
+		uint32_t currBit = bits & (1 << i);
+
+		if (currBit != 0)
+		{
+			int inverseI = 32 - i - 1;
+			reversedBits |= (1 << inverseI);
+		}
+	}
+
+	return reversedBits;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // 2nd-degree smooth start (a.k.a "quadratic ease in")
 //
 float SmoothStart2(float t)
