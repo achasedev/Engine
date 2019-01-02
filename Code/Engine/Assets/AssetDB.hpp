@@ -23,7 +23,6 @@ class TextureCube;
 class Skeleton;
 class ShaderProgram;
 class MaterialInstance;
-class VoxelTexture;
 
 class AssetDB
 {

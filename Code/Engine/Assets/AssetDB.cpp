@@ -20,7 +20,6 @@
 #include "Engine/Rendering/Resources/SpriteSheet.hpp"
 #include "Engine/Rendering/Resources/SpriteSheet.hpp"
 #include "Engine/Rendering/Shaders/ShaderProgram.hpp"
-#include "Engine/Rendering/Resources/VoxelTexture.hpp"
 #include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 #include "Engine/Rendering/Meshes/MeshGroupBuilder.hpp"
 #include "Engine/Rendering/Materials/MaterialInstance.hpp"
