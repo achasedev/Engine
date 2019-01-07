@@ -129,6 +129,13 @@ void Clock::FrameStep(uint64_t elapsedHPC)
 
 	double elapsedSeconds = TimeSystem::PerformanceCountToSeconds(elapsedHPC);
 
+	// Clamp the elapsed to fit the delta max
+	if (elapsedSeconds > m_deltaLimitSeconds)
+	{
+		elapsedSeconds = m_deltaLimitSeconds;
+		elapsedHPC = TimeSystem::SecondsToPerformanceCount(elapsedSeconds);
+	}
+
 	m_frameData.m_seconds = elapsedSeconds;
 	m_frameData.m_hpc = elapsedHPC;
 
@@ -164,6 +171,15 @@ void Clock::AddChild(Clock* child)
 	{
 		m_childClocks.push_back(child);
 	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the upper limit for the clock, ensuring the delta time will never go over
+//
+void Clock::SetMaxDeltaTime(float maxSeconds)
+{
+	m_deltaLimitSeconds = maxSeconds;
 }
 
 

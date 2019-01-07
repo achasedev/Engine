@@ -40,6 +40,7 @@ public:
 	void ResetTimeData();
 	void AddChild(Clock* child);
 
+	void SetMaxDeltaTime(float maxSeconds);
 	void SetScale(float newScale);
 	void SetPaused(bool pauseState);
 
@@ -72,6 +73,7 @@ private:
 	unsigned int	m_frameCount;
 	double			m_scale;
 	bool			m_isPaused;
+	double			m_deltaLimitSeconds = 99999999.f;
 
 	TimeData_t		m_frameData;
 	TimeData_t		m_totalData;
