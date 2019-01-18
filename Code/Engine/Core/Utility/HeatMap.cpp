@@ -24,6 +24,22 @@ HeatMap::HeatMap(const IntVector2& dimensions, float initialHeatValuePerCell)
 
 
 //-----------------------------------------------------------------------------------------------
+// Copy constructor
+//
+HeatMap::HeatMap(const HeatMap& copy)
+{
+	m_heatPerGridCell = copy.m_heatPerGridCell;
+	m_dimensions = copy.m_dimensions;
+	m_maxDistanceSolved = copy.m_maxDistanceSolved;
+
+	if (copy.m_costMap != nullptr)
+	{
+		m_costMap = new HeatMap(*copy.m_costMap);
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Sets all cells to have the given clear value
 //
 void HeatMap::Clear(float clearValue)

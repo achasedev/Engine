@@ -16,6 +16,7 @@ public:
 	//-----Public Methods-----
 
 	HeatMap(const IntVector2& dimensions, float initialHeatValuePerCell);
+	HeatMap(const HeatMap& copy);
 
 	// Mutators
 	void Clear(float clearValue);
