@@ -65,20 +65,10 @@ void Camera::Rotate(const Vector3& rotation)
 {
 	Vector3 newRotation = m_transform.rotation.GetAsEulerAngles() + rotation;
 
-// 	newRotation.x = GetAngleBetweenZeroThreeSixty(newRotation.x);
-// 	newRotation.y = GetAngleBetweenZeroThreeSixty(newRotation.y);
-// 	newRotation.z = GetAngleBetweenZeroThreeSixty(newRotation.z);
-// 
-// 	if (newRotation.x > 90.f && newRotation.x < 180.f)
-// 	{
-// 		newRotation.x = 90.f;
-// 	}
-// 
-// 	if (newRotation.x > 180.f && newRotation.x < 270.f)
-// 	{
-// 		newRotation.x = 270.f;
-// 	}
-// 
+ 	newRotation.x = GetAngleBetweenZeroThreeSixty(newRotation.x);
+	newRotation.y = GetAngleBetweenZeroThreeSixty(newRotation.y);
+ 	newRotation.z = GetAngleBetweenZeroThreeSixty(newRotation.z);
+ 
  	m_transform.SetRotation(newRotation);
 
 	m_viewMatrix = InvertLookAtMatrix(m_transform.GetWorldMatrix());

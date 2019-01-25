@@ -277,7 +277,6 @@
     <ClCompile Include="Core\EngineCommon.cpp" />
     <ClCompile Include="Core\Utility\ErrorWarningAssert.cpp" />
     <ClCompile Include="Core\File.cpp" />
-    <ClCompile Include="Core\GameObject.cpp" />
     <ClCompile Include="Core\Utility\HeatMap.cpp" />
     <ClCompile Include="Core\Image.cpp" />
     <ClCompile Include="Assets\AssetDB.cpp" />
@@ -419,7 +418,6 @@
     <ClInclude Include="Core\EngineCommon.hpp" />
     <ClInclude Include="Core\Utility\ErrorWarningAssert.hpp" />
     <ClInclude Include="Core\File.hpp" />
-    <ClInclude Include="Core\GameObject.hpp" />
     <ClInclude Include="Core\Utility\HeatMap.hpp" />
     <ClInclude Include="Core\Image.hpp" />
     <ClInclude Include="Assets\AssetDB.hpp" />

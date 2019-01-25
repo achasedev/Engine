@@ -150,9 +150,6 @@
     <ClCompile Include="..\ThirdParty\mikkt\mikktspace.c">
       <Filter>ThirdParty\mikkt</Filter>
     </ClCompile>
-    <ClCompile Include="Core\GameObject.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Rendering\DebugRendering\DebugRenderSystem.cpp">
       <Filter>Rendering\DebugRendering</Filter>
     </ClCompile>
@@ -503,9 +500,6 @@
     </ClInclude>
     <ClInclude Include="..\ThirdParty\mikkt\mikktspace.h">
       <Filter>ThirdParty\mikkt</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\GameObject.hpp">
-      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Rendering\DebugRendering\DebugRenderSystem.hpp">
       <Filter>Rendering\DebugRendering</Filter>
