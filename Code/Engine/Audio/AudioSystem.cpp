@@ -54,6 +54,7 @@ AudioSystem::~AudioSystem()
 }
 
 
+#include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 //-----------------------------------------------------------------------------------------------
 void AudioSystem::Initialize()
 {
@@ -83,6 +84,10 @@ AudioSystem* AudioSystem::GetInstance()
 void AudioSystem::BeginFrame()
 {
 	m_fmodSystem->update();
+
+	unsigned int version = 0;
+	FMOD_RESULT result = s_instance->m_fmodSystem->getVersion(&version);
+	ConsolePrintf("Version: %i", version);
 }
 
 
