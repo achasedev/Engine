@@ -15,6 +15,7 @@
 #include "Engine/Math/IntRange.hpp"
 #include "Engine/Math/Matrix44.hpp"
 #include "Engine/Math/IntVector2.hpp"
+#include "Engine/Math/IntVector3.hpp"
 #include <stdint.h>
 
 class Quaternion;
@@ -113,6 +114,7 @@ float				Interpolate(float start, float end, float fractionTowardEnd);
 int					Interpolate(int start, int end, float fractionTowardEnd);
 unsigned char		Interpolate(unsigned char start, unsigned char end, float fractionTowardEnd);
 const IntVector2	Interpolate(const IntVector2& start, const IntVector2& end, float fractionTowardEnd);
+const IntVector3	Interpolate(const IntVector3& start, const IntVector3& end, float fractionTowardEnd);
 const IntRange		Interpolate(const IntRange& start, const IntRange& end, float fractionTowardEnd);
 const Rgba			Interpolate(const Rgba& start, const Rgba& end, float fractionTowardEnd);
 

@@ -900,6 +900,19 @@ const Rgba Interpolate(const Rgba& start, const Rgba& end, float fractionTowardE
 
 
 //-----------------------------------------------------------------------------------------------
+// Finds the IntVector3 between start and end given the fractional parameter
+//
+const IntVector3 Interpolate(const IntVector3& start, const IntVector3& end, float fractionTowardEnd)
+{
+	int interpolatedX = Interpolate(start.x, end.x, fractionTowardEnd);
+	int interpolatedY = Interpolate(start.y, end.y, fractionTowardEnd);
+	int interpolatedZ = Interpolate(start.z, end.z, fractionTowardEnd);
+
+	return IntVector3(interpolatedX, interpolatedY, interpolatedZ);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Finds the roots of the quadratic function given by the coefficients a, b, and c, and stores them
 // in solutions
 // Returns true if roots were found, false otherwise

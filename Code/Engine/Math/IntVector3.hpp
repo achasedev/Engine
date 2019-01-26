@@ -23,7 +23,9 @@ public:
 	explicit IntVector3( int initialX, int initialY, int initialZ );		// explicit constructor
 	explicit IntVector3( float initialX, float initialY, float initialZ );	// explicit float constructor
 	explicit IntVector3(const Vector3& copyFrom);
-																			// Operators
+	explicit IntVector3(int initialValue);
+	
+	// Operators
 	const IntVector3 operator+( const IntVector3& vecToAdd ) const;			// vec2 + vec2
 	const IntVector3 operator-( const IntVector3& vecToSubtract ) const;	// vec2 - vec2
 	const IntVector3 operator*( int uniformScale ) const;					// vec2 * int

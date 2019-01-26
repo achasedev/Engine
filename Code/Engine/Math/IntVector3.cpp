@@ -59,6 +59,14 @@ IntVector3::IntVector3(const Vector3& copyFrom)
 {
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Explicit constructor from single int
+IntVector3::IntVector3(int initialValue)
+	: x(initialValue), y(initialValue), z(initialValue)
+{
+}
+
 //------------------------------ Operator Overloads ---------------------------------------------
 
 //-----------------------------------------------------------------------------------------------
