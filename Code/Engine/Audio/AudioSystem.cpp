@@ -248,6 +248,15 @@ void AudioSystem::ValidateResult( FMOD_RESULT result )
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the FMOD system itself
+//
+FMOD::System* AudioSystem::GetFMODSystem() const
+{
+	return m_fmodSystem;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Loads the given file defining a set of audio groups and attempts to construct them
 //
 void AudioSystem::LoadAudioGroupFile(const std::string& filepath)
