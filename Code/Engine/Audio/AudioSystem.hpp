@@ -42,6 +42,8 @@ public:
 
 	virtual void				ValidateResult( FMOD_RESULT result );
 
+	FMOD::System*				GetFMODSystem() const;
+
 
 protected:
 	FMOD::System*						m_fmodSystem;
