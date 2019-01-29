@@ -69,6 +69,19 @@ void Camera::Rotate(const Vector3& rotation)
 	newRotation.y = GetAngleBetweenZeroThreeSixty(newRotation.y);
  	newRotation.z = GetAngleBetweenZeroThreeSixty(newRotation.z);
  
+	// Clamping to avoid gimble lock
+	// Even though we use quaternions, we need to use Euler angles to
+	// rotate the way we want to for a first-person character
+	// (i.e. to prevent rolling even though there's no Z rotation)
+	if (newRotation.x > 80.f && newRotation.x < 180.f)
+	{
+		newRotation.x = 80.f;
+	}
+	else if (newRotation.x > 180.f && newRotation.x < 280.f)
+	{
+		newRotation.x = 280.f;
+	}
+
  	m_transform.SetRotation(newRotation);
 
 	m_viewMatrix = InvertLookAtMatrix(m_transform.GetWorldMatrix());
