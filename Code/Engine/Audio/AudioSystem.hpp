@@ -5,9 +5,10 @@
 #include <map>
 #include <string>
 #include <vector>
+#include "Engine/Math/AABB2.hpp"
+#include "Engine/Rendering/Meshes/Mesh.hpp"
 #include "Engine/Core/Utility/XmlUtilities.hpp"
 #include "ThirdParty/fmod/fmod.hpp"
-
 
 //-----------------------------------------------------------------------------------------------
 typedef size_t SoundID;
@@ -30,6 +31,7 @@ public:
 	static void					LoadAudioGroupFile(const std::string& filepath);
 
 	virtual void				BeginFrame();
+	virtual void				RenderFFTGraph() const;
 	virtual void				EndFrame();
 
 	virtual SoundID				CreateOrGetSound( const std::string& soundFilePath );
@@ -43,6 +45,10 @@ public:
 	virtual void				ValidateResult( FMOD_RESULT result );
 
 	FMOD::System*				GetFMODSystem() const;
+	void						AddFFTDSPToMasterChannel();
+
+	static void					SetShouldRender(bool newState);
+	static bool					ShouldRender();
 
 
 protected:
@@ -52,6 +58,21 @@ protected:
 
 	std::map<std::string, AudioGroup*>	m_audioGroups;
 
+	// For FFT rendering
+	FMOD::DSP*							m_fftDSP = nullptr;
+	FMOD_DSP_PARAMETER_FFT*				m_spectrumData = nullptr;
+	bool								m_renderFFTGraph = false;
+	mutable Mesh						m_barMesh;
+	unsigned int						m_numWindowSegments = 4096;
+	unsigned int						m_fractionOfSegmentsToShow = 8;
+	unsigned int						m_numSegmentsToRender;
+	float								m_fontHeight = 30.f;
+
+	AABB2 m_borderBounds;
+	AABB2 m_detailsBounds;
+	AABB2 m_graphBounds;
+
+
 private:
 	//-----Private Methods-----
 
@@ -60,10 +81,18 @@ private:
 	virtual ~AudioSystem();
 	AudioSystem(const AudioSystem& copy) = delete;
 
+	// Console Commands
+	static void InitializeConsoleCommands();
+
+	// For FFT rendering
+	void UpdateFFTGraph();
+
+
 private:
 	//-----Private Data-----
 
 	static AudioSystem* s_instance;	// The singleton AudioSystem instance
+
 };
 
 
@@ -86,5 +115,6 @@ private:
 	std::vector<SoundID> m_sounds;
 
 	SoundID m_lastSoundPlayed;
+
 };
 

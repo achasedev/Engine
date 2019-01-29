@@ -1,7 +1,10 @@
+#include "Engine/Assets/AssetDB.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Rendering/Core/Renderer.hpp"
 #include "Engine/Core/Utility/StringUtils.hpp"
+#include "Engine/Core/DeveloperConsole/Command.hpp"
 #include "Engine/Core/Utility/ErrorWarningAssert.hpp"
 
 //-----------------------------------------------------------------------------------------------
@@ -29,6 +32,22 @@
 AudioSystem* AudioSystem::s_instance = nullptr;
 
 
+// Console Commands
+void Command_ShowFFT(Command& cmd)
+{
+	UNUSED(cmd);
+
+	AudioSystem::SetShouldRender(true);
+}
+
+void Command_HideFFT(Command& cmd)
+{
+	UNUSED(cmd);
+
+	AudioSystem::SetShouldRender(false);
+}
+
+
 //-----------------------------------------------------------------------------------------------
 // Initialization code based on example from "FMOD Studio Programmers API for Windows"
 //
@@ -41,6 +60,115 @@ AudioSystem::AudioSystem()
 
 	result = m_fmodSystem->init( 512, FMOD_INIT_NORMAL, nullptr );
 	ValidateResult( result );
+}
+
+
+//-----------------------------------------------------------------------------------------------
+void AudioSystem::InitializeConsoleCommands()
+{
+#ifdef FFT_ENABLED
+	Command::Register("show_fft", "Shows the FFT audio graph", Command_ShowFFT);
+	Command::Register("hide_fft", "Hides the FFT audio graph", Command_HideFFT);
+#endif
+}
+
+
+//-----------------------------------------------------------------------------------------------
+void AudioSystem::UpdateFFTGraph()
+{
+	FMOD::ChannelGroup* masterChannelGroup = nullptr;
+	m_fmodSystem->getMasterChannelGroup(&masterChannelGroup);
+
+	// Get the fft data
+	void* spectrumData = nullptr;
+	m_fftDSP->getParameterData(FMOD_DSP_FFT_SPECTRUMDATA, (void**)&spectrumData, 0, 0, 0);
+	m_spectrumData = (FMOD_DSP_PARAMETER_FFT*)spectrumData;
+
+	Renderer* renderer = Renderer::GetInstance();
+	m_detailsBounds = renderer->GetUIBounds();
+
+	m_detailsBounds.AddPaddingToSides(-20.f, 0.f);
+	m_detailsBounds.mins.y += 40.f;
+	m_detailsBounds.maxs.y -= m_fontHeight * 3.f;
+
+	m_borderBounds = m_detailsBounds;
+
+	m_borderBounds.mins.x += 100.f;
+	m_detailsBounds.maxs.x = m_detailsBounds.mins.x + 100.f;
+
+	AABB2 graphBounds = m_borderBounds;
+	graphBounds.AddPaddingToSides(-20.f, -20.f);
+	m_detailsBounds.AddPaddingToSides(0.f, -20.f);
+
+	if (m_spectrumData != nullptr)
+	{
+		m_numSegmentsToRender = m_spectrumData->length / m_fractionOfSegmentsToShow / 2;
+
+		float boxWidth = graphBounds.GetDimensions().x / (float)m_numSegmentsToRender;
+		AABB2 baseBoxBounds = AABB2(graphBounds.mins, graphBounds.mins + Vector2(boxWidth, graphBounds.GetDimensions().y));
+
+		MeshBuilder mb;
+		mb.BeginBuilding(PRIMITIVE_TRIANGLES, true);
+
+		for (unsigned int i = 0; i < m_numSegmentsToRender; ++i)
+		{
+			float value = m_spectrumData->spectrum[0][i] + m_spectrumData->spectrum[1][i];
+
+			AABB2 currBoxBounds = baseBoxBounds;
+			currBoxBounds.maxs.y = value * baseBoxBounds.GetDimensions().y + baseBoxBounds.mins.y;
+
+			mb.Push2DQuad(currBoxBounds, AABB2::UNIT_SQUARE_OFFCENTER, Rgba::RED);
+
+			baseBoxBounds.Translate(Vector2(baseBoxBounds.GetDimensions().x, 0.f));
+		}
+
+
+		// Push a grid
+		int numLines = 11;
+		float width = graphBounds.GetDimensions().x / (float)numLines;
+		for (int i = 0; i <= numLines; ++i)
+		{
+			float thickness = 1;
+			if (i % 2 == 0)
+			{
+				thickness *= 2;
+			}
+
+			float x = graphBounds.mins.x + i * width;
+
+			Vector2 min = Vector2(x - thickness, graphBounds.mins.y);
+			Vector2 max = Vector2(x + thickness, graphBounds.maxs.y);
+
+			AABB2 line = AABB2(min, max);
+
+			mb.Push2DQuad(line, AABB2::UNIT_SQUARE_OFFCENTER, Rgba::GRAY);
+		}
+
+		float height = graphBounds.GetDimensions().y / (float)numLines;
+		for (int i = 0; i <= numLines; ++i)
+		{
+			float thickness = 1;
+			if (i % 2 == 0)
+			{
+				thickness *= 2;
+			}
+
+			float y = graphBounds.mins.y + i * height;
+
+			Vector2 min = Vector2(graphBounds.mins.x, y - thickness);
+			Vector2 max = Vector2(graphBounds.maxs.x, y + thickness);
+
+			AABB2 line = AABB2(min, max);
+
+			mb.Push2DQuad(line, AABB2::UNIT_SQUARE_OFFCENTER, Rgba::GRAY);
+		}
+
+		mb.Push2DQuad(m_borderBounds, AABB2::UNIT_SQUARE_OFFCENTER, Rgba(0, 0, 0, 100));
+		mb.Push2DQuad(m_detailsBounds, AABB2::UNIT_SQUARE_OFFCENTER, Rgba::GRAY);
+
+		mb.FinishBuilding();
+		mb.UpdateMesh(m_barMesh);
+	}
 }
 
 
@@ -60,6 +188,12 @@ void AudioSystem::Initialize()
 {
 	GUARANTEE_OR_DIE(s_instance == nullptr, "Error: AudioSystem::Initialize() called with an existing instance.");
 	s_instance = new AudioSystem();
+
+#ifdef FFT_ENABLED
+	s_instance->AddFFTDSPToMasterChannel();
+#endif
+
+	InitializeConsoleCommands();
 }
 
 
@@ -84,6 +218,32 @@ AudioSystem* AudioSystem::GetInstance()
 void AudioSystem::BeginFrame()
 {
 	m_fmodSystem->update();
+
+	if (m_fftDSP != nullptr)
+	{
+		UpdateFFTGraph();
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+void AudioSystem::RenderFFTGraph() const
+{
+	Renderer* renderer = Renderer::GetInstance();
+	renderer->SetCurrentCamera(renderer->GetUICamera());
+	AABB2 bounds = renderer->GetUIBounds();
+	BitmapFont* font = AssetDB::GetBitmapFont("Data/Images/Fonts/ConsoleFont.png");
+
+	renderer->DrawTextInBox2D(Stringf("Number of Channels: %i", m_spectrumData->numchannels / 2), bounds, Vector2::ZERO, m_fontHeight, TEXT_DRAW_OVERRUN, font);
+	bounds.Translate(Vector2(0.f, -m_fontHeight));
+
+	renderer->DrawTextInBox2D(Stringf("Number of Entries shown: %i (out of %i)", m_numSegmentsToRender, m_numWindowSegments), bounds, Vector2::ZERO, m_fontHeight, TEXT_DRAW_OVERRUN, font);
+	bounds.Translate(Vector2(0.f, -m_fontHeight));
+
+	renderer->DrawTextInBox2D(Stringf("Frequency span per entry: %f hz", 44100.f / (float)m_numWindowSegments), bounds, Vector2::ZERO, m_fontHeight, TEXT_DRAW_OVERRUN, font);
+	bounds.Translate(Vector2(0.f, -m_fontHeight));
+
+	renderer->DrawMesh(&m_barMesh);
 }
 
 
@@ -253,6 +413,43 @@ void AudioSystem::ValidateResult( FMOD_RESULT result )
 FMOD::System* AudioSystem::GetFMODSystem() const
 {
 	return m_fmodSystem;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Adds an FFT DSP to the main channel group, for equalizer rendering
+//
+void AudioSystem::AddFFTDSPToMasterChannel()
+{
+	FMOD::ChannelGroup* masterChannelGroup = nullptr;
+	m_fmodSystem->getMasterChannelGroup(&masterChannelGroup);
+
+	// Create and setup the FFT DSP, assigning it to the master channel group
+	FMOD_RESULT result = m_fmodSystem->createDSPByType(FMOD_DSP_TYPE_FFT, &m_fftDSP);
+	ASSERT_OR_DIE(result == FMOD_OK, "Couldn't create the DSP");
+
+	result = m_fftDSP->setParameterInt(FMOD_DSP_FFT_WINDOWTYPE, FMOD_DSP_FFT_WINDOW_BLACKMANHARRIS);
+	ASSERT_OR_DIE(result == FMOD_OK, "Couldn't assign window type parameter");
+
+	result = m_fftDSP->setParameterInt(FMOD_DSP_FFT_WINDOWSIZE, 2 * m_numWindowSegments);
+	ASSERT_OR_DIE(result == FMOD_OK, "Couldn't assign window size parameter");
+
+	result = masterChannelGroup->addDSP(FMOD_CHANNELCONTROL_DSP_HEAD, m_fftDSP);
+	ASSERT_OR_DIE(result == FMOD_OK, "Couldn't ADD the DSP to the master channel group");
+}
+
+
+//-----------------------------------------------------------------------------------------------
+void AudioSystem::SetShouldRender(bool newState)
+{
+	s_instance->m_renderFFTGraph = newState;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+bool AudioSystem::ShouldRender()
+{
+	return s_instance->m_renderFFTGraph;
 }
 
 
