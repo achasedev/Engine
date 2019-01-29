@@ -83,6 +83,18 @@ const IntVector2 IntVector2::operator-( const IntVector2& vecToSubtract ) const
 
 
 //-----------------------------------------------------------------------------------------------
+bool IntVector2::operator<(const IntVector2& compare) const
+{
+	if (x < compare.x || x == compare.x && y < compare.y)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 const IntVector2 IntVector2::operator*( int uniformScale ) const
 {
 	return IntVector2( (x * uniformScale), (y * uniformScale) );
