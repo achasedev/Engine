@@ -38,6 +38,8 @@ public:
 	bool operator==( const IntVector2& compare ) const;						// vec2 == vec2
 	bool operator!=( const IntVector2& compare ) const;						// vec2 != vec2
 
+	bool operator<( const IntVector2& compare ) const;						// Used in particular for keys in maps
+
 	friend const IntVector2 operator*( int uniformScale, const IntVector2& vecToScale );	// int * vec2
 
 	float	GetLength() const;							// Calculates the magnitude of the vector
