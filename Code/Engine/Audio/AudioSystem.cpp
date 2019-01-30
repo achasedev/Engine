@@ -96,36 +96,79 @@ void AudioSystem::UpdateFFTGraph()
 	m_borderBounds.mins.x += 100.f;
 	m_detailsBounds.maxs.x = m_detailsBounds.mins.x + 100.f;
 
-	AABB2 graphBounds = m_borderBounds;
-	graphBounds.AddPaddingToSides(-20.f, -20.f);
+	m_graphBounds = m_borderBounds;
+	m_graphBounds.AddPaddingToSides(-20.f, -20.f);
 	m_detailsBounds.AddPaddingToSides(0.f, -20.f);
 
 	if (m_spectrumData != nullptr)
 	{
-		m_numSegmentsToRender = m_spectrumData->length / m_fractionOfSegmentsToShow / 2;
+		m_numSegmentsToRender = m_spectrumData->length / 2 /  m_fractionOfSegmentsToShow;
 
-		float boxWidth = graphBounds.GetDimensions().x / (float)m_numSegmentsToRender;
-		AABB2 baseBoxBounds = AABB2(graphBounds.mins, graphBounds.mins + Vector2(boxWidth, graphBounds.GetDimensions().y));
+		float boxWidth = m_graphBounds.GetDimensions().x / (float)m_numSegmentsToRender;
+		AABB2 baseBoxBounds = AABB2(m_graphBounds.mins, m_graphBounds.mins + Vector2(boxWidth, m_graphBounds.GetDimensions().y));
 
 		MeshBuilder mb;
 		mb.BeginBuilding(PRIMITIVE_TRIANGLES, true);
 
+		m_maxValueLastFrame = 0.f;
+
+		float oneOverNumChannels = 1.0f / (float) m_spectrumData->numchannels;
 		for (unsigned int i = 0; i < m_numSegmentsToRender; ++i)
 		{
-			float value = m_spectrumData->spectrum[0][i] + m_spectrumData->spectrum[1][i];
+			// Get the average of all channels
+			float value = 0.f;
+			for (int j = 0; j < m_spectrumData->numchannels; ++j)
+			{
+				value += m_spectrumData->spectrum[j][i];
+			}
+
+			value *= oneOverNumChannels;
+
+			m_maxValueLastFrame = MaxFloat(value, m_maxValueLastFrame);
 
 			AABB2 currBoxBounds = baseBoxBounds;
 			currBoxBounds.maxs.y = value * baseBoxBounds.GetDimensions().y + baseBoxBounds.mins.y;
 
-			mb.Push2DQuad(currBoxBounds, AABB2::UNIT_SQUARE_OFFCENTER, Rgba::RED);
+			// Texture coords
+			AABB2 texCoords;
+			texCoords.mins = Vector2::ZERO;
+			texCoords.maxs = Vector2(1.0f, value);
+
+			mb.Push2DQuad(currBoxBounds, texCoords);
 
 			baseBoxBounds.Translate(Vector2(baseBoxBounds.GetDimensions().x, 0.f));
 		}
 
+		mb.FinishBuilding();
+		mb.UpdateMesh(m_barMesh);
+
+		mb.Clear();
+		mb.BeginBuilding(PRIMITIVE_TRIANGLES, true);
 
 		// Push a grid
 		int numLines = 11;
-		float width = graphBounds.GetDimensions().x / (float)numLines;
+		int baseThickness = 1;
+
+		float width = m_graphBounds.GetDimensions().x / (float)numLines;
+		for (int i = 0; i <= numLines; ++i)
+		{
+			int lineThickness = baseThickness;
+			if (i % 2 == 0)
+			{
+				lineThickness *= 2;
+			}
+
+			float x = m_graphBounds.mins.x + i * width;
+
+			Vector2 min = Vector2(x - lineThickness, m_graphBounds.mins.y);
+			Vector2 max = Vector2(x + lineThickness, m_graphBounds.maxs.y);
+
+			AABB2 line = AABB2(min, max);
+
+			mb.Push2DQuad(line, AABB2::UNIT_SQUARE_OFFCENTER, Rgba::GRAY);
+		}
+
+		float height = m_graphBounds.GetDimensions().y / (float)numLines;
 		for (int i = 0; i <= numLines; ++i)
 		{
 			float thickness = 1;
@@ -134,40 +177,29 @@ void AudioSystem::UpdateFFTGraph()
 				thickness *= 2;
 			}
 
-			float x = graphBounds.mins.x + i * width;
+			float y = m_graphBounds.mins.y + i * height;
 
-			Vector2 min = Vector2(x - thickness, graphBounds.mins.y);
-			Vector2 max = Vector2(x + thickness, graphBounds.maxs.y);
-
-			AABB2 line = AABB2(min, max);
-
-			mb.Push2DQuad(line, AABB2::UNIT_SQUARE_OFFCENTER, Rgba::GRAY);
-		}
-
-		float height = graphBounds.GetDimensions().y / (float)numLines;
-		for (int i = 0; i <= numLines; ++i)
-		{
-			float thickness = 1;
-			if (i % 2 == 0)
-			{
-				thickness *= 2;
-			}
-
-			float y = graphBounds.mins.y + i * height;
-
-			Vector2 min = Vector2(graphBounds.mins.x, y - thickness);
-			Vector2 max = Vector2(graphBounds.maxs.x, y + thickness);
+			Vector2 min = Vector2(m_graphBounds.mins.x, y - thickness);
+			Vector2 max = Vector2(m_graphBounds.maxs.x, y + thickness);
 
 			AABB2 line = AABB2(min, max);
 
 			mb.Push2DQuad(line, AABB2::UNIT_SQUARE_OFFCENTER, Rgba::GRAY);
 		}
+
+		// Line for max value
+		AABB2 maxValueLine;
+		maxValueLine.mins = Vector2(m_graphBounds.mins.x, m_detailsBounds.GetDimensions().y * m_maxValueLastFrame + m_detailsBounds.mins.y);
+		maxValueLine.maxs = Vector2(m_graphBounds.maxs.x, m_detailsBounds.GetDimensions().y * m_maxValueLastFrame + m_detailsBounds.mins.y);
+		maxValueLine.AddPaddingToSides(0.f, baseThickness);
+
+		mb.Push2DQuad(maxValueLine, AABB2::UNIT_SQUARE_OFFCENTER, Rgba(64, 64, 64, 200));
 
 		mb.Push2DQuad(m_borderBounds, AABB2::UNIT_SQUARE_OFFCENTER, Rgba(0, 0, 0, 100));
 		mb.Push2DQuad(m_detailsBounds, AABB2::UNIT_SQUARE_OFFCENTER, Rgba::GRAY);
 
 		mb.FinishBuilding();
-		mb.UpdateMesh(m_barMesh);
+		mb.UpdateMesh(m_gridMesh);
 	}
 }
 
@@ -229,21 +261,25 @@ void AudioSystem::BeginFrame()
 //-----------------------------------------------------------------------------------------------
 void AudioSystem::RenderFFTGraph() const
 {
+
 	Renderer* renderer = Renderer::GetInstance();
 	renderer->SetCurrentCamera(renderer->GetUICamera());
 	AABB2 bounds = renderer->GetUIBounds();
 	BitmapFont* font = AssetDB::GetBitmapFont("Data/Images/Fonts/ConsoleFont.png");
 
-	renderer->DrawTextInBox2D(Stringf("Number of Channels: %i", m_spectrumData->numchannels / 2), bounds, Vector2::ZERO, m_fontHeight, TEXT_DRAW_OVERRUN, font);
+	renderer->DrawMeshWithMaterial(&m_gridMesh, AssetDB::GetSharedMaterial("UI"));
+	renderer->DrawMeshWithMaterial(&m_barMesh, AssetDB::GetSharedMaterial("Gradient"));
+	
+	renderer->DrawTextInBox2D(Stringf("Number of Channels: %i", m_spectrumData->numchannels), bounds, Vector2::ZERO, m_fontHeight, TEXT_DRAW_OVERRUN, font);
 	bounds.Translate(Vector2(0.f, -m_fontHeight));
 
-	renderer->DrawTextInBox2D(Stringf("Number of Entries shown: %i (out of %i)", m_numSegmentsToRender, m_numWindowSegments), bounds, Vector2::ZERO, m_fontHeight, TEXT_DRAW_OVERRUN, font);
+	renderer->DrawTextInBox2D(Stringf("Number of intervals displayed: %i (out of %i)", m_numSegmentsToRender, m_numWindowSegments), bounds, Vector2::ZERO, m_fontHeight, TEXT_DRAW_OVERRUN, font);
 	bounds.Translate(Vector2(0.f, -m_fontHeight));
 
-	renderer->DrawTextInBox2D(Stringf("Frequency span per entry: %f hz", 44100.f / (float)m_numWindowSegments), bounds, Vector2::ZERO, m_fontHeight, TEXT_DRAW_OVERRUN, font);
+	renderer->DrawTextInBox2D(Stringf("Frequency resolution: %f hz", 22050.f / (float)m_numWindowSegments), bounds, Vector2::ZERO, m_fontHeight, TEXT_DRAW_OVERRUN, font);
 	bounds.Translate(Vector2(0.f, -m_fontHeight));
 
-	renderer->DrawMesh(&m_barMesh);
+	renderer->DrawTextInBox2D(Stringf("%.3f", m_maxValueLastFrame), m_detailsBounds, Vector2(0.f, 1.0f - m_maxValueLastFrame), m_fontHeight, TEXT_DRAW_SHRINK_TO_FIT, font);
 }
 
 
@@ -428,7 +464,7 @@ void AudioSystem::AddFFTDSPToMasterChannel()
 	FMOD_RESULT result = m_fmodSystem->createDSPByType(FMOD_DSP_TYPE_FFT, &m_fftDSP);
 	ASSERT_OR_DIE(result == FMOD_OK, "Couldn't create the DSP");
 
-	result = m_fftDSP->setParameterInt(FMOD_DSP_FFT_WINDOWTYPE, FMOD_DSP_FFT_WINDOW_BLACKMANHARRIS);
+	result = m_fftDSP->setParameterInt(FMOD_DSP_FFT_WINDOWTYPE, FMOD_DSP_FFT_WINDOW_RECT);
 	ASSERT_OR_DIE(result == FMOD_OK, "Couldn't assign window type parameter");
 
 	result = m_fftDSP->setParameterInt(FMOD_DSP_FFT_WINDOWSIZE, 2 * m_numWindowSegments);

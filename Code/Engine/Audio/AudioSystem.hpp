@@ -63,10 +63,12 @@ protected:
 	FMOD_DSP_PARAMETER_FFT*				m_spectrumData = nullptr;
 	bool								m_renderFFTGraph = false;
 	mutable Mesh						m_barMesh;
+	mutable Mesh						m_gridMesh;
 	unsigned int						m_numWindowSegments = 4096;
-	unsigned int						m_fractionOfSegmentsToShow = 8;
+	unsigned int						m_fractionOfSegmentsToShow = 4;
 	unsigned int						m_numSegmentsToRender;
 	float								m_fontHeight = 30.f;
+	float								m_maxValueLastFrame = 0.f;
 
 	AABB2 m_borderBounds;
 	AABB2 m_detailsBounds;

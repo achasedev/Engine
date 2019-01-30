@@ -63,6 +63,10 @@ void AssetDB::CreateTextures()
 	Texture* defaultTexture = new Texture();
 	defaultTexture->CreateFromImage(&Image::IMAGE_DEFAULT_TEXTURE);
 	AssetCollection<Texture>::AddAsset("Default", defaultTexture);
+
+	Texture* gradientTexture = new Texture();
+	gradientTexture->CreateFromFile("Data/Images/Debug/Gradient.png");
+	AssetCollection<Texture>::AddAsset("Gradient", gradientTexture);
 }
 
 
@@ -165,13 +169,17 @@ void AssetDB::CreateMaterials()
 
 	AssetCollection<Material>::AddAsset("FLChan", flChanMat);
 
-
-
 	Material* skyboxMat = new Material("Skybox");
 	skyboxMat->SetDiffuse(AssetDB::GetTexture("White"));
 	skyboxMat->SetShader(AssetDB::GetShader(ShaderSource::SKYBOX_SHADER_NAME));
 
 	AssetCollection<Material>::AddAsset("Skybox", skyboxMat);
+
+	Material* gradientMat = new Material("Gradient");
+	gradientMat->SetDiffuse(AssetDB::GetTexture("Gradient"));
+	gradientMat->SetShader(AssetDB::GetShader(ShaderSource::UI_SHADER_NAME));
+
+	AssetCollection<Material>::AddAsset("Gradient", gradientMat);
 }
 
 
