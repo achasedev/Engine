@@ -379,6 +379,7 @@
     <ClCompile Include="Networking\NetObject.cpp" />
     <ClCompile Include="Networking\NetObjectView.cpp" />
     <ClCompile Include="Networking\NetObjectConnectionView.cpp" />
+    <ClCompile Include="Math\IntAABB2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -735,5 +736,6 @@
     <ClInclude Include="Networking\NetObjectType.hpp" />
     <ClInclude Include="Networking\NetObjectView.hpp" />
     <ClInclude Include="Networking\NetObjectConnectionView.hpp" />
+    <ClInclude Include="Math\IntAABB2.hpp" />
   </ItemGroup>
 </Project>

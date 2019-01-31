@@ -296,6 +296,7 @@
     <ClCompile Include="Math\CubicSpline.cpp" />
     <ClCompile Include="Math\Disc2.cpp" />
     <ClCompile Include="Math\FloatRange.cpp" />
+    <ClCompile Include="Math\IntAABB2.cpp" />
     <ClCompile Include="Math\IntRange.cpp" />
     <ClCompile Include="Math\IntVector2.cpp" />
     <ClCompile Include="Math\IntVector3.cpp" />
@@ -441,6 +442,7 @@
     <ClInclude Include="Math\CubicSpline.hpp" />
     <ClInclude Include="Math\Disc2.hpp" />
     <ClInclude Include="Math\FloatRange.hpp" />
+    <ClInclude Include="Math\IntAABB2.hpp" />
     <ClInclude Include="Math\IntRange.hpp" />
     <ClInclude Include="Math\IntVector2.hpp" />
     <ClInclude Include="Math\IntVector3.hpp" />
