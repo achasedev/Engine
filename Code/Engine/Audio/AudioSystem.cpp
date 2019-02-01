@@ -47,6 +47,48 @@ void Command_HideFFT(Command& cmd)
 	AudioSystem::SetShouldRender(false);
 }
 
+void Command_SetYMaxValue(Command& cmd)
+{
+	float newValue = 0.f;
+	bool specified = cmd.GetParam("v", newValue);
+
+	if (!specified)
+	{
+		ConsoleErrorf("No value specified with -v flag");
+		return;
+	}
+
+	if (newValue <= 0.f || newValue > 2.0f)
+	{
+		ConsoleErrorf("Value must be between (0.0, 2.0]");
+		return;
+	}
+
+	AudioSystem::GetInstance()->SetFFTMaxYValue(newValue);
+	ConsolePrintf("Set the FFT max Y value to %.2f", newValue);
+}
+
+void Command_SetXMaxValue(Command& cmd)
+{
+	float maxX = 0.f;
+	bool specified = cmd.GetParam("v", maxX);
+
+	if (!specified)
+	{
+		ConsoleErrorf("No value specified with -v flag");
+		return;
+	}
+
+	if (maxX <= 0.f || maxX > 20000.f) // Just not too high
+	{
+		ConsoleErrorf("Value must be between (0.0, 20000.0]");
+		return;
+	}
+
+	AudioSystem::GetInstance()->SetFFTMaxXValue(maxX);
+	ConsolePrintf("Set the FFT max X value to %.2f", maxX);
+}
+
 
 //-----------------------------------------------------------------------------------------------
 // Initialization code based on example from "FMOD Studio Programmers API for Windows"
@@ -69,6 +111,8 @@ void AudioSystem::InitializeConsoleCommands()
 #ifdef FFT_ENABLED
 	Command::Register("show_fft", "Shows the FFT audio graph", Command_ShowFFT);
 	Command::Register("hide_fft", "Hides the FFT audio graph", Command_HideFFT);
+	Command::Register("set_fft_max_x", "Sets the max X value on the FFT graph", Command_SetXMaxValue);
+	Command::Register("set_fft_max_y", "Sets the max Y value on the FFT graph", Command_SetYMaxValue);
 #endif
 }
 
@@ -126,9 +170,7 @@ void AudioSystem::UpdateFFTGraph()
 
 	if (m_spectrumData != nullptr)
 	{
-		m_numSegmentsToRender = m_spectrumData->length / 2 /  m_fractionOfSegmentsToShow;
-
-		float boxWidth = m_graphBounds.GetDimensions().x / (float)m_numSegmentsToRender;
+		float boxWidth = m_graphBounds.GetDimensions().x / (float)m_segmentsToDisplay;
 		AABB2 baseBoxBounds = AABB2(m_graphBounds.mins, m_graphBounds.mins + Vector2(boxWidth, m_graphBounds.GetDimensions().y));
 
 		MeshBuilder mb;
@@ -136,9 +178,9 @@ void AudioSystem::UpdateFFTGraph()
 
 		m_maxValueLastFrame = 0.f;
 
-		float oneOverMaxYValue = 1.0f / m_maxYValue;
+		float oneOverMaxYValue = 1.0f / m_fftMaxYAxis;
 		float oneOverNumChannels = 1.0f / (float) m_spectrumData->numchannels;
-		for (unsigned int i = 0; i < m_numSegmentsToRender; ++i)
+		for (unsigned int i = 0; i < m_segmentsToDisplay; ++i)
 		{
 			// Get the average of all channels
 			float value = 0.f;
@@ -302,14 +344,14 @@ void AudioSystem::RenderFFTGraph() const
 	renderer->DrawMeshWithMaterial(&m_barMesh, AssetDB::GetSharedMaterial("Gradient"));
 	
 	std::string text = Stringf("Number of Channels: %i\n", m_spectrumData->numchannels);
-	text += Stringf("Number of intervals displayed: %i (out of %i)\n", m_numSegmentsToRender, m_numWindowSegments);
+	text += Stringf("Number of intervals displayed: %i (out of %i)\n", m_segmentsToDisplay, m_numWindowSegments);
 	text += Stringf("Frequency resolution: %f hz\n", m_nyquistFreq / (float)m_numWindowSegments);
 	text += Stringf("Sample Rate: %.0f hz\n", m_sampleRate);
 
 	renderer->DrawTextInBox2D(text, m_headingBounds, Vector2::ZERO, m_fontHeight, TEXT_DRAW_SHRINK_TO_FIT, font, m_fontColor);
 
 	// Draw x axis labels
-	float maxFrequencyOnGraph = (m_nyquistFreq / (float)m_fractionOfSegmentsToShow);
+	float maxFrequencyOnGraph = m_nyquistFreq * ((float) m_segmentsToDisplay / (float) m_numWindowSegments);
 
 	float graphWidth = m_graphBounds.GetDimensions().x;
 	float axisFontHeight = m_fontHeight * 0.5f;
@@ -340,12 +382,12 @@ void AudioSystem::RenderFFTGraph() const
 		Vector2 yTextPos;
 		yTextPos.x = m_yAxisBounds.maxs.x - textWidth - 10.f;
 		yTextPos.y = m_graphBounds.mins.y + (value * graphHeight) - (0.5f * axisFontHeight);
-		renderer->DrawText2D(Stringf("%.2f", m_maxYValue * value), yTextPos, axisFontHeight, font, m_fontColor);
+		renderer->DrawText2D(Stringf("%.2f", m_fftMaxYAxis * value), yTextPos, axisFontHeight, font, m_fontColor);
 	}
 
 	renderer->DrawTextInBox2D("Frequency (hz)", m_xAxisBounds, Vector2(0.5f, 1.f), m_fontHeight, TEXT_DRAW_OVERRUN, font, m_fontColor);
 
-	float yPosition = RangeMapFloat(m_maxValueLastFrame, 0.f, m_maxYValue, 1.f, 0.0f);
+	float yPosition = RangeMapFloat(m_maxValueLastFrame, 0.f, m_fftMaxYAxis, 1.f, 0.0f);
 	renderer->DrawTextInBox2D(Stringf("%.3f", m_maxValueLastFrame), m_maxValueBounds, Vector2(0.f, yPosition), m_fontHeight, TEXT_DRAW_SHRINK_TO_FIT, font, m_fontColor);
 }
 
@@ -539,6 +581,29 @@ void AudioSystem::AddFFTDSPToMasterChannel()
 
 	result = masterChannelGroup->addDSP(FMOD_CHANNELCONTROL_DSP_HEAD, m_fftDSP);
 	ASSERT_OR_DIE(result == FMOD_OK, "Couldn't ADD the DSP to the master channel group");
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Updates the max X value to the one specified, clamping to avoid going over Nyquist Frequency
+//
+void AudioSystem::SetFFTMaxXValue(float maxFrequency)
+{
+	float frequencyPerSegment = m_nyquistFreq / (float) m_numWindowSegments;
+	m_segmentsToDisplay = Ceiling(maxFrequency / frequencyPerSegment);
+
+	SetupUIBounds();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Updates the max Y value for the graph and rebuilds the UI bounds elements
+//
+void AudioSystem::SetFFTMaxYValue(float newValue)
+{
+	m_fftMaxYAxis = newValue;
+
+	SetupUIBounds();
 }
 
 

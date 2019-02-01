@@ -47,10 +47,11 @@ public:
 
 	FMOD::System*				GetFMODSystem() const;
 	void						AddFFTDSPToMasterChannel();
-
+	void						SetFFTMaxXValue(float maxFrequency);
+	void						SetFFTMaxYValue(float newValue);
 	static void					SetShouldRender(bool newState);
 	static bool					ShouldRender();
-
+	
 
 protected:
 	FMOD::System*						m_fmodSystem;
@@ -66,8 +67,7 @@ protected:
 	mutable Mesh						m_barMesh;
 	mutable Mesh						m_gridMesh;
 	unsigned int						m_numWindowSegments = 4096;
-	unsigned int						m_fractionOfSegmentsToShow = 8;
-	unsigned int						m_numSegmentsToRender;
+	unsigned int						m_segmentsToDisplay = 512;
 	float								m_maxValueLastFrame = 0.f;
 	float								m_sampleRate = 48000.f;
 	float								m_nyquistFreq = m_sampleRate * 0.5f;
@@ -76,7 +76,7 @@ protected:
 	int									m_graphHeight = 800.f;
 	float								m_fontHeight = 30.f;
 	Vector2								m_screenEdgePadding = Vector2(30.f, 100.f);
-	float								m_maxYValue = 1.0f;
+	float								m_fftMaxYAxis = 1.0f;
 
 	AABB2 m_totalBounds;
 	AABB2 m_maxValueBounds;
