@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Math/IntVector2.hpp"
 #include "Engine/Rendering/Meshes/Mesh.hpp"
 #include "Engine/Core/Utility/XmlUtilities.hpp"
 #include "ThirdParty/fmod/fmod.hpp"
@@ -65,14 +66,32 @@ protected:
 	mutable Mesh						m_barMesh;
 	mutable Mesh						m_gridMesh;
 	unsigned int						m_numWindowSegments = 4096;
-	unsigned int						m_fractionOfSegmentsToShow = 4;
+	unsigned int						m_fractionOfSegmentsToShow = 8;
 	unsigned int						m_numSegmentsToRender;
-	float								m_fontHeight = 30.f;
 	float								m_maxValueLastFrame = 0.f;
+	float								m_sampleRate = 48000.f;
+	float								m_nyquistFreq = m_sampleRate * 0.5f;
 
-	AABB2 m_borderBounds;
-	AABB2 m_detailsBounds;
+	// UI Settings
+	int									m_graphHeight = 800.f;
+	float								m_fontHeight = 30.f;
+	Vector2								m_screenEdgePadding = Vector2(30.f, 100.f);
+	float								m_maxYValue = 1.0f;
+
+	AABB2 m_totalBounds;
+	AABB2 m_maxValueBounds;
 	AABB2 m_graphBounds;
+	AABB2 m_headingBounds;
+
+	AABB2 m_xAxisBounds;
+	AABB2 m_yAxisBounds;
+	AABB2 m_rightSidePanel;
+
+	Rgba m_lineAndPanelColor = Rgba(15, 60, 120, 200);
+	Rgba m_backgroundColor = Rgba(0, 0, 0, 100);
+	Rgba m_fontColor = Rgba(200, 200, 200, 200);
+
+	IntVector2 m_gridSegmentCount = IntVector2(20, 10);
 
 
 private:
@@ -87,6 +106,7 @@ private:
 	static void InitializeConsoleCommands();
 
 	// For FFT rendering
+	void SetupUIBounds();
 	void UpdateFFTGraph();
 
 
