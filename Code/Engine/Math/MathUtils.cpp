@@ -246,17 +246,17 @@ float GetNearestInterCardinalAngle(float angle)
 //
 Vector2 GetNearestCardinalDirection(const Vector2& direction)
 {
-	float northDot = DotProduct(direction, Vector2::DIRECTION_UP);
-	float southDot = DotProduct(direction, Vector2::DIRECTION_DOWN);
-	float eastDot = DotProduct(direction, Vector2::DIRECTION_RIGHT);
-	float westDot = DotProduct(direction, Vector2::DIRECTION_LEFT);
+	float northDot = DotProduct(direction, Vector2::Y_AXIS);
+	float southDot = DotProduct(direction, Vector2::MINUS_Y_AXIS);
+	float eastDot = DotProduct(direction, Vector2::X_AXIS);
+	float westDot = DotProduct(direction, Vector2::MINUS_X_AXIS);
 
 	float maxDot = MaxFloat(northDot, southDot, eastDot, westDot);
 
-	if		(maxDot == northDot)		{ return Vector2::DIRECTION_UP;}
-	else if	(maxDot == southDot)		{ return Vector2::DIRECTION_DOWN; }
-	else if	(maxDot == eastDot)			{ return Vector2::DIRECTION_RIGHT; }
-	else								{ return Vector2::DIRECTION_LEFT; }
+	if		(maxDot == northDot)		{ return Vector2::Y_AXIS;}
+	else if	(maxDot == southDot)		{ return Vector2::MINUS_Y_AXIS; }
+	else if	(maxDot == eastDot)			{ return Vector2::X_AXIS; }
+	else								{ return Vector2::MINUS_X_AXIS; }
 }
 
 

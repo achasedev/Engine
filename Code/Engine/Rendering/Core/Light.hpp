@@ -56,7 +56,7 @@ public:
 
 	// Statics
 	static Light* CreatePointLight(const Vector3& position, const Rgba& color = Rgba::WHITE, const Vector3& attenuation = Vector3(1.f, 0.f, 0.f));
-	static Light* CreateDirectionalLight(const Vector3& position, const Vector3& direction = Vector3::DIRECTION_DOWN, const Rgba& color = Rgba::WHITE, const Vector3& attenuation = Vector3(1.f, 0.f, 0.f));
+	static Light* CreateDirectionalLight(const Vector3& position, const Vector3& direction = Vector3::MINUS_Y_AXIS, const Rgba& color = Rgba::WHITE, const Vector3& attenuation = Vector3(1.f, 0.f, 0.f));
 	static Light* CreateConeLight(const Vector3& position, const Vector3& direction, float outerAngle, float innerAngle, const Rgba& color = Rgba::WHITE, const Vector3& attenuation = Vector3(1.f, 0.f, 0.f));
 
 	

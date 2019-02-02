@@ -209,7 +209,7 @@ Camera* DebugRenderSystem::GetWorldCamera()
 Vector3 DebugRenderSystem::GetDefaultSpawnLocation()
 {
 	Vector3 cameraPosition = s_instance->m_worldCamera->GetPosition();
-	Vector3 cameraForward = s_instance->m_worldCamera->GetForwardVector();
+	Vector3 cameraForward = s_instance->m_worldCamera->GetZVector();
 
 	return cameraPosition + cameraForward * CAMERA_SPAWN_DISTANCE;
 }
@@ -764,8 +764,8 @@ void Command_DebugRender3DQuad(Command& cmd)
 	Vector2 dimensions	= Vector2(1.0f, 1.0f);
 	Vector3 position	= DebugRenderSystem::GetDefaultSpawnLocation();
 	
-	Vector3 rightVector = Vector3::DIRECTION_RIGHT;
-	Vector3 upVector	= Vector3::DIRECTION_UP;
+	Vector3 rightVector = Vector3::X_AXIS;
+	Vector3 upVector	= Vector3::Y_AXIS;
 
 	std::string renderModeText = "use_depth";
 	bool isWireFrame = false;

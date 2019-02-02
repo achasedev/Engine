@@ -39,7 +39,7 @@ public:
 	GLuint					GetUniformBufferHandle() const;
 
 	// Model setters
-	void					LookAt(const Vector3& position, const Vector3& target, const Vector3& up = Vector3::DIRECTION_UP);
+	void					LookAt(const Vector3& position, const Vector3& target, const Vector3& up = Vector3::Y_AXIS);
 	void					SetCameraMatrix(const Matrix44& cameraMatrix);
 	void					SetViewMatrix(const Matrix44& viewMatrix);
 
@@ -62,9 +62,9 @@ public:
 	Vector3					GetPosition() const;
 	Vector3					GetRotation() const;
 
-	Vector3					GetForwardVector() const;
-	Vector3					GetRightVector() const;
-	Vector3					GetUpVector() const;
+	Vector3					GetZVector() const;
+	Vector3					GetXVector() const;
+	Vector3					GetYVector() const;
 
 	unsigned int			GetFrameBufferHandle() const;
 	unsigned int			GetDrawOrder() const;
@@ -89,6 +89,7 @@ private:
 	// All initialized to identity
 	Matrix44 m_viewMatrix;			// inverse of camera matrix (model matrix on transform) (used for shader)
 	Matrix44 m_projectionMatrix;    // projection
+	Matrix44 m_changeOfBasisMatrix; // For different supporting coordinate systems
 
 	UniformBuffer m_uniformBuffer;
 

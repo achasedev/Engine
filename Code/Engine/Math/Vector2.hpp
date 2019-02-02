@@ -54,10 +54,10 @@ public:
 	// Static constants
 	const static Vector2 ZERO;
 	const static Vector2 ONES;
-	const static Vector2 DIRECTION_UP;
-	const static Vector2 DIRECTION_DOWN;
-	const static Vector2 DIRECTION_LEFT;
-	const static Vector2 DIRECTION_RIGHT;
+	const static Vector2 X_AXIS;
+	const static Vector2 Y_AXIS;
+	const static Vector2 MINUS_X_AXIS;
+	const static Vector2 MINUS_Y_AXIS;
 
 
 public:

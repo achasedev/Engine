@@ -4,6 +4,7 @@
 /* Date: November 10th, 2017
 /* Description: Implementation of the Matrix44 class
 /************************************************************************/
+#include "Game/Framework/EngineBuildPreferences.hpp"
 #include "Engine/Core/Window.hpp"
 #include "Engine/Math/Vector4.hpp"
 #include "Engine/Math/Matrix44.hpp"
@@ -435,90 +436,6 @@ Vector4 Matrix44::GetWVector() const
 
 
 //-----------------------------------------------------------------------------------------------
-// Constructs a 2D rotation matrix for the given 2D angle and returns it
-//
-Matrix44 Matrix44::MakeRotation(const Vector3& rotation)
-{
-	// Roll matrix - rotation about z
-	Matrix44 rollMatrix;
-
-	rollMatrix.Ix = CosDegrees(rotation.z);
-	rollMatrix.Iy = SinDegrees(rotation.z);
-
-	rollMatrix.Jx = -SinDegrees(rotation.z);
-	rollMatrix.Jy = CosDegrees(rotation.z);
-
-	// Yaw matrix - rotation about y
-	Matrix44 yawMatrix;
-
-	yawMatrix.Ix = CosDegrees(rotation.y);
-	yawMatrix.Iz = -SinDegrees(rotation.y);
-
-	yawMatrix.Kx = SinDegrees(rotation.y);
-	yawMatrix.Kz = CosDegrees(rotation.y);
-
-	// Pitch matrix - rotation about x
-	Matrix44 pitchMatrix;
-
-	pitchMatrix.Jy = CosDegrees(rotation.x);
-	pitchMatrix.Jz = SinDegrees(rotation.x);
-
-	pitchMatrix.Ky = -SinDegrees(rotation.x);
-	pitchMatrix.Kz = CosDegrees(rotation.x);
-
-	// Concatenate and return
-	return yawMatrix * pitchMatrix * rollMatrix;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Constructs a rotation matrix from the given quaternion and returns it
-//
-Matrix44 Matrix44::MakeRotation(const Quaternion& rotation)
-{
-	// Imaginary part
-	float const x = rotation.v.x;
-	float const y = rotation.v.y;
-	float const z = rotation.v.z;
-
-	// Cache off some squares
-	float const x2 = x * x;
-	float const y2 = y * y;
-	float const z2 = z * z;
-
-	// I Basis
-	Vector4 iCol = Vector4( 
-		1.0f - 2.0f * y2 - 2.0f * z2, 
-		2.0f * x * y + 2.0f * rotation.s * z, 
-		2.0f * x * z - 2.0f * rotation.s * y,
-		0.f
-	);
-
-	// J Basis
-	Vector4 jCol = Vector4(	
-		2.f * x * y - 2.0f * rotation.s * z, 
-		1.0f - 2.0f * x2 - 2.0f * z2, 
-		2.0f * y * z + 2.0f * rotation.s * x,
-		0.f
-	);
-
-	// K Basis
-	Vector4 kCol = Vector4( 
-		2.0f * x * z + 2.0f * rotation.s * y, 
-		2.0f * y * z - 2.0f * rotation.s * x, 
-		1.0f - 2.0f * x2 - 2.0f * y2,
-		0.f
-	);
-
-	// T Basis
-	Vector4 tCol = Vector4(0.f, 0.f, 0.f, 1.0f);
-
-	Matrix44 result = Matrix44(iCol, jCol, kCol, tCol);
-	return result;
-}
-
-
-//-----------------------------------------------------------------------------------------------
 // Constructs a 3D translation matrix for the given 3D translation and returns it
 //
 Matrix44 Matrix44::MakeTranslation(const Vector3& translation)
@@ -624,34 +541,6 @@ Matrix44 Matrix44::MakePerspective(float fovDegrees, float nearZ, float farZ)
 
 
 //-----------------------------------------------------------------------------------------------
-// Constructs a Look At matrix from position looking at target with the given up reference vector
-//
-Matrix44 Matrix44::MakeLookAt(const Vector3& position, const Vector3& target, const Vector3& referenceUp /*= Vector3::DIRECTION_UP*/)
-{
-	// Edge case - Target and position are the same position, then just look world forward
-	Vector3 forward;
-	if (position == target)
-	{
-		forward = Vector3::DIRECTION_FORWARD;
-	}
-	else
-	{
-		forward = (target - position).GetNormalized();
-	}
-
-	// Edge case - check if the forward happens to be the reference up vector, and if so just set right to the reference up
-	ASSERT_OR_DIE(forward != referenceUp, "Error: Matrix44::LookAt() had forward and up vector matched.");
-
-	Vector3 right = CrossProduct(referenceUp, forward);
-	right.NormalizeAndGetLength();
-
-	Vector3 lookUp = CrossProduct(forward, right);
-	
-	return Matrix44(right, lookUp, forward, position);
-}
-
-
-//-----------------------------------------------------------------------------------------------
 // Returns the translation component of the matrix
 //
 Vector3 Matrix44::ExtractTranslation(const Matrix44& translationMatrix)
@@ -663,35 +552,6 @@ Vector3 Matrix44::ExtractTranslation(const Matrix44& translationMatrix)
 	translation.z = translationMatrix.Tz;
 
 	return translation;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Finds the Euler angles of the rotation represented by the rotation matrix
-//
-Vector3 Matrix44::ExtractRotationDegrees(const Matrix44& rotationMatrix)
-{
-	float xDegrees;
-	float yDegrees;
-	float zDegrees;
-
-	float sineX = -1.0f * rotationMatrix.Ky;
-	xDegrees = ASinDegrees(sineX);
-
-	float cosX = CosDegrees(xDegrees);
-	if (cosX != 0.f)
-	{
-		yDegrees = Atan2Degrees(rotationMatrix.Kx, rotationMatrix.Kz);
-		zDegrees = Atan2Degrees(rotationMatrix.Iy, rotationMatrix.Jy);
-	}
-	else
-	{
-		// Gimble lock, lose roll but keep yaw
-		zDegrees = 0.f;
-		yDegrees = Atan2Degrees(-rotationMatrix.Iz, rotationMatrix.Ix);
-	}
-
-	return Vector3(xDegrees, yDegrees, zDegrees);
 }
 
 
@@ -907,3 +767,296 @@ Matrix44 Interpolate(const Matrix44& start, const Matrix44& end, float fractionT
 
 	return Matrix44(resultI, resultJ, resultK, resultT);
 }
+
+
+//////////////////////////////////////////////////////////////////////////
+// Functions that depend on coordinate system
+//////////////////////////////////////////////////////////////////////////
+
+#ifdef COORDINATE_SYSTEM_RIGHT_HAND_Z_UP
+
+//-----------------------------------------------------------------------------------------------
+// Constructs a 2D rotation matrix for the given 2D angle and returns it
+//
+Matrix44 Matrix44::MakeRotation(const Vector3& rotation)
+{
+	// Roll matrix - rotation about x
+	Matrix44 rollMatrix;
+
+	rollMatrix.Jy = CosDegrees(rotation.x);
+	rollMatrix.Jz = SinDegrees(rotation.x);
+
+	rollMatrix.Ky = -SinDegrees(rotation.x);
+	rollMatrix.Kz = CosDegrees(rotation.x);
+
+
+	// Yaw matrix - rotation about z
+	Matrix44 yawMatrix;
+
+	yawMatrix.Ix = CosDegrees(rotation.z);
+	yawMatrix.Iy = SinDegrees(rotation.z);
+
+	yawMatrix.Jx = -SinDegrees(rotation.z);
+	yawMatrix.Jy = CosDegrees(rotation.z);
+
+	// Pitch matrix - rotation about y
+	Matrix44 pitchMatrix;
+	pitchMatrix.Ix = CosDegrees(rotation.y);
+	pitchMatrix.Iz = -SinDegrees(rotation.y);
+
+	pitchMatrix.Kx = SinDegrees(rotation.y);
+	pitchMatrix.Kz = CosDegrees(rotation.y);
+
+
+	// Concatenate and return
+	return yawMatrix * pitchMatrix * rollMatrix;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Constructs a rotation matrix from the given quaternion and returns it
+//
+Matrix44 Matrix44::MakeRotation(const Quaternion& rotation)
+{
+	// Imaginary part
+	float const x = rotation.v.x;
+	float const y = rotation.v.y;
+	float const z = rotation.v.z;
+
+	// Cache off some squares
+	float const x2 = x * x;
+	float const y2 = y * y;
+	float const z2 = z * z;
+
+	// I Basis
+	Vector4 iCol = Vector4(
+		1.0f - 2.0f * y2 - 2.0f * z2,
+		2.0f * x * y + 2.0f * rotation.s * z,
+		2.0f * x * z - 2.0f * rotation.s * y,
+		0.f
+	);
+
+	// J Basis
+	Vector4 jCol = Vector4(
+		2.f * x * y - 2.0f * rotation.s * z,
+		1.0f - 2.0f * x2 - 2.0f * z2,
+		2.0f * y * z + 2.0f * rotation.s * x,
+		0.f
+	);
+
+	// K Basis
+	Vector4 kCol = Vector4(
+		2.0f * x * z + 2.0f * rotation.s * y,
+		2.0f * y * z - 2.0f * rotation.s * x,
+		1.0f - 2.0f * x2 - 2.0f * y2,
+		0.f
+	);
+
+	// T Basis
+	Vector4 tCol = Vector4(0.f, 0.f, 0.f, 1.0f);
+
+	Matrix44 result = Matrix44(kCol, -1.0f * iCol, jCol, tCol);
+	return result;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Finds the Euler angles of the rotation represented by the rotation matrix
+//
+Vector3 Matrix44::ExtractRotationDegrees(const Matrix44& rotationMatrix)
+{
+	float xDegrees;
+	float yDegrees;
+	float zDegrees;
+
+	float sineY = -1.0f * rotationMatrix.Ky;
+	yDegrees = ASinDegrees(sineY);
+
+	float cosY = CosDegrees(yDegrees);
+	if (cosY != 0.f)
+	{
+		zDegrees = Atan2Degrees(rotationMatrix.Kx, rotationMatrix.Kz);
+		xDegrees = Atan2Degrees(rotationMatrix.Iy, rotationMatrix.Jy);
+	}
+	else
+	{
+		// Gimble lock, lose roll but keep yaw
+		xDegrees = 0.f;
+		zDegrees = Atan2Degrees(-rotationMatrix.Iz, rotationMatrix.Ix);
+	}
+
+	return Vector3(xDegrees, yDegrees, zDegrees);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Constructs a Look At matrix from position looking at target with the given up reference vector
+//
+Matrix44 Matrix44::MakeLookAt(const Vector3& position, const Vector3& target, const Vector3& referenceUp /*= Vector3::DIRECTION_UP*/)
+{
+	// Edge case - Target and position are the same position, then just look world forward
+	Vector3 iVector;
+	if (position == target)
+	{
+		iVector = Vector3::X_AXIS;
+	}
+	else
+	{
+		iVector = (target - position).GetNormalized();
+	}
+
+	// Edge case - check if the forward happens to be the reference up vector, and if so just set right to the reference up
+	ASSERT_OR_DIE(iVector != referenceUp, "Error: Matrix44::LookAt() had new forward and up vector matched.");
+
+	Vector3 jVector = CrossProduct(referenceUp, iVector);
+	jVector.NormalizeAndGetLength();
+
+	Vector3 kVector = CrossProduct(iVector, jVector);
+
+	return Matrix44(iVector, jVector, kVector, position);
+}
+
+
+#else // Left Hand Y up coordinate system
+
+//-----------------------------------------------------------------------------------------------
+// Constructs a 3D rotation matrix for the given 3D angle and returns it
+//
+Matrix44 Matrix44::MakeRotation(const Vector3& rotation)
+{
+	// Rotation about z
+	Matrix44 rollMatrix;
+
+	rollMatrix.Ix = CosDegrees(rotation.z);
+	rollMatrix.Iy = SinDegrees(rotation.z);
+
+	rollMatrix.Jx = -SinDegrees(rotation.z);
+	rollMatrix.Jy = CosDegrees(rotation.z);
+
+	// Rotation about y
+	Matrix44 yawMatrix;
+
+	yawMatrix.Ix = CosDegrees(rotation.y);
+	yawMatrix.Iz = -SinDegrees(rotation.y);
+
+	yawMatrix.Kx = SinDegrees(rotation.y);
+	yawMatrix.Kz = CosDegrees(rotation.y);
+
+	// Rotation about x
+	Matrix44 pitchMatrix;
+
+	pitchMatrix.Jy = CosDegrees(rotation.x);
+	pitchMatrix.Jz = SinDegrees(rotation.x);
+
+	pitchMatrix.Ky = -SinDegrees(rotation.x);
+	pitchMatrix.Kz = CosDegrees(rotation.x);
+
+	// Concatenate and return
+	return yawMatrix * pitchMatrix * rollMatrix;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Constructs a rotation matrix from the given quaternion and returns it
+//
+Matrix44 Matrix44::MakeRotation(const Quaternion& rotation)
+{
+	// Imaginary part
+	float const x = rotation.v.x;
+	float const y = rotation.v.y;
+	float const z = rotation.v.z;
+
+	// Cache off some squares
+	float const x2 = x * x;
+	float const y2 = y * y;
+	float const z2 = z * z;
+
+	// I Basis
+	Vector4 iCol = Vector4(
+		1.0f - 2.0f * y2 - 2.0f * z2,
+		2.0f * x * y + 2.0f * rotation.s * z,
+		2.0f * x * z - 2.0f * rotation.s * y,
+		0.f
+	);
+
+	// J Basis
+	Vector4 jCol = Vector4(
+		2.f * x * y - 2.0f * rotation.s * z,
+		1.0f - 2.0f * x2 - 2.0f * z2,
+		2.0f * y * z + 2.0f * rotation.s * x,
+		0.f
+	);
+
+	// K Basis
+	Vector4 kCol = Vector4(
+		2.0f * x * z + 2.0f * rotation.s * y,
+		2.0f * y * z - 2.0f * rotation.s * x,
+		1.0f - 2.0f * x2 - 2.0f * y2,
+		0.f
+	);
+
+	// T Basis
+	Vector4 tCol = Vector4(0.f, 0.f, 0.f, 1.0f);
+
+	Matrix44 result = Matrix44(iCol, jCol, kCol, tCol);
+	return result;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Finds the Euler angles of the rotation represented by the rotation matrix
+//
+Vector3 Matrix44::ExtractRotationDegrees(const Matrix44& rotationMatrix)
+{
+	float xDegrees;
+	float yDegrees;
+	float zDegrees;
+
+	float sineX = -1.0f * rotationMatrix.Ky;
+	xDegrees = ASinDegrees(sineX);
+
+	float cosX = CosDegrees(xDegrees);
+	if (cosX != 0.f)
+	{
+		yDegrees = Atan2Degrees(rotationMatrix.Kx, rotationMatrix.Kz);
+		zDegrees = Atan2Degrees(rotationMatrix.Iy, rotationMatrix.Jy);
+	}
+	else
+	{
+		// Gimble lock, lose roll but keep yaw
+		zDegrees = 0.f;
+		yDegrees = Atan2Degrees(-rotationMatrix.Iz, rotationMatrix.Ix);
+	}
+
+	return Vector3(xDegrees, yDegrees, zDegrees);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Constructs a Look At matrix from position looking at target with the given up reference vector
+//
+Matrix44 Matrix44::MakeLookAt(const Vector3& position, const Vector3& target, const Vector3& referenceUp /*= Vector3::DIRECTION_UP*/)
+{
+	// Edge case - Target and position are the same position, then just look world forward
+	Vector3 forward;
+	if (position == target)
+	{
+		forward = Vector3::Z_AXIS;
+	}
+	else
+	{
+		forward = (target - position).GetNormalized();
+	}
+
+	// Edge case - check if the forward happens to be the reference up vector, and if so just set right to the reference up
+	ASSERT_OR_DIE(forward != referenceUp, "Error: Matrix44::LookAt() had forward and up vector matched.");
+
+	Vector3 right = CrossProduct(referenceUp, forward);
+	right.NormalizeAndGetLength();
+
+	Vector3 lookUp = CrossProduct(forward, right);
+
+	return Matrix44(right, lookUp, forward, position);
+}
+
+#endif

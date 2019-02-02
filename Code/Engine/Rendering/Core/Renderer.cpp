@@ -1533,14 +1533,14 @@ void Renderer::DrawPoint(const Vector3& position, const Rgba& color, float radiu
 {
 	Vertex3D_PCU vertices[14];
 
-	vertices[0] = Vertex3D_PCU(position - Vector3::DIRECTION_RIGHT * radius, color, Vector2::ZERO);
-	vertices[1] = Vertex3D_PCU(position + Vector3::DIRECTION_RIGHT * radius, color, Vector2::ZERO);
+	vertices[0] = Vertex3D_PCU(position - Vector3::X_AXIS * radius, color, Vector2::ZERO);
+	vertices[1] = Vertex3D_PCU(position + Vector3::X_AXIS * radius, color, Vector2::ZERO);
 
-	vertices[2] = Vertex3D_PCU(position - Vector3::DIRECTION_UP * radius, color, Vector2::ZERO);
-	vertices[3] = Vertex3D_PCU(position + Vector3::DIRECTION_UP * radius, color, Vector2::ZERO);
+	vertices[2] = Vertex3D_PCU(position - Vector3::Y_AXIS * radius, color, Vector2::ZERO);
+	vertices[3] = Vertex3D_PCU(position + Vector3::Y_AXIS * radius, color, Vector2::ZERO);
 
-	vertices[4] = Vertex3D_PCU(position - Vector3::DIRECTION_FORWARD * radius, color, Vector2::ZERO);
-	vertices[5] = Vertex3D_PCU(position + Vector3::DIRECTION_FORWARD * radius, color, Vector2::ZERO);
+	vertices[4] = Vertex3D_PCU(position - Vector3::Z_AXIS * radius, color, Vector2::ZERO);
+	vertices[5] = Vertex3D_PCU(position + Vector3::Z_AXIS * radius, color, Vector2::ZERO);
 
 	vertices[6] = Vertex3D_PCU(position - Vector3(1.0f, 1.0f, 1.0f) * radius, color, Vector2::ZERO);
 	vertices[7] = Vertex3D_PCU(position + Vector3(1.0f, 1.0f, 1.0f) * radius, color, Vector2::ZERO);

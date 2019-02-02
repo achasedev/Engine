@@ -14,7 +14,7 @@ class DebugRenderTask_Quad3D : public DebugRenderTask
 public:
 	//-----Public Methods-----
 
-	DebugRenderTask_Quad3D(const Vector3& position, const Vector2& dimensions, const DebugRenderOptions& options, const Vector3& rightVector = Vector3::DIRECTION_RIGHT, const Vector3& upVector = Vector3::DIRECTION_UP);
+	DebugRenderTask_Quad3D(const Vector3& position, const Vector2& dimensions, const DebugRenderOptions& options, const Vector3& rightVector = Vector3::X_AXIS, const Vector3& upVector = Vector3::Y_AXIS);
 
 	virtual void Render() const override;
 

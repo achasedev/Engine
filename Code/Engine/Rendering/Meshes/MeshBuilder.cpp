@@ -527,14 +527,14 @@ void MeshBuilder::PushPoint(const Vector3& position, const Rgba& color /*= Rgba:
 	SetColor(color);
 	SetUVs(Vector2::ZERO);
 
-	PushVertex(position - Vector3::DIRECTION_RIGHT * radius);
-	PushVertex(position + Vector3::DIRECTION_RIGHT * radius);
+	PushVertex(position - Vector3::X_AXIS * radius);
+	PushVertex(position + Vector3::X_AXIS * radius);
 
-	PushVertex(position - Vector3::DIRECTION_UP * radius);
-	PushVertex(position + Vector3::DIRECTION_UP * radius);
+	PushVertex(position - Vector3::Y_AXIS * radius);
+	PushVertex(position + Vector3::Y_AXIS * radius);
 
-	PushVertex(position - Vector3::DIRECTION_FORWARD * radius);
-	PushVertex(position + Vector3::DIRECTION_FORWARD * radius);
+	PushVertex(position - Vector3::Z_AXIS * radius);
+	PushVertex(position + Vector3::Z_AXIS * radius);
 
 	PushVertex(position - Vector3(1.0f, 1.0f, 1.0f) * radius);
 	PushVertex(position + Vector3(1.0f, 1.0f, 1.0f) * radius);
@@ -659,8 +659,8 @@ void MeshBuilder::PushCube(const Vector3& center, const Vector3& dimensions, con
 	//-------------------------------------Front face--------------------------------------------------------
 	{
 		SetUVs(sideUVs.GetBottomLeft());
-		SetNormal(Vector3::DIRECTION_BACK);
-		SetTangent(Vector4::DIRECTION_RIGHT);
+		SetNormal(Vector3::MINUS_Z_AXIS);
+		SetTangent(Vector4::X_AXIS);
 
 		unsigned int index = PushVertex(cubeBounds.GetFrontBottomLeft());
 
@@ -680,8 +680,8 @@ void MeshBuilder::PushCube(const Vector3& center, const Vector3& dimensions, con
 	//-------------------------------------Back face--------------------------------------------------------
 	{
 		SetUVs(sideUVs.GetBottomLeft());
-		SetNormal(Vector3::DIRECTION_FORWARD);
-		SetTangent(Vector4::DIRECTION_LEFT);
+		SetNormal(Vector3::Z_AXIS);
+		SetTangent(Vector4::MINUS_X_AXIS);
 
 		unsigned int index = PushVertex(cubeBounds.GetBackBottomRight());
 
@@ -701,8 +701,8 @@ void MeshBuilder::PushCube(const Vector3& center, const Vector3& dimensions, con
 	//-------------------------------------Left face--------------------------------------------------------
 	{
 		SetUVs(sideUVs.GetBottomLeft());
-		SetNormal(Vector3::DIRECTION_LEFT);
-		SetTangent(Vector4::DIRECTION_BACK);
+		SetNormal(Vector3::MINUS_X_AXIS);
+		SetTangent(Vector4::MINUS_Z_AXIS);
 
 		unsigned int index = PushVertex(cubeBounds.GetBackBottomLeft());
 
@@ -722,8 +722,8 @@ void MeshBuilder::PushCube(const Vector3& center, const Vector3& dimensions, con
 	//-------------------------------------Right face--------------------------------------------------------
 	{
 		SetUVs(sideUVs.GetBottomLeft());
-		SetNormal(Vector3::DIRECTION_RIGHT);
-		SetTangent(Vector4::DIRECTION_FORWARD);
+		SetNormal(Vector3::X_AXIS);
+		SetTangent(Vector4::Z_AXIS);
 
 		unsigned int index = PushVertex(cubeBounds.GetFrontBottomRight());
 
@@ -743,8 +743,8 @@ void MeshBuilder::PushCube(const Vector3& center, const Vector3& dimensions, con
 	//-------------------------------------Top face--------------------------------------------------------
 	{
 		SetUVs(topUVs.GetBottomLeft());
-		SetNormal(Vector3::DIRECTION_UP);
-		SetTangent(Vector4::DIRECTION_RIGHT);
+		SetNormal(Vector3::Y_AXIS);
+		SetTangent(Vector4::X_AXIS);
 
 		unsigned int index = PushVertex(cubeBounds.GetFrontTopLeft());
 
@@ -764,8 +764,8 @@ void MeshBuilder::PushCube(const Vector3& center, const Vector3& dimensions, con
 	//-------------------------------------Bottom face--------------------------------------------------------
 	{
 		SetUVs(bottomUVs.GetBottomLeft());
-		SetNormal(Vector3::DIRECTION_DOWN);
-		SetTangent(Vector4::DIRECTION_RIGHT);
+		SetNormal(Vector3::MINUS_Y_AXIS);
+		SetTangent(Vector4::X_AXIS);
 
 		unsigned int index = PushVertex(cubeBounds.GetBackBottomLeft());
 
@@ -811,7 +811,7 @@ void MeshBuilder::PushUVSphere(const Vector3& spherePosition, float radius, unsi
 			Vector3 tangent = Vector3(-SinDegrees(rotationAngle) * SinDegrees(azimuth), 0.f, CosDegrees(rotationAngle) * SinDegrees(azimuth));
 			if (AreMostlyEqual(tangent, Vector3::ZERO))
 			{
-				tangent = Vector3::DIRECTION_RIGHT;
+				tangent = Vector3::X_AXIS;
 			}
 			tangent.NormalizeAndGetLength();
 

@@ -4,6 +4,7 @@
 /* Date: February 13th, 2018
 /* Description: Implementation of the Camera class
 /************************************************************************/
+#include "Game/Framework/EngineBuildPreferences.hpp"
 #include "Engine/Rendering/Core/Camera.hpp"
 #include "Engine/Core/Window.hpp"
 #include "Engine/Core/EngineCommon.hpp"
@@ -17,11 +18,11 @@ struct CameraBufferData
 
 	Matrix44 m_cameraMatrix;
 
-	Vector3 m_cameraRight;
+	Vector3 m_cameraX;
 	float	m_padding0;
-	Vector3 m_cameraUp;
+	Vector3 m_cameraY;
 	float	m_padding1;
-	Vector3 m_cameraForward;
+	Vector3 m_cameraZ;
 	float	m_padding2;
 	Vector3 m_cameraPosition;
 	float	m_padding3;
@@ -35,6 +36,14 @@ struct CameraBufferData
 Camera::Camera()
 	: m_drawOrder(0)
 {
+#ifdef COORDINATE_SYSTEM_LEFT_HAND_Y_UP
+	m_changeOfBasisMatrix = Matrix44::IDENTITY; // If nothing is defined, will still default to Identity
+#elif defined COORDINATE_SYSTEM_RIGHT_HAND_Z_UP
+	m_changeOfBasisMatrix = Matrix44(	Vector4(0.f, 0.f, 1.f, 0.f),
+										Vector4(-1.f, 0.f, 0.f, 0.f),
+										Vector4(0.f, 1.f, 0.f, 0.f),
+										Vector4(0.f, 0.f, 0.f, 1.f));
+#endif
 }
 
 
@@ -64,24 +73,6 @@ void Camera::TranslateLocal(const Vector3& localTranslation)
 void Camera::Rotate(const Vector3& rotation)
 {
 	Vector3 newRotation = m_transform.rotation.GetAsEulerAngles() + rotation;
-
- 	newRotation.x = GetAngleBetweenZeroThreeSixty(newRotation.x);
-	newRotation.y = GetAngleBetweenZeroThreeSixty(newRotation.y);
- 	newRotation.z = GetAngleBetweenZeroThreeSixty(newRotation.z);
- 
-	// Clamping to avoid gimble lock
-	// Even though we use quaternions, we need to use Euler angles to
-	// rotate the way we want to for a first-person character
-	// (i.e. to prevent rolling even though there's no Z rotation)
-	if (newRotation.x > 80.f && newRotation.x < 180.f)
-	{
-		newRotation.x = 80.f;
-	}
-	else if (newRotation.x > 180.f && newRotation.x < 280.f)
-	{
-		newRotation.x = 280.f;
-	}
-
  	m_transform.SetRotation(newRotation);
 
 	m_viewMatrix = InvertLookAtMatrix(m_transform.GetWorldMatrix());
@@ -243,15 +234,15 @@ void Camera::FinalizeUniformBuffer()
 	CameraBufferData bufferData;
 
 	bufferData.m_viewMatrix = m_viewMatrix;
-	bufferData.m_projectionMatrix = m_projectionMatrix;
+	bufferData.m_projectionMatrix = m_projectionMatrix * m_changeOfBasisMatrix; // Append change of basis!
 	bufferData.m_cameraMatrix = m_transform.GetWorldMatrix();
 
-	bufferData.m_cameraRight	= GetRightVector();
-	bufferData.m_cameraUp		= GetUpVector();
-	bufferData.m_cameraForward	= GetForwardVector();
+	bufferData.m_cameraX	= GetXVector();
+	bufferData.m_cameraY	= GetYVector();
+	bufferData.m_cameraZ	= GetZVector();
 	bufferData.m_cameraPosition = m_transform.position;
 
-	bufferData.m_inverseViewProjection = Matrix44::GetInverse(m_viewMatrix) * Matrix44::GetInverse(m_projectionMatrix);
+	bufferData.m_inverseViewProjection = Matrix44::GetInverse(m_viewMatrix) * Matrix44::GetInverse(m_projectionMatrix * m_changeOfBasisMatrix);
 	
 	m_uniformBuffer.SetCPUAndGPUData(sizeof(CameraBufferData), &bufferData);
 }
@@ -315,7 +306,7 @@ Vector3 Camera::GetRotation() const
 //-----------------------------------------------------------------------------------------------
 // Returns the forward (K) vector of the camera's transform
 //
-Vector3 Camera::GetForwardVector() const
+Vector3 Camera::GetZVector() const
 {
 	return m_transform.GetWorldMatrix().GetKVector().xyz();
 }
@@ -324,7 +315,7 @@ Vector3 Camera::GetForwardVector() const
 //-----------------------------------------------------------------------------------------------
 // Returns the right (I) vector of the camera's transform
 //
-Vector3 Camera::GetRightVector() const
+Vector3 Camera::GetXVector() const
 {
 	return m_transform.GetWorldMatrix().GetIVector().xyz();
 }
@@ -333,7 +324,7 @@ Vector3 Camera::GetRightVector() const
 //-----------------------------------------------------------------------------------------------
 // Returns the up (J) vector of the camera's transform
 //
-Vector3 Camera::GetUpVector() const
+Vector3 Camera::GetYVector() const
 {
 	return m_transform.GetWorldMatrix().GetJVector().xyz();
 }

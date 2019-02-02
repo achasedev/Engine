@@ -56,12 +56,12 @@ public:
 	// Static constants
 	const static Vector3 ZERO;
 	const static Vector3 ONES;
-	const static Vector3 DIRECTION_UP;
-	const static Vector3 DIRECTION_DOWN;
-	const static Vector3 DIRECTION_LEFT;
-	const static Vector3 DIRECTION_RIGHT;
-	const static Vector3 DIRECTION_FORWARD;
-	const static Vector3 DIRECTION_BACK;
+	const static Vector3 Y_AXIS;
+	const static Vector3 MINUS_Y_AXIS;
+	const static Vector3 MINUS_X_AXIS;
+	const static Vector3 X_AXIS;
+	const static Vector3 Z_AXIS;
+	const static Vector3 MINUS_Z_AXIS;
 
 public:
 	float x;

@@ -15,12 +15,12 @@
 const Vector4 Vector4::ZERO	= Vector4(0.f, 0.f, 0.f, 1.0f);
 const Vector4 Vector4::ONES	= Vector4(1.f, 1.f, 1.f, 1.0f);
 					
-const Vector4 Vector4::DIRECTION_UP			= Vector4(0.f,	 1.0f, 0.f, 1.0f);
-const Vector4 Vector4::DIRECTION_DOWN		= Vector4(0.f,	-1.0f, 0.f, 1.0f);
-const Vector4 Vector4::DIRECTION_LEFT		= Vector4(-1.0f, 0.f,  0.f, 1.0f);
-const Vector4 Vector4::DIRECTION_RIGHT		= Vector4(1.0f,	 0.f,  0.f, 1.0f);
-const Vector4 Vector4::DIRECTION_FORWARD	= Vector4(0.f,	 0.f,  1.f, 1.0f);
-const Vector4 Vector4::DIRECTION_BACK		= Vector4(0.f,	 0.f, -1.f, 1.0f);
+const Vector4 Vector4::X_AXIS			= Vector4(1.0f,	 0.f,  0.f, 1.0f);
+const Vector4 Vector4::Y_AXIS			= Vector4(0.f,	 1.0f, 0.f, 1.0f);
+const Vector4 Vector4::Z_AXIS			= Vector4(0.f,	 0.f,  1.f, 1.0f);
+const Vector4 Vector4::MINUS_X_AXIS		= Vector4(-1.0f, 0.f,  0.f, 1.0f);
+const Vector4 Vector4::MINUS_Y_AXIS		= Vector4(0.f,	-1.0f, 0.f, 1.0f);
+const Vector4 Vector4::MINUS_Z_AXIS		= Vector4(0.f,	 0.f, -1.f, 1.0f);
 
 
 //-----------------------------------------------------------------------------------------------
