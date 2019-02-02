@@ -32,6 +32,7 @@ public:
 	static void					LoadAudioGroupFile(const std::string& filepath);
 
 	virtual void				BeginFrame();
+	virtual void				ProcessInput();
 	virtual void				RenderFFTGraph() const;
 	virtual void				EndFrame();
 
@@ -46,9 +47,12 @@ public:
 	virtual void				ValidateResult( FMOD_RESULT result );
 
 	FMOD::System*				GetFMODSystem() const;
-	void						AddFFTDSPToMasterChannel();
+
+	// FFT
 	void						SetFFTMaxXValue(float maxFrequency);
 	void						SetFFTMaxYValue(float newValue);
+	void						SetWindowSize(int windowSize);
+	void						SetFFTWindowType(FMOD_DSP_FFT_WINDOW windowType);
 	static void					SetShouldRender(bool newState);
 	static bool					ShouldRender();
 	
@@ -107,6 +111,7 @@ private:
 
 	// For FFT rendering
 	void SetupUIBounds();
+	void AddFFTDSPToMasterChannel();
 	void UpdateFFTGraph();
 
 

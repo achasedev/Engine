@@ -89,6 +89,21 @@ void Command_SetXMaxValue(Command& cmd)
 	ConsolePrintf("Set the FFT max X value to %.2f", maxX);
 }
 
+void Command_SetWindowSize(Command& cmd)
+{
+	int numWindowSegments;
+	bool success = cmd.GetParam("n", numWindowSegments);
+
+	if (!success)
+	{
+		ConsoleErrorf("Window size must be specified with -n flag and be a power of two <= 4096");
+		return;
+	}
+
+	AudioSystem::GetInstance()->SetWindowSize(numWindowSegments);
+	ConsolePrintf(Rgba::GREEN, "Set window size to %i", numWindowSegments);
+}
+
 
 //-----------------------------------------------------------------------------------------------
 // Initialization code based on example from "FMOD Studio Programmers API for Windows"
@@ -113,6 +128,7 @@ void AudioSystem::InitializeConsoleCommands()
 	Command::Register("hide_fft", "Hides the FFT audio graph", Command_HideFFT);
 	Command::Register("set_fft_max_x", "Sets the max X value on the FFT graph", Command_SetXMaxValue);
 	Command::Register("set_fft_max_y", "Sets the max Y value on the FFT graph", Command_SetYMaxValue);
+	Command::Register("set_window_size", "Sets the window size for the FFT function", Command_SetWindowSize);
 #endif
 }
 
@@ -179,17 +195,14 @@ void AudioSystem::UpdateFFTGraph()
 		m_maxValueLastFrame = 0.f;
 
 		float oneOverMaxYValue = 1.0f / m_fftMaxYAxis;
-		float oneOverNumChannels = 1.0f / (float) m_spectrumData->numchannels;
 		for (unsigned int i = 0; i < m_segmentsToDisplay; ++i)
 		{
-			// Get the average of all channels
+			// Get the sum of all channels
 			float value = 0.f;
 			for (int j = 0; j < m_spectrumData->numchannels; ++j)
 			{
 				value += m_spectrumData->spectrum[j][i];
 			}
-
-			value *= oneOverNumChannels;
 
 			m_maxValueLastFrame = MaxFloat(value, m_maxValueLastFrame);
 
@@ -332,9 +345,78 @@ void AudioSystem::BeginFrame()
 
 
 //-----------------------------------------------------------------------------------------------
+void AudioSystem::ProcessInput()
+{
+	InputSystem* input = InputSystem::GetInstance();
+
+	int windowType;
+	m_fftDSP->getParameterInt(FMOD_DSP_FFT_WINDOWTYPE, &windowType, 0, 0);
+	
+	int oldType = windowType;
+
+	if (input->WasKeyJustPressed(InputSystem::KEYBOARD_LEFT_ARROW))
+	{
+		windowType--;
+	}
+	
+	if (input->WasKeyJustPressed(InputSystem::KEYBOARD_RIGHT_ARROW))
+	{
+		windowType++;
+	}
+
+	// There are only 6 window types, 0 through 5
+	if (windowType > 5)
+	{
+		windowType = 0;
+	}
+	else if (windowType < 0)
+	{
+		windowType = 5;
+	}
+
+	if (oldType != windowType)
+	{
+		SetFFTWindowType((FMOD_DSP_FFT_WINDOW)windowType);
+	}
+}
+
+
+//- C FUNCTION ----------------------------------------------------------------------------------
+// Returns the string version of the given window type enumeration
+//
+std::string GetStringForWindowType(FMOD_DSP_FFT_WINDOW windowType)
+{
+	switch (windowType)
+	{
+	case FMOD_DSP_FFT_WINDOW_RECT:
+		return "Rectangle";
+		break;
+	case FMOD_DSP_FFT_WINDOW_TRIANGLE:
+		return "Triangle";
+		break;
+	case FMOD_DSP_FFT_WINDOW_HAMMING:
+		return "Hamming";
+		break;
+	case FMOD_DSP_FFT_WINDOW_HANNING:
+		return "Hanning";
+		break;
+	case FMOD_DSP_FFT_WINDOW_BLACKMAN:
+		return "Blackman";
+		break;
+	case FMOD_DSP_FFT_WINDOW_BLACKMANHARRIS:
+		return "Blackman-Harris";
+		break;
+	default:
+		break;
+	}
+
+	return "";
+}
+
+
+//-----------------------------------------------------------------------------------------------
 void AudioSystem::RenderFFTGraph() const
 {
-
 	Renderer* renderer = Renderer::GetInstance();
 	renderer->SetCurrentCamera(renderer->GetUICamera());
 	AABB2 bounds = renderer->GetUIBounds();
@@ -347,6 +429,13 @@ void AudioSystem::RenderFFTGraph() const
 	text += Stringf("Number of intervals displayed: %i (out of %i)\n", m_segmentsToDisplay, m_numWindowSegments);
 	text += Stringf("Frequency resolution: %f hz\n", m_nyquistFreq / (float)m_numWindowSegments);
 	text += Stringf("Sample Rate: %.0f hz\n", m_sampleRate);
+
+	int windowType;
+	m_fftDSP->getParameterInt(FMOD_DSP_FFT_WINDOWTYPE, &windowType, 0, 0);
+
+	std::string windowTypeText = GetStringForWindowType((FMOD_DSP_FFT_WINDOW)windowType);
+
+	text += Stringf("[Left, Right] Window Type: %s", windowTypeText.c_str());
 
 	renderer->DrawTextInBox2D(text, m_headingBounds, Vector2::ZERO, m_fontHeight, TEXT_DRAW_SHRINK_TO_FIT, font, m_fontColor);
 
@@ -573,51 +662,11 @@ void AudioSystem::AddFFTDSPToMasterChannel()
 	FMOD_RESULT result = m_fmodSystem->createDSPByType(FMOD_DSP_TYPE_FFT, &m_fftDSP);
 	ASSERT_OR_DIE(result == FMOD_OK, "Couldn't create the DSP");
 
-	result = m_fftDSP->setParameterInt(FMOD_DSP_FFT_WINDOWTYPE, FMOD_DSP_FFT_WINDOW_RECT);
-	ASSERT_OR_DIE(result == FMOD_OK, "Couldn't assign window type parameter");
-
-	result = m_fftDSP->setParameterInt(FMOD_DSP_FFT_WINDOWSIZE, 2 * m_numWindowSegments);
-	ASSERT_OR_DIE(result == FMOD_OK, "Couldn't assign window size parameter");
+	SetFFTWindowType(FMOD_DSP_FFT_WINDOW_BLACKMANHARRIS);
+	SetWindowSize(m_numWindowSegments);
 
 	result = masterChannelGroup->addDSP(FMOD_CHANNELCONTROL_DSP_HEAD, m_fftDSP);
 	ASSERT_OR_DIE(result == FMOD_OK, "Couldn't ADD the DSP to the master channel group");
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Updates the max X value to the one specified, clamping to avoid going over Nyquist Frequency
-//
-void AudioSystem::SetFFTMaxXValue(float maxFrequency)
-{
-	float frequencyPerSegment = m_nyquistFreq / (float) m_numWindowSegments;
-	m_segmentsToDisplay = Ceiling(maxFrequency / frequencyPerSegment);
-
-	SetupUIBounds();
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Updates the max Y value for the graph and rebuilds the UI bounds elements
-//
-void AudioSystem::SetFFTMaxYValue(float newValue)
-{
-	m_fftMaxYAxis = newValue;
-
-	SetupUIBounds();
-}
-
-
-//-----------------------------------------------------------------------------------------------
-void AudioSystem::SetShouldRender(bool newState)
-{
-	s_instance->m_renderFFTGraph = newState;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-bool AudioSystem::ShouldRender()
-{
-	return s_instance->m_renderFFTGraph;
 }
 
 
@@ -719,5 +768,65 @@ SoundID AudioGroup::GetRandomSound()
 	m_lastSoundPlayed = soundToReturn;
 	return soundToReturn;
 }
+
+
+//-----------------------------------------------------------------------------------------------
+// Updates the max X value to the one specified, clamping to avoid going over Nyquist Frequency
+//
+void AudioSystem::SetFFTMaxXValue(float maxFrequency)
+{
+	float frequencyPerSegment = m_nyquistFreq / (float)m_numWindowSegments;
+	m_segmentsToDisplay = Ceiling(maxFrequency / frequencyPerSegment);
+
+	SetupUIBounds();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Updates the max Y value for the graph and rebuilds the UI bounds elements
+//
+void AudioSystem::SetFFTMaxYValue(float newValue)
+{
+	m_fftMaxYAxis = newValue;
+
+	SetupUIBounds();
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the window size for the FFT
+//
+void AudioSystem::SetWindowSize(int windowSize)
+{
+	m_numWindowSegments = windowSize;
+
+	FMOD_RESULT result = m_fftDSP->setParameterInt(FMOD_DSP_FFT_WINDOWSIZE, 2 * m_numWindowSegments);
+	ASSERT_OR_DIE(result == FMOD_OK, "Couldn't assign window size parameter");
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the FFT window type for the current FFT DSP
+//
+void AudioSystem::SetFFTWindowType(FMOD_DSP_FFT_WINDOW windowType)
+{
+	FMOD_RESULT result = m_fftDSP->setParameterInt(FMOD_DSP_FFT_WINDOWTYPE, windowType);
+	ASSERT_OR_DIE(result == FMOD_OK, "Couldn't assign window type parameter");
+}
+
+
+//-----------------------------------------------------------------------------------------------
+void AudioSystem::SetShouldRender(bool newState)
+{
+	s_instance->m_renderFFTGraph = newState;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+bool AudioSystem::ShouldRender()
+{
+	return s_instance->m_renderFFTGraph;
+}
+
 
 #endif // !defined( ENGINE_DISABLE_AUDIO )
