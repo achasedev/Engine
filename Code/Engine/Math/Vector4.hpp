@@ -50,12 +50,12 @@ public:
 	// Static constants
 	const static Vector4 ZERO;
 	const static Vector4 ONES;
-	const static Vector4 DIRECTION_UP;
-	const static Vector4 DIRECTION_DOWN;
-	const static Vector4 DIRECTION_LEFT;
-	const static Vector4 DIRECTION_RIGHT;
-	const static Vector4 DIRECTION_FORWARD;
-	const static Vector4 DIRECTION_BACK;
+	const static Vector4 X_AXIS;
+	const static Vector4 Y_AXIS;
+	const static Vector4 Z_AXIS;
+	const static Vector4 MINUS_X_AXIS;
+	const static Vector4 MINUS_Y_AXIS;
+	const static Vector4 MINUS_Z_AXIS;
 
 public:
 	float x;

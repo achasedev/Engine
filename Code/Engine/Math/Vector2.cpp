@@ -19,10 +19,10 @@
 // Initialize the static constants
 const Vector2 Vector2::ZERO = Vector2(0.f, 0.f);
 const Vector2 Vector2::ONES = Vector2(1.f, 1.f);
-const Vector2 Vector2::DIRECTION_UP = Vector2(0.f, 1.0f);
-const Vector2 Vector2::DIRECTION_DOWN = Vector2(0.f, -1.0f);
-const Vector2 Vector2::DIRECTION_LEFT = Vector2(-1.0f, 0.f);
-const Vector2 Vector2::DIRECTION_RIGHT = Vector2(1.0f, 0.f);
+const Vector2 Vector2::X_AXIS = Vector2(1.0f, 0.f);
+const Vector2 Vector2::Y_AXIS = Vector2(0.f, 1.0f);
+const Vector2 Vector2::MINUS_X_AXIS = Vector2(-1.0f, 0.f);
+const Vector2 Vector2::MINUS_Y_AXIS = Vector2(0.f, -1.0f);
 
 //-----------------------------------------------------------------------------------------------
 // Copy constructor

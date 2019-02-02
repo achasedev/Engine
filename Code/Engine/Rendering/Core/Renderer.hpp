@@ -87,7 +87,7 @@ private:
 	void SetAmbientLight(const Vector4& color);
 
 	void EnablePointLight(unsigned int index, const Vector3& position, const Rgba& color = Rgba::WHITE, const Vector3& attenuation = Vector3(1.f, 0.f, 0.f));
-	void EnableDirectionalLight(unsigned int index, const Vector3& position, const Vector3& direction = Vector3::DIRECTION_DOWN, const Rgba& color = Rgba::WHITE, const Vector3& attenuation = Vector3(1.f, 0.f, 0.f));
+	void EnableDirectionalLight(unsigned int index, const Vector3& position, const Vector3& direction = Vector3::MINUS_Y_AXIS, const Rgba& color = Rgba::WHITE, const Vector3& attenuation = Vector3(1.f, 0.f, 0.f));
 	void EnableSpotLight(unsigned int index, const Vector3& position, const Vector3& direction, float outerAngle, float innerAngle, const Rgba& color = Rgba::WHITE, const Vector3& attenuation = Vector3(1.f, 0.f, 0.f));
 
 	void EnableLightsForDrawCall(const DrawCall* drawCall);
@@ -145,10 +145,10 @@ public:
 	void Draw2DQuad(const AABB2& bounds, const AABB2& textureUVs, const Rgba& tint, Material* material = nullptr);
 	
 	//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	void DrawSprite(const Sprite* sprite, const Vector3& position, const Rgba& tint = Rgba::WHITE, const Vector3& right = Vector3::DIRECTION_RIGHT, const Vector3& up = Vector3::DIRECTION_UP);
+	void DrawSprite(const Sprite* sprite, const Vector3& position, const Rgba& tint = Rgba::WHITE, const Vector3& right = Vector3::X_AXIS, const Vector3& up = Vector3::Y_AXIS);
 
 	//--------------------------------------------------------------------------------------------------s---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	void Draw3DQuad(const Vector3& position, const Vector2& dimensions, const AABB2& textureUVs, const Vector3& right = Vector3::DIRECTION_RIGHT, const Vector3& up = Vector3::DIRECTION_UP, const Rgba& tint = Rgba::WHITE, const Vector2& pivot = Vector2(0.5f, 0.5f), Material* material = nullptr);
+	void Draw3DQuad(const Vector3& position, const Vector2& dimensions, const AABB2& textureUVs, const Vector3& right = Vector3::X_AXIS, const Vector3& up = Vector3::Y_AXIS, const Rgba& tint = Rgba::WHITE, const Vector2& pivot = Vector2(0.5f, 0.5f), Material* material = nullptr);
 	
 	//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	void DrawCube(const Vector3& center, const Vector3& dimensions, const Rgba& tint = Rgba::WHITE, const AABB2& topUVs = AABB2::UNIT_SQUARE_OFFCENTER, const AABB2& sideUVs = AABB2::UNIT_SQUARE_OFFCENTER, const AABB2& bottomUVs = AABB2::UNIT_SQUARE_OFFCENTER, Material* material = nullptr);

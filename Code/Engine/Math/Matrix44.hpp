@@ -76,7 +76,7 @@ public:
 	static Matrix44 MakePerspective(float fovDegrees, float nearZ, float farZ);
 
 	// Camera/View
-	static Matrix44 MakeLookAt(const Vector3& position, const Vector3& target, const Vector3& up = Vector3::DIRECTION_UP);
+	static Matrix44 MakeLookAt(const Vector3& position, const Vector3& target, const Vector3& up = Vector3::Y_AXIS);
 
 	// Utilities
 	static Vector3 ExtractTranslation(const Matrix44& translationMatrix);

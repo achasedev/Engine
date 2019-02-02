@@ -16,12 +16,12 @@
 const Vector3 Vector3::ZERO	= Vector3(0.f, 0.f, 0.f);
 const Vector3 Vector3::ONES	= Vector3(1.f, 1.f, 1.f);
 
-const Vector3 Vector3::DIRECTION_UP			= Vector3(0.f, 1.0f, 0.f);
-const Vector3 Vector3::DIRECTION_DOWN		= Vector3(0.f, -1.0f, 0.f);
-const Vector3 Vector3::DIRECTION_LEFT		= Vector3(-1.0f, 0.f, 0.f);
-const Vector3 Vector3::DIRECTION_RIGHT		= Vector3(1.0f, 0.f, 0.f);
-const Vector3 Vector3::DIRECTION_FORWARD	= Vector3(0.f, 0.f, 1.f);
-const Vector3 Vector3::DIRECTION_BACK		= Vector3(0.f, 0.f, -1.f);
+const Vector3 Vector3::X_AXIS			= Vector3(1.0f, 0.f, 0.f);
+const Vector3 Vector3::Y_AXIS			= Vector3(0.f, 1.0f, 0.f);
+const Vector3 Vector3::Z_AXIS			= Vector3(0.f, 0.f, 1.f);
+const Vector3 Vector3::MINUS_X_AXIS		= Vector3(-1.0f, 0.f, 0.f);
+const Vector3 Vector3::MINUS_Y_AXIS		= Vector3(0.f, -1.0f, 0.f);
+const Vector3 Vector3::MINUS_Z_AXIS		= Vector3(0.f, 0.f, -1.f);
 
 
 //-----------------------------------------------------------------------------------------------
