@@ -813,8 +813,10 @@ Matrix44 Matrix44::MakeRotation(const Vector3& rotation)
 }
 
 
+
 //-----------------------------------------------------------------------------------------------
 // Constructs a rotation matrix from the given quaternion and returns it
+// ONLY WORKS WITH Y-UP LEFT HANDED SYSTEM
 //
 Matrix44 Matrix44::MakeRotation(const Quaternion& rotation)
 {
@@ -855,7 +857,7 @@ Matrix44 Matrix44::MakeRotation(const Quaternion& rotation)
 	// T Basis
 	Vector4 tCol = Vector4(0.f, 0.f, 0.f, 1.0f);
 
-	Matrix44 result = Matrix44(kCol, -1.0f * iCol, jCol, tCol);
+	Matrix44 result = Matrix44(kCol, -1.0f * iCol, kCol, tCol);
 	return result;
 }
 
@@ -865,27 +867,31 @@ Matrix44 Matrix44::MakeRotation(const Quaternion& rotation)
 //
 Vector3 Matrix44::ExtractRotationDegrees(const Matrix44& rotationMatrix)
 {
-	float xDegrees;
-	float yDegrees;
-	float zDegrees;
+	float sinPitch, cosPitch, sinRoll, cosRoll, sinYaw, cosYaw;
 
-	float sineY = -1.0f * rotationMatrix.Ky;
-	yDegrees = ASinDegrees(sineY);
+	sinPitch = -rotationMatrix.Iz;
+	cosPitch = sqrt(1 - sinPitch * sinPitch);
 
-	float cosY = CosDegrees(yDegrees);
-	if (cosY != 0.f)
+	if (AbsoluteValue(cosPitch) > 0.0001f)
 	{
-		zDegrees = Atan2Degrees(rotationMatrix.Kx, rotationMatrix.Kz);
-		xDegrees = Atan2Degrees(rotationMatrix.Iy, rotationMatrix.Jy);
+		sinRoll = rotationMatrix.Jz / cosPitch;
+		cosRoll = rotationMatrix.Kz / cosPitch;
+		sinYaw = rotationMatrix.Iy / cosPitch;
+		cosYaw = rotationMatrix.Ix / cosPitch;
 	}
 	else
 	{
-		// Gimble lock, lose roll but keep yaw
-		xDegrees = 0.f;
-		zDegrees = Atan2Degrees(-rotationMatrix.Iz, rotationMatrix.Ix);
+		sinRoll = -rotationMatrix.Ky;
+		cosRoll = rotationMatrix.Jy;
+		sinYaw = 0.f;
+		cosYaw = 1.f;
 	}
 
-	return Vector3(xDegrees, yDegrees, zDegrees);
+	float zRotation = Atan2Degrees(sinYaw, cosYaw);
+	float yRotation = Atan2Degrees(sinPitch, cosPitch);
+	float xRotation = Atan2Degrees(sinRoll, cosRoll);
+
+	return Vector3(xRotation, yRotation, zRotation);
 }
 
 
@@ -953,53 +959,6 @@ Matrix44 Matrix44::MakeRotation(const Vector3& rotation)
 
 	// Concatenate and return
 	return yawMatrix * pitchMatrix * rollMatrix;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Constructs a rotation matrix from the given quaternion and returns it
-//
-Matrix44 Matrix44::MakeRotation(const Quaternion& rotation)
-{
-	// Imaginary part
-	float const x = rotation.v.x;
-	float const y = rotation.v.y;
-	float const z = rotation.v.z;
-
-	// Cache off some squares
-	float const x2 = x * x;
-	float const y2 = y * y;
-	float const z2 = z * z;
-
-	// I Basis
-	Vector4 iCol = Vector4(
-		1.0f - 2.0f * y2 - 2.0f * z2,
-		2.0f * x * y + 2.0f * rotation.s * z,
-		2.0f * x * z - 2.0f * rotation.s * y,
-		0.f
-	);
-
-	// J Basis
-	Vector4 jCol = Vector4(
-		2.f * x * y - 2.0f * rotation.s * z,
-		1.0f - 2.0f * x2 - 2.0f * z2,
-		2.0f * y * z + 2.0f * rotation.s * x,
-		0.f
-	);
-
-	// K Basis
-	Vector4 kCol = Vector4(
-		2.0f * x * z + 2.0f * rotation.s * y,
-		2.0f * y * z - 2.0f * rotation.s * x,
-		1.0f - 2.0f * x2 - 2.0f * y2,
-		0.f
-	);
-
-	// T Basis
-	Vector4 tCol = Vector4(0.f, 0.f, 0.f, 1.0f);
-
-	Matrix44 result = Matrix44(iCol, jCol, kCol, tCol);
-	return result;
 }
 
 

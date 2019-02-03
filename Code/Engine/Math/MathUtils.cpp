@@ -1099,17 +1099,6 @@ bool AreMostlyEqual(float a, float b, float epsilon /*= 0.0001f*/)
 
 
 //-----------------------------------------------------------------------------------------------
-// Returns true if the difference between the quaternions is less than or equal to epsilon
-//
-bool AreMostlyEqual(const Quaternion& a, const Quaternion& b, float epsilon /*= 0.0001f*/)
-{
-	float angleBetween = Quaternion::GetAngleBetweenDegrees(a, b);
-
-	return (angleBetween <= epsilon);
-}
-
-
-//-----------------------------------------------------------------------------------------------
 // Returns true if the two matrices are equal within an epsilon error, false otherwise
 //
 bool AreMostlyEqual(const Matrix44& a, const Matrix44& b, float epsilon /*= 0.0001f*/)

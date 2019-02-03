@@ -72,7 +72,7 @@ void Camera::TranslateLocal(const Vector3& localTranslation)
 //
 void Camera::Rotate(const Vector3& rotation)
 {
-	Vector3 newRotation = m_transform.rotation.GetAsEulerAngles() + rotation;
+	Vector3 newRotation = m_transform.rotation + rotation;
  	m_transform.SetRotation(newRotation);
 
 	m_viewMatrix = InvertLookAtMatrix(m_transform.GetWorldMatrix());
@@ -125,7 +125,7 @@ void Camera::LookAt(const Vector3& position, const Vector3& target, const Vector
 	Matrix44 cameraMatrix = Matrix44::MakeLookAt(position, target, up);
 
 	m_transform.position = position;
-	m_transform.rotation = Quaternion::FromEuler(Matrix44::ExtractRotationDegrees(cameraMatrix));
+	m_transform.rotation = Matrix44::ExtractRotationDegrees(cameraMatrix);
 
 	m_transform.SetModelMatrix(cameraMatrix);
 	m_viewMatrix = InvertLookAtMatrix(cameraMatrix);
@@ -218,6 +218,16 @@ void Camera::SetOrthoSizeLimits(float min, float max)
 
 
 //-----------------------------------------------------------------------------------------------
+// Sets the matrix appended to the projection matrix when buffered to the GPU;
+// Useful when the space the camera lives in isn't OpenGL's basis
+//
+void Camera::SetChangeOfBasisMatrix(const Matrix44& changeOfBasisMatrix)
+{
+	m_changeOfBasisMatrix = changeOfBasisMatrix;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Sets the draw order for the camera, used in ForwardRenderPath sorting
 //
 void Camera::SetDrawOrder(unsigned int order)
@@ -233,8 +243,8 @@ void Camera::FinalizeUniformBuffer()
 {
 	CameraBufferData bufferData;
 
-	bufferData.m_viewMatrix = m_viewMatrix;
-	bufferData.m_projectionMatrix = m_projectionMatrix * m_changeOfBasisMatrix; // Append change of basis!
+	bufferData.m_viewMatrix = m_changeOfBasisMatrix * m_viewMatrix;
+	bufferData.m_projectionMatrix = m_projectionMatrix; // Append change of basis!
 	bufferData.m_cameraMatrix = m_transform.GetWorldMatrix();
 
 	bufferData.m_cameraX	= GetXVector();
@@ -299,7 +309,7 @@ Vector3 Camera::GetPosition() const
 //
 Vector3 Camera::GetRotation() const
 {
-	return m_transform.rotation.GetAsEulerAngles();
+	return m_transform.rotation;
 }
 
 

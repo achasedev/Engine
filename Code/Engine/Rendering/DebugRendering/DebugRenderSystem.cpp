@@ -80,6 +80,7 @@ void DebugRenderSystem::Initialize(Camera* worldCamera /*nullptr*/)
 		s_instance->m_screenCamera = new Camera();
 		s_instance->m_screenCamera->SetColorTarget(renderer->GetDefaultColorTarget());
 		s_instance->m_screenCamera->SetDepthTarget(renderer->GetDefaultDepthTarget());
+		s_instance->m_screenCamera->SetChangeOfBasisMatrix(Matrix44::IDENTITY);
 
 		Matrix44 orthoMat = Matrix44::MakeOrtho(Vector2::ZERO, Vector2(Window::GetInstance()->GetDimensions()), 0.f, 1.f);
 		s_instance->m_screenCamera->SetProjection(orthoMat);

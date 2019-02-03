@@ -52,7 +52,8 @@ public:
 	void					SetOrthoSize(float newSize);
 	void					AdjustOrthoSize(float additiveModifier);
 	void					SetOrthoSizeLimits(float min, float max);
-	
+	void					SetChangeOfBasisMatrix(const Matrix44& changeOfBasisMatrix);
+
 	void					SetDrawOrder(unsigned int order);
 
 	Matrix44				GetCameraMatrix() const;

@@ -7,7 +7,6 @@
 #pragma once
 #include "Engine/Math/Vector3.hpp"
 #include "Engine/Math/Matrix44.hpp"
-#include "Engine/Math/Quaternion.hpp"
 
 class Transform
 {
@@ -54,16 +53,16 @@ public:
 	//-----Public Data-----
 
 	// All defined in local space!
-	Vector3		position;	
-	Quaternion	rotation;	
-	Vector3		scale;		
+	Vector3		position = Vector3::ZERO;	
+	Vector3		rotation = Vector3::ZERO;	
+	Vector3		scale = Vector3::ONES;		
 
 
 private:
 	//-----Private Data-----
 
 	Vector3 m_oldPosition = Vector3::ZERO;
-	Quaternion m_oldRotation = Quaternion::IDENTITY;
+	Vector3 m_oldRotation = Vector3::ZERO;
 	Vector3 m_oldScale = Vector3::ONES;
 
 	Matrix44 m_localMatrix;

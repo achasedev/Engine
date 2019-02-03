@@ -98,6 +98,7 @@ void Renderable::SetModelMatrix(unsigned int index, const Matrix44& model)
 void Renderable::SetDraw(unsigned int index, RenderableDraw_t draw)
 {
 	m_draws[index] = draw;
+	BindMeshToMaterial(index);
 }
 
 

@@ -345,8 +345,6 @@
     <ClCompile Include="Core\Utility\XmlUtilities.cpp">
       <Filter>Core\Utilities</Filter>
     </ClCompile>
-    <ClCompile Include="Math\Quaternion.cpp" />
-    <ClCompile Include="Assets\AssimpLoader.cpp" />
     <ClCompile Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.cpp" />
     <ClCompile Include="Rendering\Animation\Pose.cpp" />
     <ClCompile Include="Rendering\Animation\AnimationClip.cpp" />
@@ -697,8 +695,6 @@
     <ClInclude Include="Core\Utility\XmlUtilities.hpp">
       <Filter>Core\Utilities</Filter>
     </ClInclude>
-    <ClInclude Include="Math\Quaternion.hpp" />
-    <ClInclude Include="Assets\AssimpLoader.hpp" />
     <ClInclude Include="Rendering\DebugRendering\DebugRenderTask_Skeleton.hpp" />
     <ClInclude Include="Rendering\Animation\Pose.hpp" />
     <ClInclude Include="Rendering\Animation\AnimationClip.hpp" />

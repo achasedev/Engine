@@ -12,10 +12,8 @@
 // Constructor from position, rotation, and scale
 //
 Transform::Transform(const Vector3& position, const Vector3& rotationP, const Vector3& scale)
-	: position(position), scale(scale)
+	: position(position), rotation(rotationP), scale(scale)
 {
-	rotation = Quaternion::FromEuler(rotationP);
-
 	CheckAndUpdateLocalMatrix();
 }
 
@@ -24,10 +22,7 @@ Transform::Transform(const Vector3& position, const Vector3& rotationP, const Ve
 // Default Constructor
 //
 Transform::Transform()
-	: position(Vector3::ZERO), scale(Vector3::ONES)
 {
-	rotation = Quaternion::IDENTITY;
-
 	CheckAndUpdateLocalMatrix();
 }
 
@@ -57,7 +52,7 @@ void Transform::SetPosition(const Vector3& newPosition)
 //
 void Transform::SetRotation(const Vector3& newRotation)
 {
-	rotation = Quaternion::FromEuler(newRotation);
+	rotation = newRotation;
 }
 
 
@@ -78,7 +73,7 @@ void Transform::SetModelMatrix(const Matrix44& model)
 	m_localMatrix = model;
 
 	position	= Matrix44::ExtractTranslation(model);
-	rotation	= Quaternion::FromEuler(Matrix44::ExtractRotationDegrees(model));
+	rotation	= Matrix44::ExtractRotationDegrees(model);
 	scale		= Matrix44::ExtractScale(model);
 }
 
@@ -110,13 +105,12 @@ void Transform::TranslateLocal(const Vector3& localTranslation)
 	TranslateWorld(worldTranslation.xyz());
 }
 
-#include "Engine/Core/DeveloperConsole/DevConsole.hpp"
+
 //-----------------------------------------------------------------------------------------------
 // Rotates the translation by deltaRotation
 //
 void Transform::Rotate(const Vector3& deltaRotation)
 {
-	TODO("Try just doing quats here")
 	CheckAndUpdateLocalMatrix();
 
 	Vector3 oldRotation = Matrix44::ExtractRotationDegrees(m_localMatrix);
@@ -125,8 +119,6 @@ void Transform::Rotate(const Vector3& deltaRotation)
 	newRotation.x = GetAngleBetweenZeroThreeSixty(oldRotation.x + deltaRotation.x);
 	newRotation.y = GetAngleBetweenZeroThreeSixty(oldRotation.y + deltaRotation.y);
 	newRotation.z = GetAngleBetweenZeroThreeSixty(oldRotation.z + deltaRotation.z);
-
-	rotation = Quaternion::FromEuler(newRotation);
 }
 
 

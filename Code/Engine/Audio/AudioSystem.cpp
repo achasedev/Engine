@@ -182,8 +182,6 @@ void AudioSystem::UpdateFFTGraph()
 	m_fftDSP->getParameterData(FMOD_DSP_FFT_SPECTRUMDATA, (void**)&spectrumData, 0, 0, 0);
 	m_spectrumData = (FMOD_DSP_PARAMETER_FFT*)spectrumData;
 
-	Renderer* renderer = Renderer::GetInstance();
-
 	if (m_spectrumData != nullptr)
 	{
 		float boxWidth = m_graphBounds.GetDimensions().x / (float)m_segmentsToDisplay;
@@ -273,7 +271,7 @@ void AudioSystem::UpdateFFTGraph()
 		AABB2 maxValueLine;
 		maxValueLine.mins = Vector2(m_graphBounds.mins.x, m_graphBounds.GetDimensions().y * m_maxValueLastFrame * oneOverMaxYValue + m_graphBounds.mins.y);
 		maxValueLine.maxs = Vector2(m_graphBounds.maxs.x, m_graphBounds.GetDimensions().y * m_maxValueLastFrame * oneOverMaxYValue + m_graphBounds.mins.y);
-		maxValueLine.AddPaddingToSides(0.f, baseThickness);
+		maxValueLine.AddPaddingToSides(0.f, (float) baseThickness);
 
 		mb.Push2DQuad(maxValueLine, AABB2::UNIT_SQUARE_OFFCENTER, Rgba(255, 255, 0, 100));
 

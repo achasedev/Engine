@@ -77,7 +77,7 @@ protected:
 	float								m_nyquistFreq = m_sampleRate * 0.5f;
 
 	// UI Settings
-	int									m_graphHeight = 800.f;
+	float								m_graphHeight = 800.f;
 	float								m_fontHeight = 30.f;
 	Vector2								m_screenEdgePadding = Vector2(30.f, 100.f);
 	float								m_fftMaxYAxis = 1.0f;

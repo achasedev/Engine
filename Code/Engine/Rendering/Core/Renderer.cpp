@@ -110,6 +110,7 @@ Renderer::Renderer()
 	m_UICamera->SetColorTarget(m_defaultColorTarget);
 	m_UICamera->SetDepthTarget(m_defaultDepthTarget);
 	m_UICamera->SetProjection(Matrix44::MakeOrtho(Vector2::ZERO, Vector2(Window::GetInstance()->GetAspect() * UI_ORTHO_HEIGHT, UI_ORTHO_HEIGHT)));
+	m_UICamera->SetChangeOfBasisMatrix(Matrix44::IDENTITY);
 
 	// Make the Effects camera - all Identity transforms, we assign the color target in ApplyEffect()
 	m_effectsCamera = new Camera();
