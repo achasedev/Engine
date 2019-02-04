@@ -7,6 +7,7 @@
 #pragma once
 #include <vector>
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Math/AABB3.hpp"
 #include "Engine/Rendering/Meshes/Mesh.hpp"
 #include "Engine/Rendering/Core/Vertex.hpp"
 
@@ -42,6 +43,8 @@ public:
 	void Push3DQuad(const Vector3& position, const Vector2& dimensions, const AABB2& uvs, const Rgba& color = Rgba::WHITE, 
 		const Vector3& rightVector = Vector3::X_AXIS, const Vector3& upVector = Vector3::Y_AXIS, const Vector2& pivot = Vector2(0.5f, 0.5f));
 	void PushCube(const Vector3& center, const Vector3& dimensions, const Rgba& color = Rgba::WHITE, 
+		const AABB2& sideUVs = AABB2::UNIT_SQUARE_OFFCENTER, const AABB2& topUVs = AABB2::UNIT_SQUARE_OFFCENTER, const AABB2& bottomUVs = AABB2::UNIT_SQUARE_OFFCENTER);
+	void PushCube(const AABB3& bounds, const Rgba& color = Rgba::WHITE,
 		const AABB2& sideUVs = AABB2::UNIT_SQUARE_OFFCENTER, const AABB2& topUVs = AABB2::UNIT_SQUARE_OFFCENTER, const AABB2& bottomUVs = AABB2::UNIT_SQUARE_OFFCENTER);
 	void PushUVSphere(const Vector3& position, float radius, unsigned int numWedges, unsigned int numSlices, const Rgba& color = Rgba::WHITE);
 

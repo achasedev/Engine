@@ -4,12 +4,12 @@
 /* Date: March 25th, 2018
 /* Description: Implementation of the MeshBuilder class
 /************************************************************************/
+#include "Game/Framework/EngineBuildPreferences.hpp"
 #include "Engine/Core/File.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Rendering/Meshes/MeshBuilder.hpp"
-
 #include "ThirdParty/mikkt/mikktspace.h"
 
 
@@ -644,143 +644,14 @@ void MeshBuilder::Push3DQuad(const Vector3& position, const Vector2& dimensions,
 
 
 //-----------------------------------------------------------------------------------------------
-// Pushes the vertices and indices needed to construct a 3D cube with the given params
+// Pushes a cube into the meshbuilder given by the bounds
 //
-void MeshBuilder::PushCube(const Vector3& center, const Vector3& dimensions, const Rgba& color /*= Rgba::WHITE*/, 
-	const AABB2& sideUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& topUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& bottomUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/)
+void MeshBuilder::PushCube(const AABB3& bounds, const Rgba& color /*= Rgba::WHITE*/, const AABB2& sideUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& topUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& bottomUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/)
 {
-	AssertBuildState(true, PRIMITIVE_TRIANGLES, true);
+	Vector3 center = bounds.GetCenter();
+	Vector3 dimensions = bounds.GetDimensions();
 
-	// Set up the corner vertices
-	AABB3 cubeBounds = AABB3(center - dimensions * 0.5f, center + dimensions * 0.5f);
-
-	SetColor(color);
-
-	//-------------------------------------Front face--------------------------------------------------------
-	{
-		SetUVs(sideUVs.GetBottomLeft());
-		SetNormal(Vector3::MINUS_Z_AXIS);
-		SetTangent(Vector4::X_AXIS);
-
-		unsigned int index = PushVertex(cubeBounds.GetFrontBottomLeft());
-
-		SetUVs(sideUVs.GetBottomRight());
-		PushVertex(cubeBounds.GetFrontBottomRight());
-
-		SetUVs(sideUVs.GetTopRight());
-		PushVertex(cubeBounds.GetFrontTopRight());
-
-		SetUVs(sideUVs.GetTopLeft());
-		PushVertex(cubeBounds.GetFrontTopLeft());
-
-		PushIndices(index + 0, index + 1, index + 2);
-		PushIndices(index + 0, index + 2, index + 3);
-	}
-
-	//-------------------------------------Back face--------------------------------------------------------
-	{
-		SetUVs(sideUVs.GetBottomLeft());
-		SetNormal(Vector3::Z_AXIS);
-		SetTangent(Vector4::MINUS_X_AXIS);
-
-		unsigned int index = PushVertex(cubeBounds.GetBackBottomRight());
-
-		SetUVs(sideUVs.GetBottomRight());
-		PushVertex(cubeBounds.GetBackBottomLeft());
-
-		SetUVs(sideUVs.GetTopRight());
-		PushVertex(cubeBounds.GetBackTopLeft());
-
-		SetUVs(sideUVs.GetTopLeft());
-		PushVertex(cubeBounds.GetBackTopRight());
-
-		PushIndices(index + 0, index + 1, index + 2);
-		PushIndices(index + 0, index + 2, index + 3);
-	}
-
-	//-------------------------------------Left face--------------------------------------------------------
-	{
-		SetUVs(sideUVs.GetBottomLeft());
-		SetNormal(Vector3::MINUS_X_AXIS);
-		SetTangent(Vector4::MINUS_Z_AXIS);
-
-		unsigned int index = PushVertex(cubeBounds.GetBackBottomLeft());
-
-		SetUVs(sideUVs.GetBottomRight());
-		PushVertex(cubeBounds.GetFrontBottomLeft());
-
-		SetUVs(sideUVs.GetTopRight());
-		PushVertex(cubeBounds.GetFrontTopLeft());
-
-		SetUVs(sideUVs.GetTopLeft());
-		PushVertex(cubeBounds.GetBackTopLeft());
-
-		PushIndices(index + 0, index + 1, index + 2);
-		PushIndices(index + 0, index + 2, index + 3);
-	}
-
-	//-------------------------------------Right face--------------------------------------------------------
-	{
-		SetUVs(sideUVs.GetBottomLeft());
-		SetNormal(Vector3::X_AXIS);
-		SetTangent(Vector4::Z_AXIS);
-
-		unsigned int index = PushVertex(cubeBounds.GetFrontBottomRight());
-
-		SetUVs(sideUVs.GetBottomRight());
-		PushVertex(cubeBounds.GetBackBottomRight());
-
-		SetUVs(sideUVs.GetTopRight());
-		PushVertex(cubeBounds.GetBackTopRight());
-
-		SetUVs(sideUVs.GetTopLeft());
-		PushVertex(cubeBounds.GetFrontTopRight());
-
-		PushIndices(index + 0, index + 1, index + 2);
-		PushIndices(index + 0, index + 2, index + 3);
-	}
-
-	//-------------------------------------Top face--------------------------------------------------------
-	{
-		SetUVs(topUVs.GetBottomLeft());
-		SetNormal(Vector3::Y_AXIS);
-		SetTangent(Vector4::X_AXIS);
-
-		unsigned int index = PushVertex(cubeBounds.GetFrontTopLeft());
-
-		SetUVs(topUVs.GetBottomRight());
-		PushVertex(cubeBounds.GetFrontTopRight());
-
-		SetUVs(topUVs.GetTopRight());
-		PushVertex(cubeBounds.GetBackTopRight());
-
-		SetUVs(topUVs.GetTopLeft());
-		PushVertex(cubeBounds.GetBackTopLeft());
-
-		PushIndices(index + 0, index + 1, index + 2);
-		PushIndices(index + 0, index + 2, index + 3);
-	}
-
-	//-------------------------------------Bottom face--------------------------------------------------------
-	{
-		SetUVs(bottomUVs.GetBottomLeft());
-		SetNormal(Vector3::MINUS_Y_AXIS);
-		SetTangent(Vector4::X_AXIS);
-
-		unsigned int index = PushVertex(cubeBounds.GetBackBottomLeft());
-
-		SetUVs(bottomUVs.GetBottomRight());
-		PushVertex(cubeBounds.GetBackBottomRight());
-
-		SetUVs(bottomUVs.GetTopRight());
-		PushVertex(cubeBounds.GetFrontBottomRight());
-
-		SetUVs(bottomUVs.GetTopLeft());
-		PushVertex(cubeBounds.GetFrontBottomLeft());
-
-		PushIndices(index + 0, index + 1, index + 2);
-		PushIndices(index + 0, index + 2, index + 3);
-	}
+	PushCube(center, dimensions, color, sideUVs, topUVs, bottomUVs);
 }
 
 
@@ -1041,3 +912,109 @@ bool GenerateMikkTangents(MeshBuilder& mb)
 
 	return genTangSpaceDefault(&context);
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Functions that depend on coordinate system
+///////////////////////////////////////////////////////////////////////////////
+
+#ifdef COORDINATE_SYSTEM_RIGHT_HAND_Z_UP
+
+//-----------------------------------------------------------------------------------------------
+// Pushes the vertices and indices needed to construct a 3D cube with the given params
+//
+void MeshBuilder::PushCube(const Vector3& center, const Vector3& dimensions, const Rgba& color /*= Rgba::WHITE*/,
+	const AABB2& sideUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& topUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& bottomUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/)
+{
+	AssertBuildState(true, PRIMITIVE_TRIANGLES, true);
+
+	// Set up the corner vertices
+	AABB3 cubeBounds = AABB3(center - dimensions * 0.5f, center + dimensions * 0.5f);
+
+	//-------------------------------------Front face--------------------------------------------------------
+	{
+		Vector3 position = Vector3(cubeBounds.mins.x, center.y, center.z);
+		Push3DQuad(position, Vector2(dimensions.y, dimensions.z), sideUVs, color, Vector3::MINUS_Y_AXIS, Vector3::Z_AXIS, Vector2(0.5f, 0.5f));
+	}
+
+	//-------------------------------------Back face--------------------------------------------------------
+	{
+		Vector3 position = Vector3(cubeBounds.maxs.x, center.y, center.z);
+		Push3DQuad(position, Vector2(dimensions.y, dimensions.z), sideUVs, color, Vector3::Y_AXIS, Vector3::Z_AXIS, Vector2(0.5f, 0.5f));
+	}
+
+	//-------------------------------------Left face--------------------------------------------------------
+	{
+		Vector3 position = Vector3(center.x, cubeBounds.maxs.y, center.z);
+		Push3DQuad(position, Vector2(dimensions.x, dimensions.z), sideUVs, color, Vector3::MINUS_X_AXIS, Vector3::Z_AXIS, Vector2(0.5f, 0.5f));
+	}
+
+	//-------------------------------------Right face--------------------------------------------------------
+	{
+		Vector3 position = Vector3(center.x, cubeBounds.mins.y, center.z);
+		Push3DQuad(position, Vector2(dimensions.x, dimensions.z), sideUVs, color, Vector3::X_AXIS, Vector3::Z_AXIS, Vector2(0.5f, 0.5f));
+	}
+
+	//-------------------------------------Top face--------------------------------------------------------
+	{
+		Vector3 position = Vector3(center.x, center.y, cubeBounds.maxs.z);
+		Push3DQuad(position, Vector2(dimensions.y, dimensions.x), topUVs, color, Vector3::MINUS_Y_AXIS, Vector3::X_AXIS, Vector2(0.5f, 0.5f));
+	}
+
+	//-------------------------------------Bottom face--------------------------------------------------------
+	{
+		Vector3 position = Vector3(center.x, center.y, cubeBounds.mins.z);
+		Push3DQuad(position, Vector2(dimensions.y, dimensions.x), bottomUVs, color, Vector3::MINUS_Y_AXIS, Vector3::MINUS_X_AXIS, Vector2(0.5f, 0.5f));
+	}
+}
+
+#else // Left hand, Y up coordinate system
+
+//-----------------------------------------------------------------------------------------------
+// Pushes the vertices and indices needed to construct a 3D cube with the given params
+//
+void MeshBuilder::PushCube(const Vector3& center, const Vector3& dimensions, const Rgba& color /*= Rgba::WHITE*/,
+	const AABB2& sideUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& topUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& bottomUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/)
+{
+	AssertBuildState(true, PRIMITIVE_TRIANGLES, true);
+
+	// Set up the corner vertices
+	AABB3 cubeBounds = AABB3(center - dimensions * 0.5f, center + dimensions * 0.5f);
+
+	//-------------------------------------Front face--------------------------------------------------------
+	{
+		Vector3 position = Vector3(center.x, center.y, cubeBounds.mins.z);
+		Push3DQuad(position, Vector2(dimensions.x, dimensions.y), sideUVs, color, Vector3::X_AXIS, Vector3::Y_AXIS, Vector2(0.5f, 0.5f));
+	}
+
+	//-------------------------------------Back face--------------------------------------------------------
+	{
+		Vector3 position = Vector3(center.x, center.y, cubeBounds.maxs.z);
+		Push3DQuad(position, Vector2(dimensions.x, dimensions.y), sideUVs, color, Vector3::MINUS_X_AXIS, Vector3::Y_AXIS, Vector2(0.5f, 0.5f));
+	}
+
+	//-------------------------------------Left face--------------------------------------------------------
+	{
+		Vector3 position = Vector3(cubeBounds.mins.x, center.y, center.z);
+		Push3DQuad(position, Vector2(dimensions.z, dimensions.y), sideUVs, color, Vector3::MINUS_Z_AXIS, Vector3::Y_AXIS, Vector2(0.5f, 0.5f));
+	}
+
+	//-------------------------------------Right face--------------------------------------------------------
+	{
+		Vector3 position = Vector3(cubeBounds.maxs.x, center.y, center.z);
+		Push3DQuad(position, Vector2(dimensions.z, dimensions.y), sideUVs, color, Vector3::Z_AXIS, Vector3::Y_AXIS, Vector2(0.5f, 0.5f));
+	}
+
+	//-------------------------------------Top face--------------------------------------------------------
+	{
+		Vector3 position = Vector3(center.x, cubeBounds.maxs.y, center.z);
+		Push3DQuad(position, Vector2(dimensions.x, dimensions.z), topUVs, color, Vector3::X_AXIS, Vector3::Z_AXIS, Vector2(0.5f, 0.5f));
+	}
+
+	//-------------------------------------Bottom face--------------------------------------------------------
+	{
+		Vector3 position = Vector3(center.x, cubeBounds.mins.y, center.z);
+		Push3DQuad(position, Vector2(dimensions.x, dimensions.z), bottomUVs, color, Vector3::X_AXIS, Vector3::MINUS_Z_AXIS, Vector2(0.5f, 0.5f));
+	}
+}
+#endif
