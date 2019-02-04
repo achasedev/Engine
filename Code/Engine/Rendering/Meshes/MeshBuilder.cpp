@@ -922,6 +922,7 @@ bool GenerateMikkTangents(MeshBuilder& mb)
 
 //-----------------------------------------------------------------------------------------------
 // Pushes the vertices and indices needed to construct a 3D cube with the given params
+// FRONT faces -x, BACK faces +x, LEFT faces +y, RIGHT faces -y, TOP faces +z, BOTTOM faces -z
 //
 void MeshBuilder::PushCube(const Vector3& center, const Vector3& dimensions, const Rgba& color /*= Rgba::WHITE*/,
 	const AABB2& sideUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& topUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& bottomUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/)
@@ -972,6 +973,7 @@ void MeshBuilder::PushCube(const Vector3& center, const Vector3& dimensions, con
 
 //-----------------------------------------------------------------------------------------------
 // Pushes the vertices and indices needed to construct a 3D cube with the given params
+// FRONT faces -z, BACK faces +z, LEFT faces -x, RIGHT faces +x, TOP faces +y, BOTTOM faces -y
 //
 void MeshBuilder::PushCube(const Vector3& center, const Vector3& dimensions, const Rgba& color /*= Rgba::WHITE*/,
 	const AABB2& sideUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& topUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& bottomUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/)
