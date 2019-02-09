@@ -85,12 +85,14 @@ const IntVector2 IntVector2::operator-( const IntVector2& vecToSubtract ) const
 //-----------------------------------------------------------------------------------------------
 bool IntVector2::operator<(const IntVector2& compare) const
 {
-	if (x < compare.x || x == compare.x && y < compare.y)
+	// Compare on y, using x as a tie breaker
+	if		(y < compare.y) { return true; }
+	else if (compare.y < y) { return false; }
+	else if (x < compare.x) { return true; }
+	else
 	{
-		return true;
+		return false;
 	}
-
-	return false;
 }
 
 

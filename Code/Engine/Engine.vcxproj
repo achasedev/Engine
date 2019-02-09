@@ -282,6 +282,8 @@
     <ClCompile Include="Assets\AssetCollection.cpp" />
     <ClCompile Include="Core\Rgba.cpp" />
     <ClCompile Include="Core\Time\Stopwatch.cpp" />
+    <ClCompile Include="Core\Utility\RawNoise.cpp" />
+    <ClCompile Include="Core\Utility\SmoothNoise.cpp" />
     <ClCompile Include="Core\Utility\StringUtils.cpp" />
     <ClCompile Include="Core\Time\Time.cpp" />
     <ClCompile Include="Core\Window.cpp" />
@@ -422,6 +424,8 @@
     <ClInclude Include="Assets\AssetCollection.hpp" />
     <ClInclude Include="Core\Rgba.hpp" />
     <ClInclude Include="Core\Time\Stopwatch.hpp" />
+    <ClInclude Include="Core\Utility\RawNoise.hpp" />
+    <ClInclude Include="Core\Utility\SmoothNoise.hpp" />
     <ClInclude Include="Core\Utility\StringUtils.hpp" />
     <ClInclude Include="Core\Time\Time.hpp" />
     <ClInclude Include="Core\Window.hpp" />
