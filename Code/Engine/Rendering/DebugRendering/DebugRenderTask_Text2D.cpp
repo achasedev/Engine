@@ -34,6 +34,6 @@ void DebugRenderTask_Text2D::Render() const
 
 	Renderer* renderer = Renderer::GetInstance();
 	renderer->SetCurrentCamera(DebugRenderSystem::GetScreenCamera());
-	BitmapFont* defaultFont = AssetDB::CreateOrGetBitmapFont("Data/Images/Fonts/Default.png");
+	BitmapFont* defaultFont = AssetDB::CreateOrGetBitmapFont("Data/Images/Fonts/ConsoleFont.png");
 	renderer->DrawTextInBox2D(m_text, m_pixelBounds, m_alignment, m_textHeight, TEXT_DRAW_OVERRUN, defaultFont, drawColor);
 }

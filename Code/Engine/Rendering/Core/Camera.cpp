@@ -68,13 +68,24 @@ void Camera::TranslateLocal(const Vector3& localTranslation)
 
 
 //-----------------------------------------------------------------------------------------------
-// Rotates the camera by the given euler angle values - do it here ourselves so we can clamp it
+// Rotates the camera by the given euler angle values
+// Returns the rotation if we desire to clamp it
 //
-void Camera::Rotate(const Vector3& rotation)
+Vector3 Camera::Rotate(const Vector3& rotation)
 {
 	Vector3 newRotation = m_transform.rotation + rotation;
- 	m_transform.SetRotation(newRotation);
+	SetRotation(newRotation);
 
+	return newRotation;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Sets the rotation to the one provided
+//
+void Camera::SetRotation(const Vector3& newRotation)
+{
+	m_transform.SetRotation(newRotation);
 	m_viewMatrix = InvertLookAtMatrix(m_transform.GetWorldMatrix());
 }
 

@@ -26,7 +26,8 @@ public:
 	void					TranslateWorld(const Vector3& worldTranslation);
 	void					TranslateLocal(const Vector3& localTranslation);
 
-	void					Rotate(const Vector3& rotation);
+	Vector3					Rotate(const Vector3& deltaRotation);
+	void					SetRotation(const Vector3& newRotation);
 
 	void					SetTransform(const Transform& transform);
 

@@ -271,6 +271,25 @@ Vector2 GetNearestCardinalDirection(float angle)
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the equivalent angle between -180 and 180 degrees
+//
+float GetAngleBetweenMinusOneEightyAndOneEighty(float angleDegrees)
+{
+	while (angleDegrees > 180.f)
+	{
+		angleDegrees -= 360.f;
+	}
+
+	while (angleDegrees < -180.f)
+	{
+		angleDegrees += 360.f;
+	}
+
+	return angleDegrees;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the angle coterminal to angle between 0 and 360 degrees
 //
 float GetAngleBetweenZeroThreeSixty(float angleDegrees)

@@ -48,6 +48,7 @@ float	GetNearestCardinalAngle(float angle);									// Returns the nearest cardi
 float	GetNearestInterCardinalAngle(float angle);								// Returns the nearest inter-cardinal direction to the given angle
 Vector2	GetNearestCardinalDirection(const Vector2& direction);					// Returns the nearest cardinal direction to the one given
 Vector2 GetNearestCardinalDirection(float angle);
+float	GetAngleBetweenMinusOneEightyAndOneEighty(float angleDegrees);			// Returns the equivalent angle between -180 and 180 degrees
 float	GetAngleBetweenZeroThreeSixty(float angleDegrees);						// Returns an angle coterminal to angleDegrees between 0 and 360
 
 // Random functions
