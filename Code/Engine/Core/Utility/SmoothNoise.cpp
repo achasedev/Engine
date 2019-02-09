@@ -1,11 +1,12 @@
 //-----------------------------------------------------------------------------------------------
 // SmoothNoise.cpp
 //
-#include "Engine/Math/RawNoise.hpp"
-#include "Engine/Math/MathUtilities.hpp"
+#include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/Utility/RawNoise.hpp"
 #include "Engine/Math/Vector2.hpp"
 #include "Engine/Math/Vector3.hpp"
 #include "Engine/Math/Vector4.hpp"
+#include <math.h>
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // For all fractal (and Perlin) noise functions, the following internal naming conventions
@@ -457,17 +458,19 @@ float Compute2dPerlinNoise( float posX, float posY, float scale, unsigned int nu
 float Compute3dPerlinNoise( float posX, float posY, float posZ, float scale, unsigned int numOctaves, float octavePersistence, float octaveScale, bool renormalize, unsigned int seed )
 {
 	const float OCTAVE_OFFSET = 0.636764989593174f; // Translation/bias to add to each octave
+	
+	float sqrtThreeOverThree = sqrtf(3.f) / 3.f;
 
 	const Vector3 gradients[ 8 ] = // Traditional "12 edges" requires modulus and isn't any better.
 	{
-		Vector3( +fSQRT_3_OVER_3, +fSQRT_3_OVER_3, +fSQRT_3_OVER_3 ), // Normalized unit 3D vectors
-		Vector3( -fSQRT_3_OVER_3, +fSQRT_3_OVER_3, +fSQRT_3_OVER_3 ), //  pointing toward cube
-		Vector3( +fSQRT_3_OVER_3, -fSQRT_3_OVER_3, +fSQRT_3_OVER_3 ), //  corners, so components
-		Vector3( -fSQRT_3_OVER_3, -fSQRT_3_OVER_3, +fSQRT_3_OVER_3 ), //  are all sqrt(3)/3, i.e.
-		Vector3( +fSQRT_3_OVER_3, +fSQRT_3_OVER_3, -fSQRT_3_OVER_3 ), // 0.5773502691896257645091f.
-		Vector3( -fSQRT_3_OVER_3, +fSQRT_3_OVER_3, -fSQRT_3_OVER_3 ), // These are slightly better
-		Vector3( +fSQRT_3_OVER_3, -fSQRT_3_OVER_3, -fSQRT_3_OVER_3 ), // than axes (1,0,0) and much
-		Vector3( -fSQRT_3_OVER_3, -fSQRT_3_OVER_3, -fSQRT_3_OVER_3 )  // faster than edges (1,1,0).
+		Vector3( +sqrtThreeOverThree, +sqrtThreeOverThree, +sqrtThreeOverThree ), // Normalized unit 3D vectors
+		Vector3( -sqrtThreeOverThree, +sqrtThreeOverThree, +sqrtThreeOverThree ), //  pointing toward cube
+		Vector3( +sqrtThreeOverThree, -sqrtThreeOverThree, +sqrtThreeOverThree ), //  corners, so components
+		Vector3( -sqrtThreeOverThree, -sqrtThreeOverThree, +sqrtThreeOverThree ), //  are all sqrt(3)/3, i.e.
+		Vector3( +sqrtThreeOverThree, +sqrtThreeOverThree, -sqrtThreeOverThree ), // 0.5773502691896257645091f.
+		Vector3( -sqrtThreeOverThree, +sqrtThreeOverThree, -sqrtThreeOverThree ), // These are slightly better
+		Vector3( +sqrtThreeOverThree, -sqrtThreeOverThree, -sqrtThreeOverThree ), // than axes (1,0,0) and much
+		Vector3( -sqrtThreeOverThree, -sqrtThreeOverThree, -sqrtThreeOverThree )  // faster than edges (1,1,0).
 	};
 
 	float totalNoise = 0.f;

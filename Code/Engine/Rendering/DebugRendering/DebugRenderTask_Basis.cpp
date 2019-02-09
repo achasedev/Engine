@@ -80,9 +80,12 @@ void DebugRenderTask_Basis::Render() const
 	// Draw twice in XRAY mode
 	if (m_options.m_renderMode == DEBUG_RENDER_XRAY)
 	{
-		m_renderable->GetMaterialInstance(0)->GetEditableShader()->EnableDepth(DEPTH_TEST_GREATER, false);
+		Material* material = m_renderable->GetMaterialInstance(0);
+		material->GetEditableShader()->EnableDepth(DEPTH_TEST_GREATER, false);
 
 		// Second draw
+		material->SetProperty("TINT", Vector4(0.5f, 0.5f, 0.5f, 0.8f));
+
 		renderer->DrawRenderable(m_renderable);
 	}
 }
