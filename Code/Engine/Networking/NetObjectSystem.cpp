@@ -264,7 +264,6 @@ const NetObjectType_t* NetObjectSystem::GetNetObjectTypeForTypeID(uint8_t typeID
 	}
 
 	ERROR_AND_DIE(Stringf("Error: NetObjectSystem::GetNetObjectTypeForTypeID() couldn't find type for ID %i", typeID));
-	return nullptr;
 }
 
 
