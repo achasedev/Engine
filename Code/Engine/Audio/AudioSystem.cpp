@@ -239,6 +239,24 @@ void AudioSystem::SetSoundPlaybackSpeed( SoundPlaybackID soundPlaybackID, float 
 
 
 //-----------------------------------------------------------------------------------------------
+bool AudioSystem::IsSoundFinished(SoundPlaybackID soundPlaybackID)
+{
+	if (soundPlaybackID == MISSING_SOUND_ID)
+	{
+		ERROR_RECOVERABLE("WARNING: Checking for finished sound with a null playback ID");
+		return;
+	}
+
+	FMOD::Channel* channelAssignedToSound = (FMOD::Channel*) soundPlaybackID;
+
+	FMOD::Sound* currentSound = nullptr;
+	channelAssignedToSound->getCurrentSound(&currentSound);
+
+	return (currentSound == nullptr);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 void AudioSystem::ValidateResult( FMOD_RESULT result )
 {
 	if( result != FMOD_OK )
