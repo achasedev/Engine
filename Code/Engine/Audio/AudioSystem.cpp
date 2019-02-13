@@ -244,7 +244,7 @@ bool AudioSystem::IsSoundFinished(SoundPlaybackID soundPlaybackID)
 	if (soundPlaybackID == MISSING_SOUND_ID)
 	{
 		ERROR_RECOVERABLE("WARNING: Checking for finished sound with a null playback ID");
-		return;
+		return true;
 	}
 
 	FMOD::Channel* channelAssignedToSound = (FMOD::Channel*) soundPlaybackID;
