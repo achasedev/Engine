@@ -47,6 +47,7 @@ public:
 	Vector3 GetNormalized() const;								// Calculates the normalized form of the vector
 	bool	SetFromText(const char* text);						// For turning a text representation into a Vector2
 
+	Vector2 xy() const;
 	Vector2 xz() const;
 
 	static Vector3 GetRandomVector(float desiredMagnitude);		// Returns a random vector with the given magnitude

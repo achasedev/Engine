@@ -17,7 +17,16 @@
 //
 int Ceiling(float value)
 {
-	return (int) ceil(value);
+	return (int) ceilf(value);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Return the floor of value (largest int that is less than value)
+//
+int Floor(float value)
+{
+	return (int)floorf(value);
 }
 
 

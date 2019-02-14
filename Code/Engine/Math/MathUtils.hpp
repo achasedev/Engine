@@ -23,6 +23,7 @@ const float PI = 3.1415926535897932384626433832795f;
 
 // Math functions
 int		Ceiling(float value);
+int		Floor(float value);
 float 	Log2(float value);
 float 	Log10(float value);
 float 	ModFloat(float x, float y);
