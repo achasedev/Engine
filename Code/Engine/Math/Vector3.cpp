@@ -281,6 +281,15 @@ bool Vector3::SetFromText(const char* text)
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the x and y values of this vector as a Vector2
+//
+Vector2 Vector3::xy() const
+{
+	return Vector2(x, y);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the x and z values of this vector as a Vector2
 //
 Vector2 Vector3::xz() const
