@@ -4,6 +4,7 @@
 /* Date: March 15th, 2018
 /* Description: Implementation of the Stopwatch class
 /************************************************************************/
+#include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/Time/Time.hpp"
 #include "Engine/Core/Time/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
@@ -169,8 +170,7 @@ float Stopwatch::GetElapsedTimeNormalized() const
 
 
 //-----------------------------------------------------------------------------------------------
-// Returns the time in seconds until the stopwatch's interval will elapse (returns negative
-// if the interval has elapsed)
+// Returns the time in seconds until the stopwatch's interval will elapse
 //
 float Stopwatch::GetTimeUntilIntervalEnds() const
 {
@@ -179,7 +179,10 @@ float Stopwatch::GetTimeUntilIntervalEnds() const
 	float endSeconds = (float) TimeSystem::PerformanceCountToSeconds(m_endHPC);
 	float currentSeconds = (float) TimeSystem::PerformanceCountToSeconds(currentHPC);
 
-	return endSeconds - currentSeconds;
+	float diff = endSeconds - currentSeconds;
+	float timeUntilIntervalEnds = ClampFloat(diff, 0.f, diff);
+
+	return timeUntilIntervalEnds;
 }
 
 
