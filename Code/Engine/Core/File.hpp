@@ -40,6 +40,7 @@ public:
 	// Read/Writing
 	bool LoadFileToMemory();
 	void Write(const char* buffer, size_t length);
+	void Write(uint8_t* buffer, size_t length);
 	void Flush();
 
 	// For manipulating files loaded into memory

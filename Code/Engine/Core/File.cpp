@@ -184,6 +184,15 @@ void File::Write(const char* buffer, size_t length)
 
 
 //-----------------------------------------------------------------------------------------------
+// Writes the buffer data to the file currently opened by this file
+//
+void File::Write(uint8_t* buffer, size_t length)
+{
+	fwrite(buffer, sizeof(char), length, (FILE*)m_filePointer);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Flushes any outstanding writes to disk
 //
 void File::Flush()
