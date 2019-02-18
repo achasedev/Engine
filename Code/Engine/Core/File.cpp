@@ -146,7 +146,13 @@ bool File::Open(const char* filepath, const char* flags)
 
 	m_filePointer = (void*) OpenFile(filepath, flags);
 
-	return (m_filePointer != nullptr);
+	if (m_filePointer != nullptr)
+	{
+		m_filePathOpened = filepath;
+		return true;
+	}
+
+	return false;
 }
 
 
@@ -282,4 +288,13 @@ size_t File::GetSize() const
 const char* File::GetData() const
 {
 	return m_data;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns the path to the file currently opened by this File object
+//
+std::string File::GetFilePathOpened() const
+{
+	return m_filePathOpened;
 }

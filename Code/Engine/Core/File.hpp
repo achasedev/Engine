@@ -49,12 +49,15 @@ public:
 
 	size_t			GetSize() const;
 	const char*		GetData() const;
+	std::string		GetFilePathOpened() const;
+
 
 private:
 	//-----Private Data-----
 
 	// File pointer (FILE*)
 	void* m_filePointer = nullptr;
+	std::string m_filePathOpened;
 
 	// File data
 	size_t		m_size = 0;
