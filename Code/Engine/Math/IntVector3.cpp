@@ -181,6 +181,15 @@ float IntVector3::GetLengthSquared() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns this vector as a float vector
+//
+Vector3 IntVector3::GetAsFloats() const
+{
+	return Vector3(*this);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Sets the vector values from the text provided
 //
 void IntVector3::SetFromText(const char* text)

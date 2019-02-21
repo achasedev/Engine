@@ -1572,6 +1572,8 @@ void Renderer::DrawLine(const Vector3& startPos, const Rgba& startColor, const V
 	vertices[1] = Vertex3D_PCU(endPos, endColor, Vector2::ZERO);
 
 	DrawMeshImmediate(vertices, 2, PRIMITIVE_LINES);
+
+	glLineWidth(1.0f);
 }
 
 

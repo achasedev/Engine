@@ -6,6 +6,7 @@
 /************************************************************************/
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Rendering/Core/Renderer.hpp"
+#include "Engine/Rendering/Materials/Material.hpp"
 #include "Engine/Rendering/DebugRendering/DebugRenderSystem.hpp"
 #include "Engine/Rendering/DebugRendering/DebugRenderTask_Line3D.hpp"
 
@@ -49,9 +50,6 @@ void DebugRenderTask_Line3D::Render() const
 	// Draw twice in XRAY mode
 	if (m_options.m_renderMode == DEBUG_RENDER_XRAY)
 	{
-		startColor.ScaleRGB(0.25f);
-		endColor.ScaleRGB(0.25f);
-
 		// Second draw
 		renderer->DrawLine(m_startPosition, startColor, m_endPosition, endColor, m_lineWidth);
 	}
