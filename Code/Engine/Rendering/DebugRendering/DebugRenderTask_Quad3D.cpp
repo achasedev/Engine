@@ -73,7 +73,7 @@ void DebugRenderTask_Quad3D::Render() const
 
 	Renderer* renderer = Renderer::GetInstance();
 
-	renderer->DrawMesh(m_renderable->GetMesh(0));
+	renderer->DrawRenderable(m_renderable);
 
 	// Draw twice in XRAY mode
 	if (m_options.m_renderMode == DEBUG_RENDER_XRAY)

@@ -17,7 +17,15 @@ DebugRenderTask_Cube::DebugRenderTask_Cube(const Vector3& position, const DebugR
 {
 	RenderableDraw_t draw;
 	draw.sharedMaterial = AssetDB::GetSharedMaterial("Debug_Render");
-	draw.mesh = AssetDB::GetMesh("Cube");
+
+	if (options.m_isWireFrame)
+	{
+		draw.mesh = AssetDB::GetMesh("Wire_Cube");
+	}
+	else
+	{
+		draw.mesh = AssetDB::GetMesh("Cube");
+	}
 
 	m_renderable->AddDraw(draw);
 	m_renderable->AddInstanceMatrix(Matrix44::MakeModelMatrix(position, Vector3::ZERO, dimensions));
@@ -50,5 +58,13 @@ void DebugRenderTask_Cube::Render() const
 
 	// Main draw
 	SetupDrawState(m_options.m_renderMode);
+
+	if (m_options.m_isWireFrame)
+	{
+		renderer->SetGLLineWidth(3.0f);
+	}
+
 	renderer->DrawRenderable(m_renderable);
+
+	renderer->SetGLLineWidth(1.0f);
 }

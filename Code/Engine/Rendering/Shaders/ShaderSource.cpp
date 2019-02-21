@@ -290,7 +290,7 @@ const RenderState ShaderSource::UI_SHADER_STATE = RenderState(
 	false, 									// Write to depth buffer on draws?
 	BLEND_OP_ADD, 							// Color blend OP
 	BLEND_FACTOR_SOURCE_ALPHA, 				// Color source factor
-	BLEND_FACTOR_ONE_MINUS_SOURCE_ALPHA, 						// Color destination factor
+	BLEND_FACTOR_ONE_MINUS_SOURCE_ALPHA,	// Color destination factor
 	BLEND_OP_ADD, 							// Alpha blend OP
 	BLEND_FACTOR_SOURCE_ALPHA, 				// Alpha source factor
 	BLEND_FACTOR_ONE_MINUS_SOURCE_ALPHA		// Alpha destination factor
@@ -350,7 +350,7 @@ const char* ShaderSource::INVALID_FS = R"(
 //
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 const char* ShaderSource::DEBUG_RENDER_NAME = "Debug_Render";
-const RenderState ShaderSource::DEBUG_RENDER_STATE;		// Default values
+const RenderState ShaderSource::DEBUG_RENDER_STATE = ShaderSource::DEFAULT_ALPHA_STATE;		// Default values
 
 // Vertex Shader
 const char* ShaderSource::DEBUG_RENDER_VS = R"(

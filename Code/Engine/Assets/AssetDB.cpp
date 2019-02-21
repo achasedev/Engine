@@ -201,6 +201,29 @@ void AssetDB::CreateMeshes()
 
 	AssetCollection<Mesh>::AddAsset("Cube", cube);
 
+	// Wire cube
+	mb.Clear();
+	mb.BeginBuilding(PRIMITIVE_LINES, false);
+	mb.PushLine(Vector3(-0.5f, -0.5f, -0.5f), Vector3(0.5f, -0.5f, -0.5f));
+	mb.PushLine(Vector3(0.5f, -0.5f, -0.5f), Vector3(0.5f, 0.5f, -0.5f));
+	mb.PushLine(Vector3(0.5f, 0.5f, -0.5f), Vector3(-0.5f, 0.5f, -0.5f));
+	mb.PushLine(Vector3(-0.5f, 0.5f, -0.5f), Vector3(-0.5f, -0.5f, -0.5f));
+
+	mb.PushLine(Vector3(-0.5f, -0.5f, 0.5f), Vector3(0.5f, -0.5f, 0.5f));
+	mb.PushLine(Vector3(0.5f, -0.5f, 0.5f), Vector3(0.5f, 0.5f, 0.5f));
+	mb.PushLine(Vector3(0.5f, 0.5f, 0.5f), Vector3(-0.5f, 0.5f, 0.5f));
+	mb.PushLine(Vector3(-0.5f, 0.5f, 0.5f), Vector3(-0.5f, -0.5f, 0.5f));
+
+	mb.PushLine(Vector3(-0.5f, -0.5f, -0.5f), Vector3(-0.5f, -0.5f, 0.5f));
+	mb.PushLine(Vector3(0.5f, -0.5f, -0.5f), Vector3(0.5f, -0.5f, 0.5f));
+	mb.PushLine(Vector3(0.5f, 0.5f, -0.5f), Vector3(0.5f, 0.5f, 0.5f));
+	mb.PushLine(Vector3(-0.5f, 0.5f, -0.5f), Vector3(-0.5f, 0.5f, 0.5f));
+
+	mb.FinishBuilding();
+	Mesh* wireCube = mb.CreateMesh();
+
+	AssetCollection<Mesh>::AddAsset("Wire_Cube", wireCube);
+
 	// Point
 	mb.Clear();
 	mb.BeginBuilding(PRIMITIVE_LINES, false);
