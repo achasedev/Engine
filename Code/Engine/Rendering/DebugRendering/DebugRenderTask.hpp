@@ -8,6 +8,7 @@
 #include "Engine/Core/Rgba.hpp"
 #include "Engine/Rendering/Core/Renderable.hpp"
 
+class Texture;
 class Renderable;
 
 // Enumeration for depth rendering
@@ -36,6 +37,7 @@ struct DebugRenderOptions
 		, m_lifetime(0.f)
 		, m_renderMode(DEBUG_RENDER_USE_DEPTH)
 		, m_isWireFrame(false)
+		, m_customTexture(nullptr)
 	{}
 
 	void operator=(const DebugRenderOptions& copyFrom)
@@ -45,6 +47,7 @@ struct DebugRenderOptions
 		m_lifetime		= copyFrom.m_lifetime;
 		m_renderMode	= copyFrom.m_renderMode;
 		m_isWireFrame	= copyFrom.m_isWireFrame;
+		m_customTexture	= copyFrom.m_customTexture;
 	}
 
 	Rgba m_startColor;
@@ -52,6 +55,7 @@ struct DebugRenderOptions
 	float m_lifetime;
 	DebugRenderMode m_renderMode;
 	bool m_isWireFrame;
+	Texture* m_customTexture = nullptr;
 };
 
 

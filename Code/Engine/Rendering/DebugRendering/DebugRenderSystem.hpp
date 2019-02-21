@@ -54,8 +54,9 @@ public:
 
 	// 3D
 	static void DrawPoint(const Vector3& position, const DebugRenderOptions& options, float radius = 1.0f);
-	static void Draw3DLine(const Vector3& startPosition, const Vector3& endPosition, const DebugRenderOptions& options, const Rgba& endStartColor, const Rgba& endEndColor, float lineWidth = 1.0f);
+	static void Draw3DLine(const Vector3& startPosition, const Vector3& endPosition, const DebugRenderOptions& options, float lineWidth = 1.0f);
 	static void Draw3DQuad(const Vector3& position, const Vector2& dimensions, const DebugRenderOptions& options, const Vector3& rightVector = Vector3::X_AXIS, const Vector3& upVector = Vector3::Y_AXIS);
+	static void Draw3DQuadWithNormal(const Vector3& position, const Vector2& dimensions, const DebugRenderOptions& options, const Vector3& normal, const Vector3& referenceRight);
 	static void DrawBasis(const Matrix44& basis, const DebugRenderOptions& options, float scale = 1.0f);
 	static void DrawUVSphere(const Vector3& position, const DebugRenderOptions& options,  float radius = 1.0f, unsigned int numSlices = 4, unsigned int numWedges = 8);
 	static void DrawCube(const Vector3& position, const DebugRenderOptions& options, const Vector3& dimensions);

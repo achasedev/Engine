@@ -5,24 +5,33 @@
 /* Description: Implementation of the 3D debug line class
 /************************************************************************/
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Assets/AssetDB.hpp"
 #include "Engine/Rendering/Core/Renderer.hpp"
 #include "Engine/Rendering/Materials/Material.hpp"
 #include "Engine/Rendering/DebugRendering/DebugRenderSystem.hpp"
 #include "Engine/Rendering/DebugRendering/DebugRenderTask_Line3D.hpp"
 
+
 //-----------------------------------------------------------------------------------------------
 // Constructor
 //
-DebugRenderTask_Line3D::DebugRenderTask_Line3D(const Vector3& startPosition, const Vector3& endPosition, const DebugRenderOptions& options, const Rgba& endStartColor, const Rgba& endEndColor, float lineWidth /*= 1.0f*/)
+DebugRenderTask_Line3D::DebugRenderTask_Line3D(const Vector3& startPosition, const Vector3& endPosition, const DebugRenderOptions& options, float lineWidth /*= 1.0f*/)
 	: DebugRenderTask(options, DEBUG_CAMERA_WORLD)
 	, m_startPosition(startPosition)
 	, m_endPosition(endPosition)
 	, m_lineWidth(lineWidth)
-	, m_endStartColor(endStartColor)
-	, m_endEndColor(endEndColor)
 {
-	delete m_renderable;
-	m_renderable = nullptr;
+	Mesh* mesh = BuildMesh();
+
+	RenderableDraw_t draw;
+	draw.sharedMaterial = AssetDB::GetSharedMaterial("Debug_Render");
+	draw.mesh = mesh;
+
+	m_renderable->AddDraw(draw);
+	m_renderable->AddInstanceMatrix(Matrix44::IDENTITY);
+
+	Material* materialInstance = m_renderable->GetMaterialInstance(0);
+	materialInstance->GetEditableShader()->SetFillMode(FILL_MODE_SOLID);
 }
 
 
@@ -31,26 +40,49 @@ DebugRenderTask_Line3D::DebugRenderTask_Line3D(const Vector3& startPosition, con
 //
 void DebugRenderTask_Line3D::Render() const
 {
-	Rgba startColor = CalculateDrawColor();
-
-	// Get the end color
-	float normalizedTime = 1.f;
-	if (m_options.m_lifetime != 0.f)
-	{
-		normalizedTime = (m_options.m_lifetime - m_timeToLive) / m_options.m_lifetime;
-	}
-
-	Rgba endColor = Interpolate(m_endStartColor, m_endEndColor, normalizedTime);
-
 	Renderer* renderer = Renderer::GetInstance();
 
-	// Draw the point
-	renderer->DrawLine(m_startPosition, startColor, m_endPosition, endColor, m_lineWidth);
+	SetupDrawState(m_options.m_renderMode);
+
+	renderer->SetGLLineWidth(m_lineWidth);
+
+	renderer->DrawMesh(m_renderable->GetMesh(0));
 
 	// Draw twice in XRAY mode
 	if (m_options.m_renderMode == DEBUG_RENDER_XRAY)
 	{
+		Material* material = m_renderable->GetMaterialInstance(0);
+		material->GetEditableShader()->EnableDepth(DEPTH_TEST_GREATER, false);
+
 		// Second draw
-		renderer->DrawLine(m_startPosition, startColor, m_endPosition, endColor, m_lineWidth);
+		material->SetProperty("TINT", Vector4(0.5f, 0.5f, 0.5f, 0.8f));
+
+		renderer->DrawRenderable(m_renderable);
 	}
+
+	renderer->SetGLLineWidth(1.0f);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Builds the mesh used to render the line
+//
+Mesh* DebugRenderTask_Line3D::BuildMesh()
+{
+	// Set up the mesh vertices
+	MeshBuilder mb;
+
+	mb.BeginBuilding(PRIMITIVE_LINES, false);
+	mb.SetUVs(Vector2::ZERO);
+
+	mb.SetColor(m_options.m_startColor);
+	mb.PushVertex(m_startPosition);
+
+	mb.SetColor(m_options.m_endColor);
+	mb.PushVertex(m_endPosition);
+
+	mb.FinishBuilding();
+
+	m_deleteMesh = true;
+	return mb.CreateMesh();
 }

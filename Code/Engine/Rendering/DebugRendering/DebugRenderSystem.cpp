@@ -5,12 +5,13 @@
 /* Description: System that controls all debug rendering tasks
 /************************************************************************/
 #include "Engine/Core/Window.hpp"
-#include "Engine/Core/DeveloperConsole/Command.hpp"
-#include "Engine/Rendering/Core/Camera.hpp"
-#include "Engine/Core/DeveloperConsole/DevConsole.hpp"
-#include "Engine/Core/Utility/StringUtils.hpp"
-#include "Engine/Rendering/Core/Renderer.hpp"
+#include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Rendering/Core/Camera.hpp"
+#include "Engine/Rendering/Core/Renderer.hpp"
+#include "Engine/Core/Utility/StringUtils.hpp"
+#include "Engine/Core/DeveloperConsole/Command.hpp"
+#include "Engine/Core/DeveloperConsole/DevConsole.hpp"
 
 #include "Engine/Rendering/DebugRendering/DebugRenderSystem.hpp"
 #include "Engine/Rendering/DebugRendering/DebugRenderTask_Cube.hpp"
@@ -327,9 +328,9 @@ void DebugRenderSystem::DrawPoint(const Vector3& position, float lifeTime, const
 //-----------------------------------------------------------------------------------------------
 // Draws a debug render line, base function
 //
-void DebugRenderSystem::Draw3DLine(const Vector3& startPosition, const Vector3& endPosition, const DebugRenderOptions& options, const Rgba& endStartColor, const Rgba& endEndColor, float lineWidth /*= 1.0f*/)
+void DebugRenderSystem::Draw3DLine(const Vector3& startPosition, const Vector3& endPosition, const DebugRenderOptions& options, float lineWidth /*= 1.0f*/)
 {
-	DebugRenderTask_Line3D* line = new DebugRenderTask_Line3D(startPosition, endPosition, options, endStartColor, endEndColor, lineWidth);
+	DebugRenderTask_Line3D* line = new DebugRenderTask_Line3D(startPosition, endPosition, options, lineWidth);
 	s_instance->m_tasks.push_back(line);
 }
 
@@ -345,7 +346,7 @@ void DebugRenderSystem::Draw3DLine(const Vector3& startPosition, const Vector3& 
 	options.m_endColor = color;
 	options.m_lifetime = lifeTime;
 	
-	Draw3DLine(startPosition, endPostion, options, color, color, lineWidth);
+	Draw3DLine(startPosition, endPostion, options, lineWidth);
 }
 
 
@@ -371,6 +372,19 @@ void DebugRenderSystem::Draw3DQuad(const Vector3& position, const Vector2& dimen
 	options.m_lifetime = lifetime;
 
 	Draw3DQuad(position, dimensions, options);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Draws a 3D quad represented by the position, dimensions, and plane normal
+// ONLY WORKS FOR RIGHT-HANDED COORDINATE SYSTEMS
+//
+void DebugRenderSystem::Draw3DQuadWithNormal(const Vector3& position, const Vector2& dimensions, const DebugRenderOptions& options, const Vector3& normal, const Vector3& referenceRight)
+{
+	Vector3 up = CrossProduct(normal, referenceRight);
+	Vector3 right = CrossProduct(up, normal);
+
+	Draw3DQuad(position, dimensions, options, right, up);
 }
 
 
@@ -724,7 +738,7 @@ void Command_DebugRender3DLine(Command& cmd)
 	options.m_lifetime = lifetime;
 	options.m_renderMode = DebugRenderSystem::ConvertStringToRenderMode(renderModeText);
 
-	DebugRenderSystem::Draw3DLine(startPosition, endPosition, options, startColor, endColor, width);
+	DebugRenderSystem::Draw3DLine(startPosition, endPosition, options, width);
 }
 
 

@@ -13,6 +13,7 @@
 
 // 4 texel white image, used for solid color rendering
 const Image Image::IMAGE_WHITE;
+const Image Image::IMAGE_WHITE_TINT = Image(IntVector2(2, 2), Rgba(255, 255, 255, 10));
 const Image Image::IMAGE_FLAT = Image(IntVector2(2, 2), Rgba(127, 127, 255, 255));
 const Image Image::IMAGE_BLACK = Image(IntVector2(2, 2), Rgba::BLACK);
 const Image Image::IMAGE_DEFAULT_TEXTURE = Image(IntVector2(64, 64), IntVector2(8, 8), Rgba::BLUE, Rgba::GRAY);

@@ -1017,6 +1017,15 @@ void Renderer::BindRenderState(const RenderState& state) const
 
 
 //-----------------------------------------------------------------------------------------------
+// Sets the width of the line to draw when drawing with PRIMITIVE_LINES
+//
+void Renderer::SetGLLineWidth(float lineWidth)
+{
+	glLineWidth(lineWidth);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Binds the model matrix to the buffer binding
 //
 void Renderer::BindModelMatrix(const Matrix44& model)

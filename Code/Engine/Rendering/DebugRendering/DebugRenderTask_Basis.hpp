@@ -21,6 +21,7 @@ public:
 
 private:
 	//-----Private Methods-----
+
 	Mesh* BuildMesh();
 
 

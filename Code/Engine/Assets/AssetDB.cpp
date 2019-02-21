@@ -52,6 +52,10 @@ void AssetDB::CreateTextures()
 	whiteTexture->CreateFromImage(&Image::IMAGE_WHITE);
 	AssetCollection<Texture>::AddAsset("White", whiteTexture);
 
+	Texture* whiteTextureTint = new Texture();
+	whiteTextureTint->CreateFromImage(&Image::IMAGE_WHITE_TINT);
+	AssetCollection<Texture>::AddAsset("White_Tint", whiteTextureTint);
+
 	Texture* flatTexture = new Texture();
 	flatTexture->CreateFromImage(&Image::IMAGE_FLAT);
 	AssetCollection<Texture>::AddAsset("Flat", flatTexture);

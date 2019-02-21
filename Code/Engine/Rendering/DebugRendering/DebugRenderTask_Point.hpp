@@ -21,4 +21,6 @@ public:
 private:
 	//-----Private Data-----
 
+	float m_radius = 1.0f;
+
 };

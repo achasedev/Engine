@@ -23,6 +23,7 @@ DebugRenderTask_Quad3D::DebugRenderTask_Quad3D(const Vector3& position, const Ve
 	, m_upVector(upVector)
 {
 	RenderableDraw_t draw;
+
 	draw.sharedMaterial = AssetDB::GetSharedMaterial("Debug_Render");
 	draw.mesh = BuildMesh();
 
@@ -32,7 +33,15 @@ DebugRenderTask_Quad3D::DebugRenderTask_Quad3D(const Vector3& position, const Ve
 	if (!options.m_isWireFrame)
 	{
 		Material* material = m_renderable->GetMaterialInstance(0);
-		material->SetDiffuse(AssetDB::CreateOrGetTexture("Data/Images/Debug/Debug.png"));
+
+		if (options.m_customTexture != nullptr)
+		{
+			material->SetDiffuse(options.m_customTexture);
+		}
+		else
+		{
+			material->SetDiffuse(AssetDB::CreateOrGetTexture("Data/Images/Debug/Debug.png"));
+		}
 	}
 
 	Material* materialInstance = m_renderable->GetMaterialInstance(0);

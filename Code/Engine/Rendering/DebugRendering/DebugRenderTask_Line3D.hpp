@@ -13,9 +13,15 @@ class DebugRenderTask_Line3D : public DebugRenderTask
 public:
 	//-----Public Methods-----
 
-	DebugRenderTask_Line3D(const Vector3& startPosition, const Vector3& endPosition, const DebugRenderOptions& options, const Rgba& endStartColor, const Rgba& endEndColor, float lineWidth = 1.0f);
+	DebugRenderTask_Line3D(const Vector3& startPosition, const Vector3& endPosition, const DebugRenderOptions& options, float lineWidth = 1.0f);
 
 	virtual void Render() const override;
+
+	
+private:
+	//-----Private Methods-----
+
+	Mesh* BuildMesh();
 
 
 private:
@@ -25,8 +31,5 @@ private:
 	Vector3 m_endPosition;
 
 	float m_lineWidth;
-
-	Rgba m_endStartColor;
-	Rgba m_endEndColor;
 
 };

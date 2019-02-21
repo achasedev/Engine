@@ -45,6 +45,7 @@ public:
 
 	const static Image IMAGE_FLAT;
 	const static Image IMAGE_WHITE;
+	const static Image IMAGE_WHITE_TINT;
 	const static Image IMAGE_BLACK;
 	const static Image IMAGE_DEFAULT_TEXTURE;
 

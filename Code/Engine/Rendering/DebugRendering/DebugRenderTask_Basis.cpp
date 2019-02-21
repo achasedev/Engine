@@ -75,6 +75,8 @@ void DebugRenderTask_Basis::Render() const
 	Renderer* renderer = Renderer::GetInstance();
 
 	SetupDrawState(m_options.m_renderMode);
+	renderer->SetGLLineWidth(m_scale);
+
 	renderer->DrawMesh(m_renderable->GetMesh(0));
 
 	// Draw twice in XRAY mode
@@ -88,4 +90,6 @@ void DebugRenderTask_Basis::Render() const
 
 		renderer->DrawRenderable(m_renderable);
 	}
+
+	renderer->SetGLLineWidth(1.0f);
 }

@@ -77,6 +77,9 @@ public:
 	// Time
 	void SetRendererGameClock(Clock* gameClock);
 
+	// Lines
+	void SetGLLineWidth(float lineWidth);
+
 
 private:
 	//-----Lighting-----

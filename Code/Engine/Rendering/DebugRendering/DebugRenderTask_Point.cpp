@@ -18,6 +18,7 @@
 //
 DebugRenderTask_Point::DebugRenderTask_Point(const Vector3& position, const DebugRenderOptions& options, float radius/*=1.0f*/)
 	: DebugRenderTask(options, DEBUG_CAMERA_WORLD)
+	, m_radius(radius)
 {
 	RenderableDraw_t draw;
 	draw.sharedMaterial = AssetDB::GetSharedMaterial("Debug_Render");
@@ -27,7 +28,7 @@ DebugRenderTask_Point::DebugRenderTask_Point(const Vector3& position, const Debu
 	m_renderable->AddInstanceMatrix(Matrix44::MakeModelMatrix(position, Vector3::ZERO, Vector3(radius, radius, radius)));
 
 	Material* materialInstance = m_renderable->GetMaterialInstance(0);
-	materialInstance->GetEditableShader()->SetFillMode(m_options.m_isWireFrame ? FILL_MODE_WIRE : FILL_MODE_SOLID);
+	materialInstance->GetEditableShader()->SetFillMode(FILL_MODE_SOLID);
 }
 
 
@@ -39,6 +40,7 @@ void DebugRenderTask_Point::Render() const
 	SetupDrawState(m_options.m_renderMode);
 
 	Renderer* renderer = Renderer::GetInstance();
+	renderer->SetGLLineWidth(m_radius);
 
 	// Draw the point
 	renderer->DrawRenderable(m_renderable);
@@ -51,4 +53,6 @@ void DebugRenderTask_Point::Render() const
 		// Second draw
 		renderer->DrawRenderable(m_renderable);
 	}
+
+	renderer->SetGLLineWidth(1.0f);
 }
