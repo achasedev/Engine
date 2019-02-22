@@ -31,7 +31,9 @@ public:
 	virtual void				BeginFrame();
 	virtual void				EndFrame();
 
+	virtual FMOD::Sound*		GetSoundForSoundID(SoundID soundID);
 	virtual SoundID				CreateOrGetSound( const std::string& soundFilePath );
+	virtual SoundID				GetSound(const std::string& soundFilePath);
 	virtual SoundPlaybackID		PlaySound( SoundID soundID, bool isLooped=false, float volume=1.f, float balance=0.0f, float speed=1.0f, bool isPaused=false );
 	virtual SoundPlaybackID		PlaySoundFromAudioGroup(const std::string& groupName, bool isLooped=false, float volume=1.f, float balance=0.0f, float speed=1.0f, bool isPaused=false );
 	virtual void				StopSound( SoundPlaybackID soundPlaybackID );

@@ -95,6 +95,19 @@ void AudioSystem::EndFrame()
 
 
 //-----------------------------------------------------------------------------------------------
+FMOD::Sound* AudioSystem::GetSoundForSoundID(SoundID soundID)
+{
+	size_t numSounds = m_registeredSounds.size();
+	if (soundID < 0 || soundID >= numSounds)
+		return nullptr;
+
+	FMOD::Sound* sound = m_registeredSounds[soundID];
+
+	return sound;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 SoundID AudioSystem::CreateOrGetSound( const std::string& soundFilePath )
 {
 	std::map< std::string, SoundID >::iterator found = m_registeredSoundIDs.find( soundFilePath );
@@ -113,6 +126,19 @@ SoundID AudioSystem::CreateOrGetSound( const std::string& soundFilePath )
 			m_registeredSounds.push_back( newSound );
 			return newSoundID;
 		}
+	}
+
+	return MISSING_SOUND_ID;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+SoundID AudioSystem::GetSound(const std::string& soundFilePath)
+{
+	std::map< std::string, SoundID >::iterator found = m_registeredSoundIDs.find(soundFilePath);
+	if (found != m_registeredSoundIDs.end())
+	{
+		return found->second;
 	}
 
 	return MISSING_SOUND_ID;
