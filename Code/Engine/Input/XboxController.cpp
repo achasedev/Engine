@@ -148,7 +148,9 @@ void XboxController::UpdateStickState(XboxStickID stickID, short rawX, short raw
 // 
 void XboxController::UpdateTriggerState(XboxTriggerID triggerID, unsigned char triggerValue)
 {
-	m_triggers[triggerID] = static_cast<float>(triggerValue) * (1.f / 255.f);
+	XboxTriggerState& triggerState = m_triggers[triggerID];
+	triggerState.m_valueLastFrame = triggerState.m_valueThisFrame;
+	triggerState.m_valueThisFrame = static_cast<float>(triggerValue) * (1.f / 255.f);
 }
 
 
@@ -192,7 +194,8 @@ void XboxController::ResetTriggerStates()
 {
 	for (int i = 0; i < NUM_XBOX_TRIGGERS; i++)
 	{
-		m_triggers[i] = 0.f;
+		m_triggers[i].m_valueLastFrame = 0.f;
+		m_triggers[i].m_valueThisFrame = 0.f;
 	}
 }
 
@@ -304,5 +307,15 @@ bool XboxController::WasStickJustPressed(XboxStickID stickID) const
 //
 float XboxController::GetTriggerValue(XboxTriggerID triggerID) const
 {
-	return m_triggers[triggerID];
+	return m_triggers[triggerID].m_valueThisFrame;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns true if the trigger was just pulled this frame
+//
+bool XboxController::WasTriggerJustPulled(XboxTriggerID triggerID) const
+{
+	const XboxTriggerState& triggerState = m_triggers[triggerID];
+	return (triggerState.m_valueThisFrame > 0.f && triggerState.m_valueLastFrame == 0.f);
 }

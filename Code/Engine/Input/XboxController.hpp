@@ -33,6 +33,12 @@ struct XboxStickState
 	float m_lastFrameCorrectedMagnitude = 0.f;
 };
 
+struct XboxTriggerState
+{
+	float m_valueThisFrame = 0.f;
+	float m_valueLastFrame = 0.f; 
+};
+
 
 // Enumeration of the 14 buttons on the controller
 enum XboxButtonID 
@@ -100,11 +106,9 @@ public: // Methods
 	float	GetCorrectedStickMagnitude(XboxStickID stickID) const;			// Returns the magnitude of the stick after compensating for deadzone
 	bool	WasStickJustPressed(XboxStickID stickID) const;					// Returns true if the stick was just pressed this frame (previous corrected magnitude was 0.f)
 
-	float GetTriggerValue(XboxTriggerID triggerID) const;					// Gets the current value of the trigger, from 0.f to 1.f
+	float	GetTriggerValue(XboxTriggerID triggerID) const;					// Gets the current value of the trigger, from 0.f to 1.f
+	bool	WasTriggerJustPulled(XboxTriggerID triggerID) const;			// Returns true if the trigger was just pulled this frame
 
-public: // Data
-
-	
 
 private: // Methods
 
@@ -128,11 +132,11 @@ private: // Methods
 private: // Data
 
 	int m_controllerNumber;							// The controllerID, between 0 and 3 inclusive
-	bool m_isConnected;							// True when connected to the computer and XInput recognizes it
+	bool m_isConnected;								// True when connected to the computer and XInput recognizes it
 
 	KeyButtonState m_buttons[NUM_XBOX_BUTTONS];		// Buttons on the controller
 	XboxStickState m_sticks[NUM_XBOX_STICKS];		// Sticks on the controller
-	float m_triggers[NUM_XBOX_TRIGGERS];			// Triggers on the controller
+	XboxTriggerState m_triggers[NUM_XBOX_TRIGGERS];	// Triggers on the controller
 
 
 	// Max and min values attained by the sticks, their value is a signed short
