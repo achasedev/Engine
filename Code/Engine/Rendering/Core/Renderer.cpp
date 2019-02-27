@@ -429,7 +429,7 @@ void Renderer::Draw3DQuad(const Vector3& position, const Vector2& dimensions, co
 //-----------------------------------------------------------------------------------------------
 // Draws a cube with the given corner positions and tint
 //
-void Renderer::DrawCube(const Vector3& center, const Vector3& dimensions, const Rgba& tint /*= Rgba::WHITE*/, const AABB2& topUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& sideUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& bottomUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, Material* material /*= nulltpr*/)
+void Renderer::DrawSolidCube(const Vector3& center, const Vector3& dimensions, const Rgba& tint /*= Rgba::WHITE*/, const AABB2& topUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& sideUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, const AABB2& bottomUVs /*= AABB2::UNIT_SQUARE_OFFCENTER*/, Material* material /*= nulltpr*/)
 {
 	// Clear state
 	m_immediateBuilder.Clear();
@@ -439,6 +439,51 @@ void Renderer::DrawCube(const Vector3& center, const Vector3& dimensions, const 
 	m_immediateBuilder.PushCube(center, dimensions, tint, sideUVs, topUVs, bottomUVs);
 	m_immediateBuilder.FinishBuilding();
 	m_immediateBuilder.UpdateMesh(m_immediateMesh);
+
+	// Draw
+	if (material == nullptr)
+	{
+		DrawMesh(&m_immediateMesh);
+	}
+	else
+	{
+		DrawMeshWithMaterial(&m_immediateMesh, material);
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Draws a wire cube using GLLines
+//
+void Renderer::DrawWireCube(const Vector3& center, const Vector3& dimensions, const Rgba& tint /*= Rgba::WHITE*/, Material* material /*= nullptr*/)
+{
+	Vector3 halfDimensions = dimensions * 0.5f;
+	Vector3 mins = center - halfDimensions;
+	Vector3 maxs = center + halfDimensions;
+
+	// Clear state
+	m_immediateBuilder.Clear();
+
+	// Build the mesh
+	m_immediateBuilder.BeginBuilding(PRIMITIVE_LINES, false);
+
+	m_immediateBuilder.PushLine(Vector3(mins.x, mins.y, mins.z), Vector3(maxs.x, mins.y, mins.z), tint);
+	m_immediateBuilder.PushLine(Vector3(maxs.x, mins.y, mins.z), Vector3(maxs.x, maxs.y, mins.z), tint);
+	m_immediateBuilder.PushLine(Vector3(maxs.x, maxs.y, mins.z), Vector3(mins.x, maxs.y, mins.z), tint);
+	m_immediateBuilder.PushLine(Vector3(mins.x, maxs.y, mins.z), Vector3(mins.x, mins.y, mins.z), tint);
+
+	m_immediateBuilder.PushLine(Vector3(mins.x, mins.y, maxs.z), Vector3(maxs.x, mins.y, maxs.z), tint);
+	m_immediateBuilder.PushLine(Vector3(maxs.x, mins.y, maxs.z), Vector3(maxs.x, maxs.y, maxs.z), tint);
+	m_immediateBuilder.PushLine(Vector3(maxs.x, maxs.y, maxs.z), Vector3(mins.x, maxs.y, maxs.z), tint);
+	m_immediateBuilder.PushLine(Vector3(mins.x, maxs.y, maxs.z), Vector3(mins.x, mins.y, maxs.z), tint);
+
+	m_immediateBuilder.PushLine(Vector3(mins.x, mins.y, mins.z), Vector3(mins.x, mins.y, maxs.z), tint);
+	m_immediateBuilder.PushLine(Vector3(maxs.x, mins.y, mins.z), Vector3(maxs.x, mins.y, maxs.z), tint);
+	m_immediateBuilder.PushLine(Vector3(maxs.x, maxs.y, mins.z), Vector3(maxs.x, maxs.y, maxs.z), tint);
+	m_immediateBuilder.PushLine(Vector3(mins.x, maxs.y, mins.z), Vector3(mins.x, maxs.y, maxs.z), tint);
+
+	m_immediateBuilder.FinishBuilding();
+	m_immediateBuilder.UpdateMesh<Vertex3D_PCU>(m_immediateMesh);
 
 	// Draw
 	if (material == nullptr)
@@ -1514,7 +1559,7 @@ void Renderer::UpdateTimeData()
 //-----------------------------------------------------------------------------------------------
 // Draws to the screen given the vertices and the draw primitive type
 //
-void Renderer::DrawMeshImmediate(const Vertex3D_PCU* vertices, int vertexCount, PrimitiveType primitiveType /*= PRIMITIVE_TRIANGLES*/, const unsigned int* indices /*= nullptr*/, int indexCount /*= -1*/)
+void Renderer::DrawMeshImmediate(const Vertex3D_PCU* vertices, int vertexCount, PrimitiveType primitiveType /*= PRIMITIVE_TRIANGLES*/, const unsigned int* indices /*= nullptr*/, int indexCount /*= -1*/, Material* material/*= nullptr*/)
 {
 	m_immediateMesh.SetVertices(vertexCount, vertices);
 
@@ -1532,14 +1577,22 @@ void Renderer::DrawMeshImmediate(const Vertex3D_PCU* vertices, int vertexCount, 
 	instruction.m_elementCount = (isUsingIndices ? indexCount : vertexCount);
 
 	m_immediateMesh.SetDrawInstruction(instruction);
-	DrawMesh(&m_immediateMesh);
+
+	if (material == nullptr)
+	{
+		DrawMesh(&m_immediateMesh);
+	}
+	else
+	{
+		DrawMeshWithMaterial(&m_immediateMesh, material);
+	}
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Draws a point at the given position with the given color and size
 //
-void Renderer::DrawPoint(const Vector3& position, const Rgba& color, float radius)
+void Renderer::DrawPoint(const Vector3& position, const Rgba& color, float radius, Material* material /*= nullptr*/)
 {
 	Vertex3D_PCU vertices[14];
 
@@ -1564,25 +1617,25 @@ void Renderer::DrawPoint(const Vector3& position, const Rgba& color, float radiu
 	vertices[12] = Vertex3D_PCU(position - Vector3(-1.0f, 1.0f, -1.0f) * radius, color, Vector2::ZERO);
 	vertices[13] = Vertex3D_PCU(position + Vector3(-1.0f, 1.0f, -1.0f) * radius, color, Vector2::ZERO);
 
-	DrawMeshImmediate(vertices, 14, PRIMITIVE_LINES);
+	DrawMeshImmediate(vertices, 14, PRIMITIVE_LINES, nullptr, -1, material);
 }
 
 
 //-----------------------------------------------------------------------------------------------
 // Draws a line from startPos to endPos with the given colors
 //
-void Renderer::DrawLine(const Vector3& startPos, const Rgba& startColor, const Vector3& endPos, const Rgba& endColor, float width/*=1.0f*/)
+void Renderer::Draw3DLine(const Vector3& startPos, const Rgba& startColor, const Vector3& endPos, const Rgba& endColor, float width/*=1.0f*/, Material* material /*= nullptr*/)
 {
-	glLineWidth(width);
+	SetGLLineWidth(width);
 
 	Vertex3D_PCU vertices[2];
 
 	vertices[0] = Vertex3D_PCU(startPos, startColor, Vector2::ZERO);
 	vertices[1] = Vertex3D_PCU(endPos, endColor, Vector2::ZERO);
 
-	DrawMeshImmediate(vertices, 2, PRIMITIVE_LINES);
+	DrawMeshImmediate(vertices, 2, PRIMITIVE_LINES, nullptr, -1, material);
 
-	glLineWidth(1.0f);
+	SetGLLineWidth(1.0f);
 }
 
 

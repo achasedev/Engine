@@ -15,6 +15,6 @@ Skybox::Skybox(TextureCube* skyboxTexture)
 void Skybox::Render() const
 {
 	Renderer* renderer = Renderer::GetInstance();
-	renderer->DrawCube(Vector3::ZERO, Vector3::ONES, Rgba::WHITE, AABB2::UNIT_SQUARE_OFFCENTER, AABB2::UNIT_SQUARE_OFFCENTER, AABB2::UNIT_SQUARE_OFFCENTER, m_skyboxMaterial);
+	renderer->DrawSolidCube(Vector3::ZERO, Vector3::ONES, Rgba::WHITE, AABB2::UNIT_SQUARE_OFFCENTER, AABB2::UNIT_SQUARE_OFFCENTER, AABB2::UNIT_SQUARE_OFFCENTER, m_skyboxMaterial);
 }
 

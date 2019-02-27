@@ -350,7 +350,7 @@ const char* ShaderSource::INVALID_FS = R"(
 //
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 const char* ShaderSource::DEBUG_RENDER_NAME = "Debug_Render";
-const RenderState ShaderSource::DEBUG_RENDER_STATE = ShaderSource::DEFAULT_ALPHA_STATE;		// Default values
+const RenderState ShaderSource::DEBUG_RENDER_STATE = ShaderSource::DEFAULT_OPAQUE_STATE;
 
 // Vertex Shader
 const char* ShaderSource::DEBUG_RENDER_VS = R"(
@@ -409,6 +409,46 @@ const char* ShaderSource::DEBUG_RENDER_FS = R"(
 		vec4 diffuse = texture(gTexDiffuse, passUV);	
 		outColor = diffuse * TINT * passColor;	 				
 	})";
+
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+//
+// XRAY
+//
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+const char* ShaderSource::XRAY_SHADER_NAME = "X_Ray";
+const char* ShaderSource::XRAY_SHADER_VS = ShaderSource::DEFAULT_OPAQUE_VS;
+const char* ShaderSource::XRAY_SHADER_FS = R"(
+	
+	#version 420 core											
+																											
+	in vec2 passUV;												
+	in vec4 passColor;											
+																  										
+	layout(binding = 0) uniform sampler2D gTexDiffuse;			
+																												
+	out vec4 outColor; 											
+																
+	// Entry Point												
+	void main( void )											
+	{																																			
+		vec4 diffuse = texture(gTexDiffuse, passUV);	
+		outColor = diffuse * passColor * vec4(0.5f, 0.5f, 0.5f, 0.8f);	 				
+	})";
+
+const RenderState ShaderSource::XRAY_SHADER_STATE = RenderState(
+	CULL_MODE_BACK,					// Cull mode
+	FILL_MODE_SOLID, 				// Fill mode
+	WIND_COUNTER_CLOCKWISE, 		// Wind order
+	DEPTH_TEST_GREATER, 			// Depth compare method
+	false, 							// Write to depth buffer on draws?
+	BLEND_OP_ADD, 					// Color blend OP
+	BLEND_FACTOR_ONE, 				// Color source factor
+	BLEND_FACTOR_ZERO,				// Color destination factor
+	BLEND_OP_ADD, 					// Alpha blend OP
+	BLEND_FACTOR_ONE, 				// Alpha source factor
+	BLEND_FACTOR_ONE				// Alpha destination factor
+);
 
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------

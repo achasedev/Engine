@@ -45,5 +45,5 @@ void DebugRenderTask_Line2D::Render() const
 	Renderer* renderer = Renderer::GetInstance();
 
 	// Draw the line (no xray draw)
-	renderer->DrawLine(m_startPosition, startColor, m_endPosition, endColor, m_lineWidth);
+	renderer->Draw3DLine(m_startPosition, startColor, m_endPosition, endColor, m_lineWidth);
 }

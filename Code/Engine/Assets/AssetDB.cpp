@@ -89,11 +89,12 @@ void AssetDB::CreateShaders()
 
 	// Then construct all others, since if they fail to compile we assign them the invalid shader data
 	Shader* defaultOpaque	= Shader::BuildShader(ShaderSource::DEFAULT_OPAQUE_NAME,	ShaderSource::DEFAULT_OPAQUE_VS,	ShaderSource::DEFAULT_OPAQUE_FS,	ShaderSource::DEFAULT_OPAQUE_STATE,		ShaderSource::DEFAULT_OPAQUE_LAYER, ShaderSource::DEFAULT_OPAQUE_QUEUE);
-	Shader* defaultAlpha	= Shader::BuildShader(ShaderSource::DEFAULT_ALPHA_NAME,		ShaderSource::DEFAULT_ALPHA_VS,		ShaderSource::DEFAULT_ALPHA_FS,		ShaderSource::DEFAULT_ALPHA_STATE,		ShaderSource::DEFAULT_ALPHA_LAYER, ShaderSource::DEFAULT_ALPHA_QUEUE);
-	Shader* uiShader		= Shader::BuildShader(ShaderSource::UI_SHADER_NAME,			ShaderSource::UI_SHADER_VS,			ShaderSource::UI_SHADER_FS,			ShaderSource::UI_SHADER_STATE,			ShaderSource::DEFAULT_ALPHA_LAYER, ShaderSource::DEFAULT_ALPHA_QUEUE);
+	Shader* defaultAlpha	= Shader::BuildShader(ShaderSource::DEFAULT_ALPHA_NAME,		ShaderSource::DEFAULT_ALPHA_VS,		ShaderSource::DEFAULT_ALPHA_FS,		ShaderSource::DEFAULT_ALPHA_STATE,		ShaderSource::DEFAULT_ALPHA_LAYER,	ShaderSource::DEFAULT_ALPHA_QUEUE);
+	Shader* uiShader		= Shader::BuildShader(ShaderSource::UI_SHADER_NAME,			ShaderSource::UI_SHADER_VS,			ShaderSource::UI_SHADER_FS,			ShaderSource::UI_SHADER_STATE,			ShaderSource::DEFAULT_ALPHA_LAYER,	ShaderSource::DEFAULT_ALPHA_QUEUE);
 	Shader* debugShader		= Shader::BuildShader(ShaderSource::DEBUG_RENDER_NAME,		ShaderSource::DEBUG_RENDER_VS,		ShaderSource::DEBUG_RENDER_FS,		ShaderSource::DEBUG_RENDER_STATE,		ShaderSource::DEFAULT_OPAQUE_LAYER, ShaderSource::DEFAULT_OPAQUE_QUEUE);
+	Shader* xrayShader		= Shader::BuildShader(ShaderSource::XRAY_SHADER_NAME,		ShaderSource::XRAY_SHADER_VS,		ShaderSource::XRAY_SHADER_FS,		ShaderSource::XRAY_SHADER_STATE,		ShaderSource::DEFAULT_OPAQUE_LAYER, ShaderSource::DEFAULT_OPAQUE_QUEUE);
 	Shader* phongOpaque		= Shader::BuildShader(ShaderSource::PHONG_OPAQUE_NAME,		ShaderSource::PHONG_OPAQUE_VS,		ShaderSource::PHONG_OPAQUE_FS,		ShaderSource::PHONG_OPAQUE_STATE,		ShaderSource::DEFAULT_OPAQUE_LAYER, ShaderSource::DEFAULT_OPAQUE_QUEUE);
-	Shader* phongAlpha		= Shader::BuildShader(ShaderSource::PHONG_ALPHA_NAME,		ShaderSource::PHONG_ALPHA_VS,		ShaderSource::PHONG_ALPHA_FS,		ShaderSource::PHONG_ALPHA_STATE,		ShaderSource::DEFAULT_ALPHA_LAYER, ShaderSource::DEFAULT_ALPHA_QUEUE);
+	Shader* phongAlpha		= Shader::BuildShader(ShaderSource::PHONG_ALPHA_NAME,		ShaderSource::PHONG_ALPHA_VS,		ShaderSource::PHONG_ALPHA_FS,		ShaderSource::PHONG_ALPHA_STATE,		ShaderSource::DEFAULT_ALPHA_LAYER,	ShaderSource::DEFAULT_ALPHA_QUEUE);
 	Shader* vertexNormal	= Shader::BuildShader(ShaderSource::VERTEX_NORMAL_NAME,		ShaderSource::VERTEX_NORMAL_VS,		ShaderSource::VERTEX_NORMAL_FS,		ShaderSource::VERTEX_NORMAL_STATE,		ShaderSource::DEFAULT_OPAQUE_LAYER, ShaderSource::DEFAULT_OPAQUE_QUEUE);
 	Shader* vertexTangent	= Shader::BuildShader(ShaderSource::VERTEX_TANGENT_NAME,	ShaderSource::VERTEX_TANGENT_VS,	ShaderSource::VERTEX_TANGENT_FS,	ShaderSource::VERTEX_TANGENT_STATE,		ShaderSource::DEFAULT_OPAQUE_LAYER, ShaderSource::DEFAULT_OPAQUE_QUEUE);
 	Shader* vertexBitangent	= Shader::BuildShader(ShaderSource::VERTEX_BITANGENT_NAME,	ShaderSource::VERTEX_BITANGENT_VS,	ShaderSource::VERTEX_BITANGENT_FS,	ShaderSource::VERTEX_BITANGENT_STATE,	ShaderSource::DEFAULT_OPAQUE_LAYER, ShaderSource::DEFAULT_OPAQUE_QUEUE);
@@ -115,6 +116,7 @@ void AssetDB::CreateShaders()
 	AssetCollection<Shader>::AddAsset(ShaderSource::DEFAULT_ALPHA_NAME,		defaultAlpha);
 	AssetCollection<Shader>::AddAsset(ShaderSource::UI_SHADER_NAME,			uiShader);
 	AssetCollection<Shader>::AddAsset(ShaderSource::DEBUG_RENDER_NAME,		debugShader);
+	AssetCollection<Shader>::AddAsset(ShaderSource::XRAY_SHADER_NAME,		xrayShader);
 	AssetCollection<Shader>::AddAsset(ShaderSource::PHONG_OPAQUE_NAME,		phongOpaque);
 	AssetCollection<Shader>::AddAsset(ShaderSource::PHONG_ALPHA_NAME,		phongAlpha);
 	AssetCollection<Shader>::AddAsset(ShaderSource::VERTEX_NORMAL_NAME,		vertexNormal);
@@ -146,20 +148,29 @@ void AssetDB::CreateMaterials()
 
 	AssetCollection<Material>::AddAsset("Debug_Render", debugMaterial);
 
-	Material* defaultMaterial = new Material("Default_Opaque");
-	defaultMaterial->SetDiffuse(AssetDB::GetTexture("White"));
-	defaultMaterial->SetShader(AssetDB::GetShader(ShaderSource::DEFAULT_OPAQUE_NAME));
+	Material* xrayMaterial = new Material("X_Ray");
+	xrayMaterial->SetDiffuse(AssetDB::GetTexture("White"));
+	xrayMaterial->SetShader(AssetDB::GetShader(ShaderSource::XRAY_SHADER_NAME));
 
-	AssetCollection<Material>::AddAsset("Default_Opaque", defaultMaterial);
+	AssetCollection<Material>::AddAsset("X_Ray", xrayMaterial);
+
+	Material* defaultOpaque = new Material("Default_Opaque");
+	defaultOpaque->SetDiffuse(AssetDB::GetTexture("White"));
+	defaultOpaque->SetShader(AssetDB::GetShader(ShaderSource::DEFAULT_OPAQUE_NAME));
+
+	AssetCollection<Material>::AddAsset("Default_Opaque", defaultOpaque);
+
+	Material* defaultAlpha = new Material("Default_Alpha");
+	defaultAlpha->SetDiffuse(AssetDB::GetTexture("White_Tint"));
+	defaultAlpha->SetShader(AssetDB::GetShader(ShaderSource::DEFAULT_ALPHA_NAME));
+
+	AssetCollection<Material>::AddAsset("Default_Alpha", defaultAlpha);
 
 	Material* phongMaterial = new Material("Phong_Opaque");
 	phongMaterial->SetDiffuse(GetTexture("Default"));
 	phongMaterial->SetShader(GetShader(ShaderSource::PHONG_OPAQUE_NAME));
 
 	AssetCollection<Material>::AddAsset("Phong_Opaque", phongMaterial);
-
-
-	AssetCollection<Material>::AddAsset("Default_Opaque", defaultMaterial);
 
 	Material* uiMat = new Material("UI");
 	uiMat->SetDiffuse(AssetDB::GetTexture("White"));

@@ -68,6 +68,11 @@ namespace ShaderSource
 	extern const char* DEBUG_RENDER_FS;
 	extern const RenderState DEBUG_RENDER_STATE;
 
+	// Xray shader, for xray draws
+	extern const char* XRAY_SHADER_NAME;
+	extern const char* XRAY_SHADER_VS;
+	extern const char* XRAY_SHADER_FS;
+	extern const RenderState XRAY_SHADER_STATE;
 
 	// Phong Opaque Shader
 	extern const char* PHONG_OPAQUE_NAME;

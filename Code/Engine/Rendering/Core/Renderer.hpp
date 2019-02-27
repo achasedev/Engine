@@ -130,7 +130,7 @@ public:
 	//-----Drawing-----
 
 	// For ALL drawing
-	void DrawMeshImmediate(const Vertex3D_PCU* verts, int numVerts, PrimitiveType drawPrimitive = PRIMITIVE_TRIANGLES, const unsigned int* indices = nullptr, int numIndices = -1);
+	void DrawMeshImmediate(const Vertex3D_PCU* verts, int numVerts, PrimitiveType drawPrimitive = PRIMITIVE_TRIANGLES, const unsigned int* indices = nullptr, int numIndices = -1, Material* material = nullptr);
 	void DrawMesh(Mesh* mesh);
 	void DrawMeshWithMaterial(Mesh* mesh, Material* material);
 	void DrawRenderable(Renderable* renderable);
@@ -139,10 +139,10 @@ public:
 	// Drawing convenience functions
 
 	//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	void DrawPoint(const Vector3& position, const Rgba& color, float radius);
+	void DrawPoint(const Vector3& position, const Rgba& color, float radius, Material* material = nullptr);
 
 	//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	void DrawLine(const Vector3& startPos, const Rgba& startColor, const Vector3& endPos, const Rgba& endColor, float width = 1.0f);
+	void Draw3DLine(const Vector3& startPos, const Rgba& startColor, const Vector3& endPos, const Rgba& endColor, float width = 1.0f, Material* material = nullptr);
 	
 	//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	void Draw2DQuad(const AABB2& bounds, const AABB2& textureUVs, const Rgba& tint, Material* material = nullptr);
@@ -154,8 +154,9 @@ public:
 	void Draw3DQuad(const Vector3& position, const Vector2& dimensions, const AABB2& textureUVs, const Vector3& right = Vector3::X_AXIS, const Vector3& up = Vector3::Y_AXIS, const Rgba& tint = Rgba::WHITE, const Vector2& pivot = Vector2(0.5f, 0.5f), Material* material = nullptr);
 	
 	//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	void DrawCube(const Vector3& center, const Vector3& dimensions, const Rgba& tint = Rgba::WHITE, const AABB2& topUVs = AABB2::UNIT_SQUARE_OFFCENTER, const AABB2& sideUVs = AABB2::UNIT_SQUARE_OFFCENTER, const AABB2& bottomUVs = AABB2::UNIT_SQUARE_OFFCENTER, Material* material = nullptr);
-	
+	void DrawSolidCube(const Vector3& center, const Vector3& dimensions, const Rgba& tint = Rgba::WHITE, const AABB2& topUVs = AABB2::UNIT_SQUARE_OFFCENTER, const AABB2& sideUVs = AABB2::UNIT_SQUARE_OFFCENTER, const AABB2& bottomUVs = AABB2::UNIT_SQUARE_OFFCENTER, Material* material = nullptr);
+	void DrawWireCube(const Vector3& center, const Vector3& dimensions, const Rgba& tint = Rgba::WHITE, Material* material = nullptr);
+
 	//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	void DrawSphere(const Vector3& position, float radius, unsigned int numWedges, unsigned int numSlices, const Rgba& color = Rgba::WHITE, Material* material = nullptr);
 

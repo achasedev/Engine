@@ -918,7 +918,7 @@ void Profiler::RenderGraph() const
 		if (m_firstSelectionIndex == m_secondSelectionIndex)
 		{
 			float x = graphOffset.x - (graphDimensions.x * m_firstSelectionIndex * (1.f / (PROFILER_MAX_REPORT_COUNT - 1)));
-			renderer->DrawLine(Vector3(x, s_graphBounds.mins.y, 0.f), s_graphSelectionColor, Vector3(x, s_graphBounds.maxs.y, 0.f), s_graphSelectionColor);
+			renderer->Draw3DLine(Vector3(x, s_graphBounds.mins.y, 0.f), s_graphSelectionColor, Vector3(x, s_graphBounds.maxs.y, 0.f), s_graphSelectionColor);
 		}
 		else // Otherwise draw a quad for the selection
 		{
