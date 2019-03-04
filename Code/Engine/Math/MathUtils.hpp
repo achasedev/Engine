@@ -126,6 +126,7 @@ bool Quadratic(Vector2& out_solutions, float a, float b, float c);
 int			MinInt(int a, int b);
 int			MaxInt(int a, int b);
 
+
 unsigned int MinInt(unsigned int a, unsigned int b);
 unsigned int MaxInt(unsigned int a, unsigned int b);
 float	MaxFloat(float a, float b, float c, float d);
@@ -144,3 +145,30 @@ bool AreMostlyEqual(const Matrix44& a, const Matrix44& b, float epsilon = 0.0001
 // Misc
 bool DoSpheresOverlap(const Vector3& posA, float radiusA, const Vector3& posB, float radiusB);
 bool DoesBoxSphereOverlap(const AABB3& boxBounds, const Vector3& sphereCenter, float sphereRadius);
+
+// Templates
+template <typename T>
+T Max(const T& a, const T& b)
+{
+	return (a > b ? a : b);
+}
+
+template <typename T, typename ...ARGS>
+T Max(const T&a, ARGS ...args)
+{
+	T max = Max<T>(args...);
+	return Max<T>(a, max);
+}
+
+template <typename T>
+T Min(const T& a, const T& b)
+{
+	return (a < b ? a : b);
+}
+
+template <typename T, typename ...ARGS>
+T Min(const T&a, ARGS ...args)
+{
+	T min = Min<T>(args...);
+	return Min<T>(a, min);
+}
