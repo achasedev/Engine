@@ -58,6 +58,7 @@ public:
 	static const int NUM_CONTROLLERS = 4;
 	static const unsigned char	KEYBOARD_ESCAPE;
 	static const unsigned char	KEYBOARD_SPACEBAR;
+	static const unsigned char	KEYBOARD_CONTROL;
 	static const unsigned char	KEYBOARD_UP_ARROW;
 	static const unsigned char	KEYBOARD_DOWN_ARROW;
 	static const unsigned char	KEYBOARD_LEFT_ARROW;

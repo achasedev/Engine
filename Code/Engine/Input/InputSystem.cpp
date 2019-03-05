@@ -21,6 +21,7 @@ InputSystem* InputSystem::s_instance = nullptr;
 // Mapping InputSystem constants to Windows macros
 const unsigned char	InputSystem::KEYBOARD_ESCAPE		= VK_ESCAPE;
 const unsigned char InputSystem::KEYBOARD_SPACEBAR		= VK_SPACE;
+const unsigned char	InputSystem::KEYBOARD_CONTROL		= VK_CONTROL;
 const unsigned char	InputSystem::KEYBOARD_F1			= VK_F1;
 const unsigned char	InputSystem::KEYBOARD_F2			= VK_F2;
 const unsigned char	InputSystem::KEYBOARD_F3			= VK_F3;
