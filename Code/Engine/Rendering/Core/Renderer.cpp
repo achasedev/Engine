@@ -247,6 +247,16 @@ void Renderer::ClearScreen(const Rgba& clearColor)
 
 
 //-----------------------------------------------------------------------------------------------
+// Clears the back buffer to a solid color
+//
+void Renderer::ClearScreen(const Vector3& clearColor)
+{
+	glClearColor(clearColor.x, clearColor.y, clearColor.z, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Applies a single shader draw effect to the entire default render target
 //
 void Renderer::ApplyImageEffect(ShaderProgram* program)
