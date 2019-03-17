@@ -52,7 +52,7 @@ Vector2 IntAABB2::GetCenterPoint() const
 bool IntAABB2::DoesContain(const IntAABB2& containee) const
 {
 	if (mins.x <= containee.mins.x && mins.y <= containee.mins.y
-		&& maxs.x >= containee.maxs.x && containee.maxs.y >= containee.maxs.y)
+		&& maxs.x >= containee.maxs.x && maxs.y >= containee.maxs.y)
 	{
 		return true;
 	}
