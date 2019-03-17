@@ -89,8 +89,6 @@ bool ComputeShader::Initialize(const char* filename)
 //
 void ComputeShader::Execute(int numGroupsX, int numGroupsY, int numGroupsZ)
 {
-	PROFILE_LOG_SCOPE_FUNCTION();
-
 	if (m_programHandle == NULL)
 	{
 		LogTaggedPrintf("COMPUTE_SHADER", "Error: Execute() called on a compute shader with NULL handle");
