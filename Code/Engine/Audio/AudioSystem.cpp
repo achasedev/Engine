@@ -268,7 +268,7 @@ void AudioSystem::SetSoundPlaybackSpeed( SoundPlaybackID soundPlaybackID, float 
 
 
 //-----------------------------------------------------------------------------------------------
-bool AudioSystem::IsSoundFinished(SoundPlaybackID soundPlaybackID)
+bool AudioSystem::IsSoundFinished(SoundPlaybackID soundPlaybackID) const
 {
 	if (soundPlaybackID == MISSING_SOUND_ID)
 	{
