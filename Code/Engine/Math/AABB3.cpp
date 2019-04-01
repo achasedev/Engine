@@ -121,6 +121,20 @@ Vector3 AABB3::GetBackTopLeft() const
 
 
 //-----------------------------------------------------------------------------------------------
+// Returns the AABB3 after translating this by translation
+//
+AABB3 AABB3::GetTranslated(const Vector3& translation) const
+{
+	AABB3 translatedResult;
+
+	translatedResult.mins = mins + translation;
+	translatedResult.maxs = maxs + translation;
+
+	return translatedResult;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns whether the box bounds contains the given point
 //
 bool AABB3::ContainsPoint(const Vector3& point) const

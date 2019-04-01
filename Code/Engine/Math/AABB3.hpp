@@ -19,7 +19,7 @@ public:
 	AABB3() {}
 	explicit AABB3(const Vector3& mins, const Vector3& maxs);							// Construct using two Vector2D's to represent the bounds
 	explicit AABB3(const Vector3& center, float radiusX, float radiusY, float radiusZ);	// Construct using a center and XY offsets (radii)
-
+	
 	//-----Producers-----
 	Vector3 GetDimensions() const;
 	Vector3 GetCenter() const;
@@ -34,7 +34,8 @@ public:
 	Vector3 GetBackTopRight() const;
 	Vector3 GetBackTopLeft() const;
 
-	bool ContainsPoint(const Vector3& point) const;
+	AABB3	GetTranslated(const Vector3& translation) const;
+	bool	ContainsPoint(const Vector3& point) const;
 
 	//-----Static Constants-----
 	static const AABB3 UNIT_CUBE;
