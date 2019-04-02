@@ -10,6 +10,7 @@
 #include "Engine/Assets/AssetDB.hpp"
 #include "Engine/Core/Time/Time.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/LogSystem.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Time/Profiler.hpp"
 #include "Engine/Rendering/Meshes/Mesh.hpp"
@@ -453,6 +454,12 @@ void Profiler::ProcessKeyboardInput()
 			SetGeneratingReportType(REPORT_TYPE_TREE);
 		}
 	}
+
+	// Saving reports to the log file
+	if (input->WasKeyJustPressed('P'))
+	{
+		WriteHistoryAverageToLog();
+	}
 }
 
 
@@ -709,6 +716,45 @@ void Profiler::AddEntryInfoRecursive(ProfileReportEntry* srcEntry, ProfileReport
 
 		AddEntryInfoRecursive(currSrcChild, currDstChild);
 	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Finds the average time values for the given log, prints them to the log file, and recursively
+// calls on the children
+//
+void RecursivelyWriteAverageReportToLog(ProfileReportEntry* accumulatedEntry, int numSamplesForEntry, int indent)
+{
+	// Write this entry, dividing by the number of samples to get the average
+	accumulatedEntry->m_callCount = Ceiling((float)accumulatedEntry->m_callCount / (float)numSamplesForEntry);
+	accumulatedEntry->m_selfTime /= numSamplesForEntry;
+	accumulatedEntry->m_totalTime /= numSamplesForEntry;
+
+	std::string logText = accumulatedEntry->GetAsStringForUI(indent);
+	LogPrintString(logText);
+
+	// Recursively call on children
+	int numChildren = (int)accumulatedEntry->m_children.size();
+	for (int childIndex = 0; childIndex < numChildren; ++childIndex)
+	{
+		RecursivelyWriteAverageReportToLog(accumulatedEntry->m_children[childIndex], numSamplesForEntry, indent + 1);
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Finds the average off all profile report entries currently in the history and writes them to
+// file using the LogSystem
+//
+void Profiler::WriteHistoryAverageToLog() const
+{
+	ProfileReport* accumulatedReport = GetAccumulatedReport(0, PROFILER_MAX_REPORT_COUNT - 1);
+	ProfileReportEntry* currEntry = accumulatedReport->m_rootEntry;
+
+	LogPrintf("---------- FRAME PROFILE - AVERAGE OF THE LAST %u FRAMES ----------", PROFILER_MAX_REPORT_COUNT);
+	RecursivelyWriteAverageReportToLog(currEntry, PROFILER_MAX_REPORT_COUNT, 0);
+
+	ConsolePrintf(Rgba::GREEN, "Wrote the current %u samples in the history to the log file", PROFILER_MAX_REPORT_COUNT);
 }
 
 
@@ -1254,6 +1300,7 @@ Profiler*			Profiler::GetInstance() { return nullptr; }
 float				Profiler::GetAverageTotalTime(int startIndex, int endIndex) const { return 0.f; }
 ProfileReport*		Profiler::GetAccumulatedReport(int firstIndex, int secondIndex) const { return nullptr; }
 void				Profiler::AddEntryInfoRecursive(ProfileReportEntry* sourceEntry, ProfileReportEntry* destinationEntry) const {}
+void				Profiler::RecursivelyWriteAverageReportToLog(ProfileReportEntry* accumulatedEntry, int numSamplesForEntry, int indent) {}
 ProfileReport*		Profiler::BuildReportForFrame(ProfileMeasurement* stack) { return nullptr; }
 void				Profiler::PushReport(ProfileReport* report) {}
 void				Profiler::FlushReports() {} 

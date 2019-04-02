@@ -380,7 +380,7 @@ static void WriteToDebugOutput(LogMessage_t log, void* fileptr)
 
 
 //-----------------------------------------------------------------------------------------------
-// Adds the text to the log with the tag "Log"
+// Adds the text to the log with no tag
 //
 void LogPrintf(char const *format, ...)
 {
@@ -393,7 +393,20 @@ void LogPrintf(char const *format, ...)
 
 
 //-----------------------------------------------------------------------------------------------
-// Adds the text to the log with the tag "Log"
+// Adds the text to to log as given, no formatting or tag
+//
+void LogPrintString(const std::string& textLiteral)
+{
+	LogMessage_t log;
+	log.message = textLiteral;
+	log.tag = "";
+
+	LogSystem::AddLog(log);
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Adds the text to the log with no tag
 //
 void LogPrintv(char const* format, va_list args)
 {
@@ -403,7 +416,7 @@ void LogPrintv(char const* format, va_list args)
 
 	LogMessage_t log;
 	log.message	= std::string(textLiteral);
-	log.tag = "LOG";
+	log.tag = "";
 
 	LogSystem::AddLog(log);
 }

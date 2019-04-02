@@ -60,6 +60,8 @@ public:
 	float										GetAverageTotalTime(int startIndex, int endIndex) const;
 	ProfileReport*								GetAccumulatedReport(int firstIndex, int secondIndex) const;
 	void											AddEntryInfoRecursive(ProfileReportEntry* sourceEntry, ProfileReportEntry* destinationEntry) const;
+	void										WriteHistoryAverageToLog() const;
+
 
 private:
 	//-----Private Methods-----

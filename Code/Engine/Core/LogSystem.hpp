@@ -10,6 +10,7 @@
 #include "Engine/DataStructures/ThreadSafeMap.hpp"
 #include "Engine/DataStructures/ThreadSafeQueue.hpp"
 #include <shared_mutex>
+#include <string>
 
 class File;
 
@@ -126,6 +127,7 @@ private:
 // For adding messages to the log
 void LogPrintf(char const *format, ...);
 void LogPrintv(char const* format, va_list args);
+void LogPrintString(const std::string& textLiteral);
 
 void LogTaggedPrintf(char const* tag, char const *format, ...);
 void LogTaggedPrintv(char const* tag, char const* format, va_list args);
