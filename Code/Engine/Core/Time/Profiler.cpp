@@ -1300,7 +1300,6 @@ Profiler*			Profiler::GetInstance() { return nullptr; }
 float				Profiler::GetAverageTotalTime(int startIndex, int endIndex) const { return 0.f; }
 ProfileReport*		Profiler::GetAccumulatedReport(int firstIndex, int secondIndex) const { return nullptr; }
 void				Profiler::AddEntryInfoRecursive(ProfileReportEntry* sourceEntry, ProfileReportEntry* destinationEntry) const {}
-void				Profiler::RecursivelyWriteAverageReportToLog(ProfileReportEntry* accumulatedEntry, int numSamplesForEntry, int indent) {}
 ProfileReport*		Profiler::BuildReportForFrame(ProfileMeasurement* stack) { return nullptr; }
 void				Profiler::PushReport(ProfileReport* report) {}
 void				Profiler::FlushReports() {} 
