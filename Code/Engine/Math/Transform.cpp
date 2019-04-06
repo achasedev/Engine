@@ -179,7 +179,7 @@ Matrix44 Transform::GetParentsToWorldMatrix()
 //-----------------------------------------------------------------------------------------------
 // Returns the world right vector for this transform
 //
-Vector3 Transform::GetWorldRight()
+Vector3 Transform::GetIVector()
 {
 	return GetWorldMatrix().GetIVector().xyz();
 }
@@ -188,7 +188,7 @@ Vector3 Transform::GetWorldRight()
 //-----------------------------------------------------------------------------------------------
 // Returns the world up vector for this transform
 //
-Vector3 Transform::GetWorldUp()
+Vector3 Transform::GetJVector()
 {
 	return GetWorldMatrix().GetJVector().xyz();
 }
@@ -197,7 +197,7 @@ Vector3 Transform::GetWorldUp()
 //-----------------------------------------------------------------------------------------------
 // Returns the world forward vector for this transform
 //
-Vector3 Transform::GetWorldForward()
+Vector3 Transform::GetKVector()
 {
 	return GetWorldMatrix().GetKVector().xyz();
 }

@@ -31,13 +31,13 @@ public:
 	void Rotate(const Vector3& deltaRotation);
 	void Scale(const Vector3& deltaScale);
 
-	Matrix44 GetLocalMatrix();		// Matrix that transforms this space to parent's space
+	Matrix44 GetLocalMatrix();	// Matrix that transforms this space to parent's space
 	Matrix44 GetWorldMatrix();	// Matrix that transforms this space to absolute world space
 	Matrix44 GetParentsToWorldMatrix();
 
-	Vector3 GetWorldRight();
-	Vector3 GetWorldUp();
-	Vector3 GetWorldForward();
+	Vector3 GetIVector();
+	Vector3 GetJVector();
+	Vector3 GetKVector();
 
 	Vector3 GetWorldPosition();
 	Vector3 GetWorldRotation();
@@ -52,7 +52,7 @@ private:
 public:
 	//-----Public Data-----
 
-	// All defined in local space!
+	// All defined in parent space!
 	Vector3		position = Vector3::ZERO;	
 	Vector3		rotation = Vector3::ZERO;	
 	Vector3		scale = Vector3::ONES;		
