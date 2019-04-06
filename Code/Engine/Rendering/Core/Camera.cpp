@@ -102,6 +102,16 @@ void Camera::SetTransform(const Transform& transform)
 
 
 //-----------------------------------------------------------------------------------------------
+// Sets the position of the camera to the one given
+//
+void Camera::SetPosition(const Vector3& position)
+{
+	m_transform.position = position;
+	m_viewMatrix = InvertLookAtMatrix(m_transform.GetWorldMatrix());
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Sets the color target of the Camera's FrameBuffer to the one passed
 //
 void Camera::SetColorTarget(Texture* colorTarget)
@@ -258,9 +268,9 @@ void Camera::FinalizeUniformBuffer()
 	bufferData.m_projectionMatrix = m_projectionMatrix; // Append change of basis!
 	bufferData.m_cameraMatrix = m_transform.GetWorldMatrix();
 
-	bufferData.m_cameraX	= GetXVector();
-	bufferData.m_cameraY	= GetYVector();
-	bufferData.m_cameraZ	= GetZVector();
+	bufferData.m_cameraX	= GetIVector();
+	bufferData.m_cameraY	= GetJVector();
+	bufferData.m_cameraZ	= GetKVector();
 	bufferData.m_cameraPosition = m_transform.position;
 
 	bufferData.m_inverseViewProjection = Matrix44::GetInverse(m_viewMatrix) * Matrix44::GetInverse(m_projectionMatrix * m_changeOfBasisMatrix);
@@ -325,27 +335,27 @@ Vector3 Camera::GetRotation() const
 
 
 //-----------------------------------------------------------------------------------------------
-// Returns the forward (K) vector of the camera's transform
+// Returns the (K) vector of the camera's transform
 //
-Vector3 Camera::GetZVector() const
+Vector3 Camera::GetKVector() const
 {
 	return m_transform.GetWorldMatrix().GetKVector().xyz();
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Returns the right (I) vector of the camera's transform
+// Returns the (I) vector of the camera's transform
 //
-Vector3 Camera::GetXVector() const
+Vector3 Camera::GetIVector() const
 {
 	return m_transform.GetWorldMatrix().GetIVector().xyz();
 }
 
 
 //-----------------------------------------------------------------------------------------------
-// Returns the up (J) vector of the camera's transform
+// Returns the (J) vector of the camera's transform
 //
-Vector3 Camera::GetYVector() const
+Vector3 Camera::GetJVector() const
 {
 	return m_transform.GetWorldMatrix().GetJVector().xyz();
 }

@@ -211,7 +211,7 @@ Camera* DebugRenderSystem::GetWorldCamera()
 Vector3 DebugRenderSystem::GetDefaultSpawnLocation()
 {
 	Vector3 cameraPosition = s_instance->m_worldCamera->GetPosition();
-	Vector3 cameraForward = s_instance->m_worldCamera->GetZVector();
+	Vector3 cameraForward = s_instance->m_worldCamera->GetKVector();
 
 	return cameraPosition + cameraForward * CAMERA_SPAWN_DISTANCE;
 }

@@ -30,6 +30,7 @@ public:
 	void					SetRotation(const Vector3& newRotation);
 
 	void					SetTransform(const Transform& transform);
+	void					SetPosition(const Vector3& position);
 
 	void					SetColorTarget(Texture* color_target);
 	void					SetDepthTarget(Texture* depth_target);
@@ -64,9 +65,9 @@ public:
 	Vector3					GetPosition() const;
 	Vector3					GetRotation() const;
 
-	Vector3					GetZVector() const;
-	Vector3					GetXVector() const;
-	Vector3					GetYVector() const;
+	Vector3					GetKVector() const;
+	Vector3					GetIVector() const;
+	Vector3					GetJVector() const;
 
 	unsigned int			GetFrameBufferHandle() const;
 	unsigned int			GetDrawOrder() const;
