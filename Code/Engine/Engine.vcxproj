@@ -373,6 +373,7 @@
     <ClCompile Include="Core\Time\Time.cpp" />
     <ClCompile Include="Core\Window.cpp" />
     <ClCompile Include="Core\Utility\XmlUtilities.cpp" />
+    <ClCompile Include="DataStructures\NamedProperties.cpp" />
     <ClCompile Include="Input\InputSystem.cpp" />
     <ClCompile Include="Input\KeyButtonState.cpp" />
     <ClCompile Include="Input\Mouse.cpp" />
@@ -516,6 +517,7 @@
     <ClInclude Include="Core\Time\Time.hpp" />
     <ClInclude Include="Core\Window.hpp" />
     <ClInclude Include="Core\Utility\XmlUtilities.hpp" />
+    <ClInclude Include="DataStructures\NamedProperties.hpp" />
     <ClInclude Include="DataStructures\ThreadSafeMap.hpp" />
     <ClInclude Include="DataStructures\ThreadSafeQueue.hpp" />
     <ClInclude Include="DataStructures\ThreadSafeSet.hpp" />

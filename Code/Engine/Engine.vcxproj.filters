@@ -381,6 +381,7 @@
     <ClCompile Include="Core\Utility\RawNoise.cpp" />
     <ClCompile Include="Core\Utility\SmoothNoise.cpp" />
     <ClCompile Include="Scripting\Lua.cpp" />
+    <ClCompile Include="DataStructures\NamedProperties.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -739,5 +740,6 @@
     <ClInclude Include="Core\Utility\RawNoise.hpp" />
     <ClInclude Include="Core\Utility\SmoothNoise.hpp" />
     <ClInclude Include="Scripting\Lua.hpp" />
+    <ClInclude Include="DataStructures\NamedProperties.hpp" />
   </ItemGroup>
 </Project>
