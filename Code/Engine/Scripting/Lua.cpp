@@ -15,10 +15,13 @@
 LuaScript::LuaScript(const char* filepath)
 {
 	m_luaVirtualMachine = luaL_newstate();
+	m_scriptFilePath = filepath;
+
 	if (luaL_loadfile(m_luaVirtualMachine, filepath) || lua_pcall(m_luaVirtualMachine, 0, 0, 0)) // Calling pcall here removes the compilation result of the file
 	{
 		PrintLuaMessage(Stringf("Couldn't load script file \"%s\"", filepath));
 		m_luaVirtualMachine = nullptr;
+		m_scriptFilePath.clear();
 	}
 }
 
@@ -32,6 +35,7 @@ LuaScript::~LuaScript()
 	{
 		lua_close(m_luaVirtualMachine);
 		m_luaVirtualMachine = nullptr;
+		m_scriptFilePath.clear();
 	}
 }
 
@@ -41,7 +45,7 @@ LuaScript::~LuaScript()
 //
 void LuaScript::PrintLuaMessage(const std::string& message) const
 {
-	LogTaggedPrintf("LUA", "%s", message.c_str());
+	LogTaggedPrintf("LUA", "File: %s | %s", m_scriptFilePath.c_str(), message.c_str());
 }
 
 

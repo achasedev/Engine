@@ -173,6 +173,11 @@ public:
 
 		while (lua_next(m_luaVirtualMachine, -2)) // Pops a key, pushes a key-value pair
 		{
+			if (!lua_isnumber(m_luaVirtualMachine, -1))
+			{
+				PrintLuaMessage(Stringf("Array \"%s\" has a non-number value at index %i", arrayName.c_str(), intVector.size()));
+			}
+
 			intVector.push_back((int)lua_tonumber(m_luaVirtualMachine, -1));
 			lua_pop(m_luaVirtualMachine, 1); // Remove the value we just stored off
 		}
@@ -182,10 +187,106 @@ public:
 		return intVector;
 	}
 
+
+	//-----------------------------------------------------------------------------------------------
+	template <>
+	std::vector<float> GetArray(const std::string& arrayName)
+	{
+		std::vector<float> floatVector;
+		lua_getglobal(m_luaVirtualMachine, arrayName.c_str());
+
+		if (lua_isnil(m_luaVirtualMachine, -1))
+		{
+			ClearLuaStack();
+			return floatVector;
+		}
+
+		lua_pushnil(m_luaVirtualMachine);
+
+		while (lua_next(m_luaVirtualMachine, -2)) // Pops a key, pushes a key-value pair
+		{
+			if (!lua_isnumber(m_luaVirtualMachine, -1))
+			{
+				PrintLuaMessage(Stringf("Array \"%s\" has a non-number value at index %i", arrayName.c_str(), floatVector.size()));
+			}
+
+			floatVector.push_back((float)lua_tonumber(m_luaVirtualMachine, -1));
+			lua_pop(m_luaVirtualMachine, 1); // Remove the value we just stored off
+		}
+
+		ClearLuaStack();
+
+		return floatVector;
+	}
+
+	//-----------------------------------------------------------------------------------------------
+	template <>
+	std::vector<std::string> GetArray(const std::string& arrayName)
+	{
+		std::vector<std::string> stringVector;
+		lua_getglobal(m_luaVirtualMachine, arrayName.c_str());
+
+		if (lua_isnil(m_luaVirtualMachine, -1))
+		{
+			ClearLuaStack();
+			return stringVector;
+		}
+
+		lua_pushnil(m_luaVirtualMachine);
+
+		while (lua_next(m_luaVirtualMachine, -2)) // Pops a key, pushes a key-value pair
+		{
+			if (!lua_isstring(m_luaVirtualMachine, -1))
+			{
+				PrintLuaMessage(Stringf("Array \"%s\" has a non-string value at index %i", arrayName.c_str(), stringVector.size()));
+			}
+
+			stringVector.push_back(lua_tostring(m_luaVirtualMachine, -1));
+			lua_pop(m_luaVirtualMachine, 1); // Remove the value we just stored off
+		}
+
+		ClearLuaStack();
+
+		return stringVector;
+	}
+
+
+	//-----------------------------------------------------------------------------------------------
+	template <>
+	std::vector<bool> GetArray(const std::string& arrayName)
+	{
+		std::vector<bool> boolVector;
+		lua_getglobal(m_luaVirtualMachine, arrayName.c_str());
+
+		if (lua_isnil(m_luaVirtualMachine, -1))
+		{
+			ClearLuaStack();
+			return boolVector;
+		}
+
+		lua_pushnil(m_luaVirtualMachine);
+
+		while (lua_next(m_luaVirtualMachine, -2)) // Pops a key, pushes a key-value pair
+		{
+			if (!lua_isboolean(m_luaVirtualMachine, -1))
+			{
+				PrintLuaMessage(Stringf("Array \"%s\" has a non-boolean value at index %i", arrayName.c_str(), boolVector.size()));
+			}
+
+			boolVector.push_back(lua_toboolean(m_luaVirtualMachine, -1));
+			lua_pop(m_luaVirtualMachine, 1); // Remove the value we just stored off
+		}
+
+		ClearLuaStack();
+
+		return boolVector;
+	}
+
 	
 private:
 	//-----Private Data-----
 
+	std::string	m_scriptFilePath;
 	lua_State*	m_luaVirtualMachine = nullptr;
 
 };
