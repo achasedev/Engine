@@ -8,47 +8,6 @@
 #include "Engine/Core/LogSystem.hpp"
 
 
-LuaVirtualMachine* LuaVirtualMachine::s_instance = nullptr;
-
-//-----------------------------------------------------------------------------------------------
-// Constructor
-//
-LuaVirtualMachine::LuaVirtualMachine()
-{
-	luaL_openlibs(m_state);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Destructor
-//
-LuaVirtualMachine::~LuaVirtualMachine()
-{
-	lua_close(m_state);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Opens Lua and loads the I/O Library
-//
-void LuaVirtualMachine::Initialize()
-{
-	s_instance = new LuaVirtualMachine();
-}
-
-
-//-----------------------------------------------------------------------------------------------
-// Closes the Lua Virtual Machine instance
-//
-void LuaVirtualMachine::Shutdown()
-{
-	if (s_instance != nullptr)
-	{
-		delete s_instance;
-		s_instance = nullptr;
-	}
-}
-
 
 //-----------------------------------------------------------------------------------------------
 // Script Constructor
@@ -87,11 +46,21 @@ void LuaScript::PrintLuaMessage(const std::string& message) const
 
 
 //-----------------------------------------------------------------------------------------------
+// Clears the Lua stack by popping all elements within
+//
+void LuaScript::ClearLuaStack()
+{
+	int stackSize = lua_gettop(m_luaVirtualMachine);
+	lua_pop(m_luaVirtualMachine, stackSize);
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Sets the Lua variable stack to be at the variable given by variableName
 // If variableName is a subfield of a global member, it is delimited by '.' characters
 // (i.e. player.position.x)
 //
-bool LuaScript::GetToStack(const std::string& variableName, int& out_numLevelsPushed)
+bool LuaScript::GetToStack(const std::string& variableName)
 {
 	if (IsStringNullOrEmpty(variableName))
 	{
@@ -100,13 +69,13 @@ bool LuaScript::GetToStack(const std::string& variableName, int& out_numLevelsPu
 	}
 
 	std::vector<std::string> variableTokens = Tokenize(variableName, '.');
-	out_numLevelsPushed = 0;
+	int numLevelsPushed = 0;
 
 	for (int levelIndex = 0; levelIndex < (int)variableTokens.size(); ++levelIndex)
 	{
 		std::string& currentToken = variableTokens[levelIndex];
 
-		if (out_numLevelsPushed == 0)
+		if (numLevelsPushed == 0)
 		{
 			lua_getglobal(m_luaVirtualMachine, currentToken.c_str());
 		}
@@ -115,7 +84,7 @@ bool LuaScript::GetToStack(const std::string& variableName, int& out_numLevelsPu
 			lua_getfield(m_luaVirtualMachine, -1, currentToken.c_str());
 		}
 
-		out_numLevelsPushed++;
+		numLevelsPushed++;
 
 		// Check for errors
 		if (lua_isnil(m_luaVirtualMachine, -1))

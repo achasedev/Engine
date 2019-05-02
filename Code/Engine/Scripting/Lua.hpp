@@ -7,6 +7,7 @@
 #ifndef __LUA_INC_H__
 #define __LUA_INC_H__
 
+// Everything is defined as C functions
 extern "C"
 {
 #include "ThirdParty/lua/include/lua.h"
@@ -14,22 +15,32 @@ extern "C"
 #include "ThirdParty/lua/include/lualib.h"
 }
 
+// Link to the static library
 #pragma comment(lib, "ThirdParty/lua/lua53.lib")
 
 #include <vector>
 #include "Engine/Core/Utility/StringUtils.hpp"
 
+
 class LuaScript
 {
 public:
+	//-----Public Methods-----
 
 	LuaScript(const char* filepath);
 	~LuaScript();
 
 	void PrintLuaMessage(const std::string& message) const;
-	bool GetToStack(const std::string& variableName, int& out_numLevelsPushed);
+	void ClearLuaStack();
 
-	// Data Manipulation
+public:
+	//-----Data Manipulation-----
+
+	void PrintStack() const;
+	bool GetToStack(const std::string& variableName);
+
+
+	//-----------------------------------------------------------------------------------------------
 	template <typename T>
 	T Get(const std::string& variableName)
 	{
@@ -40,8 +51,7 @@ public:
 		}
 
 		T result;
-		int numLevelsPushed = 0;
-		bool foundVariable = GetToStack(variableName, numLevelsPushed);
+		bool foundVariable = GetToStack(variableName);
 
 		if (foundVariable)
 		{
@@ -53,11 +63,16 @@ public:
 		}
 
 		// Reset the stack back to where it was before we started
-		lua_pop(m_luaVirtualMachine, numLevelsPushed);
+		ClearLuaStack();
 
 		return result;
 	}
 
+
+private:
+	//-----Data Accessor Helpers (Template Specializations)-----
+
+	//-----------------------------------------------------------------------------------------------
 	template <typename T>
 	inline T GetByType(const std::string& variableName)
 	{
@@ -65,6 +80,7 @@ public:
 	}
 
 
+	//-----------------------------------------------------------------------------------------------
 	template <>
 	inline bool GetByType(const std::string& variableName)
 	{
@@ -76,6 +92,8 @@ public:
 		return (bool)lua_toboolean(m_luaVirtualMachine, -1);
 	}
 
+	
+	//-----------------------------------------------------------------------------------------------
 	template <>
 	inline float GetByType(const std::string& variableName)
 	{
@@ -87,6 +105,8 @@ public:
 		return (float)lua_tonumber(m_luaVirtualMachine, -1);
 	}
 
+
+	//-----------------------------------------------------------------------------------------------
 	template <>
 	inline int GetByType(const std::string& variableName)
 	{
@@ -98,6 +118,8 @@ public:
 		return (int)lua_tonumber(m_luaVirtualMachine, -1);
 	}
 
+
+	//-----------------------------------------------------------------------------------------------
 	template <>
 	inline std::string GetByType(const std::string& variableName)
 	{
@@ -114,16 +136,55 @@ public:
 		return value;
 	}
 
+
+	//-----------------------------------------------------------------------------------------------
 	template <typename T>
 	T GetDefault()
 	{
 		return 0;
 	}
 
-	void PrintStack() const;
-	
 
+public:
+	//-----Data Array Accessors (Template Specialization)-----
+
+	//-----------------------------------------------------------------------------------------------
+	template <typename T>
+	std::vector<T> GetArray(const std::string& arrayName)
+	{
+		return std::vector<T>();
+	}
+
+
+	//-----------------------------------------------------------------------------------------------
+	template <>
+	std::vector<int> GetArray(const std::string& arrayName)
+	{
+		std::vector<int> intVector;
+		lua_getglobal(m_luaVirtualMachine, arrayName.c_str());
+
+		if (lua_isnil(m_luaVirtualMachine, -1))
+		{
+			ClearLuaStack();
+			return intVector;
+		}
+
+		lua_pushnil(m_luaVirtualMachine);
+
+		while (lua_next(m_luaVirtualMachine, -2)) // Pops a key, pushes a key-value pair
+		{
+			intVector.push_back((int)lua_tonumber(m_luaVirtualMachine, -1));
+			lua_pop(m_luaVirtualMachine, 1); // Remove the value we just stored off
+		}
+
+		ClearLuaStack();
+		
+		return intVector;
+	}
+
+	
 private:
+	//-----Private Data-----
 
 	lua_State*	m_luaVirtualMachine = nullptr;
 
