@@ -26,8 +26,8 @@ public:
 	LuaScript(const char* filepath);
 	~LuaScript();
 
-	void PrintError(const std::string& error);
-	bool GetToStack(const std::string& variableName);
+	void PrintLuaMessage(const std::string& message) const;
+	bool GetToStack(const std::string& variableName, int& out_numLevelsPushed);
 
 	// Data Manipulation
 	template <typename T>
@@ -35,65 +35,71 @@ public:
 	{
 		if (m_luaVirtualMachine == nullptr)
 		{
-			PrintError("Attempted to Get() on a script that isn't loaded");
+			PrintLuaMessage("Attempted to Get() on a script that isn't loaded");
 			return GetDefault<T>();
 		}
 
 		T result;
-		if (GetToStack(variableName))
+		int numLevelsPushed = 0;
+		bool foundVariable = GetToStack(variableName, numLevelsPushed);
+
+		if (foundVariable)
 		{
-			result = lua_get<T>(variableName);
+			result = GetByType<T>(variableName);
 		}
 		else
 		{
 			result = GetDefault<T>();
 		}
 
+		// Reset the stack back to where it was before we started
+		lua_pop(m_luaVirtualMachine, numLevelsPushed);
+
 		return result;
 	}
 
 	template <typename T>
-	inline T lua_get(const std::string& variableName)
+	inline T GetByType(const std::string& variableName)
 	{
 		return 0;
 	}
 
 
 	template <>
-	inline bool lua_get(const std::string& variableName)
+	inline bool GetByType(const std::string& variableName)
 	{
 		if (!lua_isboolean(m_luaVirtualMachine, -1))
 		{
-			PrintError(Stringf("Attempted to get variable \"%s\" as a float but it's not a number", variableName.c_str()));
+			PrintLuaMessage(Stringf("Attempted to get variable \"%s\" as a float but it's not a number", variableName.c_str()));
 		}
 
 		return (bool)lua_toboolean(m_luaVirtualMachine, -1);
 	}
 
 	template <>
-	inline float lua_get(const std::string& variableName)
+	inline float GetByType(const std::string& variableName)
 	{
 		if (!lua_isnumber(m_luaVirtualMachine, -1))
 		{
-			PrintError(Stringf("Attempted to get variable \"%s\" as a float but it's not a number", variableName.c_str()));
+			PrintLuaMessage(Stringf("Attempted to get variable \"%s\" as a float but it's not a number", variableName.c_str()));
 		}
 
 		return (float)lua_tonumber(m_luaVirtualMachine, -1);
 	}
 
 	template <>
-	inline int lua_get(const std::string& variableName)
+	inline int GetByType(const std::string& variableName)
 	{
 		if (!lua_isnumber(m_luaVirtualMachine, -1))
 		{
-			PrintError(Stringf("Attempted to get variable \"%s\" as an int but it's not a number", variableName.c_str()));
+			PrintLuaMessage(Stringf("Attempted to get variable \"%s\" as an int but it's not a number", variableName.c_str()));
 		}
 
 		return (int)lua_tonumber(m_luaVirtualMachine, -1);
 	}
 
 	template <>
-	inline std::string lua_get(const std::string& variableName)
+	inline std::string GetByType(const std::string& variableName)
 	{
 		std::string value = "null";
 		if (lua_isstring(m_luaVirtualMachine, -1))
@@ -102,7 +108,7 @@ public:
 		}
 		else
 		{
-			PrintError(Stringf("Attempted to get variable \"%s\" as a string but it's not a string", variableName.c_str()));
+			PrintLuaMessage(Stringf("Attempted to get variable \"%s\" as a string but it's not a string", variableName.c_str()));
 		}
 
 		return value;
@@ -114,37 +120,12 @@ public:
 		return 0;
 	}
 
+	void PrintStack() const;
 	
 
 private:
 
 	lua_State*	m_luaVirtualMachine = nullptr;
-	int			m_stackLevel = 0;
-
-};
-
-
-class LuaVirtualMachine
-{
-public:
-
-	static void Initialize();
-	static void Shutdown();
-
-
-private:
-
-	LuaVirtualMachine();
-	~LuaVirtualMachine();
-	LuaVirtualMachine(const LuaVirtualMachine& copy) = delete;
-
-
-private:
-
-	lua_State* m_state		= nullptr;
-
-	static std::vector<LuaScript*> m_luaScripts;
-	static LuaVirtualMachine* s_instance;
 
 };
 

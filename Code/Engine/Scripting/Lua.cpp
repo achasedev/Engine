@@ -58,7 +58,7 @@ LuaScript::LuaScript(const char* filepath)
 	m_luaVirtualMachine = luaL_newstate();
 	if (luaL_loadfile(m_luaVirtualMachine, filepath) || lua_pcall(m_luaVirtualMachine, 0, 0, 0)) // Calling pcall here removes the compilation result of the file
 	{
-		PrintError(Stringf("Couldn't load script file \"%s\"", filepath));
+		PrintLuaMessage(Stringf("Couldn't load script file \"%s\"", filepath));
 		m_luaVirtualMachine = nullptr;
 	}
 }
@@ -80,9 +80,9 @@ LuaScript::~LuaScript()
 //-----------------------------------------------------------------------------------------------
 // Logs the error to the log file for debugging
 //
-void LuaScript::PrintError(const std::string& error)
+void LuaScript::PrintLuaMessage(const std::string& message) const
 {
-	LogTaggedPrintf("LUA", "%s", error.c_str());
+	LogTaggedPrintf("LUA", "%s", message.c_str());
 }
 
 
@@ -91,22 +91,22 @@ void LuaScript::PrintError(const std::string& error)
 // If variableName is a subfield of a global member, it is delimited by '.' characters
 // (i.e. player.position.x)
 //
-bool LuaScript::GetToStack(const std::string& variableName)
+bool LuaScript::GetToStack(const std::string& variableName, int& out_numLevelsPushed)
 {
 	if (IsStringNullOrEmpty(variableName))
 	{
-		PrintError("Empty variable name passed to LuaScript::GetToStack()");
+		PrintLuaMessage("Empty variable name passed to LuaScript::GetToStack()");
 		return false;
 	}
 
 	std::vector<std::string> variableTokens = Tokenize(variableName, '.');
-	m_stackLevel = 0;
+	out_numLevelsPushed = 0;
 
 	for (int levelIndex = 0; levelIndex < (int)variableTokens.size(); ++levelIndex)
 	{
 		std::string& currentToken = variableTokens[levelIndex];
 
-		if (m_stackLevel == 0)
+		if (out_numLevelsPushed == 0)
 		{
 			lua_getglobal(m_luaVirtualMachine, currentToken.c_str());
 		}
@@ -115,15 +115,63 @@ bool LuaScript::GetToStack(const std::string& variableName)
 			lua_getfield(m_luaVirtualMachine, -1, currentToken.c_str());
 		}
 
+		out_numLevelsPushed++;
+
 		// Check for errors
 		if (lua_isnil(m_luaVirtualMachine, -1))
 		{
-			PrintError(Stringf("Couldn't get to variable name \"%s\", it doesn't exist!", variableName.c_str()));
+			PrintLuaMessage(Stringf("Couldn't get to variable name \"%s\", it doesn't exist!", variableName.c_str()));
 			return false;
 		}
-
-		m_stackLevel++;
 	}
 
 	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Prints the current Lua stack to output for debugging FROM BOTTOM TO TOP (prints bottom first!!)
+//
+void LuaScript::PrintStack() const
+{
+	if (m_luaVirtualMachine == nullptr)
+	{
+		PrintLuaMessage("PrintStack called on a null virtual machine");
+		return;
+	}
+
+	int topIndex = lua_gettop(m_luaVirtualMachine);
+
+	if (topIndex == 0)
+	{
+		PrintLuaMessage("EMPTY STACK");
+		return;
+	}
+
+	for (int stackIndex = 1; stackIndex <= topIndex; ++stackIndex)
+	{
+		int currentType = lua_type(m_luaVirtualMachine, stackIndex);
+
+		switch (currentType)
+		{
+		case LUA_TSTRING:
+			PrintLuaMessage(lua_tostring(m_luaVirtualMachine, stackIndex));
+			break;
+
+		case LUA_TBOOLEAN:
+		{
+			bool value = lua_toboolean(m_luaVirtualMachine, stackIndex);
+			PrintLuaMessage((value ? "true" : "false"));
+			break;
+		}
+
+		case LUA_TNUMBER:
+			PrintLuaMessage(Stringf("%g", lua_tonumber(m_luaVirtualMachine, stackIndex)));
+			break;
+
+		default:
+			PrintLuaMessage(Stringf("%s", lua_typename(m_luaVirtualMachine, stackIndex)));
+			break;
+		}
+	}
 }
