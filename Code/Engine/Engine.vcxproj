@@ -217,6 +217,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)../Engine/Code;$(SolutionDir)Code;$(SolutionDir)../Engine/Code/ThirdParty/assimp/include</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -468,6 +469,7 @@
     <ClCompile Include="Rendering\Buffers\UniformBuffer.cpp" />
     <ClCompile Include="Rendering\Core\Vertex.cpp" />
     <ClCompile Include="Rendering\Buffers\VertexBuffer.cpp" />
+    <ClCompile Include="Scripting\Lua.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ThirdParty\fmod\fmod.h" />
@@ -615,6 +617,7 @@
     <ClInclude Include="Rendering\Buffers\UniformBuffer.hpp" />
     <ClInclude Include="Rendering\Core\Vertex.hpp" />
     <ClInclude Include="Rendering\Buffers\VertexBuffer.hpp" />
+    <ClInclude Include="Scripting\Lua.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

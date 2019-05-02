@@ -380,6 +380,7 @@
     <ClCompile Include="Math\IntAABB2.cpp" />
     <ClCompile Include="Core\Utility\RawNoise.cpp" />
     <ClCompile Include="Core\Utility\SmoothNoise.cpp" />
+    <ClCompile Include="Scripting\Lua.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -737,5 +738,6 @@
     <ClInclude Include="Math\IntAABB2.hpp" />
     <ClInclude Include="Core\Utility\RawNoise.hpp" />
     <ClInclude Include="Core\Utility\SmoothNoise.hpp" />
+    <ClInclude Include="Scripting\Lua.hpp" />
   </ItemGroup>
 </Project>
