@@ -4,6 +4,7 @@
 /* Date: May 3rd, 2019
 /* Description: Implementation of the JobWorkerThread class
 /************************************************************************/
+#include "Engine/Core/LogSystem.hpp"
 #include "Engine/Core/JobSystem/Job.hpp"
 #include "Engine/Core/JobSystem/JobSystem.hpp"
 #include "Engine/Core/JobSystem/JobWorkerThread.hpp"
@@ -26,7 +27,35 @@ JobWorkerThread::JobWorkerThread(const char* name, WorkerThreadFlags flags, JobS
 //
 JobWorkerThread::~JobWorkerThread()
 {
+	if (m_isRunning)
+	{
+		LogTaggedPrintf("JOB", "Job worker thread was deleted before joining the thread!");
+		StopRunning();
+	}
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Tells the thread to finish the current job (if there is one)
+// Does *NOT* join the thread
+//
+void JobWorkerThread::StopRunning()
+{
 	m_isRunning = false;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Joins the thread for destruction
+//
+void JobWorkerThread::Join()
+{
+	if (m_isRunning)
+	{
+		LogTaggedPrintf("JOB", "Job worker thread was told to join before it was told to stop running!");
+		StopRunning();
+	}
+
 	m_threadHandle.join();
 }
 
@@ -68,29 +97,26 @@ Job* JobWorkerThread::DequeueJobForExecution()
 	Job* jobToExecute = nullptr;
 
 	m_jobSystem->m_queuedLock.lock();
+	m_jobSystem->m_runningLock.lock();
 	{
 		int numQueuedJobs = (int)m_jobSystem->m_queuedJobs.size();
 
-		for (int queueIndex = 0; queueIndex = numQueuedJobs; ++queueIndex)
+		for (int queueIndex = 0; queueIndex < numQueuedJobs; ++queueIndex)
 		{
 			uint32_t jobFlags = m_jobSystem->m_queuedJobs[queueIndex]->GetJobFlags();
 
-			if (jobFlags & m_workerFlags == jobFlags)
+			if ((jobFlags & m_workerFlags) == jobFlags)
 			{
 				jobToExecute = m_jobSystem->m_queuedJobs[queueIndex];
 				m_jobSystem->m_queuedJobs.erase(m_jobSystem->m_queuedJobs.begin() + queueIndex);
 				break;
 			}
 		}
-	}
-	m_jobSystem->m_queuedLock.unlock();
 
-
-	m_jobSystem->m_runningLock.lock();
-	{
 		m_jobSystem->m_runningJobs.push_back(jobToExecute);
 	}
 	m_jobSystem->m_runningLock.unlock();
+	m_jobSystem->m_queuedLock.unlock();
 
 	return jobToExecute;
 }
@@ -105,6 +131,7 @@ void JobWorkerThread::MarkJobAsFinished(Job* finishedJob)
 	std::vector<Job*>& finishedJobs = m_jobSystem->m_finishedJobs;
 
 	m_jobSystem->m_runningLock.lock();
+	m_jobSystem->m_finishedLock.lock();
 	{
 		int numRunningJobs = (int)runningJobs.size();
 
@@ -113,14 +140,12 @@ void JobWorkerThread::MarkJobAsFinished(Job* finishedJob)
 			if (runningJobs[runningIndex] == finishedJob)
 			{
 				runningJobs.erase(runningJobs.begin() + runningIndex);
+				break;
 			}
 		}
-	}
-	m_jobSystem->m_runningLock.unlock();
 
-	m_jobSystem->m_finishedLock.lock();
-	{
 		finishedJobs.push_back(finishedJob);
 	}
 	m_jobSystem->m_finishedLock.unlock();
+	m_jobSystem->m_runningLock.unlock();
 }

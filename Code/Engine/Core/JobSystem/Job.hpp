@@ -11,11 +11,13 @@
 
 class Job
 {
+	friend class JobSystem;
+
 public:
 	//-----Public Methods-----
 
 	virtual void		Execute() = 0; // No parameters, since this is meant to be derived from, so parameters exist on the derived class
-	virtual void		JobCompleteCallback() {}
+	virtual void		Finalize() {}
 	inline int			GetID() const { return m_jobID; }
 	inline uint32_t		GetJobFlags() const { return m_jobFlags; }
 

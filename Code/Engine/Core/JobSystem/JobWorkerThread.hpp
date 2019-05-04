@@ -25,8 +25,13 @@ public:
 	JobWorkerThread(const char* name, WorkerThreadFlags flags, JobSystem* jobSystem);
 	~JobWorkerThread();
 
+	inline std::string	GetName() const { return m_name; }
 	inline bool			IsRunning() const { return m_isRunning; }
 	inline JobSystem*	GetOwningJobSystem() const { return m_jobSystem; }
+	inline std::thread&	GetThreadHandle() { return m_threadHandle; }
+
+	void				StopRunning();
+	void				Join();
 
 
 private:
@@ -34,7 +39,7 @@ private:
 
 	void JobWorkerThreadEntry();
 	Job* DequeueJobForExecution();
-	void AddJobToFinishedList(Job* finishedJob);
+	void MarkJobAsFinished(Job* finishedJob);
 
 
 private:
