@@ -113,7 +113,10 @@ Job* JobWorkerThread::DequeueJobForExecution()
 			}
 		}
 
-		m_jobSystem->m_runningJobs.push_back(jobToExecute);
+		if (jobToExecute != nullptr)
+		{
+			m_jobSystem->m_runningJobs.push_back(jobToExecute);
+		}
 	}
 	m_jobSystem->m_runningLock.unlock();
 	m_jobSystem->m_queuedLock.unlock();

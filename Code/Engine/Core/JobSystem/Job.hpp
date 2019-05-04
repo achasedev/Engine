@@ -16,6 +16,9 @@ class Job
 public:
 	//-----Public Methods-----
 
+	Job() {}
+	virtual ~Job() {}
+
 	virtual void		Execute() = 0; // No parameters, since this is meant to be derived from, so parameters exist on the derived class
 	virtual void		Finalize() {}
 	inline int			GetID() const { return m_jobID; }

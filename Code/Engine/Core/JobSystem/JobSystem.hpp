@@ -33,12 +33,14 @@ public:
 	void				CreateWorkerThread(const char* name, WorkerThreadFlags flags);
 	void				DestroyWorkerThread(const char* name);
 	void				DestroyAllWorkerThreads();
+
 	int					QueueJob(Job* job);
+	void				DestroyAllJobs();
 
 	JobStatus			GetJobStatus(int jobID);
 	bool				IsJobFinished(int jobID);
 
-	void				FinishCompletedJobs();
+	void				FinalizeAllFinishedJobs();
 	void				BlockUntilJobIsFinalized(int jobID);
 	void				FinishAllJobsOfType(int jobType);
 

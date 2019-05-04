@@ -9,6 +9,9 @@
 #include "Engine/Core/Utility/ErrorWarningAssert.hpp"
 
 
+JobSystem* JobSystem::s_instance = nullptr;
+
+
 //-----------------------------------------------------------------------------------------------
 // Creates the singleton instance, does not create any worker threads
 //
@@ -16,6 +19,9 @@ void JobSystem::Initialize()
 {
 	ASSERT_OR_DIE(s_instance == nullptr, "JobSystem::Initialize() called twice!");
 	s_instance = new JobSystem();
+
+	// Add a default thread to allow some async jobs to be finished
+	s_instance->CreateWorkerThread("DEFAULT", WORKER_FLAGS_ALL);
 }
 
 
@@ -123,6 +129,45 @@ int JobSystem::QueueJob(Job* job)
 
 
 //-----------------------------------------------------------------------------------------------
+// Clears and deletes all jobs that exist in the JobSystem
+//
+void JobSystem::DestroyAllJobs()
+{
+	// Queued - just delete them
+	m_queuedLock.lock();
+	{
+		int numQueued = (int)m_queuedJobs.size();
+
+		for (int queuedIndex = 0; queuedIndex < numQueued; ++queuedIndex)
+		{
+			delete m_queuedJobs[queuedIndex];
+		}
+
+		m_queuedJobs.clear();
+	}
+
+	m_queuedLock.unlock();
+
+	// This list *SHOULD* be empty
+	ASSERT_OR_DIE(m_runningJobs.size() == 0, "JobSystem destructor still had running jobs");
+
+	// Finished jobs - Don't finalize, since we cannot guarantee anything still exists
+	m_finishedLock.lock();
+	{
+		int numFinished = (int)m_finishedJobs.size();
+
+		for (int finishedIndex = 0; finishedIndex < numFinished; ++finishedIndex)
+		{
+			delete m_finishedJobs[finishedIndex];
+		}
+
+		m_finishedJobs.clear();
+	}
+	m_finishedLock.unlock();
+}
+
+
+//-----------------------------------------------------------------------------------------------
 // Returns the current status of the job given by the ID
 //
 JobStatus JobSystem::GetJobStatus(int jobID)
@@ -225,7 +270,7 @@ bool JobSystem::IsJobFinished(int jobID)
 //-----------------------------------------------------------------------------------------------
 // Finalizes all jobs in the finished list
 //
-void JobSystem::FinishCompletedJobs()
+void JobSystem::FinalizeAllFinishedJobs()
 {
 	m_finishedLock.lock();
 	{
@@ -356,6 +401,8 @@ JobSystem::JobSystem()
 //
 JobSystem::~JobSystem()
 {
+	DestroyAllWorkerThreads();
+	DestroyAllJobs();
 }
 
 

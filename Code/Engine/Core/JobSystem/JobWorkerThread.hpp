@@ -15,6 +15,7 @@ enum WorkerThreadFlags : uint32_t
 	WORKER_FLAGS_ALL_BUT_DISK = WORKER_FLAGS_ALL & ~WORKER_FLAGS_DISK
 };
 
+class Job;
 class JobSystem;
 
 class JobWorkerThread
