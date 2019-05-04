@@ -14,9 +14,10 @@ class Job
 public:
 	//-----Public Methods-----
 
-	virtual void	Execute() = 0;
-	virtual void	JobCompleteCallback() {}
-	int				GetID();
+	virtual void		Execute() = 0; // No parameters, since this is meant to be derived from, so parameters exist on the derived class
+	virtual void		JobCompleteCallback() {}
+	inline int			GetID() const { return m_jobID; }
+	inline uint32_t		GetJobFlags() const { return m_jobFlags; }
 
 
 private:
@@ -24,6 +25,6 @@ private:
 
 	int			m_jobID = -1;
 	int			m_jobType = -1;
-	uint32_t	m_jobChannels = 0xffffffff;
+	uint32_t	m_jobFlags = 0xffffffff;
 
 };

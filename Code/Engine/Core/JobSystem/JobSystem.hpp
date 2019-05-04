@@ -7,6 +7,7 @@
 #pragma once
 #include "Engine/Core/JobSystem/JobWorkerThread.hpp"
 #include <vector>
+#include <mutex>
 
 enum JobStatus
 {
@@ -19,6 +20,8 @@ class Job;
 
 class JobSystem
 {
+	friend class JobWorkerThread;
+
 public:
 	//-----Public Methods-----
 
@@ -41,11 +44,14 @@ public:
 private:
 	//-----Private Data-----
 
-	std::vector<JobWorkerThread*> m_workerThreads;
-	std::vector<Job*> m_queuedJobs;
-	std::vector<Job*> m_runningJobs;
-	std::vector<Job*> m_finishedJobs;
+	std::vector<JobWorkerThread*>	m_workerThreads;
+	std::mutex						m_queuedLock;
+	std::mutex						m_runningLock;
+	std::mutex						m_finishedLock;
+	std::vector<Job*>				m_queuedJobs;
+	std::vector<Job*>				m_runningJobs;
+	std::vector<Job*>				m_finishedJobs;
 
-	static JobSystem* s_instance;
+	static JobSystem*				s_instance;
 
 };

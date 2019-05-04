@@ -30,6 +30,14 @@ public:
 
 
 private:
+	//-----Private Methods
+
+	void JobWorkerThreadEntry();
+	Job* DequeueJobForExecution();
+	void AddJobToFinishedList(Job* finishedJob);
+
+
+private:
 	//-----Private Data-----
 
 	std::string			m_name;
