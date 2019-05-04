@@ -26,36 +26,42 @@ class TypedProperty : public BaseProperty
 public:
 	//-----Public Methods-----
 
+	//-----------------------------------------------------------------------------------------------
 	virtual std::string GetValueAsString() const override
 	{
 		return ToString(m_value);
 	}
 
+	//-----------------------------------------------------------------------------------------------
 	void SetValue(const T& newValue)
 	{
 		m_value = newValue;
 	}
 
+	//-----------------------------------------------------------------------------------------------
 	T GetValue()
 	{
 		return m_value;
 	}
 
+	//-----------------------------------------------------------------------------------------------
 	virtual void const* GetTypeID() const override
 	{
 		return &s_typeID;
 	}
 
+	//-----------------------------------------------------------------------------------------------
 	static void const* GetTypeIDStatic()
 	{
 		return &s_typeID;
 	}
 
 private:
+	//-----Private Data-----
 
 	T m_value;
 
-	static constexpr int s_typeID = 0;
+	static constexpr int s_typeID = 0; // To avoid using RTTI, comparing types
 
 };
 
@@ -65,6 +71,7 @@ class NamedProperties
 public:
 	//-----Public Methods-----
 
+	//-----------------------------------------------------------------------------------------------
 	template <typename T>
 	void Set(const std::string& name, const T& value)
 	{
@@ -83,6 +90,7 @@ public:
 		m_properties[name] = tp;
 	}
 
+	//-----------------------------------------------------------------------------------------------
 	template <typename T>
 	T Get(const std::string& name, const T& defaultValue)
 	{

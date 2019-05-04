@@ -346,6 +346,9 @@
     <ClCompile Include="..\ThirdParty\tinyxml2\tinyxml2.cpp" />
     <ClCompile Include="Audio\AudioSystem.cpp" />
     <ClCompile Include="Core\Gif.cpp" />
+    <ClCompile Include="Core\JobSystem\Job.cpp" />
+    <ClCompile Include="Core\JobSystem\JobSystem.cpp" />
+    <ClCompile Include="Core\JobSystem\JobWorkerThread.cpp" />
     <ClCompile Include="Core\LogSystem.cpp" />
     <ClCompile Include="Core\Threading\Threading.cpp" />
     <ClCompile Include="Core\Time\ProfileLogScoped.cpp" />
@@ -490,6 +493,9 @@
     <ClInclude Include="..\ThirdParty\tinyxml2\tinyxml2.h" />
     <ClInclude Include="Audio\AudioSystem.hpp" />
     <ClInclude Include="Core\Gif.hpp" />
+    <ClInclude Include="Core\JobSystem\Job.hpp" />
+    <ClInclude Include="Core\JobSystem\JobSystem.hpp" />
+    <ClInclude Include="Core\JobSystem\JobWorkerThread.hpp" />
     <ClInclude Include="Core\LogSystem.hpp" />
     <ClInclude Include="Core\Threading\Threading.hpp" />
     <ClInclude Include="Core\Time\ProfileLogScoped.hpp" />

@@ -382,6 +382,9 @@
     <ClCompile Include="Core\Utility\SmoothNoise.cpp" />
     <ClCompile Include="Scripting\Lua.cpp" />
     <ClCompile Include="DataStructures\NamedProperties.cpp" />
+    <ClCompile Include="Core\JobSystem\JobSystem.cpp" />
+    <ClCompile Include="Core\JobSystem\Job.cpp" />
+    <ClCompile Include="Core\JobSystem\JobWorkerThread.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -741,5 +744,8 @@
     <ClInclude Include="Core\Utility\SmoothNoise.hpp" />
     <ClInclude Include="Scripting\Lua.hpp" />
     <ClInclude Include="DataStructures\NamedProperties.hpp" />
+    <ClInclude Include="Core\JobSystem\JobSystem.hpp" />
+    <ClInclude Include="Core\JobSystem\Job.hpp" />
+    <ClInclude Include="Core\JobSystem\JobWorkerThread.hpp" />
   </ItemGroup>
 </Project>
