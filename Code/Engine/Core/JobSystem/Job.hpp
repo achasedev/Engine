@@ -25,8 +25,8 @@ public:
 	inline uint32_t		GetJobFlags() const { return m_jobFlags; }
 
 
-private:
-	//-----Private Data-----
+protected:
+	//-----Protected Data-----
 
 	int			m_jobID = -1;
 	int			m_jobType = -1;

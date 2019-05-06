@@ -345,6 +345,8 @@
     <ClCompile Include="..\ThirdParty\mikkt\mikktspace.c" />
     <ClCompile Include="..\ThirdParty\tinyxml2\tinyxml2.cpp" />
     <ClCompile Include="Audio\AudioSystem.cpp" />
+    <ClCompile Include="Core\EventSystem\EventSubscription.cpp" />
+    <ClCompile Include="Core\EventSystem\EventSystem.cpp" />
     <ClCompile Include="Core\Gif.cpp" />
     <ClCompile Include="Core\JobSystem\Job.cpp" />
     <ClCompile Include="Core\JobSystem\JobSystem.cpp" />
@@ -492,6 +494,8 @@
     <ClInclude Include="..\ThirdParty\stb\stb_image_write.h" />
     <ClInclude Include="..\ThirdParty\tinyxml2\tinyxml2.h" />
     <ClInclude Include="Audio\AudioSystem.hpp" />
+    <ClInclude Include="Core\EventSystem\EventSubscription.hpp" />
+    <ClInclude Include="Core\EventSystem\EventSystem.hpp" />
     <ClInclude Include="Core\Gif.hpp" />
     <ClInclude Include="Core\JobSystem\Job.hpp" />
     <ClInclude Include="Core\JobSystem\JobSystem.hpp" />

@@ -385,6 +385,8 @@
     <ClCompile Include="Core\JobSystem\JobSystem.cpp" />
     <ClCompile Include="Core\JobSystem\Job.cpp" />
     <ClCompile Include="Core\JobSystem\JobWorkerThread.cpp" />
+    <ClCompile Include="Core\EventSystem\EventSystem.cpp" />
+    <ClCompile Include="Core\EventSystem\EventSubscription.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -747,5 +749,7 @@
     <ClInclude Include="Core\JobSystem\JobSystem.hpp" />
     <ClInclude Include="Core\JobSystem\Job.hpp" />
     <ClInclude Include="Core\JobSystem\JobWorkerThread.hpp" />
+    <ClInclude Include="Core\EventSystem\EventSystem.hpp" />
+    <ClInclude Include="Core\EventSystem\EventSubscription.hpp" />
   </ItemGroup>
 </Project>
