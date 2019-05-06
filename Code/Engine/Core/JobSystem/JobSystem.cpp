@@ -6,8 +6,8 @@
 /************************************************************************/
 #include "Engine/Core/JobSystem/Job.hpp"
 #include "Engine/Core/JobSystem/JobSystem.hpp"
+#include "Engine/Core/JobSystem/JobWorkerThread.hpp"
 #include "Engine/Core/Utility/ErrorWarningAssert.hpp"
-
 
 JobSystem* JobSystem::s_instance = nullptr;
 
@@ -19,9 +19,6 @@ void JobSystem::Initialize()
 {
 	ASSERT_OR_DIE(s_instance == nullptr, "JobSystem::Initialize() called twice!");
 	s_instance = new JobSystem();
-
-	// Add a default thread to allow some async jobs to be finished
-	s_instance->CreateWorkerThread("DEFAULT", WORKER_FLAGS_ALL);
 }
 
 

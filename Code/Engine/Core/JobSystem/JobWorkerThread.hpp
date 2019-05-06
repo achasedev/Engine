@@ -5,15 +5,11 @@
 /* Description: Class to represent a single thread within the JobSystem
 /************************************************************************/
 #pragma once
+#include "Engine/Core/JobSystem/JobSystem.hpp"
 #include <thread>
 #include <string>
 
-enum WorkerThreadFlags : uint32_t
-{
-	WORKER_FLAGS_ALL = 0xFFFFFFFF,
-	WORKER_FLAGS_DISK = 0x1,
-	WORKER_FLAGS_ALL_BUT_DISK = WORKER_FLAGS_ALL & ~WORKER_FLAGS_DISK
-};
+
 
 class Job;
 class JobSystem;

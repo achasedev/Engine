@@ -5,7 +5,6 @@
 /* Description: Class for the multi-threaded job system
 /************************************************************************/
 #pragma once
-#include "Engine/Core/JobSystem/JobWorkerThread.hpp"
 #include <vector>
 #include <shared_mutex>
 
@@ -16,6 +15,15 @@ enum JobStatus
 	JOB_STATUS_FINISHED,
 	JOB_STATUS_NOT_FOUND
 };
+
+
+enum WorkerThreadFlags : uint32_t
+{
+	WORKER_FLAGS_ALL = 0xFFFFFFFF,
+	WORKER_FLAGS_DISK = 0x1,
+	WORKER_FLAGS_ALL_BUT_DISK = WORKER_FLAGS_ALL & ~WORKER_FLAGS_DISK
+};
+
 
 class Job;
 
