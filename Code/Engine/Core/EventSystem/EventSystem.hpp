@@ -24,10 +24,10 @@ public:
 	void SubscribeEventCallbackFunction(const char* eventNameToSubTo, EventFunctionCallback callback);
 	void UnsubscribeEventCallbackFunction(const char* eventNameToUnsubFrom, EventFunctionCallback callback);
 
-	template <typename T>
-	void SubscribeEventCallbackObjectMethod(const char* eventNameToSubTo, EventObjectMethodSubscription<T>::EventObjectMethodCallback callback, T& object);
-	template <typename T>
-	void UnsubscribeEventCallbackObjectMethod(const char* eventNameToUnsubFrom, EventObjectMethodSubscription<T>::EventObjectMethodCallback callback, T& object);
+	template <typename T, typename T_Method>
+	void SubscribeEventCallbackObjectMethod(const char* eventNameToSubTo, T_Method callback, T& object);
+	template <typename T, typename T_Method>
+	void UnsubscribeEventCallbackObjectMethod(const char* eventNameToUnsubFrom, T_Method callback, T& object);
 
 	void FireEvent(const char* eventName, NamedProperties& args);
 
@@ -58,10 +58,10 @@ private:
 //-----------------------------------------------------------------------------------------------
 // Creates and adds an object method subscription for the given object and callback
 //
-template <typename T>
-void EventSystem::SubscribeEventCallbackObjectMethod(const char* eventNameToSubTo, EventObjectMethodSubscription<T>::EventObjectMethodCallback callback, T& object)
+template <typename T, typename T_Method>
+void EventSystem::SubscribeEventCallbackObjectMethod(const char* eventNameToSubTo, T_Method callback, T& object)
 {
-	EventSystemObjectMethodCallback<T> subscription = new EventSystemObjectMethodCallback<T>(callback, object);
+	EventObjectMethodSubscription<T>* subscription = new EventObjectMethodSubscription<T>(callback, object);
 
 	// This creates the entry if there isn't one already
 	std::vector<EventSubscription*>& subsToEvent = m_subscriptions[eventNameToSubTo];
@@ -72,8 +72,8 @@ void EventSystem::SubscribeEventCallbackObjectMethod(const char* eventNameToSubT
 //-----------------------------------------------------------------------------------------------
 // Removes the given subscription from the list of subscribers for the given event
 //
-template <typename T>
-void EventSystem::UnsubscribeEventCallbackObjectMethod(const char* eventNameToUnsubFrom, EventObjectMethodSubscription<T>::EventObjectMethodCallback callback, T& object)
+template <typename T, typename T_Method>
+void EventSystem::UnsubscribeEventCallbackObjectMethod(const char* eventNameToUnsubFrom, T_Method callback, T& object)
 {
 	std::vector<EventSubscription*>& subsToEvent = m_subscriptions[eventNameToUnsubFrom];
 

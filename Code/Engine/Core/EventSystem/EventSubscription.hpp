@@ -8,7 +8,7 @@
 #pragma once
 
 class NamedProperties;
-typedef bool(*EventFunctionCallback)(NamedProperties&args);
+typedef bool(*EventFunctionCallback)(NamedProperties& args);
 
 class EventSubscription
 {
@@ -39,6 +39,7 @@ private:
 
 };
 
+
 template <typename T>
 class EventObjectMethodSubscription : public EventSubscription
 {
@@ -53,7 +54,7 @@ public:
 public:
 	//-----Public Methods-----
 
-	EventObjectMethodSubscription(EventObjectMethodSubscription<T>::EventObjectMethodCallback callback, T& object);
+	EventObjectMethodSubscription(EventObjectMethodCallback callback, T& object);
 	virtual ~EventObjectMethodSubscription();
 	virtual bool Execute(NamedProperties& args) override;
 
@@ -65,6 +66,7 @@ private:
 	EventObjectMethodCallback m_methodCallback = nullptr;
 
 };
+
 
 //////////////////////////////////////////////////////////////////////////
 // Template Implementations
@@ -98,5 +100,5 @@ EventObjectMethodSubscription<T>::~EventObjectMethodSubscription()
 template <typename T>
 bool EventObjectMethodSubscription<T>::Execute(NamedProperties& args)
 {
-	return m_object.*m_methodCallback(args);
+	return (m_object.*m_methodCallback)(args);
 }
