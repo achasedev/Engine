@@ -84,7 +84,7 @@ void EventSystem::UnsubscribeEventCallbackObjectMethod(const char* eventNameToUn
 
 		if (currSub != nullptr) // currSub is an object method subscription
 		{
-			if (currSub->m_methodCallback == callback && currSub->m_object == object) // currSub is the one for the given object and callback
+			if (currSub->m_methodCallback == callback && &currSub->m_object == &object) // currSub is the one for the given object and callback
 			{
 				subsToEvent.erase(subsToEvent.begin() + subIndex);
 
