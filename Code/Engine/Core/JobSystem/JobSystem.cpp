@@ -285,6 +285,28 @@ void JobSystem::FinalizeAllFinishedJobs()
 }
 
 
+//------------------------------------------------------------------------------
+// Finalizes all jobs in the finished list that are the given ID
+//
+void JobSystem::FinalizeAllFinishedJobsOfType(int jobType)
+{
+	m_finishedLock.lock();
+	{
+		int numFinished = (int)m_finishedJobs.size();
+
+		for (int finishedIndex = 0; finishedIndex < numFinished; ++finishedIndex)
+		{
+			if (m_finishedJobs[finishedIndex]->m_jobType == jobType)
+			m_finishedJobs[finishedIndex]->Finalize();
+			delete m_finishedJobs[finishedIndex];
+		}
+
+		m_finishedJobs.clear();
+	}
+	m_finishedLock.unlock();
+}
+
+
 //-----------------------------------------------------------------------------------------------
 // Waits until the given job is complete, then immediately finalizes and destroys it
 //
@@ -322,7 +344,7 @@ void JobSystem::BlockUntilJobIsFinalized(int jobID)
 // *NOTE* Only guarentees that it will wait for all job types that are pushed BEFORE this function
 // is called - Don't push any more after calling this!
 //
-void JobSystem::FinishAllJobsOfType(int jobType)
+void JobSystem::BlockUntilAllJobsOfTypeAreFinalized(int jobType)
 {
 	bool jobOfTypeStillQueuedOrRunning = true;
 

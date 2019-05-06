@@ -49,8 +49,9 @@ public:
 	bool				IsJobFinished(int jobID);
 
 	void				FinalizeAllFinishedJobs();
+	void				FinalizeAllFinishedJobsOfType(int jobType);
 	void				BlockUntilJobIsFinalized(int jobID);
-	void				FinishAllJobsOfType(int jobType);
+	void				BlockUntilAllJobsOfTypeAreFinalized(int jobType);
 
 
 private:
