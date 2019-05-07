@@ -8,6 +8,7 @@
 #include "Engine/Math/Vector3.hpp"
 #include "Engine/Math/Vector4.hpp"
 #include "Engine/Math/IntVector3.hpp"
+#include "Engine/DataStructures/NamedProperties.hpp"
 
 //-----------------------------------------------------------------------------------------------
 const int STRINGF_STACK_LOCAL_TEMP_LENGTH = 2048;
@@ -439,6 +440,15 @@ std::string ToString(const Vector4* value)
 std::string ToString(const std::string* value)
 {
 	return *value;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+// Returns a string representation of the given property set
+//
+std::string ToString(const NamedProperties& props)
+{
+	return props.ToString();
 }
 
 

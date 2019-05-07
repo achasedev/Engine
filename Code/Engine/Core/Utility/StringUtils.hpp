@@ -8,6 +8,7 @@ class Vector3;
 class Vector4;
 class IntVector3;
 class Rgba;
+class NamedProperties;
 
 //-----------------------------------------------------------------------------------------------
 const std::string Stringf( const char* format, ... );
@@ -57,5 +58,6 @@ std::string ToString(const Vector4* value);
 
 std::string ToString(const std::string& value);	// For use with templating
 std::string ToString(const std::string* value);
+std::string ToString(const NamedProperties& props);
 
 std::string GetAsBitString(uint16_t value);

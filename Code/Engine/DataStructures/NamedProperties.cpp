@@ -25,3 +25,20 @@ std::string NamedProperties::Get(const std::string& name, const char* defaultVal
 	return Get(name, std::string(defaultValue));
 }
 
+
+//-----------------------------------------------------------------------------------------------
+// Returns the string representation of this property set
+//
+std::string NamedProperties::ToString() const
+{
+	std::string totalString;
+	std::map<std::string, BaseProperty*>::const_iterator itr = m_properties.begin();
+
+	for (itr; itr != m_properties.end(); itr++)
+	{
+		totalString += Stringf("Name: %s - Value: %s\n", itr->first.c_str(), itr->second->GetValueAsString().c_str());
+	}
+
+	return totalString;
+}
+

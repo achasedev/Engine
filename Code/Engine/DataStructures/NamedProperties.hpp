@@ -116,6 +116,8 @@ public:
 	void		Set(const std::string& name, const char* value);
 	std::string Get(const std::string& name, const char* defaultValue);
 
+	std::string ToString() const;
+
 
 private:
 	//-----Private Data-----
